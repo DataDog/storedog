@@ -8,27 +8,10 @@ SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 
 --
--- Drop databases (except postgres and template1)
---
-
-DROP DATABASE spree_starter_development;
-DROP DATABASE spree_starter_test;
-
-
-
-
---
 -- Drop roles
 --
 
-DROP ROLE postgres;
 
-
---
--- Roles
---
-
-CREATE ROLE postgres;
 ALTER ROLE postgres WITH SUPERUSER INHERIT CREATEROLE CREATEDB LOGIN REPLICATION BYPASSRLS;
 
 
