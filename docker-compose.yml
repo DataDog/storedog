@@ -6,6 +6,7 @@ services:
       POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
       - 'postgres:/var/lib/postgresql/data'
+      - ./db/restore:/docker-entrypoint-initdb.d
   redis:
     image: redis:6.2-alpine
     volumes:
@@ -47,7 +48,7 @@ services:
       DB_PORT: 5432
       DISABLE_SPRING: 1
   frontend:
-    image: storedogv2:11
+    image: storedogv2:12
     command: yarn run docker-build
     depends_on:
       - 'web'
