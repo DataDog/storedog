@@ -35,14 +35,16 @@ DROP ROLE postgres;
 CREATE ROLE postgres;
 ```
 
-*Notes*
+**Notes**
 Any `.sh` or `.sql` script under `/db/restore` will be run during init in the Postgres container.
 
 Ref: https://hub.docker.com/_/postgres -> Initialization scripts
 
 ## Spree admin
 
-http://localhost:4000/admin
+Visit http://localhost:4000/admin
 
+```
 Username: spree@example.com
 Password: spree123
+```
