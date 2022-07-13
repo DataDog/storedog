@@ -48,7 +48,7 @@ services:
       DB_PORT: 5432
       DISABLE_SPRING: 1
   frontend:
-    image: storedogv2:12
+    image: public.ecr.aws/x2b9z2t7/storedog/frontend:latest
     command: yarn run docker-build
     depends_on:
       - 'web'
