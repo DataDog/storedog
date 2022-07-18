@@ -7,10 +7,14 @@ services:
     volumes:
       - 'postgres:/var/lib/postgresql/data'
       - ./db/restore:/docker-entrypoint-initdb.d
+    networks:
+      - storedog-net
   redis:
     image: redis:6.2-alpine
     volumes:
       - 'redis:/data'
+    networks:
+      - storedog-net
   web:
     depends_on:
       - 'postgres'
@@ -30,6 +34,8 @@ services:
       DB_HOST: postgres
       DB_PORT: 5432
       DISABLE_SPRING: 1
+    networks:
+      - storedog-net
   worker:
     depends_on:
       - 'postgres'
@@ -47,15 +53,14 @@ services:
       DB_HOST: postgres
       DB_PORT: 5432
       DISABLE_SPRING: 1
-  frontend:
-    image: public.ecr.aws/x2b9z2t7/storedog/frontend:latest
-    command: yarn run docker-build
-    depends_on:
-      - 'web'
-    ports:
-      - 3000:3000
+    networks:
+      - storedog-net
 
 volumes:
   redis:
   postgres:
   bundle_cache:
+
+networks:
+  storedog-net:
+    driver: bridge
