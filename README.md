@@ -3,13 +3,10 @@
 This a dockerized [Spree Commerce](https://spreecommerce.org) application consumed by [Storedog - Frontend](https://github.com/DataDog/storedog-frontend).
 ## Local development
 
-### Frontend + Backend
-The following command will start the headless Spree backend containers as well as the NextJS frontend
-`docker-compose -f docker-compose.yml -f docker-compose.frontend.yml up`
-
-### Backend only
-The following command will start only the Spree backend
+The following command will start the Spree backend containers:
 `docker-compose up`
+
+To build the frontend as well, please see the README in the [Storedog - Frontend](https://github.com/DataDog/storedog-frontend) repo.
 ## Database rebuild
 
 The current database is based off sample data provided by the Spree starter kit. To create a new `.sql` dump file, run the following command while the application is running.
