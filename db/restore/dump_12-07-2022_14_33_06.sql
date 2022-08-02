@@ -8,16 +8,19 @@ SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 
 --
--- Drop roles
+-- Create/update roles
 --
 
 
 ALTER ROLE postgres WITH SUPERUSER INHERIT CREATEROLE CREATEDB LOGIN REPLICATION BYPASSRLS;
 
+--
+-- Create DD role: https://docs.datadoghq.com/integrations/postgres/?tab=host#configuration
+--
 
-
-
-
+create user datadog with password 'datadog';
+grant pg_monitor to datadog;
+grant SELECT ON pg_stat_database to datadog;
 
 --
 -- Databases
