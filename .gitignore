@@ -21,6 +21,7 @@ debug
 .sass-cache
 **/.DS_Store
 /storage
+__pycache__
 # TODO Comment out these rules if you are OK with secrets being uploaded to the repo
 config/initializers/secret_token.rb
 
