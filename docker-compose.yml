@@ -67,6 +67,8 @@ services:
     environment:
       - FLASK_APP=ads.py
       - FLASK_DEBUG=1
+      - POSTGRES_PASSWORD
+      - POSTGRES_USER
       - POSTGRES_HOST=postgres
       - DD_SERVICE=ads
       - DD_AGENT_HOST=dd-agent
@@ -88,6 +90,8 @@ services:
     environment:
       - FLASK_APP=discounts.py
       - FLASK_DEBUG=1
+      - POSTGRES_PASSWORD
+      - POSTGRES_USER
       - POSTGRES_HOST=postgres
       - DD_SERVICE=discounts
       - DD_AGENT_HOST=dd-agent
