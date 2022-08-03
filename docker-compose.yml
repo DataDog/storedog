@@ -7,7 +7,7 @@ services:
       POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
       - 'postgres:/var/lib/postgresql/data'
-      - ./db/restore:/docker-entrypoint-initdb.d
+      - ./services/backend/db/restore:/docker-entrypoint-initdb.d
     networks:
       - storedog-net
     labels:
@@ -26,14 +26,14 @@ services:
       - 'postgres'
       - 'redis'
     build:
-      context: .
+      context: ./services/backend
       dockerfile: Dockerfile.development
     command: bash -c "rm -rf tmp/pids/server.pid && yarn install && yarn build && bundle exec rails s -b 0.0.0.0 -p 4000"
     ports:
       - '${DOCKER_HOST_WEB_PORT:-4000}:4000'
     volumes:
       - 'bundle_cache:/bundle'
-      - '.:/app'
+      - './services/backend:/app'
       - .env:/app/.env
     environment:
       REDIS_URL: redis://redis:6379/0
@@ -46,13 +46,14 @@ services:
     depends_on:
       - 'postgres'
       - 'redis'
+      - 'web'
     build:
-      context: .
+      context: ./services/backend
       dockerfile: Dockerfile.development
     command: bundle exec sidekiq -C config/sidekiq.yml
     volumes:
       - 'bundle_cache:/bundle'
-      - '.:/app'
+      - './services/backend:/app'
       - .env:/app/.env
     environment:
       REDIS_URL: redis://redis:6379/0
@@ -67,8 +68,8 @@ services:
     environment:
       - FLASK_APP=ads.py
       - FLASK_DEBUG=1
-      - POSTGRES_PASSWORD
-      - POSTGRES_USER
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_HOST=postgres
       - DD_SERVICE=ads
       - DD_AGENT_HOST=dd-agent
@@ -90,8 +91,8 @@ services:
     environment:
       - FLASK_APP=discounts.py
       - FLASK_DEBUG=1
-      - POSTGRES_PASSWORD
-      - POSTGRES_USER
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_HOST=postgres
       - DD_SERVICE=discounts
       - DD_AGENT_HOST=dd-agent
@@ -111,7 +112,7 @@ services:
   dd-agent:
     image: gcr.io/datadoghq/agent:latest
     environment:
-      - DD_API_KEY
+      - DD_API_KEY=${DD_API_KEY}
       - DD_APM_ENABLED=true
       - DD_APM_NON_LOCAL_TRAFFIC=true
     ports:
