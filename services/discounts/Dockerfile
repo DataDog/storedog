@@ -12,7 +12,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Bring in app
+# Copy over app
 WORKDIR /app
 COPY . .
 
