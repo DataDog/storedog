@@ -27,3 +27,14 @@
 [08/03/22 15:19:12 +0000 ec0e820c3852 (1)] INFO : Not Loading Instruments
 [08/03/22 15:19:12 +0000 ec0e820c3852 (1)] INFO : Scout Agent [5.1.1] Installed
 [08/03/22 15:19:12 +0000 ec0e820c3852 (1)] INFO : Monitoring isn't enabled for the [development] environment.
+[08/03/22 17:59:33 +0000 6c7038a1ec65 (1)] INFO : No configuration file loaded, and no configuration found in ENV. For assistance configuring Scout, visit https://docs.scoutapm.com/#ruby-configuration-options
+[08/03/22 17:59:33 +0000 6c7038a1ec65 (1)] INFO : Scout Agent [5.1.1] Initialized
+[08/03/22 17:59:33 +0000 6c7038a1ec65 (1)] INFO : Not Loading Instruments
+[08/03/22 17:59:33 +0000 6c7038a1ec65 (1)] INFO : Scout Agent [5.1.1] Installed
+[08/03/22 17:59:33 +0000 1e22094d6809 (1)] INFO : No configuration file loaded, and no configuration found in ENV. For assistance configuring Scout, visit https://docs.scoutapm.com/#ruby-configuration-options
+[08/03/22 17:59:33 +0000 1e22094d6809 (1)] INFO : Scout Agent [5.1.1] Initialized
+[08/03/22 17:59:33 +0000 1e22094d6809 (1)] INFO : Not Loading Instruments
+[08/03/22 17:59:33 +0000 1e22094d6809 (1)] INFO : Scout Agent [5.1.1] Installed
+[08/03/22 17:59:33 +0000 1e22094d6809 (1)] INFO : Monitoring isn't enabled for the [development] environment.
+[08/03/22 17:59:33 +0000 6c7038a1ec65 (1)] INFO : Monitoring isn't enabled for the [development] environment.
+[08/03/22 17:59:33 +0000 6c7038a1ec65 (1)] INFO : Deferring agent start. Standing by for first request
