@@ -1,26 +1,19 @@
 *.rbc
 *.swp
-capybara-*.html
-/log
-/tmp
-/db/*.sqlite3
-/public/system
-/public/spree
-/coverage/
-/spec/tmp
-**.orig
-rerun.txt
-pickle-email-*.html
+**/**/log
+**/**/tmp
+**/**/db/*.sqlite3
+**/**/public/system
+**/**/public/spree
+**/**/coverage
+**/**/spec/tmp
+**/**/storage
 .idea
 .pt
 .ruby-gemset
 .env
-debug
-/spree
-/public/assets
-.sass-cache
 **/.DS_Store
-/storage
+
 __pycache__
 
 # TODO Comment out these rules if you are OK with secrets being uploaded to the repo
