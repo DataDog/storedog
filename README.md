@@ -12,7 +12,7 @@ Then, open the `.env` file and enter the values for the variables. The default v
 To start the backend containers, run the following:
 `docker-compose up`
 
-To build the frontend as well, please see the README in the [Storedog - Frontend](https://github.com/DataDog/storedog-frontend) repo.
+To build the frontend, please see the README in the [Storedog - Frontend](https://github.com/DataDog/storedog-frontend) repo.
 ## Database rebuild
 
 The current database is based off sample data provided by the Spree starter kit. To create a new `.sql` dump file, run the following command while the application is running.
