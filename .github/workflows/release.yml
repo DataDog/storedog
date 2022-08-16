@@ -1,4 +1,4 @@
-name: Release Changelog
+name: Publish release
 
 # Only release on a new tag that is a version number.
 on:
