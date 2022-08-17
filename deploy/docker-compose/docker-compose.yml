@@ -22,7 +22,7 @@ services:
     networks:
       - storedog-net
   web:
-    image: public.ecr.aws/x2b9z2t7/storedog/backend:1.0.0
+    image: public.ecr.aws/x2b9z2t7/storedog/backend:1.0.1
     command: bash -c "rm -rf tmp/pids/server.pid && yarn install && yarn build && bundle exec rails s -b 0.0.0.0 -p 4000"
     depends_on:
       - 'postgres'
@@ -39,7 +39,7 @@ services:
     networks:
       - storedog-net
   worker:
-    image: public.ecr.aws/x2b9z2t7/storedog/backend:1.0.0
+    image: public.ecr.aws/x2b9z2t7/storedog/backend:1.0.1
     command: bundle exec sidekiq -C config/sidekiq.yml
     depends_on:
       - 'postgres'
@@ -55,7 +55,7 @@ services:
     networks:
       - storedog-net
   ads:
-    image: public.ecr.aws/x2b9z2t7/storedog/ads:1.0.0
+    image: public.ecr.aws/x2b9z2t7/storedog/ads:1.0.1
     command: flask run --port=${ADS_PORT} --host=0.0.0.0
     depends_on:
       - postgres
@@ -75,7 +75,7 @@ services:
     networks:
       - storedog-net
   discounts:
-    image: public.ecr.aws/x2b9z2t7/storedog/discounts:1.0.0
+    image: public.ecr.aws/x2b9z2t7/storedog/discounts:1.0.1
     command: flask run --port=${DISCOUNTS_PORT} --host=0.0.0.0
     depends_on:
       - postgres
