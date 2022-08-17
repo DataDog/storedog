@@ -36,6 +36,8 @@ ENV PATH="${BUNDLE_BIN}:${PATH}"
 COPY Gemfile Gemfile.lock ./
 RUN bundle install
 
+COPY . .
+
 EXPOSE 4000
 
 CMD ["bash"]
