@@ -7,7 +7,7 @@ services:
       POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
       - 'postgres:/var/lib/postgresql/data'
-      - ./services/backend/db/restore:/docker-entrypoint-initdb.d
+      - ../../services/backend/db/restore:/docker-entrypoint-initdb.d
     networks:
       - storedog-net
     labels:
@@ -22,17 +22,15 @@ services:
     networks:
       - storedog-net
   web:
+    image: public.ecr.aws/x2b9z2t7/storedog/backend:1.0.0
+    command: bash -c "rm -rf tmp/pids/server.pid && yarn install && yarn build && bundle exec rails s -b 0.0.0.0 -p 4000"
     depends_on:
       - 'postgres'
       - 'redis'
-    image: public.ecr.aws/x2b9z2t7/storedog/backend:latest
-    command: bash -c "rm -rf tmp/pids/server.pid && yarn install && yarn build && bundle exec rails s -b 0.0.0.0 -p 4000"
     ports:
       - '${DOCKER_HOST_WEB_PORT:-4000}:4000'
     volumes:
       - 'bundle_cache:/bundle'
-      - './services/backend:/app'
-      - .env:/app/.env
     environment:
       REDIS_URL: redis://redis:6379/0
       DB_HOST: postgres
@@ -41,16 +39,14 @@ services:
     networks:
       - storedog-net
   worker:
+    image: public.ecr.aws/x2b9z2t7/storedog/backend:1.0.0
+    command: bundle exec sidekiq -C config/sidekiq.yml
     depends_on:
       - 'postgres'
       - 'redis'
       - 'web'
-    image: public.ecr.aws/x2b9z2t7/storedog/backend:latest
-    command: bundle exec sidekiq -C config/sidekiq.yml
     volumes:
       - 'bundle_cache:/bundle'
-      - './services/backend:/app'
-      - .env:/app/.env
     environment:
       REDIS_URL: redis://redis:6379/0
       DB_HOST: postgres
@@ -59,6 +55,8 @@ services:
     networks:
       - storedog-net
   ads:
+    image: public.ecr.aws/x2b9z2t7/storedog/ads:1.0.0
+    command: flask run --port=${ADS_PORT} --host=0.0.0.0
     depends_on:
       - postgres
     environment:
@@ -72,15 +70,13 @@ services:
       - DD_LOGS_INJECTION=true
       - DD_TRACE_ANALYTICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
-    image: public.ecr.aws/x2b9z2t7/storedog/ads:latest
-    command: flask run --port=${ADS_PORT} --host=0.0.0.0 # If using any other port besides the default 9292, overriding the CMD is required
-    volumes:
-      - "./services/ads:/app"
     ports:
       - "${ADS_PORT}:${ADS_PORT}"
     networks:
       - storedog-net
   discounts:
+    image: public.ecr.aws/x2b9z2t7/storedog/discounts:1.0.0
+    command: flask run --port=${DISCOUNTS_PORT} --host=0.0.0.0
     depends_on:
       - postgres
     environment:
@@ -94,10 +90,6 @@ services:
       - DD_LOGS_INJECTION=true
       - DD_TRACE_ANALYTICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
-    image: public.ecr.aws/x2b9z2t7/storedog/discounts:latest
-    command: flask run --port=${DISCOUNTS_PORT} --host=0.0.0.0 # If using any other port besides the default 8282, overriding the CMD is required
-    volumes:
-      - "./services/discounts:/app"
     ports:
       - "${DISCOUNTS_PORT}:${DISCOUNTS_PORT}"
       - "22"
@@ -109,6 +101,9 @@ services:
       - DD_API_KEY=${DD_API_KEY}
       - DD_APM_ENABLED=true
       - DD_APM_NON_LOCAL_TRAFFIC=true
+      - DD_LOGS_ENABLED=true
+      - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
+      - DD_CONTAINER_EXCLUDE="name:datadog-agent"
     ports:
       - "8126:8126"
     volumes:
@@ -126,3 +121,7 @@ volumes:
 networks:
   storedog-net:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16
+          gateway: 172.18.0.1
