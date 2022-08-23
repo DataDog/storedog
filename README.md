@@ -3,16 +3,16 @@
 This a dockerized [Spree Commerce](https://spreecommerce.org) application consumed by [Storedog - Frontend](https://github.com/DataDog/storedog-frontend).
 ## Local development
 
-1. Before starting the containers, you will need to define the required env vars. Run the following command to copy the env var template to the `.env` file:
+**1.** Before starting the containers, you will need to define the required env vars. Run the following command to copy the env var template to the `.env` file:
 
 `cp .env.template .env && cp .env.template ./deploy/docker-compose/.env`
 
 Then, open the `.env` file and enter the values for the variables. The default values should all work except for the empty `DD_API_KEY`, which is required to run the DD agent.
 
-2a. To start the backend containers using the local build context, run:
+**2a.** To start the backend containers using the local build context, run:
 `docker-compose up`
 
-2b. To start the backend containers using the published images in ECR, run:
+**2b.** To start the backend containers using the published images in ECR, run:
 `docker-compose -f ./deploy/docker-compose/docker-compose.yml -p storedog-backend up`
 
 To build the frontend, please see the README in the [Storedog - Frontend](https://github.com/DataDog/storedog-frontend) repo.
