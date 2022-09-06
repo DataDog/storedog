@@ -40,4 +40,4 @@ COPY . .
 
 EXPOSE 4000
 
-CMD ["bash"]
+CMD ["/bin/bash", "-c", "rm -rf tmp/pids/server.pid && yarn install && yarn build && bundle install && bundle exec rails s -b 0.0.0.0 -p 4000"]
