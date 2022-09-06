@@ -38,6 +38,9 @@ RUN bundle install
 
 COPY . .
 
+RUN yarn install
+RUN yarn build
+
 EXPOSE 4000
 
-CMD ["/bin/bash", "-c", "rm -rf tmp/pids/server.pid && yarn install && yarn build && bundle install && bundle exec rails s -b 0.0.0.0 -p 4000"]
+CMD ["/bin/bash", "-c", "bundle exec rails s -b 0.0.0.0 -p 4000"]
