@@ -23,7 +23,6 @@ services:
       - storedog-net
   web:
     image: public.ecr.aws/x2b9z2t7/storedog/backend:1.0.1
-    command: bash -c "rm -rf tmp/pids/server.pid && yarn install && yarn build && bundle exec rails s -b 0.0.0.0 -p 4000"
     depends_on:
       - 'postgres'
       - 'redis'
