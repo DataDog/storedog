@@ -36,6 +36,7 @@ ENV PATH="${BUNDLE_BIN}:${PATH}"
 COPY . .
 
 RUN bundle install
+RUN bundler install
 RUN yarn install
 RUN yarn build
 
