@@ -20,9 +20,6 @@ RUN apt-get clean -qy \
 RUN mkdir /app
 WORKDIR /app
 
-COPY package.json yarn.lock
-RUN yarn install
-
 # install specific version of bundler
 RUN gem install bundler -v 2.2.32
 
@@ -36,10 +33,9 @@ ENV PATH="${BUNDLE_BIN}:${PATH}"
 COPY . .
 
 RUN bundle install
-RUN bundler install
 RUN yarn install
 RUN yarn build
 
 EXPOSE 4000
 
-CMD ["/bin/bash", "-c", "bundle exec rails s -b 0.0.0.0 -p 4000"]
+CMD ["/bin/bash", "-c", "rm -rf tmp/pids/server.pid && (bundle check || bundle install) && bundle exec rails s -b 0.0.0.0 -p 4000"]
