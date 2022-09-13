@@ -33,13 +33,14 @@ ENV BUNDLE_GEMFILE=/app/Gemfile \
   GEM_HOME=/bundle
 ENV PATH="${BUNDLE_BIN}:${PATH}"
 
+COPY Gemfile Gemfile.lock ./
+RUN bundle install
+
 COPY . .
 
-RUN bundle install
-RUN bundler install
 RUN yarn install
 RUN yarn build
 
 EXPOSE 4000
 
-CMD ["/bin/bash", "-c", "bundle exec rails s -b 0.0.0.0 -p 4000"]
+CMD ["/bin/bash", "-c", "rm -rf tmp/pids/server.pid && (bundle check || bundle install) && bundle exec rails s -b 0.0.0.0 -p 4000"]
