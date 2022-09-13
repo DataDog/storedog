@@ -20,9 +20,6 @@ RUN apt-get clean -qy \
 RUN mkdir /app
 WORKDIR /app
 
-COPY package.json yarn.lock
-RUN yarn install
-
 # install specific version of bundler
 RUN gem install bundler -v 2.2.32
 
@@ -33,11 +30,9 @@ ENV BUNDLE_GEMFILE=/app/Gemfile \
   GEM_HOME=/bundle
 ENV PATH="${BUNDLE_BIN}:${PATH}"
 
-COPY Gemfile Gemfile.lock ./
-RUN bundle install
-
 COPY . .
 
+RUN bundle install
 RUN yarn install
 RUN yarn build
 

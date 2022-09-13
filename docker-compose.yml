@@ -25,9 +25,14 @@ services:
     depends_on:
       - 'postgres'
       - 'redis'
-    image: public.ecr.aws/x2b9z2t7/storedog/backend:test-2
+    build:
+      context: ./services/backend
     ports:
       - '${DOCKER_HOST_WEB_PORT:-4000}:4000'
+    volumes:
+      - 'bundle_cache:/bundle'
+      - './services/backend:/app'
+      - .env:/app/.env
     environment:
       REDIS_URL: redis://redis:6379/0
       DB_HOST: postgres
@@ -40,8 +45,13 @@ services:
       - 'postgres'
       - 'redis'
       - 'web'
-    image: public.ecr.aws/x2b9z2t7/storedog/backend:test-2
+    build:
+      context: ./services/backend
     command: bundle exec sidekiq -C config/sidekiq.yml
+    volumes:
+      - 'bundle_cache:/bundle'
+      - './services/backend:/app'
+      - .env:/app/.env
     environment:
       REDIS_URL: redis://redis:6379/0
       DB_HOST: postgres
@@ -117,6 +127,7 @@ services:
 volumes:
   redis:
   postgres:
+  bundle_cache:
 
 networks:
   storedog-net:

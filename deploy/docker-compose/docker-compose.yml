@@ -22,8 +22,7 @@ services:
     networks:
       - storedog-net
   web:
-    image: public.ecr.aws/x2b9z2t7/storedog/backend:1.0.1
-    command: bash -c "rm -rf tmp/pids/server.pid && bundle exec rails s -b 0.0.0.0 -p 4000"
+    image: public.ecr.aws/x2b9z2t7/storedog/backend:test-2
     depends_on:
       - 'postgres'
       - 'redis'
@@ -39,7 +38,7 @@ services:
     networks:
       - storedog-net
   worker:
-    image: public.ecr.aws/x2b9z2t7/storedog/backend:1.0.1
+    image: public.ecr.aws/x2b9z2t7/storedog/backend:test-2
     command: bundle exec sidekiq -C config/sidekiq.yml
     depends_on:
       - 'postgres'
