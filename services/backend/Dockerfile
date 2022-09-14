@@ -1,12 +1,10 @@
+
 FROM ruby:3.0.3
 
 RUN apt-get update -yq \
   && apt-get upgrade -yq \
   #ESSENTIALS
-  && apt-get install -y -qq --no-install-recommends build-essential curl git-core vim passwd unzip cron gcc wget netcat \
-  # RAILS PACKAGES NEEDED
-  && apt-get update \
-  && apt-get install -y --no-install-recommends imagemagick postgresql-client \
+  && apt-get install -y -qq --no-install-recommends build-essential curl git-core vim passwd unzip cron gcc wget netcat imagemagick postgresql-client wait-for-it \
   # INSTALL NODE
   && curl -sL https://deb.nodesource.com/setup_16.x | bash - \
   && apt-get install -y --no-install-recommends nodejs \
@@ -17,7 +15,6 @@ RUN apt-get update -yq \
 RUN apt-get clean -qy \
   && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir /app
 WORKDIR /app
 
 # install specific version of bundler
@@ -38,4 +35,4 @@ RUN yarn build
 
 EXPOSE 4000
 
-CMD ["/bin/bash", "-c", "rm -rf tmp/pids/server.pid && (bundle check || bundle install) && bundle exec rails s -b 0.0.0.0 -p 4000"]
+CMD ["/bin/bash", "-c", "bundle exec rails s -b 0.0.0.0 -p 4000"]
