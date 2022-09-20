@@ -32,13 +32,6 @@ group :development, :test do
 
   gem 'rspec_junit_formatter'
 
-  # monitoring
-  # gem 'bullet'
-  # gem 'rack-mini-profiler', require: false
-  # gem 'flamegraph'
-  # gem 'stackprof'
-  # gem 'memory_profiler'
-
   gem 'webmock'
 end
 
@@ -103,4 +96,5 @@ gem 'oj'
 # Fix SCSS errors with Ruby 3 on MacOS
 gem 'sassc', github: 'sass/sassc-ruby', group: :development
 
+# monitoring
 gem 'ddtrace', require: 'ddtrace/auto_instrument'
