@@ -27,6 +27,7 @@ ENV BUNDLE_GEMFILE=/app/Gemfile \
   GEM_HOME=/bundle
 ENV PATH="${BUNDLE_BIN}:${PATH}"
 
+
 COPY . .
 
 RUN bundle install
