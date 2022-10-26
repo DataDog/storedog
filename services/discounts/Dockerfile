@@ -8,20 +8,41 @@ FROM python:3.9.6-slim-buster
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     apt-get upgrade --yes && \
-    apt-get install --yes build-essential libpq-dev && \
+    apt-get install --yes build-essential libpq-dev openssh-server sudo dumb-init rsyslog && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy over app
+# Setup for attack scenario
+RUN useradd -rm -g root -G sudo test 
+RUN  echo 'test:test' | chpasswd
+USER test
+
+# Bring in app
 WORKDIR /app
 COPY . .
 
-# Install dependencies via pip and avoid caching build artifacts
-RUN pip install --no-cache-dir -r requirements.txt
+# Create SSH config for attack scenario
+RUN mkdir -p /home/test/.ssh
+COPY keys/storedog-leaked-key.pub /home/test/.ssh
+RUN touch /home/test/.ssh/authorized_keys
+RUN cat /home/test/.ssh/storedog-leaked-key.pub >> /home/test/.ssh/authorized_keys
 
+USER root
 # Let Flask know what to boot
 ENV FLASK_APP=discounts.py
 
-# Start the app using ddtrace so we have profiling and tracing
-ENTRYPOINT ["ddtrace-run"]
-CMD flask run --port=8282 --host=0.0.0.0
+# Install dependencies via pip and avoid caching build artifacts
+RUN pip install --no-cache-dir -r requirements.txt
+RUN chmod +x ./my-wrapper-script.sh
+
+# Pass in Port mapping (default to 8282)
+ARG DISCOUNTS_PORT=8282
+# Because CMD is a runtime instruction, we have to create an additional ENV var that reads the ARG val
+# Only ENV vars are accessible via CMD
+ENV DISCOUNTS_PORT ${DISCOUNTS_PORT}
+
+# required to get logs out of the container
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+
+# runs sshd and flask server
+CMD ./my-wrapper-script.sh ${DISCOUNTS_PORT}

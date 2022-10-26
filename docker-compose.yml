@@ -98,12 +98,11 @@ services:
       - DD_PROFILING_ENABLED=true
     build:
       context: ./services/discounts
-    command: flask run --port=${DISCOUNTS_PORT} --host=0.0.0.0 # If using any other port besides the default 8282, overriding the CMD is required
     volumes:
       - "./services/discounts:/app"
     ports:
       - "${DISCOUNTS_PORT}:${DISCOUNTS_PORT}"
-      - "22"
+      - "22:22"
     networks:
       - storedog-net
   dd-agent:
@@ -123,6 +122,23 @@ services:
       - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
     networks:
       - storedog-net
+  attackbox:
+    build:
+      context: ./services/attackbox
+    environment:
+      - ATTACK_GOBUSTER
+      - ATTACK_HYDRA
+      - ATTACK_GOBUSTER_INTERVAL
+      - ATTACK_HYDRA_INTERVAL
+      - ATTACK_SSH=${ATTACK_SSH}
+      - ATTACK_SSH_INTERVAL
+      - ATTACK_HOST
+      - ATTACK_PORT
+    networks:
+      - storedog-net
+    depends_on:
+      - web
+      - discounts
 
 volumes:
   redis:
