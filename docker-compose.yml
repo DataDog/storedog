@@ -74,10 +74,10 @@ services:
       - DD_TRACE_ANALYTICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
     build:
-      context: ./services/ads
+      context: ./services/ads/python
     command: flask run --port=${ADS_PORT} --host=0.0.0.0 # If using any other port besides the default 9292, overriding the CMD is required
     volumes:
-      - "./services/ads:/app"
+      - ./services/ads/python:/app
     ports:
       - "${ADS_PORT}:${ADS_PORT}"
     networks:
@@ -100,7 +100,7 @@ services:
       context: ./services/discounts
     command: flask run --port=${DISCOUNTS_PORT} --host=0.0.0.0 # If using any other port besides the default 8282, overriding the CMD is required
     volumes:
-      - "./services/discounts:/app"
+      - ./services/discounts:/app
     ports:
       - "${DISCOUNTS_PORT}:${DISCOUNTS_PORT}"
       - "22"
@@ -121,6 +121,11 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /proc/:/host/proc/:ro
       - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+    networks:
+      - storedog-net
+  ads-java:
+    build:
+      context: ./services/ads/java
     networks:
       - storedog-net
 
