@@ -24,4 +24,4 @@ ENV FLASK_APP=auth.py
 
 # Start the app using ddtrace so we have profiling and tracing
 ENTRYPOINT ["ddtrace-run"]
-CMD flask run --port=7578 --host=0.0.0.0
+CMD gunicorn --bind 0.0.0.0:7578 auth:app

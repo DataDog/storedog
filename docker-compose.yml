@@ -130,7 +130,6 @@ services:
       - DD_APPSEC_ENABLED=true
     build:
       context: ./services/auth
-    command: flask run --port=${AUTH_PORT} --host=0.0.0.0 # If using any other port besides the default 8282, overriding the CMD is required
     volumes:
       - "./services/auth:/app"
     ports:

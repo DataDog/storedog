@@ -1,4 +1,4 @@
-from flask import Response, abort, redirect, request
+from flask import Response, abort, redirect, request, jsonify
 from flask_login import (
     LoginManager,
     UserMixin,
@@ -52,7 +52,7 @@ def unauthorized(error):
     return Response("Not authorized"), 401
 
 
-@app.route("/", methods=["GET", "POST"])
+@app.route("/", methods=["POST"])
 def homepage():
     if request.method == "POST":
         username = request.form.get("username")
@@ -64,21 +64,19 @@ def homepage():
                 user_model = User()
                 user_model.id = user.id
                 login_user(user_model)
-                return Response({"Response": "Logged In"}, mimetype='application/json')
+                return jsonify({'User': 'Logged In'})
             else:
                 return abort(401)
 
     if current_user.is_authenticated:
-        return Response({"Response": "Already Authed"}, mimetype='application/json')
-
-    return redirect("http://127.0.0.1:3000/", code=302)
+        return jsonify({'User': 'Already Logged In'})
 
 
 @app.route("/logout")
 @login_required
 def logout():
     logout_user()
-    return redirect("http://127.0.0.1:3000/", code=302)
+    return jsonify({'User': 'Logged Out'})
 
 
 if __name__ == "__main__":
