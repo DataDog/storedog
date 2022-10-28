@@ -130,6 +130,7 @@ services:
       - DD_APPSEC_ENABLED=true
     build:
       context: ./services/auth
+    command: gunicorn --bind 0.0.0.0:${AUTH_PORT} auth:app # If using any other port besides the default 8282, overriding the CMD is required
     volumes:
       - "./services/auth:/app"
     ports:
