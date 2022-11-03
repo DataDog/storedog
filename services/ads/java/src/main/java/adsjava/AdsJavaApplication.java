@@ -19,6 +19,11 @@ public class AdsJavaApplication {
 		return "Hello Docker World 2";
 	}
 
+	@RequestMapping("/test")
+	public String test() {
+		return "Test";
+	}
+
 	public static void main(String[] args) {
 		SpringApplication.run(AdsJavaApplication.class, args);
 	}
