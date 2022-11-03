@@ -1,7 +1,4 @@
-# using multistage docker build
-# ref: https://docs.docker.com/develop/develop-images/multistage-build/
-    
-# temp container to build using gradle
+# base container using gradle
 FROM gradle:jdk11 AS TEMP_BUILD_IMAGE
 ENV APP_HOME=/usr/app/
 WORKDIR $APP_HOME
@@ -15,7 +12,7 @@ RUN chown -R gradle /home/gradle/src
 COPY . .
 RUN gradle clean build
     
-# actual container
+# app container
 FROM alpine:latest
 RUN apk --update add openjdk11-jre
 ENV ARTIFACT_NAME=ads-java-0.0.1-SNAPSHOT.jar
@@ -23,6 +20,5 @@ ENV APP_HOME=/usr/app/
     
 WORKDIR $APP_HOME
 COPY --from=TEMP_BUILD_IMAGE $APP_HOME/build/libs/$ARTIFACT_NAME .
-    
-# EXPOSE 8080
+
 ENTRYPOINT exec java -jar ${ARTIFACT_NAME}
