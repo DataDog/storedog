@@ -126,6 +126,9 @@ services:
   ads-java:
     build:
       context: ./services/ads/java
+    command: "sleep 3500"
+    ports:
+      - "3030:8080"
     networks:
       - storedog-net
 
