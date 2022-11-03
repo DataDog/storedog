@@ -1,4 +1,4 @@
-# base container using gradle
+# compile via gradle
 FROM gradle:jdk11 AS TEMP_BUILD_IMAGE
 ENV APP_HOME=/usr/app/
 WORKDIR $APP_HOME
