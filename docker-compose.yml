@@ -125,12 +125,14 @@ services:
   attackbox:
     build:
       context: ./services/attackbox
+    profiles:
+      - attackbox
     environment:
       - ATTACK_GOBUSTER
       - ATTACK_HYDRA
       - ATTACK_GOBUSTER_INTERVAL
       - ATTACK_HYDRA_INTERVAL
-      - ATTACK_SSH=${ATTACK_SSH}
+      - ATTACK_SSH
       - ATTACK_SSH_INTERVAL
       - ATTACK_HOST
       - ATTACK_PORT

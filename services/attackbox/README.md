@@ -9,9 +9,9 @@ The script has 3 stages:
 
 ## Deployment
 
-The attack box is configurable via environment variables in the `docker compose` command:
+The attack box is configurable via environment variables found in the `.env` file.
 - **ATTACK_SSH**: Set to `1` to run the SSH attack script against the discounts container
-- **ATTACK_GOBUSTER**: Set to `1` to run the Gobuster tool for crawling directories on the frontend container
+- **ATTACK_GOBUSTER**: Set to `1` to run the Gobuster tool for crawling directories on the container specified in `ATTACK_HOST`
 - **ATTACK_HYDRA**: Set to `1` to run the Hydra tool for brute force login
 - **ATTACK_SSH_INTERVAL**: Number of seconds between SSH attack invocations (if ommited, SSH attack will run once)
 - **ATTACK_GOBUSTER_INTERVAL**: Number of seconds between GOBUSTER invocations (if ommited, GOBUSTER will run once)
@@ -19,12 +19,14 @@ The attack box is configurable via environment variables in the `docker compose`
 - **ATTACK_PORT**: The web port you want to run the attacks against for hydra and dirbuster.
 - **ATTACK_HOST**: The web host that hydra and dirbuster will attack. ( Probably frontend or nginx )
 
-Here's an example of what a `docker-compose` command would look like if we wanted to run Gobuster every 500 seconds and Hydra every 900 seconds:
-
-```POSTGRES_USER=postgres POSTGRES_PASSWORD=postgres DD_API_KEY=[API KEY] ATTACK_GOBUSTER=1 ATTACK_GOBUSTER_INTERVAL=500 ATTACK_HYDRA=1 ATTACK_HYDRA_INTERVAL=900 ATTACK_HOST=frontend ATTACK_PORT=3000 docker-compose -f deploy/docker-compose/docker-compose-fixed-instrumented-attack.yml up```
-
-## Local dev
-Run the following commands locally
-1. (Optional) Clean local docker environment of all volumes / containers / images: `docker system prune -a --volumes`
-2. [Recreate the frontend code](https://github.com/DataDog/ecommerce-workshop/blob/main/development.md#recreating-the-code)
-3. Start the app: `POSTGRES_USER=postgres POSTGRES_PASSWORD=postgres DD_API_KEY=[API KEY] ATTACK_GOBUSTER=1 ATTACK_GOBUSTER_INTERVAL=500 ATTACK_HYDRA=1 ATTACK_HYDRA_INTERVAL=900 docker-compose -f deploy/docker-compose/docker-compose-fixed-instrumented-attack.yml up`
+For example, if you wanted to run Gobuster every 60 seconds and Hydra ever 90 seconds, your `.env` file would look like this:
+```
+ATTACK_GOBUSTER=1
+ATTACK_GOBUSTER_INTERVAL=60
+ATTACK_HYDRA=1
+ATTACK_HYDRA_INTERVAL=90
+```
+## How to start the  attackbox service
+1. `cp .env.template .env`
+2. Set the attack config variables as explained above
+3. Run `docker compose --profile attackbox up `
