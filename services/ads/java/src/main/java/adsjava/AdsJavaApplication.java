@@ -11,6 +11,12 @@ import org.springframework.util.StreamUtils;
 @RestController
 public class AdsJavaApplication {
 
+  @RequestMapping(value = "/Image/{id:.+}", method = RequestMethod.GET)
+  public ResponseEntity<byte[]> getImage(@PathVariable("id") String id) {
+    byte[] image = imageService.getImage(id);
+    return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(image);
+  }
+
 	@RequestMapping("/")
 	public String home() {
 		return "Hello Docker World";
