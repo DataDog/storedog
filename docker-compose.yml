@@ -135,7 +135,6 @@ services:
       - "./services/auth:/app"
     ports:
       - "${AUTH_PORT}:${AUTH_PORT}"
-      - "22"
     networks:
       - storedog-net
   dd-agent:
