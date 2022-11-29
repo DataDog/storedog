@@ -23,4 +23,4 @@ COPY --from=TEMP_BUILD_IMAGE $APP_HOME/build/libs/$ARTIFACT_NAME .
 
 RUN wget -O dd-java-agent.jar 'https://dtdg.co/latest-java-tracer'
 
-ENTRYPOINT exec java -javaagent:/usr/app/dd-java-agent.jar -Ddd.logs.injection=true -Ddd.service=ads -Ddd.env=dev -jar ${ARTIFACT_NAME} 
+ENTRYPOINT exec java -javaagent:/usr/app/dd-java-agent.jar -Ddd.logs.injection=true -Ddd.service=ads-java -Ddd.env=dev -jar ${ARTIFACT_NAME} 

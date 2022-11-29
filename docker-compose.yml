@@ -126,6 +126,12 @@ services:
   ads-java:
     build:
       context: ./services/ads/java
+    environment:
+      - DD_SERVICE=ads-java
+      - DD_AGENT_HOST=dd-agent
+      - DD_LOGS_INJECTION=true
+      - DD_TRACE_ANALYTICS_ENABLED=true
+      - DD_PROFILING_ENABLED=true
     ports:
       - "3030:8080"
     networks:
