@@ -39,6 +39,7 @@ jobs:
             ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/backend
             ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/discounts
             ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/ads
+            ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/ads-java
             ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/attackbox
             ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/auth
           )
