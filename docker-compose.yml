@@ -103,6 +103,7 @@ services:
       - DD_APPSEC_ENABLED=true
     build:
       context: ./services/discounts
+    command: ./my-wrapper-script.sh ${DISCOUNTS_PORT}
     volumes:
       - ./services/discounts:/app
     ports:
