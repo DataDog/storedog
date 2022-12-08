@@ -1,4 +1,4 @@
-name: Ads
+name: Ads - Python
 
 on:
   push:
