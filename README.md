@@ -61,4 +61,4 @@ Password: spree123
 ## Image publication
 Images are stored in our public ECR repo `public.ecr.aws/x2b9z2t7`. On PR merges, only the affected services will be pushed to the ECR repo, using the `latest` tag. For example, if you only made changes to the `backend` service, then only the `backend` Github workflow will trigger and publish `public.ecr.aws/x2b9z2t7/storedog/backend:latest`. 
 
-Separately, we tag and publish *all* images when during a new release with the corresponding release tag e.g. `public.ecr.aws/x2b9z2t7/storedog/backend:1.0.1`. New releases are made on an ad-hoc basis, depending on the recent features that are added.
+Separately, we tag and publish *all* images when a new release is created with the corresponding release tag e.g. `public.ecr.aws/x2b9z2t7/storedog/backend:1.0.1`. New releases are made on an ad-hoc basis, depending on the recent features that are added.
