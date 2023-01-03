@@ -1,5 +1,29 @@
 version: '3.7'
 services:
+  frontend:
+    build:
+      context: ./services/frontend
+    command: yarn dev
+    depends_on:
+      - worker
+    volumes:
+      - "./services/frontend/site:/storedog-app/site"
+    ports:
+      - 3000:3000
+    networks:
+      - storedog-net
+  nginx:
+    build:
+      context: ./services/nginx
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - frontend
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "nginx", "service": "nginx"}]'
+    networks:
+      - storedog-net
   postgres:
     image: postgres:13-alpine
     restart: always
@@ -8,13 +32,13 @@ services:
     volumes:
       - 'postgres:/var/lib/postgresql/data'
       - ./services/backend/db/restore:/docker-entrypoint-initdb.d
-    networks:
-      - storedog-net
     labels:
       com.datadoghq.ad.check_names: '["postgres"]'
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":5432,"username":"datadog","password":"datadog"}]'
       com.datadoghq.ad.logs: '[{"source":"postgresql","service":"postgresql"}]'
+    networks:
+      - storedog-net
   redis:
     image: redis:6.2-alpine
     volumes:
@@ -39,7 +63,6 @@ services:
       DB_PORT: 5432
       DISABLE_SPRING: 1
       DD_APPSEC_ENABLED: 1
-
     networks:
       - storedog-net
   worker:
@@ -181,11 +204,11 @@ services:
       - ATTACK_SSH_INTERVAL
       - ATTACK_HOST
       - ATTACK_PORT
-    networks:
-      - storedog-net
     depends_on:
       - web
       - discounts
+    networks:
+      - storedog-net
 
 volumes:
   redis:

@@ -42,6 +42,8 @@ jobs:
             ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/ads-java
             ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/attackbox
             ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/auth
+            ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/nginx
+            ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/frontend
           )
 
           for i in "${IMAGES[@]}"
