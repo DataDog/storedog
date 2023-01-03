@@ -14,7 +14,7 @@ Open the `.env` file under the project root and enter the values for the variabl
 **3.**
 Open the `./services/frontend/site/.env.local` file and enter the values for the variables. The default values should all work except for the empty `NEXT_PUBLIC_DD_APPLICATION_KEY` and `NEXT_PUBLIC_CLIENT_TOKEN`, which are required to enable RUM.
 
-**4.** Start the app:
+**4.** Start the app: `docker-compose up`
 
 ## Image publication
 Images are stored in our public ECR repo `public.ecr.aws/x2b9z2t7`. On PR merges, only the affected services will be pushed to the ECR repo, using the `latest` tag. For example, if you only made changes to the `backend` service, then only the `backend` Github workflow will trigger and publish `public.ecr.aws/x2b9z2t7/storedog/backend:latest`. 
@@ -22,7 +22,6 @@ Images are stored in our public ECR repo `public.ecr.aws/x2b9z2t7`. On PR merges
 Separately, we tag and publish *all* images when a new release is created with the corresponding release tag e.g. `public.ecr.aws/x2b9z2t7/storedog/backend:1.0.1`. New releases are made on an ad-hoc basis, depending on the recent features that are added.
 
 # Backend
-`docker-compose up`
 ## Database rebuild
 
 The current database is based off sample data provided by the Spree starter kit. To create a new `.sql` dump file, run the following command while the application is running.
