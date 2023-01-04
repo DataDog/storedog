@@ -1,5 +1,25 @@
 version: '3.7'
 services:
+  frontend:
+    image: public.ecr.aws/x2b9z2t7/storedog/frontend:1.0.2
+    command: yarn dev
+    depends_on:
+      - worker
+    ports:
+      - 3000:3000
+    networks:
+      - storedog-net
+  nginx:
+    image: public.ecr.aws/x2b9z2t7/storedog/nginx:1.0.2
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - frontend
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "nginx", "service": "nginx"}]'
+    networks:
+      - storedog-net
   postgres:
     image: postgres:13-alpine
     restart: always
