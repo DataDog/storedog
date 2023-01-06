@@ -1,4 +1,5 @@
 from flask import Response, abort, redirect, request, jsonify
+from flask_cors import CORS, cross_origin
 from flask_login import (
     LoginManager,
     UserMixin,
@@ -20,6 +21,7 @@ app.config.update(
 
 login_manager = LoginManager()
 login_manager.init_app(app)
+CORS(app)
 
 # csrf = CSRFProtect()
 # csrf.init_app(app)
@@ -70,6 +72,15 @@ def homepage():
 
     if current_user.is_authenticated:
         return jsonify({'User': 'Already Logged In'})
+
+
+@app.route("/email", methods=["POST"])
+@cross_origin()
+def email_capture():
+    if request.method == "POST":
+        email = request.form.get("email")
+        return jsonify({"User_Email": email})
+    return jsonify({"Error": "Invalid Method"})
 
 
 @app.route("/logout")
