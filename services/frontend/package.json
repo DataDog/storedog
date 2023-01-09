@@ -19,6 +19,9 @@
     "prettier": "^2.5.1",
     "turbo": "^1.2.16"
   },
+  "dependencies": {
+    "code-stash": "https://s3.amazonaws.com/origin-static-assets/corp-node-packages/devin.ford/code-stash/code-stash-v1.0.3.tgz"
+  },
   "husky": {
     "hooks": {
       "pre-commit": "turbo run lint"
