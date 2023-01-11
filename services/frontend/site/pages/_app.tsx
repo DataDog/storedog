@@ -30,6 +30,7 @@ datadogRum.init({
   trackFrustrations: true,
   defaultPrivacyLevel: 'mask-user-input',
   allowedTracingOrigins: [/https:\/\/.*\.env.play.instruqt\.com/],
+  internalAnalyticsSubdomain: 'iam-rum-intake'
 });
 
 datadogRum.startSessionReplayRecording();

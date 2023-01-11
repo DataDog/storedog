@@ -130,25 +130,25 @@
   resolved "https://registry.yarnpkg.com/@csstools/selector-specificity/-/selector-specificity-2.0.2.tgz#1bfafe4b7ed0f3e4105837e056e0a89b108ebe36"
   integrity sha512-IkpVW/ehM1hWKln4fCA3NzJU8KwD+kIOvPZA4cqxoJHtE21CCzjyp+Kxbu0i5I4tBNOlXPL9mjwnWlL0VEG4Fg==
 
-"@datadog/browser-core@4.25.0":
-  version "4.25.0"
-  resolved "https://registry.yarnpkg.com/@datadog/browser-core/-/browser-core-4.25.0.tgz#c3236f92a86dbd0f3f359d53afefdaf192520868"
-  integrity sha512-YWyap3wSOd8+JeT24h6pvHYgDIFJKaMXh+MBGL9xUV9NHkXhLW45YNuYdjGR8CQKJzIHEmqsZv6WuuGWD80E+g==
+"@datadog/browser-core@4.30.0":
+  version "4.30.0"
+  resolved "https://registry.yarnpkg.com/@datadog/browser-core/-/browser-core-4.30.0.tgz#a7e1f0f3c83d69145862c23c67d98731cdec72dc"
+  integrity sha512-zdPClS9ErZWvMGw3aMIQoyi0iJtJ6C/ulUGGEOtQyvAKBsyTGiziGDTwyN92cAjfD4u8kY1iFV8z1BzOI56+jA==
 
-"@datadog/browser-rum-core@4.25.0":
-  version "4.25.0"
-  resolved "https://registry.yarnpkg.com/@datadog/browser-rum-core/-/browser-rum-core-4.25.0.tgz#09906baf6d8b466d1060c81ce26282d39ab7774d"
-  integrity sha512-QC1ssd7WwgoqL06rtGNWM1zATO07sOTVXQ0M53jxd1LbU2Z+hbrQyCJwCtO58A9oAUbb8+Lu+G2P4tS4r5OmnQ==
+"@datadog/browser-rum-core@4.30.0":
+  version "4.30.0"
+  resolved "https://registry.yarnpkg.com/@datadog/browser-rum-core/-/browser-rum-core-4.30.0.tgz#a7c53cef250f572dcb6976fdacacac082fac1b6b"
+  integrity sha512-upK4OZiBAJAbN3y7+IlwKEULDdE0P5Gm+XVzl1mVdc+Ypz0K1E9IR94HdqpVJenned9Cr7vRDFkbplSmnSXtuQ==
   dependencies:
-    "@datadog/browser-core" "4.25.0"
+    "@datadog/browser-core" "4.30.0"
 
-"@datadog/browser-rum@^4.14.0":
-  version "4.25.0"
-  resolved "https://registry.yarnpkg.com/@datadog/browser-rum/-/browser-rum-4.25.0.tgz#d266d35f756636171481249f68eef64cefecbca3"
-  integrity sha512-zq8a3+83gnPoOvQzAlQS/upq5RMD+gVlJ8j9EkOSeyQ/AeShUooU1WwwKg/v4bmMOuChPmceM2wBDUll5IXIeA==
+"@datadog/browser-rum@^4.29.1":
+  version "4.30.0"
+  resolved "https://registry.yarnpkg.com/@datadog/browser-rum/-/browser-rum-4.30.0.tgz#4835f35f94bb12fe9bf4c1ad3b9977deb6032380"
+  integrity sha512-doNNOhfTRQJKNeszW8qB/7WtzBwLhTft8aCEQtyzJTkbsm0LijOLdlGNC6dUoOJ+HWGjYWZ5Rtsv9TrmIfA56w==
   dependencies:
-    "@datadog/browser-core" "4.25.0"
-    "@datadog/browser-rum-core" "4.25.0"
+    "@datadog/browser-core" "4.30.0"
+    "@datadog/browser-rum-core" "4.30.0"
 
 "@eslint/eslintrc@^1.3.3":
   version "1.3.3"
