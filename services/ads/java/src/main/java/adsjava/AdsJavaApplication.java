@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RestController
 public class AdsJavaApplication {
 
-  @CrossOrigin(origins = "http://localhost:3000")
+  @CrossOrigin(origins = {"http://localhost", "http://localhost:3000"})
   @RequestMapping(
     value = "/banners/{id}",
     produces = MediaType.IMAGE_JPEG_VALUE
@@ -36,7 +36,7 @@ public class AdsJavaApplication {
 		return "Hello from Advertisements (Java)";
 	}
 
-  @CrossOrigin(origins = "http://localhost:3000")
+  @CrossOrigin(origins = {"http://localhost", "http://localhost:3000"})
   @RequestMapping(
     value = "/ads",
     produces = MediaType.APPLICATION_JSON_VALUE
