@@ -98,3 +98,4 @@ gem 'sassc', github: 'sass/sassc-ruby', group: :development
 
 # monitoring
 gem 'ddtrace', require: 'ddtrace/auto_instrument'
+gem 'dogstatsd-ruby', require: 'datadog/statsd'
