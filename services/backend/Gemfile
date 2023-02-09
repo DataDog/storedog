@@ -98,3 +98,7 @@ gem 'sassc', github: 'sass/sassc-ruby', group: :development
 
 # monitoring
 gem 'ddtrace', require: 'ddtrace/auto_instrument'
+# needed for Datadog Continuous Profiler
+gem 'google-protobuf', '~> 3.0'
+# needed for runtime metrics
+gem 'dogstatsd-ruby', require: 'datadog/statsd'
