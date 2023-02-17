@@ -44,7 +44,7 @@ services:
     networks:
       - storedog-net
   web:
-    image: public.ecr.aws/x2b9z2t7/storedog/backend:1.0.8
+    image: public.ecr.aws/x2b9z2t7/storedog/backend:latest
     depends_on:
       - 'postgres'
       - 'redis'
@@ -58,7 +58,7 @@ services:
     networks:
       - storedog-net
   worker:
-    image: public.ecr.aws/x2b9z2t7/storedog/backend:1.0.8
+    image: public.ecr.aws/x2b9z2t7/storedog/backend:latest
     command: bundle exec sidekiq -C config/sidekiq.yml
     depends_on:
       - 'postgres'
@@ -71,24 +71,16 @@ services:
       DISABLE_SPRING: 1
     networks:
       - storedog-net
-  ads:
-    image: public.ecr.aws/x2b9z2t7/storedog/ads:1.0.8
-    command: flask run --port=${ADS_PORT} --host=0.0.0.0
-    depends_on:
-      - postgres
+  ads-java:
+    image: public.ecr.aws/x2b9z2t7/storedog/ads-java:1.0.8
     environment:
-      - FLASK_APP=ads.py
-      - FLASK_DEBUG=1
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_HOST=postgres
-      - DD_SERVICE=ads
+      - DD_SERVICE=ads-java
       - DD_AGENT_HOST=dd-agent
       - DD_LOGS_INJECTION=true
       - DD_TRACE_ANALYTICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
     ports:
-      - "${ADS_PORT}:${ADS_PORT}"
+      - "3030:8080"
     networks:
       - storedog-net
   discounts:
