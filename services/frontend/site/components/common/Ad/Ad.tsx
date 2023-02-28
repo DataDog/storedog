@@ -1,5 +1,5 @@
 import * as React from 'react'
-import {useEffect, useState} from 'react'
+import { useState } from 'react'
 import { codeStash } from 'code-stash'
 import config from '../../../featureFlags.config.json'
 
@@ -13,20 +13,8 @@ function Ad() {
   const [data, setData] = React.useState<AdDataResults | null>(null)
   const [isLoading, setLoading] = React.useState(false)
   const adsPath = `${process.env.NEXT_PUBLIC_ADS_ROUTE}:${process.env.NEXT_PUBLIC_ADS_PORT}`
-  const [codeFlag, setCodeFlag] = useState<boolean>()
+  const [codeFlag, setCodeFlag] = useState<boolean>(false)
 
-  console.log(`codeFlag: ${codeFlag}`)
-
-  useEffect(() => {
-    if (config) {
-      codeStash('error-tracking', {file:config} )
-        .then((r: boolean) => {
-          console.log(`codeFlag retrieved: ${r}`)
-          setCodeFlag(r)
-        })
-        .catch(e => console.log(e))
-    }
-  }, [])
 
   function getRandomArbitrary(min: number, max:number) {
     return Math.floor(Math.random() * (max - min) + min);
@@ -56,22 +44,28 @@ function Ad() {
         .finally(() => {
             setLoading(false)
         })
-  } 
+  }
 
   React.useEffect(() => {
       setLoading(true)
-
-      // Fetch ad with error 
-      {codeFlag && 
-        fetchAdWithError()
+      //  check for config file, then grab feature flags
+      if (config) {
+          codeStash('error-tracking', {file:config} )
+              .then((r: boolean) => {
+                  console.log(`codeFlag retrieved: ${r}`)
+                  setCodeFlag(r)
+              })
+              .catch((e: Error) => console.log(e))
       }
+
+      // Fetch ad with error
+      codeFlag && fetchAdWithError()
+
 
       // Fetch normal ad
-      {!codeFlag && 
-        fetchAd()
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+      !codeFlag && fetchAd()
+
+  }, [codeFlag])
 
   if (isLoading) return (
     <div className="flex flex-row justify-center h-10">
