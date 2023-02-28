@@ -35,7 +35,15 @@ def weighted_image(weight):
 def status(flag):
     if flask_request.method == 'GET':
 
-        if flag == 1:
+        if flag == 2:
+
+          advertisements = Advertisement.query.all()
+          app.logger.error("An error occurred while getting ad.")
+          err = jsonify({'error': 'Internal Server Error'})
+          err.status_code = 500
+          return err
+        
+        else:
 
           try:
               advertisements = Advertisement.query.all()
@@ -46,23 +54,7 @@ def status(flag):
               app.logger.error("An error occurred while getting ad.")
               err = jsonify({'error': 'Internal Server Error'})
               err.status_code = 500
-              return err
-        
-        else: 
-
-          try:
-              advertisements = Advertisement.query.all()
-              app.logger.info(f"RETURN AD WITH ERROR: {len(advertisements)}")
-              app.logger.error("An error occurred while getting ad.")
-              err = jsonify({'error': 'Internal Server Error'})
-              err.status_code = 500
-              return err
-
-          except:
-              app.logger.error("An error occurred while getting ad.")
-              err = jsonify({'error': 'Internal Server Error'})
-              err.status_code = 500
-              return err
+              return err 
 
     elif flask_request.method == 'POST':
 
