@@ -41,6 +41,8 @@ def status(flag):
           app.logger.error("An error occurred while getting ad.")
           err = jsonify({'error': 'Internal Server Error'})
           err.status_code = 500
+          err.stack = jsonify({'error': 'Internal Server Error'})
+          err.message = jsonify({'error': 'Internal Server Error'})
           return err
         
         else:
