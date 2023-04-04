@@ -16,33 +16,46 @@ from sqlalchemy.orm import joinedload
 from bootstrap import create_app
 from models import Discount, DiscountType, db
 
+from ddtrace import patch; patch(logging=True)
+import logging
+from ddtrace import tracer
+
+FORMAT = ('%(asctime)s %(levelname)s [%(name)s] [%(filename)s:%(lineno)d] '
+          '[dd.service=%(dd.service)s dd.env=%(dd.env)s dd.version=%(dd.version)s dd.trace_id=%(dd.trace_id)s dd.span_id=%(dd.span_id)s] '
+          '- %(message)s')
+logging.basicConfig(format=FORMAT)
+log = logging.getLogger(__name__)
+log.level = logging.INFO
+
 app = create_app()
 CORS(app)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Hello world
+@tracer.wrap()
 @app.route('/')
 def hello():
     return Response({'Hello from Discounts!': 'world'}, mimetype='application/json')
 
+@tracer.wrap()
 @app.route('/discount', methods=['GET', 'POST'])
 def status():
     if flask_request.method == 'GET':
        
         try:
           discounts = Discount.query.all()
-          app.logger.info(f"Discounts available: {len(discounts)}")
+          log.info(f"Discounts available: {len(discounts)}")
 
           influencer_count = 0
           for discount in discounts:
               if discount.discount_type.influencer:
                   influencer_count += 1
-          app.logger.info(f"Total of {influencer_count} influencer specific discounts as of this request")
+          log.info(f"Total of {influencer_count} influencer specific discounts as of this request")
         
           return jsonify([b.serialize() for b in discounts])
 
         except:
-          app.logger.error("An error occurred while getting discounts.")
+          log.error("An error occurred while getting discounts.")
           err = jsonify({'error': 'Internal Server Error'})
           err.status_code = 500
           return err
@@ -59,7 +72,7 @@ def status():
                                     words.get_random(random.randint(2,4)),
                                     random.randint(10,500),
                                     new_discount_type)
-            app.logger.info(f"Adding discount {new_discount}")
+            log.info(f"Adding discount {new_discount}")
             db.session.add(new_discount)
             db.session.commit()
             discounts = Discount.query.all()
@@ -67,7 +80,7 @@ def status():
             return jsonify([b.serialize() for b in discounts])
 
         except:
-          app.logger.error("An error occurred while creating a new discount.")
+          log.error("An error occurred while creating a new discount.")
           err = jsonify({'error': 'Internal Server Error'})
           err.status_code = 500
           return err
