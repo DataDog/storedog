@@ -6,7 +6,12 @@
   },
   {
     "id": "2",
+    "name": "dbm",
+    "active": false
+  },
+  {
+    "id": "3",
     "name": "error-tracking",
-    "active": true
+    "active": false
   }
 ]
