@@ -1,4 +1,4 @@
-name: Auth
+name: DBM
 
 on:
   push:
