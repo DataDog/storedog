@@ -42,10 +42,10 @@ const Navbar: FC<NavbarProps> = ({ links }) => {
             // To simulate the ticker effect, we call this every 5 seconds, which will also run the query every 5 seconds
             setTimeout(async () => {
                 await fetchRandomOrderCount()
-            }, 4000);
+            }, 5000);
         }
     }, [dbmFlag, productInfo])
-    
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         // Bail early if env var isn't set
         if (!xssFlag) return
