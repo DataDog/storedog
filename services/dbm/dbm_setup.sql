@@ -1,3 +1,5 @@
+create user datadog with password 'datadog';
+GRANT SELECT ON pg_stat_database TO datadog;
 CREATE SCHEMA datadog;
 GRANT USAGE ON SCHEMA datadog TO datadog;
 GRANT USAGE ON SCHEMA public TO datadog;
