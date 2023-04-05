@@ -16,7 +16,6 @@ app = create_app()
 app.config.update(
     DEBUG=True,
     SECRET_KEY="secret_sauce",
-
 )
 
 CORS(app)
