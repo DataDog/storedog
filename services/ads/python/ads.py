@@ -38,12 +38,8 @@ def status(flag):
         if flag == 2:
 
           advertisements = Advertisement.query.all()
-          app.logger.error("An error occurred while getting ad.")
-          err = jsonify({'error': 'Internal Server Error'})
-          err.status_code = 500
-          err.stack = jsonify({'error': 'Internal Server Error'})
-          err.message = jsonify({'error': 'Internal Server Error'})
-          return err
+          result.status_code = 200 # attempt to set property of null object     
+          return result
         
         else:
 
