@@ -160,6 +160,32 @@ services:
       - "${AUTH_PORT}:${AUTH_PORT}"
     networks:
       - storedog-net
+  dbm:
+    depends_on:
+      - postgres
+    profiles:
+      - dbm
+    environment:
+      - FLASK_APP=dbm.py
+      - FLASK_DEBUG=1
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_HOST=postgres
+      - DD_SERVICE=storedog-dbm
+      - DD_AGENT_HOST=dd-agent
+      - DD_LOGS_INJECTION=true
+      - DD_TRACE_ANALYTICS_ENABLED=true
+      - DD_PROFILING_ENABLED=true
+      - DD_APPSEC_ENABLED=true
+    build:
+      context: ./services/dbm
+    command: gunicorn --bind 0.0.0.0:${DBM_PORT} dbm:app # If using any other port besides the default 8282, overriding the CMD is required
+    volumes:
+      - "./services/dbm:/app"
+    ports:
+      - "${DBM_PORT}:${DBM_PORT}"
+    networks:
+      - storedog-net
   dd-agent:
     image: gcr.io/datadoghq/agent:latest
     environment:
