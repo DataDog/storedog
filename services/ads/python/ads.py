@@ -31,28 +31,35 @@ def weighted_image(weight):
         if ad.weight < weight:
             return jsonify(ad.serialize())
 
-@app.route('/ads/<int:flag>', methods=['GET', 'POST'])
-def status(flag):
+@app.route('/ads', methods=['GET', 'POST'])
+def status():
     if flask_request.method == 'GET':
 
-        if flag == 2:
+      if flask_request.headers['X-Throw-Error'] == 'true':
 
-          advertisements = Advertisement.query.all()
-          result.status_code = 200 # attempt to set property of null object     
-          return result
-        
-        else:
+        try:
+            advertisements = Advertisement.query.all()
+            result.status_code = 200 # attempt to set property of null object     
+            return result
 
-          try:
-              advertisements = Advertisement.query.all()
-              app.logger.info(f"RETURN ADD NORMALLY: {len(advertisements)}")
-              return jsonify([b.serialize() for b in advertisements])
+        except:
+            app.logger.error("An error occurred while getting ad.")
+            err = jsonify({'error': 'Internal Server Error'})
+            err.status_code = 500
+            return err
+      
+      else:
 
-          except:
-              app.logger.error("An error occurred while getting ad.")
-              err = jsonify({'error': 'Internal Server Error'})
-              err.status_code = 500
-              return err 
+        try:
+            advertisements = Advertisement.query.all()
+            app.logger.info(f"Total advertisements available: {len(advertisements)}")
+            return jsonify([b.serialize() for b in advertisements])
+
+        except:
+            app.logger.error("An error occurred while getting ad.")
+            err = jsonify({'error': 'Internal Server Error'})
+            err.status_code = 500
+            return err
 
     elif flask_request.method == 'POST':
 
