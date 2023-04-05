@@ -41,7 +41,6 @@ function Ad() {
     if (config) {
       codeStash('error-tracking', { file: config })
         .then((r: boolean) => {
-          console.log(`codeFlag retrieved: ${r}`)
           setCodeFlag(r)
         })
         .catch((e: Error) => console.log(e))
