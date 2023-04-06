@@ -112,6 +112,15 @@ For example: Turning `cart` off will disable Cart capabilities.
 - Turn `wishlist` on by setting `wishlist` to `true`.
 - Run the app and the wishlist functionality should be back on.
 
+#### How to run the DBM backend to test the Database Monitoring in the product
+
+- complete the startup steps up under Local Development to number 3
+- in `services/frontend/site/featureFlags.config.json` find the object with `name:dbm` and set `active:true`
+- run `docker-compose --profile dbm up -d`
+- once all the containers are up, run `docker exec storedog-postgres-1 ./dbm_exec.sh` this will add a few things we need for dbm to the database
+- run `docker restart storedog-postgres-1` to restart the postgres container
+
+You should now see your logs in DBM!
 ## Troubleshoot
 
 <details>
