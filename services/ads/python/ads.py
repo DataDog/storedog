@@ -50,9 +50,7 @@ def weighted_image(weight):
 def status():
     if flask_request.method == 'GET':
 
-      if flask_request.headers['X-Throw-Error']:
-
-        if flask_request.headers['X-Throw-Error'] == 'true':
+        if 'X-Throw-Error' in flask_request.headers and flask_request.headers['X-Throw-Error'] == 'true':
 
             advertisements = Advertisement.query.all()
             result.status_code = 200 # attempt to set property of null object     
@@ -70,12 +68,7 @@ def status():
               err = jsonify({'error': 'Internal Server Error'})
               err.status_code = 500
               return err
-      
-      else:
-
-        advertisements = Advertisement.query.all()
-        log.info(f"Total advertisements available: {len(advertisements)}")
-        return jsonify([b.serialize() for b in advertisements])
+    
 
     elif flask_request.method == 'POST':
 
