@@ -1,5 +1,5 @@
 from flask import Flask
-from models import Items, db
+from models import Items, Preorder_Items, db
 from faker import Faker
 import random
 import os
@@ -28,12 +28,22 @@ def initialize_database(app, db):
     with app.app_context():
         db.drop_all()
         db.create_all()
-        for i in range(15000):
+        for i in range(30000):
             newItem = Items(
                 fake.sentence(),
                 random.randint(1, 7000),
                 fake.image_url(),
                 random.randint(1, 10)
+            )
+            db.session.add(newItem)
+            i+1
+        for i in range(10000):
+            newItem = Preorder_Items(
+                fake.sentence(),
+                random.randint(1, 7000),
+                fake.image_url(),
+                random.randint(1, 10),
+                bool(random.getrandbits(1))
             )
             db.session.add(newItem)
             i+1

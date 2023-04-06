@@ -112,7 +112,7 @@ For example: Turning `cart` off will disable Cart capabilities.
 - Turn `wishlist` on by setting `wishlist` to `true`.
 - Run the app and the wishlist functionality should be back on.
 
-#### How to run the DBM backend to test the Database Monitoring in the product
+#### How to run the DBM backend to test the Database Monitoring in the product and incrementally improve for the workshop
 
 - complete the startup steps up under Local Development to number 3
 - in `services/frontend/site/featureFlags.config.json` find the object with `name:dbm` and set `active:true`
@@ -121,6 +121,21 @@ For example: Turning `cart` off will disable Cart capabilities.
 - run `docker restart storedog-postgres-1` to restart the postgres container
 
 You should now see your logs in DBM!
+
+Once the metrics are showing in DBM, direct the users to the `dbm.py` file in `services/dbm/dbm.py`.
+
+Have them update the query to change the 2 `{random.randint(1, 7000)}` to `{random.randint(5000, 7000)}` so only the most popular items show in the ticker.
+
+Then explain that preorder items get marked as false or `f` in the table once they are now regular items. Say that best practice would be to update the `items` table to include the items marked `f`. Now we will update the query to the following to only look at the `items` table.
+
+```sql
+SELECT *
+FROM items
+WHERE order_count::int > {random.randint(5000, 7000)}
+```
+
+This will greatly reduce the amount of cost per query
+
 ## Troubleshoot
 
 <details>
