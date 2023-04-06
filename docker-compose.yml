@@ -32,7 +32,7 @@ services:
     volumes:
       - 'postgres:/var/lib/postgresql/data'
       - ./services/backend/db/restore:/docker-entrypoint-initdb.d
-      - ./services/backend/db/postgresql.conf:/etc/postgresql/13/main/postgresql.conf
+      - ./services/backend/db/postgresql.conf:/postgresql.conf
       - ./services/dbm/dbm_setup.sql:/etc/postgresql/13/main/dbm_setup.sql
       - ./services/dbm/dbm_exec.sh:/dbm_exec.sh
     labels:
@@ -40,7 +40,7 @@ services:
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":5432,"username":"datadog","password":"datadog"}]'
       com.datadoghq.ad.logs: '[{"source":"postgresql","service":"postgresql"}]'
-    command: ["postgres", "-c", "config_file=/etc/postgresql/13/main/postgresql.conf"]
+    command: ["postgres", "-c", "config_file=/postgresql.conf"]
     networks:
       - storedog-net
   redis:
