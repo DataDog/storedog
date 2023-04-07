@@ -14,7 +14,9 @@ Open the `.env` file under the project root and enter the values for the variabl
 **3.**
 Open the `./services/frontend/site/.env.local` file and enter the values for the variables. The default values should all work except for the empty `NEXT_PUBLIC_DD_APPLICATION_KEY` and `NEXT_PUBLIC_CLIENT_TOKEN`, which are required to enable RUM.
 
-**4.** Start the app: `docker-compose up`
+**4.** Start the app: `make local-start`
+    **4a.** If you want to work with a profile for a specific lab, you can pass that in as an argument `make local-start PROFILE=<profile-name>`
+**5.** When you're finished you can run `make local-stop` or `make local-stop PROFILE=<profile-name>` if working with a profile
 
 ## Image publication
 Images are stored in our public ECR repo `public.ecr.aws/x2b9z2t7`. On PR merges, only the affected services will be pushed to the ECR repo, using the `latest` tag. For example, if you only made changes to the `backend` service, then only the `backend` Github workflow will trigger and publish `public.ecr.aws/x2b9z2t7/storedog/backend:latest`. 
