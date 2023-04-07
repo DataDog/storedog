@@ -15,7 +15,7 @@ Open the `.env` file under the project root and enter the values for the variabl
 Open the `./services/frontend/site/.env.local` file and enter the values for the variables. The default values should all work except for the empty `NEXT_PUBLIC_DD_APPLICATION_KEY` and `NEXT_PUBLIC_CLIENT_TOKEN`, which are required to enable RUM.
 
 **4.** Start the app: `make local-start`
-    **4a.** If you wan to work with a profile for a specific lab, you can pass that in as an argument `make local-start PROFILE=<profile-name>`
+    **4a.** If you want to work with a profile for a specific lab, you can pass that in as an argument `make local-start PROFILE=<profile-name>`
 **5.** When you're finished you can run `make local-stop` or `make local-stop PROFILE=<profile-name>` if working with a profile
 
 ## Image publication
