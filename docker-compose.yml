@@ -6,6 +6,7 @@ services:
     command: yarn dev
     depends_on:
       - worker
+      - dd-agent
     volumes:
       - "./services/frontend/site:/storedog-app/site"
     ports:
@@ -20,6 +21,7 @@ services:
       - "80:80"
     depends_on:
       - frontend
+      - dd-agent
     labels:
       com.datadoghq.ad.logs: '[{"source": "nginx", "service": "nginx"}]'
     networks:
@@ -27,6 +29,8 @@ services:
   postgres:
     image: postgres:13-alpine
     restart: always
+    depends_on: 
+      - dd-agent
     environment:
       POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
@@ -45,6 +49,8 @@ services:
       - storedog-net
   redis:
     image: redis:6.2-alpine
+    depends_on:
+      - dd-agent
     volumes:
       - 'redis:/data'
     networks:
@@ -53,6 +59,7 @@ services:
     depends_on:
       - 'postgres'
       - 'redis'
+      - 'dd-agent'
     build:
       context: ./services/backend
     ports:
@@ -75,6 +82,7 @@ services:
       - 'postgres'
       - 'redis'
       - 'web'
+      - 'dd-agent'
     build:
       context: ./services/backend
     command: bundle exec sidekiq -C config/sidekiq.yml
@@ -88,11 +96,13 @@ services:
       DB_PORT: 5432
       DISABLE_SPRING: 1
       DD_APPSEC_ENABLED: 1
+      DD_AGENT_HOST: 172.43.0.1
     networks:
       - storedog-net
   ads:
     depends_on:
       - postgres
+      - dd-agent
     environment:
       - FLASK_APP=ads.py
       - FLASK_DEBUG=1
@@ -121,6 +131,7 @@ services:
   discounts:
     depends_on:
       - postgres
+      - dd-agent
     environment:
       - FLASK_APP=discounts.py
       - FLASK_DEBUG=1
@@ -150,6 +161,7 @@ services:
   auth:
     depends_on:
       - postgres
+      - dd-agent
     profiles:
       - csrf
     environment:
@@ -176,6 +188,7 @@ services:
   dbm:
     depends_on:
       - postgres
+      - dd-agent
     profiles:
       - dbm
     environment:
@@ -223,6 +236,8 @@ services:
   ads-java:
     build:
       context: ./services/ads/java
+    depends_on:
+      - dd-agent
     environment:
       - DD_SERVICE=ads-java
       - DD_AGENT_HOST=dd-agent
@@ -252,6 +267,7 @@ services:
     depends_on:
       - web
       - discounts
+      - dd-agent
     networks:
       - storedog-net
 
