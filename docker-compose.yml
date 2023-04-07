@@ -105,6 +105,8 @@ services:
       - DD_TRACE_ANALYTICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
       - DD_APPSEC_ENABLED=true
+      - DD_VERSION=7
+      - DD_ENV=dev
     build:
       context: ./services/ads/python
     command: flask run --port=${ADS_PORT} --host=0.0.0.0 # If using any other port besides the default 9292, overriding the CMD is required
@@ -114,6 +116,8 @@ services:
       - "${ADS_PORT}:${ADS_PORT}"
     networks:
       - storedog-net
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "python", "service": "ads"}]'
   discounts:
     depends_on:
       - postgres
@@ -129,6 +133,8 @@ services:
       - DD_TRACE_ANALYTICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
       - DD_APPSEC_ENABLED=true
+      - DD_VERSION=7
+      - DD_ENV=dev
     build:
       context: ./services/discounts
     command: ./my-wrapper-script.sh ${DISCOUNTS_PORT}
@@ -139,6 +145,8 @@ services:
       - "22:22"
     networks:
       - storedog-net
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "python", "service": "discounts"}]'
   auth:
     depends_on:
       - postgres
@@ -225,6 +233,8 @@ services:
       - "3030:8080"
     networks:
       - storedog-net
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "java", "service": "ads-java"}]'
   attackbox:
     build:
       context: ./services/attackbox
