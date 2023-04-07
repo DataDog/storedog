@@ -23,7 +23,16 @@ engine = db.create_engine(DB_URL)
 
 @app.route("/get-item", methods=["GET"])
 def product_ticker():
-    query = db.text(f'SELECT * FROM items WHERE order_count::int > {random.randint(1, 7000)};')
+    query = db.text(f'''
+    SELECT id, description, order_count, last_hour, image_url, NULL AS is_preorder
+    FROM items
+    WHERE order_count::int > {random.randint(1, 7000)}
+    UNION
+    SELECT id, description, order_count, last_hour, image_url, is_preorder
+    FROM preorder_items
+    WHERE order_count::int > {random.randint(1, 7000)};
+    ''')
+
     app.logger.info(engine)
     try: 
         app.logger.info('Connecting to db')
