@@ -1,5 +1,3 @@
-ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-
 # Local runs for storedog
 local-start:
 	if [[ "$(PROFILE)" ]]; then \
