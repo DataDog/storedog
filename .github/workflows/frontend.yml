@@ -24,16 +24,6 @@ jobs:
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
-      
-    - name: Docker meta
-      id: meta
-      uses: docker/metadata-action@v4
-      with:
-        images: |
-          ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/frontend
-        tags: |
-          type=sha,event=branch
-          type=sha,event=pr
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -51,21 +41,17 @@ jobs:
         password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
     - name: Build and push AMD
-      uses: docker/build-push-action@v4
-      with:
-        context: ./services/frontend
-        platforms: linux/amd64
-        push: true
-        tags: ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/frontend:test4
-        labels: ${{ steps.meta.outputs.labels }}
+      run: |
+        docker buildx build --platform linux/amd64,linux/arm64 -t ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/frontend:test5 --push
 
-    - name: Build and push ARM
-      uses: docker/build-push-action@v4
-      continue-on-error: true
-      with:
-        context: ./services/frontend
-        platforms: linux/arm64
-        push: true
-        tags: ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/frontend:test4-arm
-        labels: ${{ steps.meta.outputs.labels }}
+    # - name: Build and push ARM
+    #   uses: docker/build-push-action@v4
+    #   continue-on-error: true
+    #   with:
+    #     context: ./services/frontend
+    #     platforms: linux/arm64
+    #     push: true
+    #     tags: ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/frontend:test4-arm
+    #     labels: ${{ steps.meta.outputs.labels }}
+        
 
