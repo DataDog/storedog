@@ -2,11 +2,11 @@ name: Frontend
 
 on:
   push:
-    branches: [ main, devin.ford/fe-testing ]
+    branches: [ main ]
     paths:
       - services/frontend/**
   workflow_dispatch:
-    branches: [ main, devin.ford/fe-testing ]
+    branches: [ main ]
 
 defaults:
   run:
@@ -49,5 +49,5 @@ jobs:
         context: ./services/frontend
         platforms: linux/arm64, linux/amd64
         push: true
-        tags: ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/frontend:test6
+        tags: ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/frontend:latest
 
