@@ -50,26 +50,18 @@ jobs:
           for i in "${IMAGES[@]}"
           do
             echo "$i"
-
+            
+            docker pull "$i":latest
+            docker tag "$i":latest "$i":$TAG
+            docker push "$i":$TAG
+            
             # Since frontend is images are build to be platform specific, we need to tag and deploy accordingly
             if [[ "$i" == *"storedog/frontend"* ]]; then
-
-              # deploy frontend amd image
-              docker pull "$i":amd-latest
-              docker tag "$i":amd-latest "$i":amd-$TAG
-              docker push "$i":amd-$TAG
-
               # deploy frontend arm image
               docker pull "$i":arm-latest
               docker tag "$i":arm-latest "$i":arm-$TAG
               docker push "$i":arm-$TAG
-
-              continue
             fi
-
-            docker pull "$i":latest
-            docker tag "$i":latest "$i":$TAG
-            docker push "$i":$TAG
 
           done
 
