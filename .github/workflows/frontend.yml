@@ -47,16 +47,7 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         context: ./services/frontend
-        platforms: linux/amd64
+        platforms: linux/amd64, linux/arm64
         push: true
-        tags: ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/frontend:test5
-
-    - name: Build and push ARM
-      uses: docker/build-push-action@v4
-      continue-on-error: true
-      with:
-        context: ./services/frontend
-        platforms: linux/arm64
-        push: true
-        tags: ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/frontend:test5-arm
+        tags: ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/frontend:test6
 
