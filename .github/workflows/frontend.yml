@@ -5,7 +5,7 @@ on:
     branches: [ main ]
     paths:
       - services/frontend/**
-  workflow_dispatch:gs
+  workflow_dispatch:
     branches: [ main ]
 
 defaults:
