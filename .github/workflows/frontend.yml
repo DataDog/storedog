@@ -5,7 +5,7 @@ on:
     branches: [ main ]
     paths:
       - services/frontend/**
-  workflow_dispatch:
+  workflow_dispatch:gs
     branches: [ main ]
 
 defaults:
@@ -43,7 +43,7 @@ jobs:
         username: ${{ secrets.AWS_ACCESS_KEY_ID }}
         password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-    - name: Build and push AMD
+    - name: Build and push
       uses: docker/build-push-action@v4
       with:
         context: ./services/frontend
