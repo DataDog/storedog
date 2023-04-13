@@ -16,8 +16,16 @@ interface NavbarProps {
     links?: Link[]
 }
 
-const authUrl = `${process.env.NEXT_PUBLIC_AUTH_ROUTE}:${process.env.NEXT_PUBLIC_AUTH_PORT}/email`
-const dbmUrl = `${process.env.NEXT_PUBLIC_DBM_ROUTE}:${process.env.NEXT_PUBLIC_DBM_PORT}/get-item`
+let authUrl = `${process.env.NEXT_PUBLIC_AUTH_ROUTE}/email`
+let dbmUrl = `${process.env.NEXT_PUBLIC_DBM_ROUTE}/get-item`
+
+if (process.env.NEXT_PUBLIC_AUTH_PORT) {
+    authUrl = `${process.env.NEXT_PUBLIC_AUTH_ROUTE}:${process.env.NEXT_PUBLIC_AUTH_PORT}/email`
+}
+
+if (process.env.NEXT_PUBLIC_DBM_PORT) {
+    dbmUrl = `${process.env.NEXT_PUBLIC_DBM_ROUTE}:${process.env.NEXT_PUBLIC_DBM_PORT}/get-item`
+}
 
 const Navbar: FC<NavbarProps> = ({ links }) => {
     // Set the input value from the form to state
