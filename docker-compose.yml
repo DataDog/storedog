@@ -44,7 +44,18 @@ services:
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":5432,"username":"datadog","password":"datadog"}]'
       com.datadoghq.ad.logs: '[{"source":"postgresql","service":"postgresql"}]'
-    command: ["postgres", "-c", "config_file=/postgresql.conf"]
+    command: ["postgres", "-c", "config_file=/postgresql.conf"]    
+    networks:
+      - storedog-net
+  postgres-logs:
+    image: bash
+    depends_on:
+     - postgres
+    volumes:
+     - 'postgres:/var/lib/postgresql/data'
+     - ./services/logging.sh:/logging.sh
+    command: >
+      bash -c "sleep 5s && tail -f /var/lib/postgresql/data/pg_log/postgresql-log.log"
     networks:
       - storedog-net
   redis:
