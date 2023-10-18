@@ -127,7 +127,7 @@ services:
     networks:
       - storedog-net
     labels:
-      com.datadoghq.ad.logs: '[{"source": "python", "service": "ads"}]'
+      com.datadoghq.ad.logs: '[{"source": "python", "service": "ads", "auto_multi_line_detection":true }]'
   discounts:
     depends_on:
       - postgres
@@ -157,7 +157,7 @@ services:
     networks:
       - storedog-net
     labels:
-      com.datadoghq.ad.logs: '[{"source": "python", "service": "discounts"}]'
+      com.datadoghq.ad.logs: '[{"source": "python", "service": "discounts", "auto_multi_line_detection":true }]'
   auth:
     depends_on:
       - postgres
