@@ -19,13 +19,14 @@ from models import Discount, DiscountType, db
 from ddtrace import patch; patch(logging=True)
 import logging
 from ddtrace import tracer
+import json_log_formatter
 
-FORMAT = ('%(asctime)s %(levelname)s [%(name)s] [%(filename)s:%(lineno)d] '
-          '[dd.service=%(dd.service)s dd.env=%(dd.env)s dd.version=%(dd.version)s dd.trace_id=%(dd.trace_id)s dd.span_id=%(dd.span_id)s] '
-          '- %(message)s')
-logging.basicConfig(format=FORMAT)
-log = logging.getLogger(__name__)
-log.level = logging.INFO
+formatter = json_log_formatter.JSONFormatter()
+json_handler = logging.StreamHandler(sys.stdout)
+json_handler.setFormatter(formatter)
+logger = logging.getLogger('my_json')
+logger.addHandler(json_handler)
+logger.setLevel(logging.INFO)
 
 app = create_app()
 CORS(app)
@@ -44,18 +45,18 @@ def status():
        
         try:
           discounts = Discount.query.all()
-          log.info(f"Discounts available: {len(discounts)}")
+          logger.info(f"Discounts available: {len(discounts)}")
 
           influencer_count = 0
           for discount in discounts:
               if discount.discount_type.influencer:
                   influencer_count += 1
-          log.info(f"Total of {influencer_count} influencer specific discounts as of this request")
+          logger.info(f"Total of {influencer_count} influencer specific discounts as of this request")
         
           return jsonify([b.serialize() for b in discounts])
 
         except:
-          log.error("An error occurred while getting discounts.")
+          logger.error("An error occurred while getting discounts.")
           err = jsonify({'error': 'Internal Server Error'})
           err.status_code = 500
           return err
@@ -72,7 +73,7 @@ def status():
                                     words.get_random(random.randint(2,4)),
                                     random.randint(10,500),
                                     new_discount_type)
-            log.info(f"Adding discount {new_discount}")
+            logger.info(f"Adding discount {new_discount}")
             db.session.add(new_discount)
             db.session.commit()
             discounts = Discount.query.all()
@@ -80,7 +81,7 @@ def status():
             return jsonify([b.serialize() for b in discounts])
 
         except:
-          log.error("An error occurred while creating a new discount.")
+          logger.error("An error occurred while creating a new discount.")
           err = jsonify({'error': 'Internal Server Error'})
           err.status_code = 500
           return err
