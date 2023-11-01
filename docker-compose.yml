@@ -43,7 +43,11 @@ services:
       com.datadoghq.ad.check_names: '["postgres"]'
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":5432,"username":"datadog","password":"datadog"}]'
-      com.datadoghq.ad.logs: '[{"source":"postgresql","service":"postgresql"}]'
+      com.datadoghq.ad.logs: '[{"source":"postgresql","service":"postgresql", "log_processing_rules": [{
+          "type": "multi_line",
+          "name": "log_start_with_date",
+          "pattern" : "\\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\.\d{3}"
+        }] }]'
     command: ["postgres", "-c", "config_file=/postgresql.conf"]
     networks:
       - storedog-net
