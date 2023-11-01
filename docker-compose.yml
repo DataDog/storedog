@@ -75,12 +75,17 @@ services:
       DISABLE_SPRING: 1
       DD_APPSEC_ENABLED: 1
       DD_AGENT_HOST: 172.43.0.1
-      DD_SERVICE: "dummy-service"
-      DD_ENV: "dummy-env"
+      DD_VERSION: "7"
+      DD_SERVICE: "storedog-backend"
+      DD_ENV: "dev"
     networks:
       - storedog-net
     labels:
-      com.datadoghq.ad.logs: '[{"source": "ruby", "service": "dummy-service", "env":"dummy-env", "auto_multi_line_detection":true }]'
+      com.datadoghq.ad.logs: '[{"source": "ruby", "service": "storedog-backend",  "log_processing_rules": [{
+          "type": "multi_line",
+          "name": "log_start_with_date",
+          "pattern" : "\\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\,\d{3}"
+        }] }]'
   worker:
     depends_on:
       - 'postgres'
@@ -146,14 +151,14 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_HOST=postgres
-      - DD_SERVICE=discounts
       - DD_AGENT_HOST=dd-agent
       - DD_LOGS_INJECTION=true
       - DD_TRACE_ANALYTICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
       - DD_APPSEC_ENABLED=true
       - DD_VERSION=7
-      - DD_ENV=dummy
+      - DD_SERVICE=discounts
+      - DD_ENV=dev
     build:
       context: ./services/discounts
     command: ./my-wrapper-script.sh ${DISCOUNTS_PORT}
@@ -165,7 +170,11 @@ services:
     networks:
       - storedog-net
     labels:
-      com.datadoghq.ad.logs: '[{"source": "python", "service": "discounts", "auto_multi_line_detection":true }]'
+      com.datadoghq.ad.logs: '[{"source": "python", "service": "discounts",  "log_processing_rules": [{
+          "type": "multi_line",
+          "name": "log_start_with_date",
+          "pattern" : "\\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\,\d{3}"
+        }] }]'
   auth:
     depends_on:
       - postgres
