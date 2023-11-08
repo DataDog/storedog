@@ -21,8 +21,10 @@ Open the `./services/frontend/site/.env.local` file and enter the values for the
 ## Feature flags
 Some capabilities are hidden behind feature flags, which can be controlled via `services/frontend/site/featureFlags.config.json`. 
 
-**xss**: Enables a mock cross site scripting attack to demonstrate ASM
-How to use: 
+#### xss
+Enables a mock cross site scripting attack to demonstrate ASM
+
+**How to use**: 
 1. Start the app via `docker compose --csrf up`
 2. Set the `xss` feature flag to true
 3. Visit http://localhost and reload the home page a few times
@@ -31,15 +33,21 @@ How to use:
 6. Enter anything into the input (it being an email isn't important) and submit
 7. You should get a thank you message with the input you entered at the end
 
-**dbm**: Enables a product ticker on the homepage with a long-running query to demonstrate DBM
-How to use:
+#### dbm 
+Enables a product ticker on the homepage with a long-running query to demonstrate DBM
+
+**How to use**:
 1. Start the app via `docker-compose --profile dbm up`
 2. Set the `dbm` feature flag to true
 3. Visit http://localhost and reload the home page a few times
 4. The ticker will appear after 5 seconds and will subsequently update every 5 seconds with a new product and amount ordered
 
-**error-tracking**: Introduces an exception in the Ads python service to demonstrate Error Tracking
-How to use:
+
+#### error-tracking 
+Introduces an exception in the Ads python service to demonstrate Error Tracking
+
+**How to use**:
+
 1. Set the `error-tracking` feature flag to true
 2. Rebuild the frontend and ads service via `docker-compose build frontend ads`
 3. Start the app via `docker-compose up`
