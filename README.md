@@ -18,6 +18,34 @@ Open the `./services/frontend/site/.env.local` file and enter the values for the
     **4a.** If you want to work with a profile for a specific lab, you can pass that in as an argument `make local-start PROFILE=<profile-name>`
 **5.** When you're finished you can run `make local-stop` or `make local-stop PROFILE=<profile-name>` if working with a profile
 
+## Feature flags
+Some capabilities are hidden behind feature flags, which can be controlled via `services/frontend/site/featureFlags.config.json`. 
+
+**xss**: Enables a mock cross site scripting attack to demonstrate ASM
+How to use: 
+1. Start the app via `docker compose --csrf up`
+2. Set the `xss` feature flag to true
+3. Visit http://localhost and reload the home page a few times
+4. On the homepage in the nav you should see an option to input your email, this will have a few testing steps:
+5. Click submit with no input, you should get a validation error
+6. Enter anything into the input (it being an email isn't important) and submit
+7. You should get a thank you message with the input you entered at the end
+
+**dbm**: Enables a product ticker on the homepage with a long-running query to demonstrate DBM
+How to use:
+1. Start the app via `docker-compose --profile dbm up`
+2. Set the `dbm` feature flag to true
+3. Visit http://localhost and reload the home page a few times
+4. The ticker will appear after 5 seconds and will subsequently update every 5 seconds with a new product and amount ordered
+
+**error-tracking**: Introduces an exception in the Ads python service to demonstrate Error Tracking
+How to use:
+1. Set the `error-tracking` feature flag to true
+2. Rebuild the frontend and ads service via `docker-compose build frontend ads`
+3. Start the app via `docker-compose up`
+4. Visit http://localhost and reload the home page a few times
+5. You should start seeing 500s being generated in the logs, in addition to the banner ads not loading on the homepage
+
 ## Image publication
 Images are stored in our public ECR repo `public.ecr.aws/x2b9z2t7`. On PR merges, only the affected services will be pushed to the ECR repo, using the `latest` tag. For example, if you only made changes to the `backend` service, then only the `backend` Github workflow will trigger and publish `public.ecr.aws/x2b9z2t7/storedog/backend:latest`. 
 
