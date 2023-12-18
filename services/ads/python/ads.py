@@ -2,6 +2,7 @@ import requests
 import random
 import time
 import sys
+import re
 
 from flask import Flask, Response, jsonify, send_from_directory
 from flask import request as flask_request
@@ -18,13 +19,31 @@ import json_log_formatter
 formatter = json_log_formatter.JSONFormatter()
 json_handler = logging.StreamHandler(sys.stdout)
 json_handler.setFormatter(formatter)
-logger = logging.getLogger('my_json')
+logger = logging.getLogger('werkzeug')
 logger.addHandler(json_handler)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 app = create_app()
 CORS(app)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+## Add filter to remove color-encoding from logs e.g. "[37mGET / HTTP/1.1 [0m" 200 -
+class NoEscape(logging.Filter):
+    def __init__(self):
+        self.regex = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
+    def strip_esc(self, s):
+        try: # string-like 
+            return self.regex.sub('',s)
+        except: # non-string-like
+            return s
+    def filter(self, record):
+        record.msg = self.strip_esc(record.msg)
+        if type(record.args) is tuple:
+            record.args = tuple(map(self.strip_esc, record.args))
+        return 1
+
+remove_color_filter =NoEscape()
+logger.addFilter(remove_color_filter)
 
 @tracer.wrap()
 @app.route('/')
