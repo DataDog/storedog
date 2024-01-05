@@ -13,6 +13,8 @@ import org.apache.commons.io.IOUtils;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.HashMap;
 import org.springframework.web.bind.annotation.RequestParam;
+import java.util.concurrent.TimeoutException;
+
 
 @SpringBootApplication
 @RestController
@@ -33,7 +35,12 @@ public class AdsJavaApplication {
 
 	@RequestMapping("/")
 	public String home() {
-		return "Hello from Advertisements (Java)";
+        try {
+             throw new TimeoutException("took too long to get a response");
+        } catch  (Exception e) {
+			System.out.println("took too long to get a response");
+			throw new RuntimeException(e);
+		}
 	}
 
   @CrossOrigin(origins = {"*"})

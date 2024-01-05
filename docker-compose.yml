@@ -138,7 +138,11 @@ services:
     networks:
       - storedog-net
     labels:
-      com.datadoghq.ad.logs: '[{"source": "python", "service": "ads" }]'
+      com.datadoghq.ad.logs: '[{"source": "python", "service": "ads", "log_processing_rules": [{
+          "type": "multi_line",
+          "name": "log_start_with_date",
+          "pattern" : "\d{3}.\d{2}.\d{1}.\d{1}"
+        }] }]'
   discounts:
     depends_on:
       - postgres
@@ -168,7 +172,11 @@ services:
     networks:
       - storedog-net
     labels:
-      com.datadoghq.ad.logs: '[{"source": "python", "service": "discounts"}]'
+      com.datadoghq.ad.logs: '[{"source": "python", "service": "discounts", "log_processing_rules": [{
+          "type": "multi_line",
+          "name": "log_start_with_date",
+          "pattern" : "\\[\\d{4}-\\d{2}-\\d{2}\\s\\d{2}:\\d{2}:\\d{2}\\,\\d{3}"
+        }] }]'
   auth:
     depends_on:
       - postgres
@@ -260,7 +268,7 @@ services:
     networks:
       - storedog-net
     labels:
-      com.datadoghq.ad.logs: '[{"source": "java", "service": "ads-java"}]'
+      com.datadoghq.ad.logs: '[{"source": "java", "service": "ads-java",  "auto_multi_line_detection": true}]'
   attackbox:
     build:
       context: ./services/attackbox
