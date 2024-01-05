@@ -8,7 +8,21 @@ This service is responsible for managing the banner advertisements served to the
 
 The Python service is a Flask application that uses SQLAlchemy to connect to a PostgreSQL database. The service is packaged as a Docker image and typically used in a Docker Compose file (see the root of this repo).
 
+### Datadog configuration
+
+#### Logs
+
+Logging is configured in the `docker-compose.yml` file along with the Datadog Agent.
+
+#### APM
+
+The `ddtrace` library is used to instrument the Python service. The `ddtrace` library is installed in the `requirements.txt` file. The `ddtrace-run` command is used to run the service in the `Dockerfile`.
+
+Log injection is enabled in the `docker-compose.yml` file, but the logs are formatted in the `ads.py` file.
+
 ### Endpoints (Python)
+
+Use the following endpoints to interact with the service.
 
 #### GET /
 
@@ -102,16 +116,22 @@ POST /ads
 }
 ```
 
-### Datadog configuration
+### Database
 
-#### Logs
+The Python service uses a PostgreSQL database. The database is configured in the `docker-compose.yml` file. 
 
-Logging is configured in the `docker-compose.yml` file along with the Datadog Agent.
+The application uses SQLAlchemy to connect to the database. The `models.py` file contains the SQLAlchemy model and the `bootstrap.py` file contains database connection and setup code.
 
-#### APM
+#### Database schema
 
-The `ddtrace` library is used to instrument the Python service. The `ddtrace` library is installed in the `requirements.txt` file. The `ddtrace-run` command is used to run the service in the `Dockerfile`.
+The `ads` table has the following schema:
 
-Log injection is enabled in the `docker-compose.yml` file, but the logs are formatted in the `ads.py` file.
+| Column | Type | Description |
+| --- | --- | --- |
+| id | integer | Unique identifier for the advertisement (Primary Key) |
+| name | string | Name of the advertisement |
+| url | string | URL to redirect to when the advertisement is clicked |
+| weight | float | Weight of the advertisement (used for A/B testing) |
+| path | string | Path to the advertisement image |
 
 
