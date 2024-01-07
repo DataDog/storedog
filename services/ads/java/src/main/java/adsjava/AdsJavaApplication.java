@@ -14,58 +14,70 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.HashMap;
 import org.springframework.web.bind.annotation.RequestParam;
 import java.util.concurrent.TimeoutException;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 
 @SpringBootApplication
 @RestController
 public class AdsJavaApplication {
 
-  @CrossOrigin(origins = {"*"})
-  @RequestMapping(
-    value = "/banners/{id}",
-    produces = MediaType.IMAGE_JPEG_VALUE
-  )
-  public @ResponseBody byte[] getImageWithMediaType() throws IOException {
-    int randomNum = ThreadLocalRandom.current().nextInt(1, 3 + 1);
-    String imagePath = "/static/ads/ad" + randomNum + ".jpg";
-    InputStream in = getClass()
-        .getResourceAsStream(imagePath);
-    return IOUtils.toByteArray(in);
-  }
+    @CrossOrigin(origins = {"*"})
+    @RequestMapping(
+        value = "/banners/{id}",
+        produces = MediaType.IMAGE_JPEG_VALUE
+    )
+    public @ResponseBody byte[] getImageWithMediaType() throws IOException {
+        int randomNum = ThreadLocalRandom.current().nextInt(1, 3 + 1);
+        String imagePath = "/static/ads/ad" + randomNum + ".jpg";
+        InputStream in = getClass()
+            .getResourceAsStream(imagePath);
+        return IOUtils.toByteArray(in);
+    }
 
 	@RequestMapping("/")
 	public String home() {
-        try {
-             throw new TimeoutException("took too long to get a response");
-        } catch  (Exception e) {
-			System.out.println("took too long to get a response");
-			throw new RuntimeException(e);
-		}
+        return "Welcome to Java - Ads Service";
 	}
 
-  @CrossOrigin(origins = {"*"})
-  @RequestMapping(
-    value = "/ads",
-    produces = MediaType.APPLICATION_JSON_VALUE
-  )
-	public HashMap[] ads() {
-    HashMap<String, String> map1 = new HashMap<>();
-    map1.put("id", "1");
-    map1.put("name", "Discount Clothing");
-    map1.put("path", "1.jpg");
+    @CrossOrigin(origins = {"*"})
+    @RequestMapping(
+        value = "/ads",
+        produces = MediaType.APPLICATION_JSON_VALUE
+    )
+	public HashMap[] ads(@RequestHeader HashMap<String, String> headers) {
 
-    HashMap<String, String> map2 = new HashMap<>();
-    map2.put("id", "2");
-    map2.put("name", "Cool Hats");
-    map2.put("path", "2.jpg");
+        boolean errorFlag = false;
+        if(headers.get("x-throw-error") != null) {
+            errorFlag = Boolean.parseBoolean(headers.get("x-throw-error"));
+        }
 
-    HashMap<String, String> map3 = new HashMap<>();
-    map3.put("id", "3");
-    map3.put("name", "Nic Bags");
-    map3.put("path", "3.jpg");
-    System.out.println("ads called");
-    HashMap[] myArr = { map1, map2, map3 };
-    return myArr;
+        if(errorFlag) {
+            // Intentionally throw error here to demonstrate Logs Error Tracking behavior
+            try {
+                throw new TimeoutException("took too long to get a response");
+            } catch  (Exception e) {
+                System.out.println("took too long to get a response");
+                throw new RuntimeException(e);
+            }
+        } else {
+            HashMap<String, String> map1 = new HashMap<>();
+            map1.put("id", "1");
+            map1.put("name", "Discount Clothing");
+            map1.put("path", "1.jpg");
+
+            HashMap<String, String> map2 = new HashMap<>();
+            map2.put("id", "2");
+            map2.put("name", "Cool Hats");
+            map2.put("path", "2.jpg");
+
+            HashMap<String, String> map3 = new HashMap<>();
+            map3.put("id", "3");
+            map3.put("name", "Nic Bags");
+            map3.put("path", "3.jpg");
+            System.out.println("ads called");
+            HashMap[] myArr = { map1, map2, map3 };
+            return myArr;
+        }
 	}
 
 	public static void main(String[] args) {
