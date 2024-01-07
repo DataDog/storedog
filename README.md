@@ -23,6 +23,9 @@ Images are stored in our public ECR repo `public.ecr.aws/x2b9z2t7`. On PR merges
 
 Separately, we tag and publish *all* images when a new release is created with the corresponding release tag e.g. `public.ecr.aws/x2b9z2t7/storedog/backend:1.0.1`. New releases are made on an ad-hoc basis, depending on the recent features that are added.
 
+# Ads
+There are two advertisement services, one built in Python `ads` running on port 7676 and another built in Java `ads-java` running on port 3030. The frontend can consume either of these services and serve ads to the homepage. To select which service is consumed, update the `NEXT_PUBLIC_ADS_PORT` in `services/frontend/site/.env.local`.
+
 # Backend
 ## Database rebuild
 

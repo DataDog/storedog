@@ -51,16 +51,19 @@ public class AdsJavaApplication {
 	public HashMap[] ads() {
     HashMap<String, String> map1 = new HashMap<>();
     map1.put("id", "1");
-    map1.put("path", "ad1.jpg");
+    map1.put("name", "Discount Clothing");
+    map1.put("path", "1.jpg");
 
     HashMap<String, String> map2 = new HashMap<>();
     map2.put("id", "2");
-    map2.put("path", "ad2.jpg");
+    map2.put("name", "Cool Hats");
+    map2.put("path", "2.jpg");
 
     HashMap<String, String> map3 = new HashMap<>();
     map3.put("id", "3");
-    map3.put("path", "ad3.jpg");
-
+    map3.put("name", "Nic Bags");
+    map3.put("path", "3.jpg");
+    System.out.println("ads called");
     HashMap[] myArr = { map1, map2, map3 };
     return myArr;
 	}
