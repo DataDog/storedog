@@ -13,7 +13,7 @@ The service is based off of the [Next.js commerce template](https://github.com/v
 **Configuration**
 The frontend service is configured to use the [Datadog RUM](https://docs.datadoghq.com/real_user_monitoring/) agent. The agent is configured in the `_app.tsx` file.
 
-TODO: Update RUM version in repo
+TODO: Update RUM version in repo and add otel (https://docs.datadoghq.com/real_user_monitoring/connect_rum_and_traces/?tab=browserrum#opentelemetry-support)
 
 **Global Context**
 Every session to the application randomly selects a user from a list of users in the `/site/config/user_data.json` file to enrich RUM session data with user information.
@@ -26,7 +26,7 @@ TODO: Configure logging in API routes (add to repo)
 
 ### APM
 
-TODO: Configure APM in API routes (add to repo)
+TODO: Configure APM in API routes (add to repo from working lab example)
 
 ## Code structure
 
