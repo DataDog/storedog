@@ -3,6 +3,7 @@ import random
 import time
 import sys
 import os
+import re
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import words
@@ -19,17 +20,36 @@ from models import Discount, DiscountType, db
 from ddtrace import patch; patch(logging=True)
 import logging
 from ddtrace import tracer
+import json_log_formatter
 
-FORMAT = ('%(asctime)s %(levelname)s [%(name)s] [%(filename)s:%(lineno)d] '
-          '[dd.service=%(dd.service)s dd.env=%(dd.env)s dd.version=%(dd.version)s dd.trace_id=%(dd.trace_id)s dd.span_id=%(dd.span_id)s] '
-          '- %(message)s')
-logging.basicConfig(format=FORMAT)
-log = logging.getLogger(__name__)
-log.level = logging.INFO
+formatter = json_log_formatter.JSONFormatter()
+json_handler = logging.StreamHandler(sys.stdout)
+json_handler.setFormatter(formatter)
+logger = logging.getLogger('werkzeug')
+logger.addHandler(json_handler)
+logger.setLevel(logging.DEBUG)
 
 app = create_app()
 CORS(app)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+## Add filter to remove color-encoding from logs e.g. "[37mGET / HTTP/1.1 [0m" 200 -
+class NoEscape(logging.Filter):
+    def __init__(self):
+        self.regex = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
+    def strip_esc(self, s):
+        try: # string-like 
+            return self.regex.sub('',s)
+        except: # non-string-like
+            return s
+    def filter(self, record):
+        record.msg = self.strip_esc(record.msg)
+        if type(record.args) is tuple:
+            record.args = tuple(map(self.strip_esc, record.args))
+        return 1
+
+remove_color_filter = NoEscape()
+logger.addFilter(remove_color_filter)
 
 # Hello world
 @tracer.wrap()
@@ -44,18 +64,18 @@ def status():
        
         try:
           discounts = Discount.query.all()
-          log.info(f"Discounts available: {len(discounts)}")
+          logger.info(f"Discounts available: {len(discounts)}")
 
           influencer_count = 0
           for discount in discounts:
               if discount.discount_type.influencer:
                   influencer_count += 1
-          log.info(f"Total of {influencer_count} influencer specific discounts as of this request")
+          logger.info(f"Total of {influencer_count} influencer specific discounts as of this request")
         
           return jsonify([b.serialize() for b in discounts])
 
         except:
-          log.error("An error occurred while getting discounts.")
+          logger.error("An error occurred while getting discounts.")
           err = jsonify({'error': 'Internal Server Error'})
           err.status_code = 500
           return err
@@ -72,7 +92,7 @@ def status():
                                     words.get_random(random.randint(2,4)),
                                     random.randint(10,500),
                                     new_discount_type)
-            log.info(f"Adding discount {new_discount}")
+            logger.info(f"Adding discount {new_discount}")
             db.session.add(new_discount)
             db.session.commit()
             discounts = Discount.query.all()
@@ -80,7 +100,7 @@ def status():
             return jsonify([b.serialize() for b in discounts])
 
         except:
-          log.error("An error occurred while creating a new discount.")
+          logger.error("An error occurred while creating a new discount.")
           err = jsonify({'error': 'Internal Server Error'})
           err.status_code = 500
           return err

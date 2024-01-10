@@ -54,6 +54,18 @@ Rails.application.configure do
   # Suppress logger output for asset requests.
   config.assets.quiet = true
 
+  # Lograge config
+  config.lograge.enabled = true
+  
+  # This specifies to log in JSON format
+  config.lograge.formatter = Lograge::Formatters::Json.new
+  
+  ## Enable log coloration
+  config.colorize_logging = true
+  
+  # Log to a dedicated file
+  config.lograge.logger = ActiveSupport::Logger.new(STDOUT)
+
   # Raises error for missing translations.
   # config.action_view.raise_on_missing_translations = true
 

@@ -26,3 +26,4 @@ tenacity==6.3.1
 urllib3==1.26.5
 Werkzeug==1.0.1
 wrapt==1.12.1
+JSON-log-formatter==0.5.2
