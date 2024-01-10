@@ -6,7 +6,7 @@ on:
     paths:
       - services/ads/java/**
   workflow_dispatch:
-    branches: [ main ]
+    branches: [ main, ccole/add-creds-to-unset ]
 
 defaults:
   run:
