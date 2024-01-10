@@ -25,14 +25,6 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2.6.0
 
-    - name: Unset AWS credentials 4
-      run: |
-        unset AWS_DEFAULT_REGION
-        unset AWS_REGION
-        unset AWS_ACCESS_KEY_ID
-        unset AWS_SECRET_ACCESS_KEY
-        unset AWS_SESSION_TOKEN
-
     - name: Configure AWS credentials 4
       uses: aws-actions/configure-aws-credentials@v4
       env:
