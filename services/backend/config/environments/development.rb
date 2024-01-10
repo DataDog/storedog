@@ -61,7 +61,7 @@ Rails.application.configure do
   config.lograge.formatter = Lograge::Formatters::Json.new
   
   ## Enable log coloration
-  config.colorize_logging = true
+  config.colorize_logging = false
   
   # Log to a dedicated file
   config.lograge.logger = ActiveSupport::Logger.new(STDOUT)
