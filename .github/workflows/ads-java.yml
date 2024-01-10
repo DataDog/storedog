@@ -25,8 +25,22 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2.6.0
 
-    - name: Configure AWS credentials 3
-      uses: aws-actions/configure-aws-credentials@v2.1.0
+    - name: Unset AWS credentials 4
+      run: |
+        unset AWS_DEFAULT_REGION
+        unset AWS_REGION
+        unset AWS_ACCESS_KEY_ID
+        unset AWS_SECRET_ACCESS_KEY
+        unset AWS_SESSION_TOKEN
+
+    - name: Configure AWS credentials 4
+      uses: aws-actions/configure-aws-credentials@v4
+      env:
+        AWS_DEFAULT_REGION:
+        AWS_REGION:
+        AWS_ACCESS_KEY_ID:
+        AWS_SECRET_ACCESS_KEY:
+        AWS_SESSION_TOKEN:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
