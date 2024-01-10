@@ -25,7 +25,7 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2.6.0
 
-    - name: Unset AWS credentials
+    - name: Unset AWS credentials 2
       uses: aws-actions/configure-aws-credentials@v4
       with:
         unset-current-credentials: true
