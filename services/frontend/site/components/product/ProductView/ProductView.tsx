@@ -2,8 +2,8 @@ import cn from 'clsx'
 import Image from 'next/image'
 import s from './ProductView.module.css'
 import { FC } from 'react'
-import type { Product } from '@commerce/types/product'
-import usePrice from '@framework/product/use-price'
+import type { Product } from '@customTypes/product'
+import usePrice from '@lib/hooks/usePrice'
 import { WishlistButton } from '@components/wishlist'
 import { ProductSlider, ProductCard } from '@components/product'
 import { Container, Text } from '@components/ui'
@@ -49,13 +49,13 @@ const ProductView: FC<ProductViewProps> = ({ product, relatedProducts }) => {
                 ))}
               </ProductSlider>
             </div>
-            {process.env.COMMERCE_WISHLIST_ENABLED && (
+            {/* {process.env.COMMERCE_WISHLIST_ENABLED && (
               <WishlistButton
                 className={s.wishlistButton}
                 productId={product.id}
                 variant={product.variants[0]}
               />
-            )}
+            )} */}
           </div>
 
           <ProductSidebar

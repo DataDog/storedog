@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+import cn from 'clsx';
 import { Container } from '@components/ui';
 import { ArrowRight } from '@components/icons';
 import s from './Hero.module.css';
@@ -9,9 +10,9 @@ interface HeroProps {
   description: string;
 }
 
-const Hero: FC<HeroProps> = ({ headline, description }) => {
+const Hero: FC<HeroProps> = ({ headline, description, className }) => {
   return (
-    <div className='bg-primary-2 border-b border-t border-accent-2'>
+    <div className={cn(`bg-primary-2 border-b border-t border-accent-2`, className)}>
       <Container>
         <div className={s.root}>
           <h2 className={s.title}>{headline}</h2>

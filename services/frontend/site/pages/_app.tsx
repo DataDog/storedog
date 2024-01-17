@@ -1,18 +1,19 @@
-import '@assets/main.css';
-import '@assets/chrome-bug.css';
-import 'keen-slider/keen-slider.min.css';
+import '@assets/main.css'
+import '@assets/chrome-bug.css'
+import 'keen-slider/keen-slider.min.css'
 
-import { FC, useEffect } from 'react';
-import type { AppProps } from 'next/app';
-import { useRouter } from 'next/router';
-import { CommerceProvider } from '@framework';
-import useCart from '@framework/cart/use-cart';
+import { FC, useEffect } from 'react'
+import type { AppProps } from 'next/app'
+import { useRouter } from 'next/router'
+import { CommerceProvider } from '@framework'
+import useCart from '@framework/cart/use-cart'
+import { CartProvider, useCart as useCartNew } from '@lib/CartContext'
 
-import { Head } from '@components/common';
-import { ManagedUIContext } from '@components/ui/context';
-import { datadogRum } from '@datadog/browser-rum';
+import { Head } from '@components/common'
+import { ManagedUIContext } from '@components/ui/context'
+import { datadogRum } from '@datadog/browser-rum'
 
-import userData from '@config/user_data.json';
+import userData from '@config/user_data.json'
 
 datadogRum.init({
   applicationId: `${
@@ -29,60 +30,65 @@ datadogRum.init({
   trackInteractions: true,
   trackFrustrations: true,
   defaultPrivacyLevel: 'mask-user-input',
-  allowedTracingOrigins: [/https:\/\/.*\.env.play.instruqt\.com/],
-});
+  allowedTracingOrigins: [
+    /https:\/\/.*\.env.play.instruqt\.com/,
+    /^http:\/\/localhost(:\d+)?$/,
+  ],
+})
 
-datadogRum.startSessionReplayRecording();
+datadogRum.startSessionReplayRecording()
 
-const user = userData[Math.floor(Math.random() * userData.length)];
+const user = userData[Math.floor(Math.random() * userData.length)]
 
-datadogRum.setUser(user);
+datadogRum.setUser(user)
 
-const Noop: FC = ({ children }) => <>{children}</>;
+const Noop: FC = ({ children }) => <>{children}</>
 
 const CartWatcher = () => {
-  const { data: cartData } = useCart();
+  const { data: cartData } = useCart()
   useEffect(() => {
     if (!cartData) {
-      return;
+      return
     }
 
     datadogRum.addRumGlobalContext('cart_status', {
       cartTotal: cartData.totalPrice,
       lineItems: cartData.lineItems,
-    });
+    })
 
     datadogRum.addAction('Cart Updated', {
       cartTotal: cartData.totalPrice,
       discounts: cartData.discounts,
       id: cartData.id,
       lineItems: cartData.lineItems,
-    });
-  }, [cartData]);
+    })
+  }, [cartData])
 
-  return null;
-};
+  return null
+}
 
 export default function MyApp({ Component, pageProps }: AppProps) {
-  const { locale = 'en-US' } = useRouter();
+  const { locale = 'en-US' } = useRouter()
 
-  const Layout = (Component as any).Layout || Noop;
+  const Layout = (Component as any).Layout || Noop
 
   useEffect(() => {
-    document.body.classList?.remove('loading');
-  }, []);
+    document.body.classList?.remove('loading')
+  }, [])
 
   return (
     <>
-      <CommerceProvider locale={locale}>
-        <Head />
-        <ManagedUIContext>
-          <CartWatcher />
-          <Layout pageProps={pageProps}>
-            <Component {...pageProps} />
-          </Layout>
-        </ManagedUIContext>
-      </CommerceProvider>
+      <CartProvider>
+        <CommerceProvider locale={locale}>
+          <Head />
+          <ManagedUIContext>
+            {/* <CartWatcher /> */}
+            <Layout pageProps={pageProps}>
+              <Component {...pageProps} />
+            </Layout>
+          </ManagedUIContext>
+        </CommerceProvider>
+      </CartProvider>
     </>
-  );
+  )
 }

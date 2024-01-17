@@ -1,14 +1,14 @@
-import type { GetServerSidePropsContext, InferGetStaticPropsType } from 'next';
-import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
-import commerce from '@lib/api/commerce';
-import { Layout } from '@components/common';
-import { ProductView } from '@components/product';
+import type { GetServerSidePropsContext, InferGetStaticPropsType } from 'next'
+import { useRouter } from 'next/router'
+import { useEffect, useState } from 'react'
+import { Layout } from '@components/common'
+import { ProductView } from '@components/product'
+import { getProduct, getProducts, getPages } from '@lib/api/spree'
 
 function later(delay) {
   return new Promise(function (resolve) {
-    setTimeout(resolve, delay);
-  });
+    setTimeout(resolve, delay)
+  })
 }
 
 export async function getServerSideProps({
@@ -18,61 +18,50 @@ export async function getServerSideProps({
   locales,
   preview,
 }: GetServerSidePropsContext<{ slug: string }>) {
-  const config = { locale, locales };
-  const pagesPromise = commerce.getAllPages({ config, preview });
-  const siteInfoPromise = commerce.getSiteInfo({ config, preview });
-  const productPromise = commerce.getProduct({
-    variables: { slug: params!.slug },
-    config,
-    preview,
-  });
+  const product = await getProduct({
+    id: params!.slug,
+    include:
+      'default_variant,variants,option_types,product_properties,taxons,images,primary_variant',
+  })
 
-  const allProductsPromise = commerce.getAllProducts({
-    variables: { first: 4 },
-    config,
-    preview,
-  });
-  const { pages } = await pagesPromise;
-  const { categories } = await siteInfoPromise;
-  const { product } = await productPromise;
-  const { products: relatedProducts } = await allProductsPromise;
+  const relatedProducts = await getProducts({
+    include: 'images',
+    per_page: 5,
+  })
 
-  if (!product) {
-    throw new Error(`Product with slug '${params!.slug}' not found`);
-  }
+  const pages = await getPages()
 
   return {
     props: {
       pages,
       product,
       relatedProducts,
-      categories,
       headers: req.headers,
     },
-  };
+  }
 }
 
 export default function Slug({
   product,
   relatedProducts,
   headers,
-  categories,
   pages,
 }: InferGetStaticPropsType<typeof getServerSideProps>) {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
+  console.log(product)
+  const router = useRouter()
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (loading) {
-      loadData();
+      loadData()
     }
-  }, [loading]);
+  }, [loading])
 
   async function loadData() {
     if (headers.referer.includes('/search')) {
-      await later(Math.round(Math.random() * 7000) + 500);
+      await later(Math.round(Math.random() * 7000) + 500)
     }
-    setLoading(false);
+    setLoading(false)
   }
 
   return router.isFallback || loading ? (
@@ -83,7 +72,7 @@ export default function Slug({
       relatedProducts={relatedProducts}
       referer={headers.referer}
     />
-  );
+  )
 }
 
-Slug.Layout = Layout;
+Slug.Layout = Layout
