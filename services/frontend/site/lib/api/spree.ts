@@ -3,6 +3,7 @@ const createFetchFetcher =
 const { makeClient } = require('@spree/storefront-api-v2-sdk')
 import { Product } from '@customTypes/product'
 import { Page } from '@customTypes/page'
+import { Cart } from '@customTypes/cart'
 
 const spreeServerSide = makeClient({
   host: process.env.NEXT_PUBLIC_SPREE_API_HOST || 'http://web:4000',
@@ -203,7 +204,75 @@ interface CartOptionsBase {
   [key: string]: any
 }
 
-export const createCart = async (options: CartOptionsBase) => {
+const formatCart = (cartApi: any): Cart => {
+  const cart: Cart = {
+    createdAt: cartApi.data.attributes.created_at,
+    currency: {
+      code: cartApi.data.attributes.currency,
+    },
+    customerId: cartApi.data.attributes.token,
+    discounts: [],
+    email: cartApi.data.attributes.email,
+    id: cartApi.data.id,
+    subtotalPrice: Number(cartApi.data.attributes.item_total),
+    lineItemsSubtotalPrice: Number(cartApi.data.attributes.item_total),
+    taxesIncluded: false,
+    totalPrice: Number(cartApi.data.attributes.total),
+    lineItems: cartApi.data.relationships.line_items.data.map(
+      (lineItem: any) => {
+        const lineItemData = cartApi.included.find(
+          (i: any) => i.id === lineItem.id && i.type === lineItem.type
+        )
+
+        // get selected line item variant
+        const variant = cartApi.included.find((i: any) => {
+          return (
+            i.id === lineItemData.relationships.variant.data.id &&
+            i.type === 'variant'
+          )
+        })
+
+        return {
+          id: lineItemData.id,
+          quantity: lineItemData.attributes.quantity,
+          variantId: lineItemData.relationships.variant.data.id,
+          name: lineItemData.attributes.name,
+          path: lineItemData.attributes.slug,
+          productId: lineItemData.attributes.product_id,
+          discounts: [],
+          variant: {
+            id: variant.attributes.variant_id,
+            sku: variant.attributes.sku,
+            name: variant.attributes.name,
+            price: Number(variant.attributes.price),
+            requiresShipping: false,
+            availableForSale: true,
+            listPrice: Number(variant.attributes.price),
+            isInStock: true,
+            image: variant.relationships.images.data.map((image: any) => {
+              // find relationship data in included
+              const imageData = cartApi.included.find(
+                (i: any) => i.id === image.id && i.type === image.type
+              )
+
+              return {
+                url: `${
+                  process.env.NEXT_PUBLIC_SPREE_API_HOST || 'http://web:4000'
+                }${imageData.attributes.original_url}`,
+                alt: imageData.attributes.alt,
+              }
+            })[0],
+          },
+        }
+      }
+    ),
+  }
+  return cart
+}
+
+export const createCart = async (
+  options: CartOptionsBase
+): Promise<Cart | any> => {
   try {
     const res = await spreeClientSide.cart.create(options)
 
@@ -211,7 +280,8 @@ export const createCart = async (options: CartOptionsBase) => {
       throw res.fail()
     }
 
-    const cart = await res.success()
+    const cartApi = await res.success()
+    const cart = formatCart(cartApi)
     return cart
   } catch (error) {
     console.log(error)
@@ -219,7 +289,9 @@ export const createCart = async (options: CartOptionsBase) => {
   }
 }
 
-export const getCart = async (options: CartOptionsBase) => {
+export const getCart = async (
+  options: CartOptionsBase
+): Promise<Cart | any> => {
   if (!options.order_token && !options.bearer_token) {
     return new Error('You must provide either an order_token or a bearer_token')
   }
@@ -231,7 +303,10 @@ export const getCart = async (options: CartOptionsBase) => {
       throw res.fail()
     }
 
-    const cart = await res.success()
+    const cartApi = await res.success()
+
+    const cart = formatCart(cartApi)
+
     return cart
   } catch (error) {
     console.log(error)
@@ -239,7 +314,9 @@ export const getCart = async (options: CartOptionsBase) => {
   }
 }
 
-export const emptyCart = async (options: CartOptionsBase) => {
+export const emptyCart = async (
+  options: CartOptionsBase
+): Promise<Cart | any> => {
   if (!options.order_token && !options.bearer_token) {
     return new Error('You must provide either an order_token or a bearer_token')
   }
@@ -251,7 +328,10 @@ export const emptyCart = async (options: CartOptionsBase) => {
       throw res.fail()
     }
 
-    const cart = await res.success()
+    const cartApi = await res.success()
+
+    const cart = formatCart(cartApi)
+
     return cart
   } catch (error) {
     console.log(error)
@@ -259,7 +339,9 @@ export const emptyCart = async (options: CartOptionsBase) => {
   }
 }
 
-export const deleteCart = async (options: CartOptionsBase) => {
+export const deleteCart = async (
+  options: CartOptionsBase
+): Promise<boolean | any> => {
   if (!options.order_token && !options.bearer_token) {
     return new Error('You must provide either an order_token or a bearer_token')
   }
@@ -270,9 +352,8 @@ export const deleteCart = async (options: CartOptionsBase) => {
     if (!res.isSuccess()) {
       throw res.fail()
     }
-
-    const cart = await res.success()
-    return cart
+    // if successful deletion, no response is returned
+    return true
   } catch (error) {
     console.log(error)
     return error
@@ -285,7 +366,7 @@ export interface CartAddItems extends CartOptionsBase {
   quantity: number
 }
 
-export const addToCart = async (options: CartAddItems) => {
+export const addToCart = async (options: CartAddItems): Promise<Cart | any> => {
   if (!options.order_token && !options.bearer_token) {
     return new Error('You must provide either an order_token or a bearer_token')
   }
@@ -297,7 +378,9 @@ export const addToCart = async (options: CartAddItems) => {
       throw res.fail()
     }
 
-    const cart = await res.success()
+    const cartApi = await res.success()
+    console.log('cartApi from addToCart', cartApi)
+    const cart = formatCart(cartApi)
     return cart
   } catch (error) {
     console.log(error)
@@ -311,7 +394,9 @@ export interface CartRemoveItems extends CartOptionsBase {
   id: string
 }
 
-export const removeFromCart = async (options: CartRemoveItems) => {
+export const removeFromCart = async (
+  options: CartRemoveItems
+): Promise<Cart | any> => {
   if (!options.order_token && !options.bearer_token) {
     return new Error('You must provide either an order_token or a bearer_token')
   }
@@ -323,7 +408,8 @@ export const removeFromCart = async (options: CartRemoveItems) => {
       throw res.fail()
     }
 
-    const cart = await res.success()
+    const cartApi = await res.success()
+    const cart = formatCart(cartApi)
     return cart
   } catch (error) {
     console.log(error)
@@ -337,7 +423,9 @@ export interface CartQuantityUpdate extends CartOptionsBase {
   quantity: number
 }
 
-export const updateQuantity = async (options: CartQuantityUpdate) => {
+export const updateQuantity = async (
+  options: CartQuantityUpdate
+): Promise<Cart | any> => {
   if (!options.order_token && !options.bearer_token) {
     return new Error('You must provide either an order_token or a bearer_token')
   }
@@ -349,7 +437,8 @@ export const updateQuantity = async (options: CartQuantityUpdate) => {
       throw res.fail()
     }
 
-    const cart = await res.success()
+    const cartApi = await res.success()
+    const cart = formatCart(cartApi)
     return cart
   } catch (error) {
     console.log(error)

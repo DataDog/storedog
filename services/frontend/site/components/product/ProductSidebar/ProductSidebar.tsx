@@ -48,8 +48,8 @@ const ProductSidebar: FC<ProductSidebarProps> = ({ product, className }) => {
       //   },
       // })
 
-      setSidebarView('CART_VIEW')
-      openSidebar()
+      // setSidebarView('CART_VIEW')
+      // openSidebar()
       setLoading(false)
     } catch (err) {
       setLoading(false)

@@ -58,7 +58,7 @@ export default function Slug({
   }, [loading])
 
   async function loadData() {
-    if (headers.referer.includes('/search')) {
+    if (headers?.referer?.includes('/search')) {
       await later(Math.round(Math.random() * 7000) + 500)
     }
     setLoading(false)

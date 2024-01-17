@@ -14,6 +14,7 @@ import {
   removeFromCart,
   updateQuantity,
 } from '@lib/api/spree'
+import type { Cart } from '@customTypes/cart'
 
 type CartProviderProps = {
   children: ReactNode
@@ -42,7 +43,7 @@ export const CartContext = createContext<CartContextType>({
 })
 
 export const CartProvider = ({ children }: CartProviderProps) => {
-  const [cart, setCart] = useState<any>([])
+  const [cart, setCart] = useState<Cart | {}>({})
   const [cartToken, setCartToken] = useState<string | null>(null)
   const [cartError, setCartError] = useState<any>({})
 
@@ -60,13 +61,23 @@ export const CartProvider = ({ children }: CartProviderProps) => {
 
     try {
       if (cartToken && cartToken !== 'undefined') {
-        const cart = await getCart({
+        let cart = await getCart({
           order_token: cartToken,
           include:
             'line_items,variants,variants.images,billing_address,shipping_address,user,payments,shipments,promotions',
         })
+
+        if (!cart?.data?.id) {
+          localStorage.removeItem('cartToken')
+          cart = await createCart({
+            include:
+              'line_items,variants,variants.images,billing_address,shipping_address,user,payments,shipments,promotions',
+          })
+          localStorage.setItem('cartToken', cart.customerId)
+        }
+
         setCart(cart)
-        setCartToken(cartToken)
+        setCartToken(cart.customerId)
         setCartError(null)
         return cartToken
       } else {
@@ -74,9 +85,9 @@ export const CartProvider = ({ children }: CartProviderProps) => {
           include:
             'line_items,variants,variants.images,billing_address,shipping_address,user,payments,shipments,promotions',
         })
-        localStorage.setItem('cartToken', cart.data.attributes.token)
+        localStorage.setItem('cartToken', cart.customerId)
         setCart(cart)
-        setCartToken(cart.data.attributes.token)
+        setCartToken(cart.customerId)
         setCartError(null)
         return cartToken
       }
