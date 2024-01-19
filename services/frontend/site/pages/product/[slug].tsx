@@ -3,7 +3,8 @@ import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { Layout } from '@components/common'
 import { ProductView } from '@components/product'
-import { getProduct, getProducts, getPages } from '@lib/api/spree'
+import { getProducts, getProduct } from '@lib/api/products'
+import { getPages } from '@lib/api/pages'
 
 function later(delay) {
   return new Promise(function (resolve) {

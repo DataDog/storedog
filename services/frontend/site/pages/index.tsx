@@ -2,7 +2,8 @@ import { Layout } from '@components/common'
 import Ad from '@components/common/Ad'
 import { ProductCard } from '@components/product'
 import { Grid, Marquee, Hero } from '@components/ui'
-import { getProducts, getPages } from '@lib/api/spree'
+import { getProducts } from '@lib/api/products'
+import { getPages } from '@lib/api/pages'
 import type { InferGetStaticPropsType } from 'next'
 import { Product } from '@customTypes/product'
 import { Page } from '@customTypes/page'
@@ -30,7 +31,6 @@ export default function Home({
   pages,
 }: InferGetStaticPropsType<typeof getStaticProps>) {
   const { cart } = useCart()
-
   if (cart) {
     console.log(cart)
   }

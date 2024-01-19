@@ -13,7 +13,7 @@ import {
   addToCart,
   removeFromCart,
   updateQuantity,
-} from '@lib/api/spree'
+} from '@lib/api/cart'
 import type { Cart } from '@customTypes/cart'
 
 type CartProviderProps = {
@@ -21,9 +21,9 @@ type CartProviderProps = {
 }
 
 type CartContextType = {
-  cart: any
+  cart: Cart | {}
   cartError: any
-  cartInit: () => Promise<string | null | undefined>
+  cartInit: () => Promise<void>
   cartEmpty: () => Promise<void>
   cartDelete: () => Promise<void>
   cartAdd: (variantId: string, quantity: number) => Promise<any>
@@ -32,9 +32,9 @@ type CartContextType = {
 }
 
 export const CartContext = createContext<CartContextType>({
-  cart: null,
+  cart: {},
   cartError: null,
-  cartInit: async () => null,
+  cartInit: async () => {},
   cartEmpty: async () => {},
   cartDelete: async () => {},
   cartAdd: async () => {},
@@ -67,7 +67,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
             'line_items,variants,variants.images,billing_address,shipping_address,user,payments,shipments,promotions',
         })
 
-        if (!cart?.data?.id) {
+        if (!cart.id) {
           localStorage.removeItem('cartToken')
           cart = await createCart({
             include:
@@ -79,7 +79,6 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         setCart(cart)
         setCartToken(cart.customerId)
         setCartError(null)
-        return cartToken
       } else {
         const cart = await createCart({
           include:
@@ -166,6 +165,11 @@ export const CartProvider = ({ children }: CartProviderProps) => {
           include:
             'line_items,variants,variants.images,billing_address,shipping_address,user,payments,shipments,promotions',
         })
+
+        if (!cart?.id) {
+          throw new Error(cart)
+        }
+
         setCart(cart)
         setCartError(null)
       } else {

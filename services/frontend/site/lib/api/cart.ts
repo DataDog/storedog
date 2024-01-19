@@ -1,46 +1,34 @@
-const createFetchFetcher =
-  require('@spree/node-fetcher/dist/server/index').default
-const { makeClient } = require('@spree/storefront-api-v2-sdk')
+import fetch from 'node-fetch'
 import { Product } from '@customTypes/product'
 import { Page } from '@customTypes/page'
 import { Cart } from '@customTypes/cart'
 
-const spreeServerSide = makeClient({
-  host: process.env.NEXT_PUBLIC_SPREE_API_HOST || 'http://web:4000',
-  createFetcher: createFetchFetcher,
-})
-
-const spreeClientSide = makeClient({
-  host: 'http://localhost:4000',
-  createFetcher: createFetchFetcher,
-})
-
-const spreeGet = async (
-  resource: string,
-  operation: string,
-  options: any = {}
-): Promise<any> => {
-  try {
-    const res = await spreeServerSide[resource][operation](options)
-
-    if (!res.isSuccess()) {
-      throw res.fail()
-    }
-
-    const data = await res.success()
-    return data
-  } catch (error) {
-    console.log(error)
-    return error
-  }
-}
+const SPREE_URL_SERVERSIDE = `${
+  process.env.NEXT_PUBLIC_SPREE_API_HOST || 'http://web:4000'
+}/api/v2`
+const SPREE_URL_CLIENTSIDE = 'http://localhost:4000/api/v2'
 
 //  GET CONTENT API
 export const getProducts = async (
   options: any = {}
 ): Promise<Product[] | any> => {
   try {
-    const productsApi = await spreeGet('products', 'list', options)
+    const url = `${SPREE_URL_SERVERSIDE}/storefront/products?include=${encodeURIComponent(
+      options.include
+    )}&page=${options.page || 1}&per_page=${options.per_page || 25}`
+
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (!res.ok) {
+      throw res
+    }
+
+    const productsApi: any = await res.json()
 
     const products: Product[] = productsApi.data.map((product: any) => {
       const id = product.id
@@ -91,24 +79,39 @@ export const getProducts = async (
 
 export const getProduct = async (options: any): Promise<Product | any> => {
   try {
-    const res = await spreeGet('products', 'show', options)
+    const url = `${SPREE_URL_SERVERSIDE}/storefront/products/${
+      options.id
+    }?include=${encodeURIComponent(options.include)}`
+
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (!res.ok) {
+      throw res
+    }
+
+    const productApi: any = await res.json()
 
     const product: Product = {
-      id: res.data.id,
-      name: res.data.attributes.name,
-      description: res.data.attributes.description,
-      descriptionHtml: res.data.attributes.description,
-      slug: res.data.attributes.slug,
-      sku: res.data.attributes.sku,
-      path: res.data.attributes.slug,
+      id: productApi.data.id,
+      name: productApi.data.attributes.name,
+      description: productApi.data.attributes.description,
+      descriptionHtml: productApi.data.attributes.description,
+      slug: productApi.data.attributes.slug,
+      sku: productApi.data.attributes.sku,
+      path: productApi.data.attributes.slug,
       price: {
-        value: Number(res.data.attributes.price),
-        retailPrice: Number(res.data.attributes.price),
-        currencyCode: res.data.attributes.currency,
+        value: Number(productApi.data.attributes.price),
+        retailPrice: Number(productApi.data.attributes.price),
+        currencyCode: productApi.data.attributes.currency,
       },
-      images: res.data.relationships.images.data.map((image: any) => {
+      images: productApi.data.relationships.images.data.map((image: any) => {
         // find relationship data in included
-        const imageData = res.included.find(
+        const imageData = productApi.included.find(
           (i: any) => i.id === image.id && i.type === image.type
         )
 
@@ -121,10 +124,10 @@ export const getProduct = async (options: any): Promise<Product | any> => {
       }),
     }
 
-    const defaultVariant = res.included.reduce((acc: any, i: any) => {
+    const defaultVariant = productApi.included.reduce((acc: any, i: any) => {
       if (
         i.type !== 'variant' ||
-        i.id !== res.data.relationships.default_variant.data.id
+        i.id !== productApi.data.relationships.default_variant.data.id
       ) {
         return acc
       }
@@ -158,9 +161,22 @@ export const getProduct = async (options: any): Promise<Product | any> => {
 
 export const getPages = async (options: any = {}): Promise<Page[] | any> => {
   try {
-    const res = await spreeGet('pages', 'list', options)
+    const url = `${SPREE_URL_SERVERSIDE}/storefront/cms_pages`
 
-    const pages: Page[] = res.data.map((page: any) => {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (!res.ok) {
+      throw res
+    }
+
+    const pagesApi: any = await res.json()
+
+    const pages: Page[] = pagesApi.data.map((page: any) => {
       const id = page.id
       const name = page.attributes.title
       const url = `/${page.attributes.slug || ''}`
@@ -173,22 +189,6 @@ export const getPages = async (options: any = {}): Promise<Page[] | any> => {
     })
 
     return pages
-  } catch (error) {
-    console.log(error)
-    return error
-  }
-}
-
-export const getTaxons = async (options: any = {}) => {
-  try {
-    const res = await spreeClient.taxons.list(options)
-
-    if (!res.isSuccess()) {
-      throw res.fail()
-    }
-
-    const taxons = await res.success()
-    return taxons
   } catch (error) {
     console.log(error)
     return error
@@ -256,9 +256,7 @@ const formatCart = (cartApi: any): Cart => {
               )
 
               return {
-                url: `${
-                  process.env.NEXT_PUBLIC_SPREE_API_HOST || 'http://web:4000'
-                }${imageData.attributes.original_url}`,
+                url: `http://localhost:4000/${imageData.attributes.original_url}`,
                 alt: imageData.attributes.alt,
               }
             })[0],
@@ -274,13 +272,24 @@ export const createCart = async (
   options: CartOptionsBase
 ): Promise<Cart | any> => {
   try {
-    const res = await spreeClientSide.cart.create(options)
+    const url = `${SPREE_URL_CLIENTSIDE}/storefront/cart?include=${encodeURIComponent(
+      options.include
+    )}`
 
-    if (!res.isSuccess()) {
-      throw res.fail()
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Spree-Order-Token': options.order_token || '',
+      },
+    })
+
+    if (!res.ok) {
+      throw res
     }
 
-    const cartApi = await res.success()
+    const cartApi = await res.json()
+
     const cart = formatCart(cartApi)
     return cart
   } catch (error) {
@@ -297,13 +306,23 @@ export const getCart = async (
   }
 
   try {
-    const res = await spreeClientSide.cart.show(options)
+    const url = `${SPREE_URL_CLIENTSIDE}/storefront/cart?include=${encodeURIComponent(
+      options.include
+    )}`
 
-    if (!res.isSuccess()) {
-      throw res.fail()
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Spree-Order-Token': options.order_token || '',
+      },
+    })
+
+    if (!res.ok) {
+      throw res
     }
 
-    const cartApi = await res.success()
+    const cartApi = await res.json()
 
     const cart = formatCart(cartApi)
 
@@ -322,14 +341,23 @@ export const emptyCart = async (
   }
 
   try {
-    const res = await spreeClientSide.cart.emptyCart(options)
+    const url = `${SPREE_URL_CLIENTSIDE}/storefront/cart/empty?include=${encodeURIComponent(
+      options.include
+    )}`
 
-    if (!res.isSuccess()) {
-      throw res.fail()
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Spree-Order-Token': options.order_token || '',
+      },
+    })
+
+    if (!res.ok) {
+      throw res
     }
 
-    const cartApi = await res.success()
-
+    const cartApi = await res.json()
     const cart = formatCart(cartApi)
 
     return cart
@@ -347,11 +375,19 @@ export const deleteCart = async (
   }
 
   try {
-    const res = await spreeClientSide.cart.remove(options)
+    const url = `${SPREE_URL_CLIENTSIDE}/storefront/cart`
+    const res = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Spree-Order-Token': options.order_token || '',
+      },
+    })
 
-    if (!res.isSuccess()) {
-      throw res.fail()
+    if (!res.ok) {
+      throw res
     }
+
     // if successful deletion, no response is returned
     return true
   } catch (error) {
@@ -372,14 +408,27 @@ export const addToCart = async (options: CartAddItems): Promise<Cart | any> => {
   }
 
   try {
-    const res = await spreeClientSide.cart.addItem(options)
+    const url = `${SPREE_URL_CLIENTSIDE}/storefront/cart/add_item?include=${encodeURIComponent(
+      options.include
+    )}`
 
-    if (!res.isSuccess()) {
-      throw res.fail()
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Spree-Order-Token': options.order_token || '',
+      },
+      body: JSON.stringify({
+        variant_id: options.variant_id,
+        quantity: options.quantity,
+      }),
+    })
+
+    if (!res.ok) {
+      throw res
     }
 
-    const cartApi = await res.success()
-    console.log('cartApi from addToCart', cartApi)
+    const cartApi = await res.json()
     const cart = formatCart(cartApi)
     return cart
   } catch (error) {
@@ -400,15 +449,30 @@ export const removeFromCart = async (
   if (!options.order_token && !options.bearer_token) {
     return new Error('You must provide either an order_token or a bearer_token')
   }
-
   try {
-    const res = await spreeClientSide.cart.removeItem(options)
+    const url = `${SPREE_URL_CLIENTSIDE}/storefront/cart/remove_line_item/${
+      options.id
+    }?include=${encodeURIComponent(options.include)}`
 
-    if (!res.isSuccess()) {
-      throw res.fail()
+    const res = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Spree-Order-Token': options.order_token || '',
+      },
+    })
+
+    if (!res.ok) {
+      throw res
     }
 
-    const cartApi = await res.success()
+    const cartApi: any = await res.json()
+
+    // remove deleted line item from cart before formatting because apparently they don't know how to do that?
+    cartApi.data.relationships.line_items.data =
+      cartApi.data.relationships.line_items.data.filter(
+        (lineItem: any) => lineItem.id !== options.id
+      )
     const cart = formatCart(cartApi)
     return cart
   } catch (error) {
@@ -431,13 +495,27 @@ export const updateQuantity = async (
   }
 
   try {
-    const res = await spreeClientSide.cart.setQuantity(options)
+    const url = `${SPREE_URL_CLIENTSIDE}/storefront/cart/set_quantity?include=${encodeURIComponent(
+      options.include
+    )}`
 
-    if (!res.isSuccess()) {
-      throw res.fail()
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Spree-Order-Token': options.order_token || '',
+      },
+      body: JSON.stringify({
+        line_item_id: options.line_item_id,
+        quantity: options.quantity,
+      }),
+    })
+
+    if (!res.ok) {
+      throw res
     }
 
-    const cartApi = await res.success()
+    const cartApi = await res.json()
     const cart = formatCart(cartApi)
     return cart
   } catch (error) {
@@ -445,5 +523,3 @@ export const updateQuantity = async (
     return error
   }
 }
-
-export default spreeClientSide

@@ -17,12 +17,12 @@
 }
 
 .productImage {
-  position: absolute;
-  transform: scale(1.9);
+  /* position: absolute;
   width: 100%;
   height: 100%;
   left: 30% !important;
-  top: 30% !important;
+  top: 30% !important; */
+  transform: scale(1.3);
   z-index: 1;
 }
 

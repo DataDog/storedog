@@ -6,26 +6,24 @@ import CartItem from '../CartItem'
 import { Button, Text } from '@components/ui'
 import { useUI } from '@components/ui/context'
 import { Bag, Cross, Check } from '@components/icons'
-import useCart from '@framework/cart/use-cart'
-import usePrice from '@framework/product/use-price'
+import { useCart } from '@lib/CartContext'
+import usePrice from '@lib/hooks/usePrice'
 import SidebarLayout from '@components/common/SidebarLayout'
 
 const CartSidebarView: FC = () => {
   const { closeSidebar, setSidebarView } = useUI()
-  const { data, isLoading, isEmpty } = useCart()
-
-  data && console.log('cart data', data)
+  const { cart } = useCart()
 
   const { price: subTotal } = usePrice(
-    data && {
-      amount: Number(data.subtotalPrice),
-      currencyCode: data.currency.code,
+    cart && {
+      amount: Number(cart.subtotalPrice),
+      currencyCode: cart.currency.code,
     }
   )
   const { price: total } = usePrice(
-    data && {
-      amount: Number(data.totalPrice),
-      currencyCode: data.currency.code,
+    cart && {
+      amount: Number(cart.totalPrice),
+      currencyCode: cart.currency.code,
     }
   )
   const handleClose = () => closeSidebar()
@@ -37,11 +35,11 @@ const CartSidebarView: FC = () => {
   return (
     <SidebarLayout
       className={cn({
-        [s.empty]: error || success || isLoading || isEmpty,
+        [s.empty]: error || success || !cart,
       })}
       handleClose={handleClose}
     >
-      {isLoading || isEmpty ? (
+      {!cart || !cart.lineItems.length ? (
         <div className="flex-1 px-4 flex flex-col justify-center items-center">
           <span className="border border-dashed border-primary rounded-full flex items-center justify-center w-16 h-16 p-12 bg-secondary text-secondary">
             <Bag className="absolute" />
@@ -59,7 +57,7 @@ const CartSidebarView: FC = () => {
             <Cross width={24} height={24} />
           </span>
           <h2 className="pt-6 text-xl font-light text-center">
-            We couldn’t process the purchase. Please check your card information
+            We couldn't process the purchase. Please check your card information
             and try again.
           </h2>
         </div>
@@ -83,11 +81,11 @@ const CartSidebarView: FC = () => {
               </a>
             </Link>
             <ul className={s.lineItemsList}>
-              {data!.lineItems.map((item: any) => (
+              {cart?.lineItems.map((item: any) => (
                 <CartItem
                   key={item.id}
                   item={item}
-                  currencyCode={data!.currency.code}
+                  currencyCode={cart?.currency.code}
                 />
               ))}
             </ul>

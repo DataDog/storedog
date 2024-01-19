@@ -3,7 +3,6 @@ import cn from 'clsx'
 import Link from 'next/link'
 import s from './UserNav.module.css'
 import { Avatar } from '@components/common'
-// import useCart from '@framework/cart/use-cart';
 import { useUI } from '@components/ui/context'
 import { Heart, Bag, Menu } from '@components/icons'
 import CustomerMenuContent from './CustomerMenuContent'
@@ -32,6 +31,7 @@ const UserNav: React.FC<{
     openSidebar,
   } = useUI()
 
+  console.log('cart', cart)
   const itemsCount = cart?.lineItems?.reduce(countItem, 0) ?? 0
   const DropdownTrigger = isCustomerLoggedIn
     ? DropdownTriggerInst
@@ -59,7 +59,7 @@ const UserNav: React.FC<{
             </Button>
           </li>
         )}
-        {process.env.COMMERCE_WISHLIST_ENABLED && (
+        {/* {process.env.COMMERCE_WISHLIST_ENABLED && (
           <li className={s.item}>
             <Link href="/wishlist">
               <a
@@ -88,7 +88,7 @@ const UserNav: React.FC<{
               <CustomerMenuContent />
             </Dropdown>
           </li>
-        )}
+        )} */}
         <li className={s.mobileMenu}>
           <Button
             className={s.item}

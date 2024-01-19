@@ -4,10 +4,9 @@ import Image from 'next/image'
 import Link from 'next/link'
 import s from './CartItem.module.css'
 import { useUI } from '@components/ui/context'
-import type { LineItem } from '@commerce/types/cart'
-import usePrice from '@framework/product/use-price'
-import useUpdateItem from '@framework/cart/use-update-item'
-import useRemoveItem from '@framework/cart/use-remove-item'
+import type { CartLineItem } from '@customTypes/cart'
+import usePrice from '@lib/hooks/usePrice'
+import { useCart } from '@lib/CartContext'
 import Quantity from '@components/ui/Quantity'
 
 type ItemOption = {
@@ -26,14 +25,13 @@ const CartItem = ({
   ...rest
 }: {
   variant?: 'default' | 'display'
-  item: LineItem
+  item: CartLineItem
   currencyCode: string
 }) => {
+  const { cartRemove, cartUpdate } = useCart()
   const { closeSidebarIfPresent } = useUI()
   const [removing, setRemoving] = useState(false)
   const [quantity, setQuantity] = useState<number>(item.quantity)
-  const removeItem = useRemoveItem()
-  const updateItem = useUpdateItem({ item })
 
   const { price } = usePrice({
     amount: item.variant.price * item.quantity,
@@ -44,20 +42,29 @@ const CartItem = ({
   const handleChange = async ({
     target: { value },
   }: ChangeEvent<HTMLInputElement>) => {
-    setQuantity(Number(value))
-    await updateItem({ quantity: Number(value) })
+    try {
+      await cartUpdate(item.id, Number(value))
+      setQuantity(Number(value))
+    } catch (error) {
+      console.error(error)
+    }
   }
 
-  const increaseQuantity = async (n = 1) => {
-    const val = Number(quantity) + n
-    setQuantity(val)
-    await updateItem({ quantity: val })
+  const updateQuantity = async (n = 1) => {
+    try {
+      const val = Number(quantity) + n
+      await cartUpdate(item.id, val)
+      setQuantity(val)
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   const handleRemove = async () => {
     setRemoving(true)
     try {
-      await removeItem(item)
+      console.log('item.id', item.id)
+      await cartRemove(item.id)
     } catch (error) {
       setRemoving(false)
     }
@@ -93,7 +100,7 @@ const CartItem = ({
                 width={150}
                 height={150}
                 src={item.variant.image?.url || placeholderImg}
-                alt={item.variant.image?.altText || "Product Image"}
+                alt={item.variant.image?.altText || 'Product Image'}
                 unoptimized
               />
             </a>
@@ -110,6 +117,7 @@ const CartItem = ({
               </span>
             </a>
           </Link>
+          {/* TODO: determine if we want to use this */}
           {options && options.length > 0 && (
             <div className="flex items-center pb-1">
               {options.map((option: ItemOption, i: number) => (
@@ -148,8 +156,8 @@ const CartItem = ({
           value={quantity}
           handleRemove={handleRemove}
           handleChange={handleChange}
-          increase={() => increaseQuantity(1)}
-          decrease={() => increaseQuantity(-1)}
+          increase={() => updateQuantity(1)}
+          decrease={() => updateQuantity(-1)}
         />
       )}
     </li>
