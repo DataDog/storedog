@@ -78,7 +78,6 @@ const CartItem = ({
     if (item.quantity !== Number(quantity)) {
       setQuantity(item.quantity)
     }
-    // TODO: currently not including quantity in deps is intended, but we should
     // do this differently as it could break easily
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.quantity])
@@ -100,7 +99,7 @@ const CartItem = ({
                 width={150}
                 height={150}
                 src={item.variant.image?.url || placeholderImg}
-                alt={item.variant.image?.altText || 'Product Image'}
+                alt={item.variant.image?.alt || 'Product Image'}
                 unoptimized
               />
             </a>

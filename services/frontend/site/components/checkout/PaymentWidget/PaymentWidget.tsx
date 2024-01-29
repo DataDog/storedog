@@ -8,9 +8,6 @@ interface ComponentProps {
 }
 
 const PaymentWidget: FC<ComponentProps> = ({ onClick, isValid }) => {
-  /* Shipping Address
-  Only available with checkout set to true -
-  This means that the provider does offer checkout functionality. */
   return (
     <div onClick={onClick} className={s.root}>
       <div className="flex flex-1 items-center">
@@ -20,7 +17,10 @@ const PaymentWidget: FC<ComponentProps> = ({ onClick, isValid }) => {
         </span>
         {/* <span>VISA #### #### #### 2345</span> */}
       </div>
-      <div>{isValid ? <Check /> : <ChevronRight />}</div>
+      {/* <div>{isValid ? <Check /> : <ChevronRight />}</div> */}
+      <div>
+        <ChevronRight />
+      </div>
     </div>
   )
 }

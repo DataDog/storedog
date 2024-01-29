@@ -6,8 +6,7 @@ import { FC, useEffect } from 'react'
 import type { AppProps } from 'next/app'
 import { useRouter } from 'next/router'
 import { CommerceProvider } from '@framework'
-import useCart from '@framework/cart/use-cart'
-import { CartProvider, useCart as useCartNew } from '@lib/CartContext'
+import { CartProvider, useCart } from '@lib/CartContext'
 
 import { Head } from '@components/common'
 import { ManagedUIContext } from '@components/ui/context'
@@ -45,24 +44,24 @@ datadogRum.setUser(user)
 const Noop: FC = ({ children }) => <>{children}</>
 
 const CartWatcher = () => {
-  const { data: cartData } = useCart()
+  const { cart } = useCart()
   useEffect(() => {
-    if (!cartData) {
+    if (!cart) {
       return
     }
 
     datadogRum.addRumGlobalContext('cart_status', {
-      cartTotal: cartData.totalPrice,
-      lineItems: cartData.lineItems,
+      cartTotal: cart.totalPrice,
+      lineItems: cart.lineItems,
     })
 
     datadogRum.addAction('Cart Updated', {
-      cartTotal: cartData.totalPrice,
-      discounts: cartData.discounts,
-      id: cartData.id,
-      lineItems: cartData.lineItems,
+      cartTotal: cart.totalPrice,
+      discounts: cart.discounts,
+      id: cart.id,
+      lineItems: cart.lineItems,
     })
-  }, [cartData])
+  }, [cart])
 
   return null
 }
@@ -79,15 +78,13 @@ export default function MyApp({ Component, pageProps }: AppProps) {
   return (
     <>
       <CartProvider>
-        <CommerceProvider locale={locale}>
-          <Head />
-          <ManagedUIContext>
-            {/* <CartWatcher /> */}
-            <Layout pageProps={pageProps}>
-              <Component {...pageProps} />
-            </Layout>
-          </ManagedUIContext>
-        </CommerceProvider>
+        <Head />
+        <ManagedUIContext>
+          {/* <CartWatcher /> */}
+          <Layout pageProps={pageProps}>
+            <Component {...pageProps} />
+          </Layout>
+        </ManagedUIContext>
       </CartProvider>
     </>
   )

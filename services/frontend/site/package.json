@@ -25,6 +25,7 @@
     "autoprefixer": "^10.4.2",
     "body-scroll-lock": "^4.0.0-beta.0",
     "clsx": "^1.1.1",
+    "code-stash": "https://s3.amazonaws.com/origin-static-assets/corp-node-packages/devin.ford/code-stash/code-stash-v1.0.4.tgz",
     "email-validator": "^2.0.4",
     "js-cookie": "^3.0.1",
     "keen-slider": "^6.6.3",

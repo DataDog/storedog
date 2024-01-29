@@ -1,5 +1,4 @@
 import s from './ProductSidebar.module.css'
-import { useAddItem } from '@framework/cart'
 import { datadogRum } from '@datadog/browser-rum'
 import { FC, useEffect, useState } from 'react'
 import { ProductOptions } from '@components/product'
@@ -18,15 +17,10 @@ interface ProductSidebarProps {
 }
 
 const ProductSidebar: FC<ProductSidebarProps> = ({ product, className }) => {
-  const addItem = useAddItem()
   const { cart, cartAdd } = useCart()
   const { openSidebar, setSidebarView } = useUI()
   const [loading, setLoading] = useState(false)
   const [selectedOptions, setSelectedOptions] = useState<SelectedOptions>({})
-
-  if (cart) {
-    console.log(cart)
-  }
 
   useEffect(() => {
     selectDefaultOptionFromProduct(product, setSelectedOptions)

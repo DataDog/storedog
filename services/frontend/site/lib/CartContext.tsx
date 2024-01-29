@@ -21,8 +21,10 @@ type CartProviderProps = {
 }
 
 type CartContextType = {
-  cart: Cart | {}
+  cart: Cart | null
+  cartToken: string
   cartError: any
+  setCart: (cart: Cart | {}) => void
   cartInit: () => Promise<void>
   cartEmpty: () => Promise<void>
   cartDelete: () => Promise<void>
@@ -32,8 +34,10 @@ type CartContextType = {
 }
 
 export const CartContext = createContext<CartContextType>({
-  cart: {},
+  cart: null,
+  cartToken: null,
   cartError: null,
+  setCart: () => {},
   cartInit: async () => {},
   cartEmpty: async () => {},
   cartDelete: async () => {},
@@ -43,9 +47,9 @@ export const CartContext = createContext<CartContextType>({
 })
 
 export const CartProvider = ({ children }: CartProviderProps) => {
-  const [cart, setCart] = useState<Cart | {}>({})
+  const [cart, setCart] = useState<Cart | null>(null)
   const [cartToken, setCartToken] = useState<string | null>(null)
-  const [cartError, setCartError] = useState<any>({})
+  const [cartError, setCartError] = useState<any>()
 
   useEffect(() => {
     cartInit()
@@ -102,7 +106,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       if (cartToken) {
         await emptyCart({ order_token: cartToken })
       }
-      setCart([])
+      setCart(null)
       setCartToken(null)
       setCartError(null)
     } catch (error) {
@@ -117,7 +121,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       if (cartToken) {
         await deleteCart({ order_token: cartToken })
       }
-      setCart([])
+      setCart(null)
       setCartToken(null)
       setCartError(null)
     } catch (error) {
@@ -207,7 +211,9 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     <CartContext.Provider
       value={{
         cart,
+        cartToken,
         cartError,
+        setCart,
         cartInit,
         cartEmpty,
         cartDelete,
