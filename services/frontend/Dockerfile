@@ -1,5 +1,6 @@
-FROM node:16.18.0 as builder
+FROM node:16 as builder
 WORKDIR /storedog-app
+COPY package*.json ./
+RUN npm install
 COPY . .
 EXPOSE 3000
-RUN ["yarn","install", "--frozen-lockfile", "--network-timeout 1000000"]

@@ -29,12 +29,13 @@ services:
   frontend:
     build:
       context: ./services/frontend
-    command: yarn dev
+    command: npm run dev
     depends_on:
       - worker
       - dd-agent
     volumes:
-      - "./services/frontend/site:/storedog-app/site"
+      - ./services/frontend:/storedog-app
+      - /storedog-app/node_modules
     ports:
       - 3000:3000
     networks:
