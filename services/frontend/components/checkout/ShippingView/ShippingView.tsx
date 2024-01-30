@@ -12,7 +12,8 @@ import countryIsoCodes from '../../../config/country_iso_codes.json'
 
 const ShippingView: FC = () => {
   const { setSidebarView } = useUI()
-  const { addressFields, setAddressFields, addressError } = useCheckoutContext()
+  const { addressFields, setAddressFields, addressStatus } =
+    useCheckoutContext()
 
   const [formData, setFormData] = useState({
     firstname: addressFields.firstname || '',
@@ -41,25 +42,21 @@ const ShippingView: FC = () => {
   async function handleSubmit(event: React.ChangeEvent<any>) {
     event.preventDefault()
 
-    try {
-      const addressFields = {
-        firstname: formData.firstname,
-        lastname: formData.lastname,
-        email: formData.email,
-        address1: formData.address1,
-        address2: formData.address2,
-        zipcode: formData.zipcode,
-        city: formData.city,
-        phone: formData.phone,
-        state_name: formData.state_name,
-        country_iso: formData.country_iso,
-      }
-
-      setAddressFields(addressFields)
-      // setSidebarView('PAYMENT_VIEW')
-    } catch (error) {
-      console.log(error)
+    const addressFields = {
+      firstname: formData.firstname,
+      lastname: formData.lastname,
+      email: formData.email,
+      address1: formData.address1,
+      address2: formData.address2,
+      zipcode: formData.zipcode,
+      city: formData.city,
+      phone: formData.phone,
+      state_name: formData.state_name,
+      country_iso: formData.country_iso,
     }
+
+    setAddressFields(addressFields)
+    setSidebarView('CHECKOUT_VIEW')
   }
 
   return (
@@ -70,9 +67,9 @@ const ShippingView: FC = () => {
             Shipping
           </h2>
           {/* display error if there is one */}
-          {addressError && (
+          {addressStatus && (
             <div className="text-red border border-red p-3 mb-3">
-              {addressError}
+              {addressStatus}
             </div>
           )}
           <div>

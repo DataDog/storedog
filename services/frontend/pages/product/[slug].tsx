@@ -48,7 +48,6 @@ export default function Slug({
   headers,
   pages,
 }: InferGetStaticPropsType<typeof getServerSideProps>) {
-  console.log(product)
   const router = useRouter()
   const [loading, setLoading] = useState(true)
 

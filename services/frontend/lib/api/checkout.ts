@@ -1,4 +1,5 @@
 import fetch from 'node-fetch'
+import { formatCart } from '@lib/api/cart'
 import { CheckoutBase, UpdateCheckout } from '@customTypes/checkout'
 
 const SPREE_URL_CLIENTSIDE = 'http://localhost:4000/api/v2'
@@ -74,9 +75,11 @@ export const updateCheckout = async (options: UpdateCheckout): Promise<any> => {
       throw response
     }
 
-    const checkout = await response.json()
-    console.log('updated checkout', checkout)
-    return checkout
+    const updatedCart = await response.json()
+    console.log('updated cart with checkout', updatedCart)
+    // format cart
+    const cart = formatCart(updatedCart)
+    return cart
   } catch (error) {
     const errorMessage = await error.json()
     console.error(errorMessage.error)
@@ -85,11 +88,13 @@ export const updateCheckout = async (options: UpdateCheckout): Promise<any> => {
 }
 
 export const completeCheckout = async (options: CheckoutBase): Promise<any> => {
-  const url = `${SPREE_URL_CLIENTSIDE}/storefront/checkout/complete`
+  const url = `${SPREE_URL_CLIENTSIDE}/storefront/checkout/complete?include=${encodeURI(
+    'line_items,variants,variants.images,billing_address,shipping_address,user,payments,shipments,promotions'
+  )}`
 
   try {
     const response = await fetch(url, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: {
         'X-Spree-Order-Token': options.order_token || '',
       },
@@ -100,8 +105,9 @@ export const completeCheckout = async (options: CheckoutBase): Promise<any> => {
     }
 
     const checkout = await response.json()
+    const cart = formatCart(checkout)
     console.log('checkout', checkout)
-    return checkout
+    return cart
   } catch (error) {
     console.error(error)
     return error

@@ -27,12 +27,13 @@ export type State = {
 }
 
 type CheckoutContextType = State & {
-  shippingRate: ShippingRateAttributes
-  addressError: any
-  paymentError: any
+  shippingRate: any
+  addressStatus: any
+  paymentStatus: any
   setCardFields: (cardFields: PaymentAttributes) => void
   setAddressFields: (addressFields: AddressAttributes) => void
   clearCheckoutFields: () => void
+  handleCompleteCheckout: () => void
 }
 
 type Action =
@@ -103,10 +104,14 @@ const checkoutReducer = (state: State, action: Action): State => {
 export const CheckoutProvider: FC = (props) => {
   const [state, dispatch] = useReducer(checkoutReducer, initialState)
   const [paymentMethods, setPaymentMethods] = useState([])
-  const [shippingRate, setShippingRate] = useState({})
-  const [addressError, setAddressError] = useState(null)
-  const [paymentError, setPaymentError] = useState(null)
-  const { cartToken } = useCart()
+  const [shippingRate, setShippingRate] = useState<{
+    id: string
+    selected_rate_id: string
+    price: number
+  } | null>(null)
+  const [addressStatus, setAddressError] = useState(null)
+  const [paymentStatus, setPaymentError] = useState(null)
+  const { cart, cartToken, setCart } = useCart()
 
   // may not need to use this, yet, as we only offer dummy checkouts (but can open up to `check` or other sandboxed payment methods in the future)
   const getPaymentMethods = useCallback(async () => {
@@ -120,7 +125,13 @@ export const CheckoutProvider: FC = (props) => {
   const getShippingRates = useCallback(async () => {
     // get shipping rates
     const shippingRates = await listShippingRates({ order_token: cartToken })
-    setShippingRate(shippingRates.data[0])
+
+    setShippingRate({
+      id: shippingRates.data[0].id,
+      selected_rate_id:
+        shippingRates.data[0].relationships.selected_shipping_rate.data.id,
+      price: Number(shippingRates.data[0].attributes.final_price).toFixed(2),
+    })
   }, [cartToken, setShippingRate])
 
   const updateAddress = useCallback(
@@ -139,14 +150,27 @@ export const CheckoutProvider: FC = (props) => {
           throw updatedCheckout.error
         }
 
+        await getShippingRates()
+
         setAddressError(null)
       } catch (error) {
         console.log(error)
         setAddressError(error)
       }
     },
-    [cartToken]
+    [cartToken, getShippingRates]
   )
+
+  const handleCompleteCheckout = useCallback(async () => {
+    try {
+      const completedCheckout = await completeCheckout({
+        order_token: cartToken,
+      })
+      console.log(completedCheckout)
+    } catch (error) {
+      console.log(error)
+    }
+  }, [cartToken])
 
   const updatePayment = useCallback(
     async (payment: PaymentAttributes) => {
@@ -157,11 +181,33 @@ export const CheckoutProvider: FC = (props) => {
             payments_attributes: [payment],
           },
         })
-        console.log(updatedCheckout)
         setPaymentError(null)
       } catch (error) {
         console.log(error)
         setPaymentError(error)
+      }
+    },
+    [cartToken]
+  )
+
+  const updateShipping = useCallback(
+    async (shippingRate: ShippingRateAttributes) => {
+      try {
+        const updatedCheckout = await updateCheckout({
+          order_token: cartToken,
+          order: {
+            shipments_attributes: [
+              {
+                id: shippingRate.id,
+                selected_shipping_rate_id:
+                  shippingRate.selected_shipping_rate_id,
+              },
+            ],
+          },
+        })
+        console.log(updatedCheckout)
+      } catch (error) {
+        console.log(error)
       }
     },
     [cartToken]
@@ -197,10 +243,10 @@ export const CheckoutProvider: FC = (props) => {
   }, [cartToken, getPaymentMethods])
 
   useEffect(() => {
-    if (cartToken && addressFields.country_iso) {
+    if (cartToken && cart?.lineItems.length && addressFields.country_iso) {
       updateAddress(addressFields)
     }
-  }, [cartToken, addressFields, updateAddress])
+  }, [cart, cartToken, addressFields, updateAddress])
 
   useEffect(() => {
     if (cartToken && cardFields.source_attributes.number) {
@@ -208,26 +254,38 @@ export const CheckoutProvider: FC = (props) => {
     }
   }, [cartToken, cardFields, updatePayment])
 
+  useEffect(() => {
+    if (cartToken && shippingRate?.id) {
+      console.log(shippingRate)
+      updateShipping({
+        id: shippingRate.id,
+        selected_shipping_rate_id: shippingRate.selected_rate_id,
+      })
+    }
+  }, [cartToken, shippingRate, updateShipping])
+
   const value = useMemo(
     () => ({
       cardFields,
       addressFields,
       shippingRate,
-      addressError,
-      paymentError,
+      addressStatus,
+      paymentStatus,
       setCardFields,
       setAddressFields,
       clearCheckoutFields,
+      handleCompleteCheckout,
     }),
     [
       cardFields,
       addressFields,
       shippingRate,
-      addressError,
-      paymentError,
+      addressStatus,
+      paymentStatus,
       setCardFields,
       setAddressFields,
       clearCheckoutFields,
+      handleCompleteCheckout,
     ]
   )
 

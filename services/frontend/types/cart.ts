@@ -33,6 +33,7 @@ export type Cart = {
   id: string
   lineItems: CartLineItem[] | []
   lineItemsSubtotalPrice: number
+  shipTotal: number
   subtotalPrice: number
   taxesIncluded: boolean
   totalPrice: number

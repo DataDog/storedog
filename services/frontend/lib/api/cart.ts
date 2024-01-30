@@ -10,7 +10,7 @@ interface CartOptionsBase {
   [key: string]: any
 }
 
-const formatCart = (cartApi: any): Cart => {
+export const formatCart = (cartApi: any): Cart => {
   const cart: Cart = {
     createdAt: cartApi.data.attributes.created_at,
     currency: {
@@ -23,6 +23,7 @@ const formatCart = (cartApi: any): Cart => {
     subtotalPrice: Number(cartApi.data.attributes.item_total),
     lineItemsSubtotalPrice: Number(cartApi.data.attributes.item_total),
     taxesIncluded: false,
+    shipTotal: Number(cartApi.data.attributes.ship_total),
     totalPrice: Number(cartApi.data.attributes.total),
     lineItems: cartApi.data.relationships.line_items.data.map(
       (lineItem: any) => {

@@ -7,7 +7,6 @@ import { getPages } from '@lib/api/pages'
 import type { InferGetStaticPropsType } from 'next'
 import { Product } from '@customTypes/product'
 import { Page } from '@customTypes/page'
-import { useCart } from '@lib/CartContext'
 
 export async function getStaticProps() {
   const products: Product[] = await getProducts({
@@ -30,11 +29,6 @@ export default function Home({
   products,
   pages,
 }: InferGetStaticPropsType<typeof getStaticProps>) {
-  const { cart } = useCart()
-  if (cart) {
-    console.log(cart)
-  }
-
   return (
     <>
       <Grid variant="filled">

@@ -33,8 +33,8 @@ const CheckoutSidebarView: FC = () => {
   const [discountInput, setDiscountInput] = useState('')
   const { setSidebarView, closeSidebar } = useUI()
   const { cart: cartData, cartEmpty } = useCart()
-  const {} = useCheckoutContext()
-  const { clearCheckoutFields } = useCheckoutContext()
+  const { shippingRate, clearCheckoutFields, handleCompleteCheckout } =
+    useCheckoutContext()
 
   const { price: subTotal } = usePrice(
     cartData && {
@@ -62,11 +62,12 @@ const CheckoutSidebarView: FC = () => {
       //   id: cartData.id,
       //   lineItems: cartData.lineItems,
       // });
-
-      clearCheckoutFields()
+      const res = await handleCompleteCheckout()
+      console.log('res', res)
+      // clearCheckoutFields()
       setLoadingSubmit(false)
-      await cartEmpty()
-      setSidebarView('ORDER_CONFIRM_VIEW')
+      // await cartEmpty()
+      // setSidebarView('ORDER_CONFIRM_VIEW')
     } catch (e) {
       console.log(e)
       setLoadingSubmit(false)
@@ -176,7 +177,9 @@ const CheckoutSidebarView: FC = () => {
           </li>
           <li className="flex justify-between py-1">
             <span>Shipping</span>
-            <span className="font-bold tracking-wide">FREE</span>
+            <span className="font-bold tracking-wide">
+              {shippingRate?.price || 'TBD'}
+            </span>
           </li>
         </ul>
         <div className="flex justify-between border-t border-accent-2 py-3 font-bold mb-2">

@@ -79,7 +79,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
       <CartProvider>
         <Head />
         <ManagedUIContext>
-          {/* <CartWatcher /> */}
+          <CartWatcher />
           <Layout pageProps={pageProps}>
             <Component {...pageProps} />
           </Layout>

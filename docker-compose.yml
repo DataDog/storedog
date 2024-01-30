@@ -63,8 +63,17 @@ services:
     depends_on:
       - frontend
       - dd-agent
+    volumes:
+      - ./services/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./services/nginx/status.conf:/etc/nginx/conf.d/status.conf
     labels:
-      com.datadoghq.ad.logs: '[{"source": "nginx", "service": "nginx"}]'
+      com.datadog.tags.env: '${DD_ENV}'
+      com.datadog.tags.service: 'store-nginx'
+      com.datadog.tags.version: '1.21.4'
+      com.datadoghq.ad.logs: '[{"source": "nginx", "service": "webserver"}]'
+      com.datadoghq.ad.check_names: '["nginx"]'
+      com.datadoghq.ad.init_configs: '[{}]'
+      com.datadoghq.ad.instances: '[{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]'
     networks:
       - storedog-net
   postgres:
@@ -73,17 +82,23 @@ services:
     depends_on:
       - dd-agent
     environment:
-      POSTGRES_HOST_AUTH_METHOD: trust
+      - POSTGRES_HOST_AUTH_METHOD=trust
+      - POSTGRES_PASSWORD
+      - POSTGRES_USER
     volumes:
       - 'postgres:/var/lib/postgresql/data'
       - ./services/backend/db/restore:/docker-entrypoint-initdb.d
       - ./services/backend/db/postgresql.conf:/postgresql.conf
     labels:
+      com.datadoghq.tags.env: '${DD_ENV}'
+      com.datadoghq.tags.service: 'database'
+      com.datadoghq.tags.version: '13'
+      my.custom.label.team: 'database'
       com.datadoghq.ad.check_names: '["postgres"]'
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":5432,"username":"datadog","password":"datadog"}]'
-      com.datadoghq.ad.logs: '[{"source":"postgresql","service":"postgres", "auto_multi_line_detection": true}]'
-    command: [ "postgres", "-c", "config_file=/postgresql.conf" ]
+      com.datadoghq.ad.logs: '[{"source": "postgresql", "service": "postgres"}]'
+    # command: [ "postgres", "-c", "config_file=/postgresql.conf" ]
     networks:
       - storedog-net
   redis:
@@ -92,6 +107,15 @@ services:
       - dd-agent
     volumes:
       - 'redis:/data'
+    labels:
+      com.datadoghq.tags.env: '${DD_ENV}'
+      com.datadoghq.tags.service: 'redis'
+      com.datadoghq.tags.version: '6.2'
+      my.custom.label.team: 'database'
+      com.datadoghq.ad.check_names: '["redisdb"]'
+      com.datadoghq.ad.init_configs: '[{}]'
+      com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":6379}]'
+      com.datadoghq.ad.logs: '[{"source": "redis", "service": "redis"}]'
     networks:
       - storedog-net
   web:
@@ -101,6 +125,7 @@ services:
       - 'dd-agent'
     build:
       context: ./services/backend
+    command: wait-for-it postgres:5432 -- bundle exec rails s -b 0.0.0.0 -p 4000
     ports:
       - '${DOCKER_HOST_WEB_PORT:-4000}:4000'
     volumes:
@@ -110,12 +135,14 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - DB_HOST=postgres
       - DB_PORT=5432
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
       - DISABLE_SPRING=1
-      - DD_APPSEC_ENABLED=1
-      - DD_AGENT_HOST=172.43.0.1
-      - DD_VERSION="7"
+      - DD_APPSEC_ENABLED=true
+      - DD_AGENT_HOST=dd-agent
+      - DD_VERSION=${DD_VERSION-7}
       - DD_SERVICE=store-backend
-      - DD_ENV=dev
+      - DD_ENV=${DD_ENV-dev}
       - DD_LOGS_INJECTION=true
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
@@ -145,7 +172,6 @@ services:
       - DB_HOST=postgres
       - DB_PORT=5432
       - DISABLE_SPRING=1
-      - DD_APPSEC_ENABLED=1
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV-dev}
       - DD_SERVICE=store-worker
@@ -177,7 +203,7 @@ services:
       - DD_TRACE_ANALYTICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
       - DD_APPSEC_ENABLED=true
-      - DD_VERSION=7
+      - DD_VERSION=${DD_VERSION-7}
       - DD_SERVICE=store-ads
       - DD_ENV=${DD_ENV-dev}
     build:
