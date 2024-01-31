@@ -24,17 +24,30 @@ datadogRum.init({
   service: `${process.env.NEXT_PUBLIC_DD_SERVICE || 'frontend'}`,
   version: `${process.env.NEXT_PUBLIC_DD_VERSION || '1.0.0'}`,
   env: `${process.env.NEXT_PUBLIC_DD_ENV || 'development'}`,
-  sampleRate: 100,
-  trackInteractions: true,
-  trackFrustrations: true,
-  defaultPrivacyLevel: 'mask-user-input',
-  allowedTracingOrigins: [
-    /https:\/\/.*\.env.play.instruqt\.com/,
-    /^http:\/\/localhost(:\d+)?$/,
+  trackUserInteractions: true,
+  trackResources: true,
+  trackLongTasks: true,
+  sessionSampleRate: 100,
+  sessionReplaySampleRate: 100,
+  silentMultipleInit: true,
+  defaultPrivacyLevel: 'mask',
+  allowedTracingUrls: [
+    {
+      match: /https:\/\/.*\.env.play.instruqt\.com/,
+      propagatorTypes: ['tracecontext', 'datadog', 'b3', 'b3multi'],
+    },
+    {
+      match: /^http:\/\/localhost(:\d+)?$/,
+      propagatorTypes: ['tracecontext', 'datadog', 'b3', 'b3multi'],
+    },
+    {
+      match: /.*/,
+      propagatorTypes: ['tracecontext', 'datadog', 'b3', 'b3multi'],
+    },
   ],
+  traceSampleRate: 100,
+  allowUntrustedEvents: true,
 })
-
-datadogRum.startSessionReplayRecording()
 
 const user = userData[Math.floor(Math.random() * userData.length)]
 
@@ -49,7 +62,7 @@ const CartWatcher = () => {
       return
     }
 
-    datadogRum.addRumGlobalContext('cart_status', {
+    datadogRum.setGlobalContextProperty('cart_status', {
       cartTotal: cart.totalPrice,
       lineItems: cart.lineItems,
     })

@@ -16,10 +16,10 @@ const ShippingWidget: FC<ComponentProps> = ({ onClick, isValid }) => {
           Add Shipping Address
         </span>
       </div>
-      {/* <div>{isValid ? <Check /> : <ChevronRight />}</div> */}
-      <div>
+      <div>{isValid ? <Check /> : <ChevronRight />}</div>
+      {/* <div>
         <ChevronRight />
-      </div>
+      </div> */}
     </div>
   )
 }

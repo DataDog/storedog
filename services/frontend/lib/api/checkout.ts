@@ -109,7 +109,8 @@ export const completeCheckout = async (options: CheckoutBase): Promise<any> => {
     console.log('checkout', checkout)
     return cart
   } catch (error) {
+    const errorMessage = await error.json()
     console.error(error)
-    return error
+    return errorMessage
   }
 }

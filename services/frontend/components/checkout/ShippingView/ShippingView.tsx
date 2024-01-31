@@ -1,4 +1,4 @@
-import { FC, useState } from 'react'
+import { FC, useState, useEffect } from 'react'
 import cn from 'clsx'
 
 import Button from '@components/ui/Button'
@@ -67,9 +67,9 @@ const ShippingView: FC = () => {
             Shipping
           </h2>
           {/* display error if there is one */}
-          {addressStatus && (
+          {addressStatus.ok === false && (
             <div className="text-red border border-red p-3 mb-3">
-              {addressStatus}
+              {addressStatus.message}
             </div>
           )}
           <div>

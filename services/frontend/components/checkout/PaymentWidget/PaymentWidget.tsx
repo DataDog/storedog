@@ -17,10 +17,10 @@ const PaymentWidget: FC<ComponentProps> = ({ onClick, isValid }) => {
         </span>
         {/* <span>VISA #### #### #### 2345</span> */}
       </div>
-      {/* <div>{isValid ? <Check /> : <ChevronRight />}</div> */}
-      <div>
+      <div>{isValid ? <Check /> : <ChevronRight />}</div>
+      {/* <div>
         <ChevronRight />
-      </div>
+      </div> */}
     </div>
   )
 }

@@ -4,11 +4,11 @@ import { ProductCard } from '@components/product'
 import { Grid, Marquee, Hero } from '@components/ui'
 import { getProducts } from '@lib/api/products'
 import { getPages } from '@lib/api/pages'
-import type { InferGetStaticPropsType } from 'next'
+import type { InferGetServerSidePropsType } from 'next'
 import { Product } from '@customTypes/product'
 import { Page } from '@customTypes/page'
 
-export async function getStaticProps() {
+export async function getServerSideProps() {
   const products: Product[] = await getProducts({
     include: 'default_variant,images,primary_variant',
     page: 1,
@@ -21,14 +21,13 @@ export async function getStaticProps() {
       products,
       pages,
     },
-    revalidate: 60,
   }
 }
 
 export default function Home({
   products,
   pages,
-}: InferGetStaticPropsType<typeof getStaticProps>) {
+}: InferGetServerSidePropsType<typeof getServerSideProps>) {
   return (
     <>
       <Grid variant="filled">

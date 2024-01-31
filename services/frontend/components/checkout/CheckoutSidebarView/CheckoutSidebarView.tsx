@@ -15,26 +15,19 @@ import { useCheckoutContext } from '../context'
 
 import s from './CheckoutSidebarView.module.css'
 
-const onMockCheckout = async () => {
-  const sleep = (ms) => {
-    return new Promise((resolve) => {
-      setTimeout(resolve, ms)
-    })
-  }
-
-  await sleep(2000)
-  return new Promise((resolve, reject) => {
-    resolve(true)
-  })
-}
-
 const CheckoutSidebarView: FC = () => {
   const [loadingSubmit, setLoadingSubmit] = useState(false)
   const [discountInput, setDiscountInput] = useState('')
+  const [checkoutError, setCheckoutError] = useState(null)
   const { setSidebarView, closeSidebar } = useUI()
-  const { cart: cartData, cartEmpty } = useCart()
-  const { shippingRate, clearCheckoutFields, handleCompleteCheckout } =
-    useCheckoutContext()
+  const { cart: cartData, cartEmpty, cartInit } = useCart()
+  const {
+    shippingRate,
+    addressStatus,
+    paymentStatus,
+    clearCheckoutFields,
+    handleCompleteCheckout,
+  } = useCheckoutContext()
 
   const { price: subTotal } = usePrice(
     cartData && {
@@ -54,22 +47,26 @@ const CheckoutSidebarView: FC = () => {
       setLoadingSubmit(true)
       event.preventDefault()
 
-      // Custom RUM action
+      // // Custom RUM action
       // datadogRum.addAction('Successful Checkout', {
+      //   id: cartData.id,
       //   cartTotal: cartData.totalPrice,
       //   createdAt: cartData.createdAt,
       //   discounts: cartData.discounts,
-      //   id: cartData.id,
       //   lineItems: cartData.lineItems,
       // });
       const res = await handleCompleteCheckout()
-      console.log('res', res)
-      // clearCheckoutFields()
+      if (res.error) {
+        throw res.error
+      }
+      clearCheckoutFields()
       setLoadingSubmit(false)
-      // await cartEmpty()
-      // setSidebarView('ORDER_CONFIRM_VIEW')
+      await cartEmpty()
+      await cartInit()
+      setSidebarView('ORDER_CONFIRM_VIEW')
     } catch (e) {
       console.log(e)
+      setCheckoutError(e)
       setLoadingSubmit(false)
     }
   }
@@ -108,23 +105,24 @@ const CheckoutSidebarView: FC = () => {
       handleBack={() => setSidebarView('CART_VIEW')}
     >
       <div className="px-4 sm:px-6 flex-1">
-        <Link href="/cart">
-          <a>
-            <Text variant="sectionHeading">Checkout</Text>
-          </a>
-        </Link>
+        <Text variant="sectionHeading">Checkout</Text>
+        {checkoutError && (
+          <div className="text-red border border-red p-3 mb-3">
+            {checkoutError}
+          </div>
+        )}
 
         <PaymentWidget
-          // isValid={checkoutData?.hasPayment}
+          isValid={paymentStatus.ok || false}
           onClick={() => setSidebarView('PAYMENT_VIEW')}
         />
         <ShippingWidget
-          // isValid={checkoutData?.hasShipping}
+          isValid={addressStatus.ok || false}
           onClick={() => setSidebarView('SHIPPING_VIEW')}
         />
 
         <ul className={s.lineItemsList}>
-          {cartData!.lineItems.map((item: any) => (
+          {cartData?.lineItems.map((item: any) => (
             <CartItem
               key={item.id}
               item={item}
@@ -194,6 +192,7 @@ const CheckoutSidebarView: FC = () => {
             loading={loadingSubmit}
             className="confirm-purchase-btn"
             data-dd-action-name="Confirm Purchase"
+            disabled={addressStatus.ok && paymentStatus.ok ? false : true}
           >
             Confirm Purchase
           </Button>

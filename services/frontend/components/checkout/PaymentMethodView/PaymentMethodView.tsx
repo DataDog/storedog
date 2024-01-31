@@ -1,4 +1,4 @@
-import { FC, useState } from 'react'
+import { FC, useState, useEffect } from 'react'
 import cn from 'clsx'
 import { Button, Text } from '@components/ui'
 import { useUI } from '@components/ui/context'
@@ -23,7 +23,6 @@ const PaymentMethodView: FC = () => {
     const target = event.target
     const value = target.value
     const name = target.name
-
     setFormData((prevFormData) => ({
       ...prevFormData,
       [name]: value,
@@ -46,7 +45,6 @@ const PaymentMethodView: FC = () => {
     }
 
     setCardFields(cardFields)
-
     setSidebarView('CHECKOUT_VIEW')
   }
 
@@ -55,36 +53,38 @@ const PaymentMethodView: FC = () => {
       <SidebarLayout handleBack={() => setSidebarView('CHECKOUT_VIEW')}>
         <div className="px-4 sm:px-6 flex-1">
           <Text variant="sectionHeading"> Payment Method</Text>
+          {paymentStatus?.ok === false && (
+            <div className="text-red border border-red p-3 mb-3">
+              {paymentStatus.message}
+            </div>
+          )}
           <div>
             <div className={s.fieldset}>
               <label className={s.label}>Cardholder Name</label>
               <input
-                name="cardHolder"
+                name="name"
                 className={s.input}
                 value={formData.name}
                 onChange={handleChange}
-                placeholder="Jade Angelou"
               />
             </div>
             <div className="grid gap-3 grid-flow-row grid-cols-12">
               <div className={cn(s.fieldset, 'col-span-9')}>
                 <label className={s.label}>Card Number</label>
                 <input
-                  name="cardNumber"
+                  name="number"
                   className={s.input}
                   value={formData.number}
                   onChange={handleChange}
-                  placeholder="4111111111111111"
                 />
               </div>
               <div className={cn(s.fieldset, 'col-span-3')}>
                 <label className={s.label}>CVC</label>
                 <input
-                  name="cardCvc"
+                  name="verification_value"
                   className={s.input}
                   value={formData.verification_value}
                   onChange={handleChange}
-                  placeholder="123"
                 />
               </div>
             </div>
@@ -92,21 +92,19 @@ const PaymentMethodView: FC = () => {
               <div className={cn(s.fieldset, 'col-span-6')}>
                 <label className={s.label}>Expiry Month (mm)</label>
                 <input
-                  name="cardExpiryMonth"
+                  name="month"
                   className={s.input}
                   value={formData.month}
                   onChange={handleChange}
-                  placeholder="01"
                 />
               </div>
               <div className={cn(s.fieldset, 'col-span-6')}>
                 <label className={s.label}>Expiry Year (yyyy)</label>
                 <input
-                  name="cardExpireDate"
+                  name="year"
                   className={s.input}
                   value={formData.year}
                   onChange={handleChange}
-                  placeholder="2027"
                 />
               </div>
             </div>

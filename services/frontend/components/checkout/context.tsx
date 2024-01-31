@@ -28,8 +28,14 @@ export type State = {
 
 type CheckoutContextType = State & {
   shippingRate: any
-  addressStatus: any
-  paymentStatus: any
+  addressStatus: {
+    ok: boolean | null
+    message: any
+  }
+  paymentStatus: {
+    ok: boolean | null
+    message: any
+  }
   setCardFields: (cardFields: PaymentAttributes) => void
   setAddressFields: (addressFields: AddressAttributes) => void
   clearCheckoutFields: () => void
@@ -109,11 +115,10 @@ export const CheckoutProvider: FC = (props) => {
     selected_rate_id: string
     price: number
   } | null>(null)
-  const [addressStatus, setAddressError] = useState(null)
-  const [paymentStatus, setPaymentError] = useState(null)
+  const [addressStatus, setAddressError] = useState({ ok: null, message: null })
+  const [paymentStatus, setPaymentError] = useState({ ok: null, message: null })
   const { cart, cartToken, setCart } = useCart()
 
-  // may not need to use this, yet, as we only offer dummy checkouts (but can open up to `check` or other sandboxed payment methods in the future)
   const getPaymentMethods = useCallback(async () => {
     // get payment methods
     const paymentMethods = await listPaymentMethods({ order_token: cartToken })
@@ -152,10 +157,10 @@ export const CheckoutProvider: FC = (props) => {
 
         await getShippingRates()
 
-        setAddressError(null)
+        setAddressError({ ok: true, message: null })
       } catch (error) {
         console.log(error)
-        setAddressError(error)
+        setAddressError({ ok: false, message: error })
       }
     },
     [cartToken, getShippingRates]
@@ -166,7 +171,7 @@ export const CheckoutProvider: FC = (props) => {
       const completedCheckout = await completeCheckout({
         order_token: cartToken,
       })
-      console.log(completedCheckout)
+      return completedCheckout
     } catch (error) {
       console.log(error)
     }
@@ -181,10 +186,10 @@ export const CheckoutProvider: FC = (props) => {
             payments_attributes: [payment],
           },
         })
-        setPaymentError(null)
+        setPaymentError({ ok: true, message: null })
       } catch (error) {
         console.log(error)
-        setPaymentError(error)
+        setPaymentError({ ok: false, message: error })
       }
     },
     [cartToken]

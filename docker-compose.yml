@@ -78,6 +78,7 @@ services:
       - storedog-net
   postgres:
     image: postgres:13-alpine
+    command: [ "postgres", "-c", "config_file=/postgresql.conf" ]
     restart: always
     depends_on:
       - dd-agent
@@ -93,12 +94,11 @@ services:
       com.datadoghq.tags.env: '${DD_ENV}'
       com.datadoghq.tags.service: 'database'
       com.datadoghq.tags.version: '13'
-      my.custom.label.team: 'database'
       com.datadoghq.ad.check_names: '["postgres"]'
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":5432,"username":"datadog","password":"datadog"}]'
       com.datadoghq.ad.logs: '[{"source": "postgresql", "service": "postgres"}]'
-    # command: [ "postgres", "-c", "config_file=/postgresql.conf" ]
+      my.custom.label.team: 'database'
     networks:
       - storedog-net
   redis:
@@ -111,11 +111,11 @@ services:
       com.datadoghq.tags.env: '${DD_ENV}'
       com.datadoghq.tags.service: 'redis'
       com.datadoghq.tags.version: '6.2'
-      my.custom.label.team: 'database'
       com.datadoghq.ad.check_names: '["redisdb"]'
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":6379}]'
       com.datadoghq.ad.logs: '[{"source": "redis", "service": "redis"}]'
+      my.custom.label.team: 'database'
     networks:
       - storedog-net
   web:
@@ -189,6 +189,9 @@ services:
       com.datadoghq.tags.version: '1.0.9'
       my.custom.label.team: 'backend'
   ads:
+    build:
+      context: ./services/ads/python
+    command: flask run --port=${ADS_PORT} --host=0.0.0.0 # If using any other port besides the default 9292, overriding the CMD is required
     depends_on:
       - postgres
       - dd-agent
@@ -206,9 +209,6 @@ services:
       - DD_VERSION=${DD_VERSION-7}
       - DD_SERVICE=store-ads
       - DD_ENV=${DD_ENV-dev}
-    build:
-      context: ./services/ads/python
-    command: flask run --port=${ADS_PORT} --host=0.0.0.0 # If using any other port besides the default 9292, overriding the CMD is required
     volumes:
       - ./services/ads/python:/app
     ports:
@@ -316,17 +316,24 @@ services:
     depends_on:
       - dd-agent
     environment:
-      - DD_SERVICE=ads-java
+      - DD_SERVICE=store-ads-java
       - DD_AGENT_HOST=dd-agent
       - DD_LOGS_INJECTION=true
       - DD_TRACE_ANALYTICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
+      - DD_TRACE_SAMPLE_RATE=1
+      - DD_VERSION=${DD_VERSION-7}
+      - DD_ENV=${DD_ENV-dev}
     ports:
       - "3030:8080"
     networks:
       - storedog-net
     labels:
       com.datadoghq.ad.logs: '[{"source": "java", "service": "ads-java",  "auto_multi_line_detection": true}]'
+      com.datadoghq.tags.env: '${DD_ENV-dev}'
+      com.datadoghq.tags.service: 'store-ads-java'
+      com.datadoghq.tags.version: '${DD_VERSION-7}'
+      my.custom.label.team: 'advertisements'
   attackbox:
     build:
       context: ./services/attackbox

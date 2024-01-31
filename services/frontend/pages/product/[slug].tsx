@@ -27,7 +27,7 @@ export async function getServerSideProps({
 
   const relatedProducts = await getProducts({
     include: 'images',
-    per_page: 5,
+    per_page: 4,
   })
 
   const pages = await getPages()
