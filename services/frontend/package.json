@@ -19,7 +19,7 @@
     "autoprefixer": "^10.4.2",
     "body-scroll-lock": "^4.0.0-beta.0",
     "clsx": "^1.1.1",
-    "code-stash": "https://origin-static-assets.s3.amazonaws.com/corp-node-packages/master/code-stash-v1.0.3.tgz",
+    "code-stash": "https://origin-static-assets.s3.amazonaws.com/corp-node-packages/master/code-stash-v1.0.5.tgz",
     "dd-trace": "^4.0.0",
     "email-validator": "^2.0.4",
     "js-cookie": "^3.0.1",

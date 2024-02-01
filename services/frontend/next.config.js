@@ -14,6 +14,13 @@ module.exports = {
     locales: ['en-US', 'es'],
     defaultLocale: 'en-US',
   },
+  exportPathMap: function () {
+    return {
+      '/': { page: '/' },
+      // '/blog/nextjs': { page: '/blog/[post]/comment/[id]' },        // wrong
+      // '/blog/nextjs/comment/1': { page: '/blog/[post]/comment/[id]' }, // correct
+    }
+  },
 }
 
 // Don't delete this console log, useful to see the commerce config in Vercel deployments
