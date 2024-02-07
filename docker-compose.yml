@@ -248,12 +248,7 @@ services:
     ports:
       - '${ADS_PORT}:${ADS_PORT}'
     labels:
-      com.datadoghq.ad.logs:
-        '[{"source": "python", "service": "store-ads",  "log_processing_rules": [{
-        "type": "multi_line",
-        "name": "log_start_with_date",
-        "pattern" : "\d{3}.\d{2}.\d{1}.\d{1}"
-        }] }]'
+      com.datadoghq.ad.logs: '[{"source": "python", "service": "store-ads" }]'
       com.datadoghq.tags.env: '${DD_ENV}'
       com.datadoghq.tags.service: 'store-ads'
       com.datadoghq.tags.version: '1.0.9'
