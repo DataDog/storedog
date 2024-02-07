@@ -3,18 +3,24 @@ import Ad from '@components/common/Ad'
 import { ProductCard } from '@components/product'
 import { Grid, Marquee, Hero } from '@components/ui'
 import { getProducts } from '@lib/api/products'
-import { getPages } from '@lib/api/pages'
 import type { InferGetServerSidePropsType } from 'next'
 import { Product } from '@customTypes/product'
 import { Page } from '@customTypes/page'
 
 export async function getServerSideProps() {
+  const baseUrl =
+    process.env.NODE_ENV === 'development'
+      ? 'http://localhost:3000/api'
+      : '/api'
+
   const products: Product[] = await getProducts({
     include: 'default_variant,images,primary_variant',
     page: 1,
   })
 
-  const pages: Page[] = await getPages()
+  const pages: Page[] = await fetch(`${baseUrl}/pages`).then((res) =>
+    res.json()
+  )
 
   return {
     props: {

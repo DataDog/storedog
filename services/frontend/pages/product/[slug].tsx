@@ -42,7 +42,7 @@ export async function getServerSideProps({
   }
 }
 
-export default function Slug({
+export default function ProductPage({
   product,
   relatedProducts,
   headers,
@@ -75,4 +75,4 @@ export default function Slug({
   )
 }
 
-Slug.Layout = Layout
+ProductPage.Layout = Layout

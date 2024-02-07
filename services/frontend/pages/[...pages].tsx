@@ -1,21 +1,25 @@
-import type { GetStaticPathsContext, GetStaticPropsContext } from 'next'
+import type {
+  InferGetServerSidePropsType,
+  GetServerSidePropsContext,
+} from 'next'
 import { Text } from '@components/ui'
 import { Layout } from '@components/common'
-import getSlug from '@lib/get-slug'
 import { useRouter } from 'next/router'
-import { getPages, getPage } from '@lib/api/pages'
 import { Page } from '@customTypes/page'
 
-export async function getStaticProps({
+export async function getServerSideProps({
   params,
-}: GetStaticPropsContext<{ pages: string[] }>) {
-  if (!params) {
-    throw new Error(`Missing params`)
-  }
+}: GetServerSidePropsContext<{ pages: string }>) {
+  const baseUrl =
+    process.env.NODE_ENV === 'development'
+      ? 'http://localhost:3000/api'
+      : '/api'
+  const slug = params?.pages as string
 
-  const slug = params.pages.join('/')
-  const page = await getPage(slug)
-  const pages = await getPages()
+  const page = await fetch(`${baseUrl}/pages/${slug}`).then((res) => res.json())
+
+  // get all pages for menu
+  const pages = await fetch(`${baseUrl}/pages`).then((res) => res.json())
 
   if (!page) {
     return {
@@ -25,26 +29,14 @@ export async function getStaticProps({
 
   return {
     props: {
-      pages,
       page,
+      pages,
     },
-    revalidate: 60,
-  }
-}
-
-export async function getStaticPaths({}: GetStaticPathsContext) {
-  const pages = await getPages()
-  const paths = pages.map((page: Page) => ({
-    params: { pages: [getSlug(page.url)] },
-  }))
-
-  return {
-    paths,
-    fallback: 'blocking',
   }
 }
 
 export default function Pages({ page }: { page: Page }) {
+  console.log(page)
   const router = useRouter()
 
   return router.isFallback ? (

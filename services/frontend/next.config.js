@@ -1,4 +1,5 @@
 module.exports = {
+  runtime: 'nodejs',
   eslint: {
     // Warning: This allows production builds to successfully complete even if
     // your project has ESLint errors.
@@ -13,13 +14,6 @@ module.exports = {
   i18n: {
     locales: ['en-US', 'es'],
     defaultLocale: 'en-US',
-  },
-  exportPathMap: function () {
-    return {
-      '/': { page: '/' },
-      // '/blog/nextjs': { page: '/blog/[post]/comment/[id]' },        // wrong
-      // '/blog/nextjs/comment/1': { page: '/blog/[post]/comment/[id]' }, // correct
-    }
   },
 }
 

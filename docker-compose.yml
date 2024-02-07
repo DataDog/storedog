@@ -17,16 +17,13 @@ services:
       - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
       - DD_DBM_PROPAGATION_MODE=full
     ports:
-      - "8126:8126/tcp"
-      - "8125:8125/udp"
+      - '8126:8126/tcp'
+      - '8125:8125/udp'
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /proc/:/host/proc/:ro
       - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
       - ./services/datadog-agent/postgres/dd-agent-conf.yaml:/conf.d/postgres.d/conf.yaml
-    networks:
-      storedog-net:
-        ipv4_address: 172.43.0.4
   frontend:
     build:
       context: ./services/frontend
@@ -39,8 +36,6 @@ services:
       - /storedog-app/node_modules
     ports:
       - 3000:3000
-    networks:
-      - storedog-net
     environment:
       - DD_VERSION=${DD_VERSION-7}
       - DD_SERVICE=store-frontend
@@ -60,11 +55,12 @@ services:
       context: ./services/nginx
     restart: always
     ports:
-      - "80:80"
+      - '80:80'
     depends_on:
       - frontend
       - dd-agent
     volumes:
+      - ./services/nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./services/nginx/default.conf:/etc/nginx/conf.d/default.conf
       - ./services/nginx/status.conf:/etc/nginx/conf.d/status.conf
     labels:
@@ -75,11 +71,9 @@ services:
       com.datadoghq.ad.check_names: '["nginx"]'
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]'
-    networks:
-      - storedog-net
   postgres:
     image: postgres:13-alpine
-    command: [ "postgres", "-c", "config_file=/postgresql.conf" ]
+    command: ['postgres', '-c', 'config_file=/postgresql.conf']
     restart: always
     depends_on:
       - dd-agent
@@ -106,49 +100,47 @@ services:
       com.datadoghq.ad.check_names: '["postgres", "postgres"]'
       com.datadoghq.ad.init_configs: '[{}, {}]'
       com.datadoghq.ad.instances: '[
-          {
-            "dbm":true,
-            "host":"%%host%%", 
-            "port":5432, 
-            "username":"datadog", 
-            "password":"datadog",
-            "relations": [{
-              "relation_name": "advertisement",
-              "relation_name": "discount",
-              "relation_name": "items",
-              "relation_name": "preorder_items",
-              "relation_name": "influencer"
-            }],
-            "query_samples": {
-              "enabled": true,
-              "explain_parameterized_queries": true
-            },
-            "max_relations": 400,
-            "collect_function_metrics": true,
-            "collection_interval": 1
-          },
-          {
-            "dbm":true,
-            "host":"%%host%%", 
-            "port":5432, 
-            "username":"datadog", 
-            "password":"datadog",
-            "dbname": "spree_starter_development",
-            "relations": [{
-              "relation_regex": "spree_.*"
-            }],
-            "query_samples": {
-              "enabled": true,
-              "explain_parameterized_queries": true
-            },
-            "max_relations": 400,
-            "collect_function_metrics": true,
-            "collection_interval": 1
-          }]'
+        {
+        "dbm":true,
+        "host":"%%host%%",
+        "port":5432,
+        "username":"datadog",
+        "password":"datadog",
+        "relations": [{
+        "relation_name": "advertisement",
+        "relation_name": "discount",
+        "relation_name": "items",
+        "relation_name": "preorder_items",
+        "relation_name": "influencer"
+        }],
+        "query_samples": {
+        "enabled": true,
+        "explain_parameterized_queries": true
+        },
+        "max_relations": 400,
+        "collect_function_metrics": true,
+        "collection_interval": 1
+        },
+        {
+        "dbm":true,
+        "host":"%%host%%",
+        "port":5432,
+        "username":"datadog",
+        "password":"datadog",
+        "dbname": "spree_starter_development",
+        "relations": [{
+        "relation_regex": "spree_.*"
+        }],
+        "query_samples": {
+        "enabled": true,
+        "explain_parameterized_queries": true
+        },
+        "max_relations": 400,
+        "collect_function_metrics": true,
+        "collection_interval": 1
+        }]'
       com.datadoghq.ad.logs: '[{"source": "postgresql", "service": "postgres"}]'
       my.custom.label.team: 'database'
-    networks:
-      - storedog-net
   redis:
     image: redis:6.2-alpine
     depends_on:
@@ -164,8 +156,6 @@ services:
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":6379}]'
       com.datadoghq.ad.logs: '[{"source": "redis", "service": "redis"}]'
       my.custom.label.team: 'database'
-    networks:
-      - storedog-net
   web:
     depends_on:
       - 'postgres'
@@ -194,8 +184,6 @@ services:
       - DD_LOGS_INJECTION=true
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
-    networks:
-      - storedog-net
     labels:
       com.datadoghq.ad.logs: '[{"source": "ruby", "service": "store-backend",  "auto_multi_line_detection":true }]'
       com.datadoghq.tags.env: '${DD_ENV}'
@@ -228,8 +216,6 @@ services:
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
       - DD_APPSEC_ENABLED=true
-    networks:
-      - storedog-net
     labels:
       com.datadoghq.ad.logs: '[{"source": "ruby", "service": "storedog-worker",  "auto_multi_line_detection":true }]'
       com.datadoghq.tags.env: '${DD_ENV}'
@@ -260,11 +246,14 @@ services:
     volumes:
       - ./services/ads/python:/app
     ports:
-      - "${ADS_PORT}:${ADS_PORT}"
-    networks:
-      - storedog-net
+      - '${ADS_PORT}:${ADS_PORT}'
     labels:
-      com.datadoghq.ad.logs: '[{"source": "python", "service": "store-ads"}]'
+      com.datadoghq.ad.logs:
+        '[{"source": "python", "service": "store-ads",  "log_processing_rules": [{
+        "type": "multi_line",
+        "name": "log_start_with_date",
+        "pattern" : "\d{3}.\d{2}.\d{1}.\d{1}"
+        }] }]'
       com.datadoghq.tags.env: '${DD_ENV}'
       com.datadoghq.tags.service: 'store-ads'
       com.datadoghq.tags.version: '1.0.9'
@@ -293,10 +282,8 @@ services:
     volumes:
       - ./services/discounts:/app
     ports:
-      - "${DISCOUNTS_PORT}:${DISCOUNTS_PORT}"
-      - "22:22"
-    networks:
-      - storedog-net
+      - '${DISCOUNTS_PORT}:${DISCOUNTS_PORT}'
+      - '22:22'
     labels:
       com.datadoghq.ad.logs: '[{"source": "python", "service": "store-discounts"}]'
       com.datadoghq.tags.env: '${DD_ENV-dev}'
@@ -325,11 +312,10 @@ services:
       context: ./services/auth
     command: gunicorn --bind 0.0.0.0:${AUTH_PORT} auth:app # If using any other port besides the default 8282, overriding the CMD is required
     volumes:
-      - "./services/auth:/app"
+      - './services/auth:/app'
     ports:
-      - "${AUTH_PORT}:${AUTH_PORT}"
-    networks:
-      - storedog-net
+      - '${AUTH_PORT}:${AUTH_PORT}'
+
   dbm:
     depends_on:
       - postgres
@@ -352,11 +338,9 @@ services:
       context: ./services/dbm
     command: gunicorn --bind 0.0.0.0:${DBM_PORT} dbm:app # If using any other port besides the default 8282, overriding the CMD is required
     volumes:
-      - "./services/dbm:/app"
+      - './services/dbm:/app'
     ports:
-      - "${DBM_PORT}:${DBM_PORT}"
-    networks:
-      - storedog-net
+      - '${DBM_PORT}:${DBM_PORT}'
 
   ads-java:
     build:
@@ -373,9 +357,7 @@ services:
       - DD_VERSION=${DD_VERSION-7}
       - DD_ENV=${DD_ENV-dev}
     ports:
-      - "3030:8080"
-    networks:
-      - storedog-net
+      - '3030:8080'
     labels:
       com.datadoghq.ad.logs: '[{"source": "java", "service": "ads-java",  "auto_multi_line_detection": true}]'
       com.datadoghq.tags.env: '${DD_ENV-dev}'
@@ -400,8 +382,6 @@ services:
       - web
       - discounts
       - dd-agent
-    networks:
-      - storedog-net
   # puppeteer:
   #   image: buildkite/puppeteer:10.0.0
   #   platform: linux/amd64
@@ -422,11 +402,3 @@ services:
 volumes:
   redis:
   postgres:
-
-
-networks:
-  storedog-net:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.43.0.0/16
