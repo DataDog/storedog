@@ -17,7 +17,7 @@ interface ProductSidebarProps {
 }
 
 const ProductSidebar: FC<ProductSidebarProps> = ({ product, className }) => {
-  const { cart, cartAdd } = useCart()
+  const { cart, cartAdd, cartError } = useCart()
   const { openSidebar, setSidebarView } = useUI()
   const [loading, setLoading] = useState(false)
   const [selectedOptions, setSelectedOptions] = useState<SelectedOptions>({})
@@ -30,22 +30,31 @@ const ProductSidebar: FC<ProductSidebarProps> = ({ product, className }) => {
   const addToCart = async () => {
     setLoading(true)
     try {
-      await cartAdd(String(variant ? variant.id : product.variants[0]?.id), 1)
-      // datadogRum.addAction('Product Added to Cart', {
-      //   cartTotal: cartData.totalPrice,
-      //   product: {
-      //     name: product.name,
-      //     sku: product.sku,
-      //     id: product.id,
-      //     price: product.price.value,
-      //     slug: product.slug,
-      //   },
-      // })
+      const cartRes = await cartAdd(
+        String(variant ? variant.id : product.variants[0]?.id),
+        1
+      )
 
-      // setSidebarView('CART_VIEW')
-      // openSidebar()
+      if (cartRes.error) {
+        throw new Error(cartRes.error)
+      }
+
+      datadogRum.addAction('Product Added to Cart', {
+        cartTotal: cart.totalPrice,
+        product: {
+          name: product.name,
+          sku: product.sku,
+          id: product.id,
+          price: product.price.value,
+          slug: product.slug,
+        },
+      })
+
+      setSidebarView('CART_VIEW')
+      openSidebar()
       setLoading(false)
     } catch (err) {
+      console.error(err)
       setLoading(false)
     }
   }
@@ -67,21 +76,25 @@ const ProductSidebar: FC<ProductSidebarProps> = ({ product, className }) => {
         <Rating value={4} />
         <div className="text-accent-6 pr-1 font-medium text-sm">36 reviews</div>
       </div>
+      {cartError && (
+        <div className="text-red border border-red p-1 mb-2">
+          {cartError.message}
+        </div>
+      )}
       <div>
-          <Button
-            aria-label="Add to Cart"
-            type="button"
-            id="add-to-cart-button"
-            className={s.button}
-            onClick={addToCart}
-            loading={loading}
-            disabled={variant?.availableForSale === false}
-          >
-            {variant?.availableForSale === false
-              ? 'Not Available'
-              : 'Add To Cart'}
-          </Button>
-
+        <Button
+          aria-label="Add to Cart"
+          type="button"
+          id="add-to-cart-button"
+          className={s.button}
+          onClick={addToCart}
+          loading={loading}
+          disabled={variant?.availableForSale === false}
+        >
+          {variant?.availableForSale === false
+            ? 'Not Available'
+            : 'Add To Cart'}
+        </Button>
       </div>
       <div className="mt-6">
         <Collapse title="Details">This product is not for resale!</Collapse>

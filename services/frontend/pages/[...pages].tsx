@@ -1,7 +1,4 @@
-import type {
-  InferGetServerSidePropsType,
-  GetServerSidePropsContext,
-} from 'next'
+import type { GetServerSidePropsContext } from 'next'
 import { Text } from '@components/ui'
 import { Layout } from '@components/common'
 import { useRouter } from 'next/router'
@@ -36,7 +33,6 @@ export async function getServerSideProps({
 }
 
 export default function Pages({ page }: { page: Page }) {
-  console.log(page)
   const router = useRouter()
 
   return router.isFallback ? (

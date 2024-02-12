@@ -47,18 +47,19 @@ const CheckoutSidebarView: FC = () => {
       setLoadingSubmit(true)
       event.preventDefault()
 
-      // // Custom RUM action
-      // datadogRum.addAction('Successful Checkout', {
-      //   id: cartData.id,
-      //   cartTotal: cartData.totalPrice,
-      //   createdAt: cartData.createdAt,
-      //   discounts: cartData.discounts,
-      //   lineItems: cartData.lineItems,
-      // });
       const res = await handleCompleteCheckout()
       if (res.error) {
         throw res.error
       }
+
+      datadogRum.addAction('Successful Checkout', {
+        id: cartData.id,
+        cartTotal: cartData.totalPrice,
+        createdAt: cartData.createdAt,
+        discounts: cartData.discounts,
+        lineItems: cartData.lineItems,
+      })
+
       clearCheckoutFields()
       setLoadingSubmit(false)
       await cartEmpty()
@@ -102,6 +103,7 @@ const CheckoutSidebarView: FC = () => {
   return (
     <SidebarLayout
       className={s.root}
+      id="sidebar"
       handleBack={() => setSidebarView('CART_VIEW')}
     >
       <div className="px-4 sm:px-6 flex-1">
@@ -152,6 +154,7 @@ const CheckoutSidebarView: FC = () => {
               width="100%"
               variant="ghost"
               className="!py-2 !border-1"
+              data-dd-action-name="Apply Discount"
             >
               Apply Discount
             </Button>

@@ -14,6 +14,8 @@ import {
   removeFromCart,
   updateQuantity,
 } from '@lib/api/cart'
+import { datadogRum } from '@datadog/browser-rum'
+import userData from '@config/user_data.json'
 import type { Cart } from '@customTypes/cart'
 
 type CartProviderProps = {
@@ -24,6 +26,7 @@ type CartContextType = {
   cart: Cart | null
   cartToken: string
   cartError: any
+  cartUser: any
   setCart: (cart: Cart | {}) => void
   cartInit: () => Promise<void>
   cartEmpty: () => Promise<void>
@@ -37,6 +40,7 @@ export const CartContext = createContext<CartContextType>({
   cart: null,
   cartToken: null,
   cartError: null,
+  cartUser: null,
   setCart: () => {},
   cartInit: async () => {},
   cartEmpty: async () => {},
@@ -50,6 +54,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   const [cart, setCart] = useState<Cart | null>(null)
   const [cartToken, setCartToken] = useState<string | null>(null)
   const [cartError, setCartError] = useState<any>()
+  const [cartUser, setCartUser] = useState<any>()
 
   useEffect(() => {
     cartInit()
@@ -58,6 +63,20 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   useEffect(() => {
     localStorage.setItem('cartToken', cartToken || '')
   }, [cartToken])
+
+  useEffect(() => {
+    // if user exists in local storage, set user or create a new user
+    if (localStorage.getItem('rum_user')) {
+      const user = JSON.parse(localStorage.getItem('rum_user') || '')
+      datadogRum.setUser(user)
+      setCartUser(user)
+    } else {
+      const user = userData[Math.floor(Math.random() * userData.length)]
+      datadogRum.setUser(user)
+      localStorage.setItem('rum_user', JSON.stringify(user))
+      setCartUser(user)
+    }
+  }, [])
 
   // init cart
   const cartInit = async () => {
@@ -141,8 +160,13 @@ export const CartProvider = ({ children }: CartProviderProps) => {
           include:
             'line_items,variants,variants.images,billing_address,shipping_address,user,payments,shipments,promotions',
         })
+        if (cart?.error) {
+          throw new Error(cart.error)
+        }
+
         setCart(cart)
         setCartError(null)
+        return cart
       } else {
         const cartToken = await cartInit()
         const cart = await addToCart({
@@ -152,10 +176,12 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         })
         setCart(cart)
         setCartError(null)
+        return cart
       }
     } catch (error) {
       console.log(error)
       setCartError(error)
+      return { error }
     }
   }
 
@@ -213,6 +239,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         cart,
         cartToken,
         cartError,
+        cartUser,
         setCart,
         cartInit,
         cartEmpty,

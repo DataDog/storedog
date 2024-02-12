@@ -1,24 +1,24 @@
-import type { GetStaticPropsContext } from 'next'
+import type { GetServerSidePropsContext } from 'next'
 import { Layout } from '@components/common'
 import { Text } from '@components/ui'
 
-// export async function getStaticProps({
-//   preview,
-//   locale,
-//   locales,
-// }: GetStaticPropsContext) {
-//   const config = { locale, locales }
-//   const { pages } = await commerce.getAllPages({ config, preview })
-//   const { categories, brands } = await commerce.getSiteInfo({ config, preview })
-//   return {
-//     props: {
-//       pages,
-//       categories,
-//       brands,
-//     },
-//     revalidate: 200,
-//   }
-// }
+import { Page } from '@customTypes/page'
+
+export async function getServerSideProps() {
+  const baseUrl =
+    process.env.NODE_ENV === 'development'
+      ? 'http://localhost:3000/api'
+      : '/api'
+
+  // get all pages for menu
+  const pages = await fetch(`${baseUrl}/pages`).then((res) => res.json())
+
+  return {
+    props: {
+      pages,
+    },
+  }
+}
 
 export default function NotFound() {
   return (
@@ -31,4 +31,4 @@ export default function NotFound() {
   )
 }
 
-// NotFound.Layout = Layout
+NotFound.Layout = Layout

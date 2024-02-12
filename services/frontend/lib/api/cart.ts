@@ -232,15 +232,17 @@ export const addToCart = async (options: CartAddItems): Promise<Cart | any> => {
     })
 
     if (!res.ok) {
+      console.log('error')
       throw res
     }
 
     const cartApi = await res.json()
+
     const cart = formatCart(cartApi)
     return cart
   } catch (error) {
-    console.log(error)
-    return error
+    const errorResponse = await error.json()
+    return errorResponse
   }
 }
 

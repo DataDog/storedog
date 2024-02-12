@@ -1,23 +1,24 @@
-const puppeteer = require("puppeteer");
+const puppeteer = require('puppeteer');
 
 const startUrl = process.env.STOREDOG_URL;
-console.log("starting...");
+console.log('starting...');
 
 if (!startUrl) {
-  console.log("No start URL provided");
+  console.log('No start URL provided');
   process.exit(1);
 }
 
 const getNewBrowser = async () => {
   try {
     const browser = await puppeteer.launch({
+      headless: 'new',
       defaultViewport: null,
       timeout: 40000,
       slowMo: 250,
       args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
       ],
     });
     const browserVersion = await browser.version();
@@ -31,16 +32,16 @@ const getNewBrowser = async () => {
 
 const choosePhone = () => {
   const deviceNames = [
-    "Pixel 2 XL",
-    "Pixel 2",
-    "Galaxy S5",
-    "iPhone 11 Pro Max",
-    "iPhone 11",
-    "iPhone XR",
-    "iPhone X",
-    "iPhone SE",
-    "iPad Pro",
-    "iPad Mini",
+    'Pixel 2 XL',
+    'Pixel 2',
+    'Galaxy S5',
+    'iPhone 11 Pro Max',
+    'iPhone 11',
+    'iPhone XR',
+    'iPhone X',
+    'iPhone SE',
+    'iPad Pro',
+    'iPad Mini',
   ];
 
   const deviceIndex = Math.floor(Math.random() * deviceNames.length);
@@ -49,17 +50,17 @@ const choosePhone = () => {
 };
 
 const randomlyCloseSession = async (browser, page, skipSessionClose) => {
-  console.log("In randomlyCloseSession");
+  console.log('In randomlyCloseSession');
 
   if (skipSessionClose) {
-    console.log("Skipping session close");
+    console.log('Skipping session close');
     return false;
   }
 
   const random = Math.floor(Math.random() * 15) + 1;
 
   if (random === 2) {
-    console.log("Closing browser...");
+    console.log('Closing browser...');
     await page.close();
     await browser.close();
     return true;
@@ -70,9 +71,9 @@ const randomlyCloseSession = async (browser, page, skipSessionClose) => {
 
 // select cool bits product on search page
 const selectCoolBits = async (page) => {
-  console.log("In selectHomePageProduct on page", await page.title());
+  console.log('In selectHomePageProduct on page', await page.title());
   await page.waitForTimeout(8000);
-  let productAriaLabel = "Cool Bits";
+  let productAriaLabel = 'Cool Bits';
   const selector = `[aria-label="${productAriaLabel}"]`;
 
   await Promise.all([page.waitForNavigation(), page.click(selector)]);
@@ -84,14 +85,14 @@ const selectCoolBits = async (page) => {
 
 // select a random product on the home page
 const selectHomePageProduct = async (page) => {
-  console.log("In selectHomePageProduct on page", await page.title());
+  console.log('In selectHomePageProduct on page', await page.title());
   await page.waitForTimeout(2000);
-  const allProducts = await page.$$(".product-item");
+  const allProducts = await page.$$('.product-item');
   const randomProductIndex = Math.floor(Math.random() * allProducts.length);
   const randomProduct = allProducts[randomProductIndex];
   // reassign selector to the random product's aria-label
   const productAriaLabel = await randomProduct.evaluate((el) =>
-    el.getAttribute("aria-label")
+    el.getAttribute('aria-label')
   );
 
   const selector = `[aria-label="${productAriaLabel}"]`;
@@ -105,26 +106,26 @@ const selectHomePageProduct = async (page) => {
 
 // when on product page, add to cart
 const addToCart = async (page) => {
-  console.log("In addToCart on page", await page.title());
+  console.log('In addToCart on page', await page.title());
 
-  await page.waitForSelector("#add-to-cart-button", {
+  await page.waitForSelector('#add-to-cart-button', {
     visible: true,
   });
 
-  await page.click("#add-to-cart-button");
+  await page.click('#add-to-cart-button');
 
-  await page.waitForSelector("#close-sidebar", {
+  await page.waitForSelector('#close-sidebar', {
     visible: true,
   });
 
-  await page.click("#close-sidebar");
+  await page.click('#close-sidebar');
 
   return;
 };
 
 // select related product on product page
 const selectRelatedProduct = async (page) => {
-  console.log("In selectRelatedProduct on page", await page.title());
+  console.log('In selectRelatedProduct on page', await page.title());
   const selector = '[aria-label="Learning Bits"]';
   await Promise.all([page.waitForNavigation(), page.click(selector)]);
   const pageTitle = await page.title();
@@ -135,14 +136,14 @@ const selectRelatedProduct = async (page) => {
 // select product on search page
 const selectSearchPageProduct = async (page) => {
   // go to all products page
-  let selector = "nav#main-navbar a:first-child";
+  let selector = 'nav#main-navbar a:first-child';
   const button = await page.$(selector);
   await Promise.all([
     button.evaluate((b) => b.click()),
     page.waitForNavigation(),
   ]);
 
-  selector = ".product-grid";
+  selector = '.product-grid';
   await page.waitForSelector(selector);
   // does selector exist
   const productGrid = await page.$(selector);
@@ -152,30 +153,30 @@ const selectSearchPageProduct = async (page) => {
   }
 
   // get products and select one at random
-  const products = await page.$$(".product-item");
+  const products = await page.$$('.product-item');
   let productIndex = Math.floor(Math.random() * products.length);
-  console.log("product index", productIndex);
+  console.log('product index', productIndex);
   let product = products[productIndex];
-  let productThumbnail = await product.$("img");
+  let productThumbnail = await product.$('img');
   // click on product
   let [_, navigation] = await Promise.allSettled([
     page.click(productThumbnail),
     page.waitForNavigation(),
   ]);
-  console.log("clicked first time");
+  console.log('clicked first time');
   // if it didn't go anywhere, try again
-  if (navigation.status !== "fulfilled") {
+  if (navigation.status !== 'fulfilled') {
     const rect = await page.evaluate(async (selector) => {
-      console.log("GETTING ELEMENT COORDS");
+      console.log('GETTING ELEMENT COORDS');
       const box = selector.getBoundingClientRect();
       const x = (box.left + box.right) / 2;
       const y = (box.top + box.bottom) / 2;
       return { x, y };
     }, productThumbnail);
-    console.log("rect", rect);
+    console.log('rect', rect);
     await page.mouse.click(rect.x, rect.y, { count: 6, clickCount: 4 });
 
-    console.log("clicked second time (3x), trying a different item");
+    console.log('clicked second time (3x), trying a different item');
 
     // randomly try again
     if (Math.floor(Math.random() * 10) + 1 < 8) {
@@ -188,17 +189,17 @@ const selectSearchPageProduct = async (page) => {
 
     // randomly close session
     if (Math.floor(Math.random() * 10) + 1 < 5) {
-      console.log("Frustrated and closing browser...");
+      console.log('Frustrated and closing browser...');
       const url = await page.url();
       await page.goto(`${url}?end_session=true`, {
-        waitUntil: "domcontentloaded",
+        waitUntil: 'domcontentloaded',
       });
       await page.close();
       return;
     }
 
     await page.waitForTimeout(500);
-    console.log("clicking on the product title this time");
+    console.log('clicking on the product title this time');
     await Promise.all([
       page.click(`.product-item:nth-child(${productIndex}) a`),
       page.waitForNavigation(),
@@ -221,7 +222,7 @@ const applyDiscountCode = async (discountCode, page) => {
       delay: Math.floor(Math.random() * 430) + 150,
     });
 
-    console.log("entered code", discountCode);
+    console.log('entered code', discountCode);
 
     await page.waitForSelector('button[data-dd-action-name="Apply Discount"]', {
       visible: true,
@@ -229,7 +230,7 @@ const applyDiscountCode = async (discountCode, page) => {
 
     await page.click('button[data-dd-action-name="Apply Discount"]');
 
-    console.log("Clicked discount code button");
+    console.log('Clicked discount code button');
   } catch (e) {
     console.error(e);
   }
@@ -239,7 +240,7 @@ const applyDiscountCode = async (discountCode, page) => {
 
 const useDiscountCode = async (page) => {
   try {
-    console.log("In useDiscountCode on page", await page.title());
+    console.log('In useDiscountCode on page', await page.title());
 
     await page.waitForSelector('input[name="discount-code"]', {
       visible: true,
@@ -249,13 +250,13 @@ const useDiscountCode = async (page) => {
 
     // enter discount code out of random array
     const discountCodes = [
-      "DISCOUNT",
-      "COOLBITS",
-      "LEARNINGBITS",
-      "BITS",
-      "COOL",
-      "STOREDOG",
-      "STOREDOG10",
+      'DISCOUNT',
+      'COOLBITS',
+      'LEARNINGBITS',
+      'BITS',
+      'COOL',
+      'STOREDOG',
+      'STOREDOG10',
     ];
 
     const randomIndex = Math.floor(Math.random() * discountCodes.length);
@@ -281,7 +282,7 @@ const useDiscountCode = async (page) => {
 };
 
 const checkout = async (page) => {
-  console.log("In checkout on page", await page.title());
+  console.log('In checkout on page', await page.title());
 
   await page.waitForSelector('button[data-dd-action-name="Toggle Cart"]', {
     visible: true,
@@ -302,7 +303,7 @@ const checkout = async (page) => {
     }
   );
 
-  console.log("opened cart...");
+  console.log('opened cart...');
 
   await Promise.all([
     page.waitForTimeout(5000),
@@ -317,8 +318,8 @@ const checkout = async (page) => {
   });
 
   await page.waitForTimeout(8000);
-
-  const sidebarSelector = "#sidebar";
+  console.log('getting sidebar...');
+  const sidebarSelector = '#sidebar';
   const sidebarElement = await page.$(sidebarSelector);
 
   // scroll to bottom of checkout form
@@ -328,14 +329,14 @@ const checkout = async (page) => {
 
   // only use discount sometimes, try to enter a discount (and get errors)
   if (Math.floor(Math.random() * 10 + 1) > 5) {
-    console.log("applying discount code...");
+    console.log('applying discount code...');
 
     await useDiscountCode(page);
 
     // rarely still checkout
     if (Math.floor(Math.random() * 10 + 1) <= 7) {
       console.log(
-        "begrudgingly checking out even though discount code failed..."
+        'begrudgingly checking out even though discount code failed...'
       );
 
       await Promise.all([
@@ -346,18 +347,18 @@ const checkout = async (page) => {
 
       await page.waitForTimeout(10000);
 
-      const selector = ".purchase-confirmed-msg";
+      const selector = '.purchase-confirmed-msg';
 
       await page.waitForSelector(selector, { visible: true });
 
-      console.log("purchase confirmed");
+      console.log('purchase confirmed');
 
-      console.log("Checkout complete");
+      console.log('Checkout complete');
 
       await page.waitForTimeout(6000);
     }
   } else {
-    console.log("proceeded to checkout...");
+    console.log('proceeded to checkout...');
 
     await Promise.all([
       page.waitForTimeout(5000),
@@ -367,13 +368,13 @@ const checkout = async (page) => {
 
     await page.waitForTimeout(10000);
 
-    const selector = ".purchase-confirmed-msg";
+    const selector = '.purchase-confirmed-msg';
 
     await page.waitForSelector(selector, { visible: true });
 
-    console.log("purchase confirmed");
+    console.log('purchase confirmed');
 
-    console.log("Checkout complete");
+    console.log('Checkout complete');
 
     await page.waitForTimeout(6000);
   }
@@ -403,12 +404,13 @@ const mainSession = async () => {
     );
 
     // go to home page
-    await page.goto(startUrl, { waitUntil: "domcontentloaded" });
+    await page.goto(startUrl, { waitUntil: 'domcontentloaded' });
 
     const pageTitle = await page.title();
     console.log(`"${pageTitle}" loaded`);
 
-    await selectCoolBits(page);
+    await selectHomePageProduct(page);
+    await page.waitForTimeout(2000);
     await addToCart(page);
 
     // maybe purchase that extra product
@@ -454,15 +456,15 @@ const mainSession = async () => {
     await page.waitForTimeout(2500);
     const url = await page.url();
     await page.goto(`${url}?end_session=true`, {
-      waitUntil: "domcontentloaded",
+      waitUntil: 'domcontentloaded',
     });
     await page.close();
   } catch (err) {
     console.log(`First session failed: ${err}`);
   } finally {
-    console.log("closing browser");
+    console.log('closing browser');
     await browser.close();
-    if (browser && browser.process() != null) browser.process().kill("SIGINT");
+    if (browser && browser.process() != null) browser.process().kill('SIGINT');
   }
 };
 
@@ -488,7 +490,7 @@ const secondSession = async () => {
     );
 
     // go to home page
-    await page.goto(startUrl, { waitUntil: "domcontentloaded" });
+    await page.goto(startUrl, { waitUntil: 'domcontentloaded' });
     let pageTitle = await page.title();
     console.log(`"${pageTitle}" loaded`);
 
@@ -522,28 +524,27 @@ const secondSession = async () => {
     await page.waitForTimeout(3000);
     const url = await page.url();
     await page.goto(`${url}?end_session=true`, {
-      waitUntil: "domcontentloaded",
+      waitUntil: 'domcontentloaded',
     });
-    console.log("Second session complete");
+    console.log('Second session complete');
     await page.close();
   } catch (err) {
     console.log(`Second session failed, ending session: ${err}`);
   } finally {
-    console.log("closing browser");
+    console.log('closing browser');
     await browser.close();
-    if (browser && browser.process() != null) browser.process().kill("SIGINT");
+    if (browser && browser.process() != null) browser.process().kill('SIGINT');
   }
 };
 
 // set up 10 staggered sessions
-// for (let i = 0; i < 10; i++) {
-//   setTimeout(() => {
-//     // randomly select a session type
-//     if (Math.floor(Math.random() * 2) === 0) {
-//       (() => mainSession())();
-//     } else {
-//       (() => secondSession())();
-//     }
-//   }, 500 * i);
-// }
-(() => mainSession())();
+for (let i = 0; i < 10; i++) {
+  setTimeout(() => {
+    // randomly select a session type
+    if (Math.floor(Math.random() * 2) === 0) {
+      (() => mainSession())();
+    } else {
+      (() => secondSession())();
+    }
+  }, 500 * i);
+}

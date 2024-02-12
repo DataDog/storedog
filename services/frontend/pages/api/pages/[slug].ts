@@ -6,8 +6,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  console.log(req)
-  console.log(req.query)
   // Get the slug from the URL
   const { slug } = req.query
   // Get the page data from the API

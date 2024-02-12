@@ -8,6 +8,9 @@ import React, {
   useContext,
   createContext,
 } from 'react'
+
+import { datadogRum } from '@datadog/browser-rum'
+
 import {
   listPaymentMethods,
   listShippingRates,
@@ -117,7 +120,7 @@ export const CheckoutProvider: FC = (props) => {
   } | null>(null)
   const [addressStatus, setAddressError] = useState({ ok: null, message: null })
   const [paymentStatus, setPaymentError] = useState({ ok: null, message: null })
-  const { cart, cartToken, setCart } = useCart()
+  const { cart, cartToken, cartUser } = useCart()
 
   const getPaymentMethods = useCallback(async () => {
     // get payment methods
@@ -268,6 +271,18 @@ export const CheckoutProvider: FC = (props) => {
       })
     }
   }, [cartToken, shippingRate, updateShipping])
+
+  // set user name and email based on rum user
+  useEffect(() => {
+    if (cartUser && cartUser.name && cartUser.email) {
+      setAddressFields({
+        ...initialState.addressFields,
+        email: cartUser.email,
+        firstname: cartUser.name.split(' ')[0],
+        lastname: cartUser.name.split(' ')[1],
+      })
+    }
+  }, [cartUser, setAddressFields])
 
   const value = useMemo(
     () => ({

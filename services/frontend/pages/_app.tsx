@@ -11,8 +11,6 @@ import { Head } from '@components/common'
 import { ManagedUIContext } from '@components/ui/context'
 import { datadogRum } from '@datadog/browser-rum'
 
-import userData from '@config/user_data.json'
-
 datadogRum.init({
   applicationId: `${
     process.env.NEXT_PUBLIC_DD_APPLICATION_ID || 'DD_APPLICATION_ID_PLACEHOLDER'
@@ -30,7 +28,7 @@ datadogRum.init({
   sessionSampleRate: 100,
   sessionReplaySampleRate: 100,
   silentMultipleInit: true,
-  defaultPrivacyLevel: 'mask',
+  defaultPrivacyLevel: 'mask-user-input',
   allowedTracingUrls: [
     {
       match: /https:\/\/.*\.env.play.instruqt\.com/,
@@ -48,10 +46,6 @@ datadogRum.init({
   traceSampleRate: 100,
   allowUntrustedEvents: true,
 })
-
-const user = userData[Math.floor(Math.random() * userData.length)]
-
-datadogRum.setUser(user)
 
 const Noop: FC = ({ children }) => <>{children}</>
 
@@ -79,8 +73,6 @@ const CartWatcher = () => {
 }
 
 export default function MyApp({ Component, pageProps }: AppProps) {
-  const { locale = 'en-US' } = useRouter()
-
   const Layout = (Component as any).Layout || Noop
 
   useEffect(() => {

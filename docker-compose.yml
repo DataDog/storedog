@@ -95,7 +95,7 @@ services:
       - ./services/backend/db/postgresql.conf:/postgresql.conf
     labels:
       com.datadoghq.tags.env: '${DD_ENV}'
-      com.datadoghq.tags.service: 'database'
+      com.datadoghq.tags.service: 'storedog-db'
       com.datadoghq.tags.version: '13'
       com.datadoghq.ad.check_names: '["postgres", "postgres"]'
       com.datadoghq.ad.init_configs: '[{}, {}]'
@@ -184,6 +184,7 @@ services:
       - DD_LOGS_INJECTION=true
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
+      - RAILS_ENV=development
     labels:
       com.datadoghq.ad.logs: '[{"source": "ruby", "service": "store-backend",  "auto_multi_line_detection":true }]'
       com.datadoghq.tags.env: '${DD_ENV}'
@@ -248,7 +249,7 @@ services:
     ports:
       - '${ADS_PORT}:${ADS_PORT}'
     labels:
-      com.datadoghq.ad.logs: '[{"source": "python", "service": "store-ads" }]'
+      com.datadoghq.ad.logs: '[{"source": "python", "service": "store-ads"}]'
       com.datadoghq.tags.env: '${DD_ENV}'
       com.datadoghq.tags.service: 'store-ads'
       com.datadoghq.tags.version: '1.0.9'
@@ -354,7 +355,7 @@ services:
     ports:
       - '3030:8080'
     labels:
-      com.datadoghq.ad.logs: '[{"source": "java", "service": "ads-java",  "auto_multi_line_detection": true}]'
+      com.datadoghq.ad.logs: '[{"source": "java", "service": "ads-java"}]'
       com.datadoghq.tags.env: '${DD_ENV-dev}'
       com.datadoghq.tags.service: 'store-ads-java'
       com.datadoghq.tags.version: '${DD_VERSION-7}'
@@ -377,22 +378,23 @@ services:
       - web
       - discounts
       - dd-agent
-  # puppeteer:
-  #   image: buildkite/puppeteer:10.0.0
-  #   platform: linux/amd64
-  #   volumes:
-  #     - ./services/puppeteer/puppeteer.js:/puppeteer.js
-  #     - ./services/puppeteer/puppeteer.sh:/puppeteer.sh
-  #   environment:
-  #     - STOREDOG_URL=http://frontend:3000
-  #     - PUPPETEER_TIMEOUT
-  #     - SKIP_SESSION_CLOSE
-  #   depends_on:
-  #     - frontend
-  #   command: bash puppeteer.sh
-  #   networks:
-  #     - storedog-net
-  #   shm_size: '4gb' # Increase shared memory size
+  puppeteer:
+    image: ghcr.io/puppeteer/puppeteer:20.0.0
+    platform: linux/amd64
+    network_mode: host
+    volumes:
+      - ./services/puppeteer/puppeteer.js:/home/pptruser/puppeteer.js
+      - ./services/puppeteer/puppeteer.sh:/home/pptruser/puppeteer.sh
+    environment:
+      - STOREDOG_URL=${STOREDOG_URL-http://localhost}
+      - PUPPETEER_TIMEOUT
+      - SKIP_SESSION_CLOSE
+    depends_on:
+      - frontend
+    command: bash puppeteer.sh
+    shm_size: '4gb' # Increase shared memory size
+    cap_add:
+      - 'SYS_ADMIN' # Required for Puppeteer to run in Docker
 
 volumes:
   redis:
