@@ -1,9 +1,10 @@
 const pino = require('pino')
 
-const logger = pino({
-  serializers: {
-    err: (err) => ({ error: err }),
-  },
-})
+const logger = (defaultConfig) =>
+  pino({
+    ...defaultConfig,
+    errorKey: 'error',
+    messageKey: 'message',
+  })
 
 module.exports = logger

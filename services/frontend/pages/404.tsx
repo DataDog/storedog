@@ -1,17 +1,18 @@
-import type { GetServerSidePropsContext } from 'next'
 import { Layout } from '@components/common'
 import { Text } from '@components/ui'
 
 import { Page } from '@customTypes/page'
 
-export async function getServerSideProps() {
+export async function getStaticProps() {
+  // get pages for the footer
   const baseUrl =
     process.env.NODE_ENV === 'development'
       ? 'http://localhost:3000/api'
       : '/api'
 
-  // get all pages for menu
-  const pages = await fetch(`${baseUrl}/pages`).then((res) => res.json())
+  const pages: Page[] = await fetch(`${baseUrl}/pages`).then((res) =>
+    res.json()
+  )
 
   return {
     props: {

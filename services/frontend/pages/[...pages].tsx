@@ -13,16 +13,17 @@ export async function getServerSideProps({
       : '/api'
   const slug = params?.pages as string
 
-  const page = await fetch(`${baseUrl}/pages/${slug}`).then((res) => res.json())
+  const pageRes = await fetch(`${baseUrl}/pages/${slug}`)
 
-  // get all pages for menu
-  const pages = await fetch(`${baseUrl}/pages`).then((res) => res.json())
-
-  if (!page) {
+  if (!pageRes.ok) {
     return {
       notFound: true,
     }
   }
+  const page = await pageRes.json()
+
+  // get all pages for menu
+  const pages = await fetch(`${baseUrl}/pages`).then((res) => res.json())
 
   return {
     props: {
@@ -34,6 +35,7 @@ export async function getServerSideProps({
 
 export default function Pages({ page }: { page: Page }) {
   const router = useRouter()
+  console.log(page)
 
   return router.isFallback ? (
     <h1>Loading...</h1>

@@ -63,7 +63,6 @@ const CartItem = ({
   const handleRemove = async () => {
     setRemoving(true)
     try {
-      console.log('item.id', item.id)
       await cartRemove(item.id)
     } catch (error) {
       setRemoving(false)

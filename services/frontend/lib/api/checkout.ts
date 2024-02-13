@@ -48,7 +48,6 @@ export const listShippingRates = async (
     }
 
     const shippingRates = await response.json()
-    console.log('shippingRates', shippingRates)
     return shippingRates
   } catch (error) {
     console.error(error)
@@ -76,7 +75,6 @@ export const updateCheckout = async (options: UpdateCheckout): Promise<any> => {
     }
 
     const updatedCart = await response.json()
-    console.log('updated cart with checkout', updatedCart)
     // format cart
     const cart = formatCart(updatedCart)
     return cart
@@ -106,7 +104,6 @@ export const completeCheckout = async (options: CheckoutBase): Promise<any> => {
 
     const checkout = await response.json()
     const cart = formatCart(checkout)
-    console.log('checkout', checkout)
     return cart
   } catch (error) {
     const errorMessage = await error.json()
