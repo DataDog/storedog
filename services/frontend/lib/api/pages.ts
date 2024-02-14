@@ -1,9 +1,9 @@
 import fetch from 'node-fetch'
 import { Page } from '@customTypes/page'
 
-const SPREE_URL_SERVERSIDE = `${
-  process.env.NEXT_PUBLIC_SPREE_API_HOST || 'http://web:4000'
-}/api/v2`
+const SPREE_URL_SERVERSIDE = process.env.NEXT_PUBLIC_SPREE_API_HOST
+  ? `${process.env.NEXT_PUBLIC_SPREE_API_HOST}/api/v2`
+  : 'http://web:4000/api/v2'
 
 export const getPages = async (options: any = {}): Promise<Page[] | any> => {
   try {

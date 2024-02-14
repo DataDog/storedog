@@ -1,3 +1,4 @@
+import { useState, useEffect, useCallback } from 'react'
 import cn from 'clsx'
 import s from './Layout.module.css'
 import dynamic from 'next/dynamic'
@@ -16,6 +17,7 @@ import Discount from '@components/common/Discount'
 import Ad from '@components/common/Ad'
 import type { Page } from '@customTypes/page'
 import type { Link as LinkProps } from '../UserNav/MenuSidebarView'
+import Pages from 'pages/[...pages]'
 
 const Loading = () => (
   <div className="w-80 h-80 flex items-center text-center justify-center p-3">
@@ -48,9 +50,7 @@ const Modal = dynamic(() => import('@components/ui/Modal'), {
 })
 
 interface Props {
-  pageProps: {
-    pages?: Page[]
-  }
+  pageProps: any
 }
 
 const ModalView: React.FC<{ modalView: string; closeModal(): any }> = ({
@@ -97,13 +97,37 @@ const SidebarUI: React.FC<{}> = ({}) => {
 }
 
 const Layout: React.FC<Props> = ({ children, pageProps: { ...pageProps } }) => {
+  const [pages, setPages] = useState<Page[]>([])
+
+  useEffect(() => {
+    getLinks()
+  }, [])
+
+  async function getLinks() {
+    try {
+      const baseUrl = '/api'
+
+      const res = await fetch(`${baseUrl}/pages`)
+
+      if (!res.ok) {
+        throw new Error('Error fetching data')
+      }
+
+      const pages: Page[] = await res.json()
+
+      setPages(pages)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   return (
     <div className={cn(s.root)}>
       <Navbar />
       <Discount />
       <main className="fit">{children}</main>
       <Ad />
-      <Footer pages={pageProps.pages} />
+      <Footer pages={pages} />
       <ModalUI />
       <CheckoutProvider>
         <SidebarUI />

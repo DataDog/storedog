@@ -1,8 +1,6 @@
-import React, { FC } from 'react'
+import React, { FC, useState, useEffect } from 'react'
 import cn from 'clsx'
 import Link from 'next/link'
-import { useRouter } from 'next/router'
-import getSlug from '@lib/get-slug'
 import { Logo, Container } from '@components/ui'
 import s from './Footer.module.css'
 
@@ -42,7 +40,7 @@ const Footer: FC<Props> = ({ className, pages = [] }) => {
               {[...links, ...pages].map((page) => (
                 <span key={page.name} className="py-3 md:py-0 md:pb-4">
                   <Link href={page.url!}>
-                    <a className="text-accent-9 hover:text-accent-6 transition ease-in-out duration-150">
+                    <a className="text-accent-9 hover:text-accent-6 transition ease-in-out duration-150 footer-link">
                       {page.name}
                     </a>
                   </Link>

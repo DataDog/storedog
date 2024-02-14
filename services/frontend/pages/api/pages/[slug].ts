@@ -14,9 +14,9 @@ export default async function handler(
 
     if (isError) {
       const random = Math.random()
-      if (random < 0.25) {
+      if (random < 0.33) {
         return res.status(400).json({ message: 'Bad request' })
-      } else if (random < 0.5) {
+      } else if (random < 0.66) {
         return res.status(500).json({ message: 'Internal server error' })
       }
     }

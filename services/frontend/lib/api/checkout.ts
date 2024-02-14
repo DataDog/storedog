@@ -2,7 +2,9 @@ import fetch from 'node-fetch'
 import { formatCart } from '@lib/api/cart'
 import { CheckoutBase, UpdateCheckout } from '@customTypes/checkout'
 
-const SPREE_URL_CLIENTSIDE = 'http://localhost:4000/api/v2'
+const SPREE_URL_CLIENTSIDE = process.env.NEXT_PUBLIC_SPREE_CLIENT_HOST
+  ? `${process.env.NEXT_PUBLIC_SPREE_CLIENT_HOST}/api/v2`
+  : 'http://localhost:4000/api/v2'
 
 // use this to select payment method (will usually be `1` for credit card bogus gateway)
 export const listPaymentMethods = async (

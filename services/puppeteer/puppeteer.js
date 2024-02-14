@@ -212,6 +212,23 @@ const selectSearchPageProduct = async (page) => {
   }
 };
 
+const goToFooterPage = async (page) => {
+  console.log('In goToFooterPage on page', await page.title());
+  const links = await page.$$('.footer-link');
+  let linkIndex = Math.floor(Math.random() * links.length);
+  console.log('link index', linkIndex);
+  let link = links[linkIndex];
+  // click on link
+  let [_, navigation] = await Promise.allSettled([
+    page.click(link),
+    page.waitForNavigation(),
+  ]);
+
+  // wait 2500ms and go back
+  await page.waitForTimeout(2500);
+  await Promise.allSettled([page.goBack(), page.waitForNavigation()]);
+};
+
 const applyDiscountCode = async (discountCode, page) => {
   try {
     await page.waitForSelector('input[name="discount-code"]', {
@@ -419,6 +436,8 @@ const mainSession = async () => {
       await addToCart(page);
     }
 
+    await goToFooterPage(page);
+
     // maybe go back to the home page and purchase another product
     if (Math.floor(Math.random() * 3) === 0) {
       selector = '[href="/"]';
@@ -451,6 +470,8 @@ const mainSession = async () => {
       await page.waitForTimeout(4000);
       await addToCart(page);
     }
+
+    await goToFooterPage(page);
 
     await checkout(page);
     await page.waitForTimeout(2500);
@@ -513,11 +534,15 @@ const secondSession = async () => {
       await addToCart(page);
     }
 
+    await goToFooterPage(page);
+
     // maybe try to find another product on the search page
     if (Math.floor(Math.random() * 4) === 0) {
       await selectSearchPageProduct(page);
       await addToCart(page);
     }
+
+    await goToFooterPage(page);
 
     await page.waitForTimeout(3000);
     await checkout(page);

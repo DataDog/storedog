@@ -77,6 +77,9 @@ export default function MyApp({ Component, pageProps }: AppProps) {
 
   useEffect(() => {
     document.body.classList?.remove('loading')
+    if (window?.location.search.includes('end_session=true')) {
+      datadogRum.stopSession()
+    }
   }, [])
 
   return (
