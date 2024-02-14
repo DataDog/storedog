@@ -17,6 +17,6 @@
   {
     "id": "4",
     "name": "api-errors",
-    "active": true
+    "active": false
   }
 ]
