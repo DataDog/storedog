@@ -23,15 +23,25 @@ services:
     build:
       context: ./services/nginx
     restart: always
+    networks:
+      - storedog-net
     ports:
       - "80:80"
     depends_on:
       - frontend
       - dd-agent
+    volumes:
+      - ./services/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./services/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./services/nginx/status.conf:/etc/nginx/conf.d/status.conf
     labels:
-      com.datadoghq.ad.logs: '[{"source": "nginx", "service": "nginx"}]'
-    networks:
-      - storedog-net
+      com.datadog.tags.env: '${DD_ENV}'
+      com.datadog.tags.service: 'store-nginx'
+      com.datadog.tags.version: '1.21.4'
+      com.datadoghq.ad.logs: '[{"source": "nginx", "service": "webserver"}]'
+      com.datadoghq.ad.check_names: '["nginx"]'
+      com.datadoghq.ad.init_configs: '[{}]'
+      com.datadoghq.ad.instances: '[{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]'
   postgres:
     image: postgres:13-alpine
     restart: always
