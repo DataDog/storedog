@@ -7,4 +7,4 @@ const logger = (defaultConfig) =>
     messageKey: 'message',
   })
 
-module.exports = logger
+module.exports = { logger }

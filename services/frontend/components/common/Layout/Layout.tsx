@@ -110,13 +110,14 @@ const Layout: React.FC<Props> = ({ children, pageProps: { ...pageProps } }) => {
       const res = await fetch(`${baseUrl}/pages`)
 
       if (!res.ok) {
-        throw new Error('Error fetching data')
+        throw res
       }
 
       const pages: Page[] = await res.json()
 
       setPages(pages)
-    } catch (error) {
+    } catch (errorRes) {
+      const error = await errorRes.json()
       console.error(error)
     }
   }

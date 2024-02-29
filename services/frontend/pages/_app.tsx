@@ -10,6 +10,7 @@ import { CartProvider, useCart } from '@lib/CartContext'
 import { Head } from '@components/common'
 import { ManagedUIContext } from '@components/ui/context'
 import { datadogRum } from '@datadog/browser-rum'
+import ErrorBoundary from '@components/ErrorBoundary'
 
 datadogRum.init({
   applicationId: `${
@@ -89,7 +90,9 @@ export default function MyApp({ Component, pageProps }: AppProps) {
         <ManagedUIContext>
           <CartWatcher />
           <Layout pageProps={pageProps}>
-            <Component {...pageProps} />
+            <ErrorBoundary>
+              <Component {...pageProps} />
+            </ErrorBoundary>
           </Layout>
         </ManagedUIContext>
       </CartProvider>

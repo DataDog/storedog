@@ -1,10 +1,4 @@
 CREATE user datadog WITH password 'datadog';
-CREATE SCHEMA datadog;
-GRANT USAGE ON SCHEMA datadog TO datadog;
-GRANT USAGE ON SCHEMA public TO datadog;
-GRANT pg_monitor TO datadog;
-CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
-GRANT SELECT ON pg_stat_database TO datadog;
 
 --
 -- PostgreSQL database dump
@@ -24,33 +18,14 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
---
--- Name: spree_starter_development; Type: DATABASE; Schema: -; Owner: postgres
---
+\connect postgres
 
-CREATE DATABASE spree_starter_development WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE = 'en_US.utf8';
+CREATE SCHEMA IF NOT EXISTS datadog;
+GRANT USAGE ON SCHEMA datadog TO datadog;
+GRANT USAGE ON SCHEMA public TO datadog;
+GRANT pg_monitor TO datadog;
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 
-
-ALTER DATABASE spree_starter_development OWNER TO postgres;
-
-\connect spree_starter_development
-
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
-SET check_function_bodies = false;
-SET xmloption = content;
-SET client_min_messages = warning;
-SET row_security = off;
-
-SET default_tablespace = '';
-
-SET default_table_access_method = heap;
-
-/* FOR DATADOG DBM */
 CREATE OR REPLACE FUNCTION datadog.explain_statement(
    l_query TEXT,
    OUT explain JSON
@@ -71,7 +46,58 @@ $$
 LANGUAGE 'plpgsql'
 RETURNS NULL ON NULL INPUT
 SECURITY DEFINER;
-/* END DBM */
+
+--
+-- Name: spree_starter_development; Type: DATABASE; Schema: -; Owner: postgres
+--
+
+CREATE DATABASE spree_starter_development WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE = 'en_US.utf8';
+
+ALTER DATABASE spree_starter_development OWNER TO postgres;
+
+\connect spree_starter_development
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+\connect spree_starter_development
+CREATE SCHEMA IF NOT EXISTS datadog;
+GRANT USAGE ON SCHEMA datadog TO datadog;
+GRANT USAGE ON SCHEMA public TO datadog;
+GRANT pg_monitor TO datadog;
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+
+CREATE OR REPLACE FUNCTION datadog.explain_statement(
+   l_query TEXT,
+   OUT explain JSON
+)
+RETURNS SETOF JSON AS
+$$
+DECLARE
+curs REFCURSOR;
+plan JSON;
+
+BEGIN
+   OPEN curs FOR EXECUTE pg_catalog.concat('EXPLAIN (FORMAT JSON) ', l_query);
+   FETCH curs INTO plan;
+   CLOSE curs;
+   RETURN QUERY SELECT plan;
+END;
+$$
+LANGUAGE 'plpgsql'
+RETURNS NULL ON NULL INPUT
+SECURITY DEFINER;
 
 --
 -- Name: action_mailbox_inbound_emails; Type: TABLE; Schema: public; Owner: postgres
