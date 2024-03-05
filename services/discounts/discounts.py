@@ -22,7 +22,7 @@ import logging
 from ddtrace import tracer
 import json_log_formatter
 
-formatter = json_log_formatter.JSONFormatter()
+formatter = json_log_formatter.VerboseJSONFormatter()
 json_handler = logging.StreamHandler(sys.stdout)
 json_handler.setFormatter(formatter)
 logger = logging.getLogger('werkzeug')
@@ -48,7 +48,7 @@ class NoEscape(logging.Filter):
             record.args = tuple(map(self.strip_esc, record.args))
         return 1
 
-remove_color_filter = NoEscape()
+remove_color_filter =NoEscape()
 logger.addFilter(remove_color_filter)
 
 # Hello world
