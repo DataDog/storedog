@@ -10,7 +10,9 @@ export interface AdDataResults {
 function Ad() {
   const [data, setData] = useState<AdDataResults | null>(null)
   const [isLoading, setLoading] = useState(false)
-  const adsPath = `${process.env.NEXT_PUBLIC_ADS_ROUTE}:${process.env.NEXT_PUBLIC_ADS_PORT}`
+  const adsPath =
+    `${process.env.NEXT_PUBLIC_ADS_URL_FULL}` ||
+    `${process.env.NEXT_PUBLIC_ADS_ROUTE}:${process.env.NEXT_PUBLIC_ADS_PORT}`
   const [codeFlag, setCodeFlag] = useState<boolean>(false)
 
   const getRandomArbitrary = useCallback((min: number, max: number) => {
