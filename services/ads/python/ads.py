@@ -11,7 +11,7 @@ from flask_cors import CORS
 from bootstrap import create_app
 from models import Advertisement, db
 
-from ddtrace import patch; patch(logging=True)
+from ddtrace import patch; patch(logging=True)  
 import logging
 from ddtrace import tracer
 import json_log_formatter

@@ -1,5 +1,10 @@
-FROM node:16.18.0 as builder
+FROM node:20 as builder
+
+# install wait-for-it
+RUN apt-get update && apt-get install -y wait-for-it
+
 WORKDIR /storedog-app
+COPY package*.json ./
+RUN npm install
 COPY . .
 EXPOSE 3000
-RUN ["yarn","install", "--frozen-lockfile", "--network-timeout 1000000"]
