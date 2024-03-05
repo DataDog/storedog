@@ -12,11 +12,11 @@
   {
     "id": "3",
     "name": "error-tracking",
-    "active": false
+    "active": true
   },
   {
     "id": "4",
     "name": "api-errors",
-    "active": false
+    "active": true
   }
 ]
