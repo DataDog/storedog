@@ -16,7 +16,7 @@ import logging
 from ddtrace import tracer
 import json_log_formatter
 
-formatter = json_log_formatter.JSONFormatter()
+formatter = json_log_formatter.VerboseJSONFormatter()
 json_handler = logging.StreamHandler(sys.stdout)
 json_handler.setFormatter(formatter)
 logger = logging.getLogger('werkzeug')
