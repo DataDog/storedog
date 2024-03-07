@@ -61,31 +61,36 @@ def hello():
 @app.route('/discount', methods=['GET', 'POST'])
 def status():
     if flask_request.method == 'GET':
-       
-        try:
-          discounts = Discount.query.all()
-          logger.info(f"Discounts available: {len(discounts)}")
-
-          failure_rate = random.randint(1, 20)
-          if failure_rate <= 10:
-              app.logger.error("An error occurred while getting discounts.")
-              err = jsonify({"error": "Internal Server Error"})
-              err.status_code = 500
-              return err
-
-          influencer_count = 0
-          for discount in discounts:
-              if discount.discount_type.influencer:
-                  influencer_count += 1
-          logger.info(f"Total of {influencer_count} influencer specific discounts as of this request")
         
-          return jsonify([b.serialize() for b in discounts])
+        failure_rate = random.randint(1, 20)
+        if failure_rate <= 10:
+            try:
+                raise ValueError('something went wrong')
+            except ValueError:
+                logger.error('Request failed', exc_info=True)
 
-        except:
-          logger.error("An error occurred while getting discounts.")
-          err = jsonify({'error': 'Internal Server Error'})
-          err.status_code = 500
-          return err
+            err = jsonify({'error': 'Internal Server Error'})
+            err.status_code = 500
+            return err
+        
+        else:
+          try:
+            discounts = Discount.query.all()
+            logger.info(f"Discounts available: {len(discounts)}")
+
+            influencer_count = 0
+            for discount in discounts:
+                if discount.discount_type.influencer:
+                    influencer_count += 1
+            logger.info(f"Total of {influencer_count} influencer specific discounts as of this request")
+            
+            return jsonify([b.serialize() for b in discounts])
+
+          except:
+            logger.error("An error occurred while getting discounts.")
+            err = jsonify({'error': 'Internal Server Error'})
+            err.status_code = 500
+            return err
 
     elif flask_request.method == 'POST':
 
