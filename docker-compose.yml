@@ -8,7 +8,7 @@ services:
       - DD_APM_NON_LOCAL_TRAFFIC=true
       - DD_LOGS_ENABLED=true
       # - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
-      - DD_CONTAINER_EXCLUDE_LOGS="image:^postgres$ name:puppeteer name:dd-agent"
+      - DD_CONTAINER_EXCLUDE_LOGS="name:puppeteer name:dd-agent"
       - DD_HOSTNAME_TRUST_UTS_NAMESPACE=true
       - DD_PROCESS_AGENT_ENABLED=true
       - DD_CONTAINER_LABELS_AS_TAGS={"my.custom.label.team":"team"}
@@ -96,7 +96,7 @@ services:
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[
         {
-        "dbm":true,
+        "dbm":false,
         "host":"%%host%%",
         "port":5432,
         "username":"datadog",
@@ -216,7 +216,7 @@ services:
       my.custom.label.team: 'advertisements'
   discounts:
     image: public.ecr.aws/x2b9z2t7/storedog/discounts:latest
-    command: ./my-wrapper-script.sh ${DISCOUNTS_PORT}
+    command: ./wait-for-it.sh postgres:5432 -- ./my-wrapper-script.sh ${DISCOUNTS_PORT}
     depends_on:
       - postgres
       - dd-agent
@@ -236,6 +236,7 @@ services:
       - DD_ENV=${DD_ENV-dev}
     volumes:
       - ./services/discounts:/app
+      - ./utils/wait-for-it.sh:/app/wait-for-it.sh
     ports:
       - '${DISCOUNTS_PORT}:${DISCOUNTS_PORT}'
     labels:
