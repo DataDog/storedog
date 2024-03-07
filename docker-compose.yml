@@ -7,15 +7,14 @@ services:
       - DD_APM_ENABLED=true
       - DD_APM_NON_LOCAL_TRAFFIC=true
       - DD_LOGS_ENABLED=true
-      - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
-      - DD_CONTAINER_EXCLUDE="name:dd-agent,name:puppeteer"
+      # - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
+      - DD_CONTAINER_EXCLUDE_LOGS="image:^postgres$ name:puppeteer name:dd-agent"
       - DD_HOSTNAME_TRUST_UTS_NAMESPACE=true
       - DD_PROCESS_AGENT_ENABLED=true
       - DD_CONTAINER_LABELS_AS_TAGS={"my.custom.label.team":"team"}
       - DD_TAGS=${DD_TAGS-env:storedog}
       - DD_HOSTNAME=${DD_HOSTNAME-storedog-host}
       - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
-      - DD_DBM_PROPAGATION_MODE=full
     ports:
       - '8126:8126/tcp'
       - '8125:8125/udp'
@@ -23,7 +22,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /proc/:/host/proc/:ro
       - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
-      - ./services/datadog-agent/postgres/dd-agent-conf.yaml:/conf.d/postgres.d/conf.yaml
   frontend:
     image: public.ecr.aws/x2b9z2t7/storedog/frontend:latest
     command: npm run dev
@@ -71,7 +69,7 @@ services:
       com.datadoghq.ad.instances: '[{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]'
   postgres:
     image: postgres:13-alpine
-    command: ['postgres', '-c', 'config_file=/postgresql.conf']
+    # command: ['postgres', '-c', 'config_file=/postgresql.conf']
     restart: always
     depends_on:
       - dd-agent
@@ -83,7 +81,6 @@ services:
       - DD_SERVICE=storedog-db
       - DD_VERSION=${DD_VERSION-7}
       - DD_AGENT_HOST=dd-agent
-      - DD_DBM_PROPAGATION_MODE=full
       - DD_LOGS_INJECTION=true
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
@@ -95,8 +92,8 @@ services:
       com.datadoghq.tags.env: '${DD_ENV}'
       com.datadoghq.tags.service: 'storedog-db'
       com.datadoghq.tags.version: '13'
-      com.datadoghq.ad.check_names: '["postgres", "postgres"]'
-      com.datadoghq.ad.init_configs: '[{}, {}]'
+      com.datadoghq.ad.check_names: '["postgres"]'
+      com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[
         {
         "dbm":true,
@@ -104,38 +101,6 @@ services:
         "port":5432,
         "username":"datadog",
         "password":"datadog",
-        "relations": [{
-        "relation_name": "advertisement",
-        "relation_name": "discount",
-        "relation_name": "items",
-        "relation_name": "preorder_items",
-        "relation_name": "influencer"
-        }],
-        "query_samples": {
-        "enabled": true,
-        "explain_parameterized_queries": true
-        },
-        "max_relations": 400,
-        "collect_function_metrics": true,
-        "collection_interval": 1
-        },
-        {
-        "dbm":true,
-        "host":"%%host%%",
-        "port":5432,
-        "username":"datadog",
-        "password":"datadog",
-        "dbname": "spree_starter_development",
-        "relations": [{
-        "relation_regex": "spree_.*"
-        }],
-        "query_samples": {
-        "enabled": true,
-        "explain_parameterized_queries": true
-        },
-        "max_relations": 400,
-        "collect_function_metrics": true,
-        "collection_interval": 1
         }]'
       com.datadoghq.ad.logs: '[{"source": "postgresql", "service": "postgres", "auto_multi_line_detection":true }]'
       my.custom.label.team: 'database'
