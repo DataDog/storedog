@@ -186,7 +186,7 @@ services:
       my.custom.label.team: 'backend'
   ads:
     image: public.ecr.aws/x2b9z2t7/storedog/ads:latest
-    command: flask run --port=${ADS_PORT} --host=0.0.0.0 # If using any other port besides the default 9292, overriding the CMD is required
+    command: ./wait-for-it.sh postgres:5432 -- flask run --port=${ADS_PORT} --host=0.0.0.0 # If using any other port besides the default 9292, overriding the CMD is required
     depends_on:
       - postgres
       - dd-agent
@@ -206,6 +206,7 @@ services:
       - DD_ENV=${DD_ENV-dev}
     volumes:
       - ./services/ads/python:/app
+      - ./utils/wait-for-it.sh:/app/wait-for-it.sh
     ports:
       - '${ADS_PORT}:${ADS_PORT}'
     labels:
