@@ -8,7 +8,7 @@ services:
       - DD_APM_NON_LOCAL_TRAFFIC=true
       - DD_LOGS_ENABLED=true
       # - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
-      - DD_CONTAINER_EXCLUDE_LOGS="image:^postgres$ name:puppeteer name:dd-agent"
+      - DD_CONTAINER_EXCLUDE_LOGS="image:^postgres$ name:puppeteer"
       - DD_HOSTNAME_TRUST_UTS_NAMESPACE=true
       - DD_PROCESS_AGENT_ENABLED=true
       - DD_CONTAINER_LABELS_AS_TAGS={"my.custom.label.team":"team"}
@@ -24,7 +24,7 @@ services:
       - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
   frontend:
     image: public.ecr.aws/x2b9z2t7/storedog/frontend:latest
-    command: npm run dev
+    command: wait-for-it web:4000 -- npm run dev
     depends_on:
       - worker
       - dd-agent
