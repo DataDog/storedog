@@ -32,7 +32,7 @@ datadogRum.init({
   defaultPrivacyLevel: 'mask-user-input',
   allowedTracingUrls: [
     {
-      match: /https:\/\/.*\.env.play.instruqt\.com/,
+      match: /https:\/\/.*\.env.play.instruqt\.com.*/,
       propagatorTypes: ['tracecontext', 'datadog', 'b3', 'b3multi'],
     },
     {
