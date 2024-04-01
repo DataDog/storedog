@@ -44,7 +44,7 @@ Rails.application.configure do
   config.active_record.migration_error = :page_load
 
   # Highlight code that triggered database queries in logs.
-  config.active_record.verbose_query_logs = true
+  config.active_record.verbose_query_logs = false
 
   # Debug mode disables concatenation and preprocessing of assets.
   # This option may cause significant delays in view rendering with a large
@@ -53,6 +53,18 @@ Rails.application.configure do
 
   # Suppress logger output for asset requests.
   config.assets.quiet = true
+
+  # Lograge config
+  config.lograge.enabled = true
+  
+  # This specifies to log in JSON format
+  config.lograge.formatter = Lograge::Formatters::Json.new
+  
+  ## Enable log coloration
+  config.colorize_logging = false
+  
+  # Log to a dedicated file
+  config.lograge.logger = ActiveSupport::Logger.new(STDOUT)
 
   # Raises error for missing translations.
   # config.action_view.raise_on_missing_translations = true

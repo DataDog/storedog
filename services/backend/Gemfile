@@ -102,3 +102,6 @@ gem 'ddtrace', require: 'ddtrace/auto_instrument'
 gem 'google-protobuf', '~> 3.0'
 # needed for runtime metrics
 gem 'dogstatsd-ruby', require: 'datadog/statsd'
+
+# JSON log formatter
+gem 'lograge'

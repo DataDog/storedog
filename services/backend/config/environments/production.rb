@@ -61,6 +61,18 @@ Rails.application.configure do
   # Prepend all log lines with the following tags.
   config.log_tags = [ :request_id ]
 
+  # Lograge config
+  config.lograge.enabled = true
+  
+  # This specifies to log in JSON format
+  config.lograge.formatter = Lograge::Formatters::Json.new
+  
+  ## Enable log coloration
+  config.colorize_logging = false
+  
+  # Log to a dedicated file
+  config.lograge.logger = ActiveSupport::Logger.new(STDOUT)
+
   # Use a different cache store in production.
   if ENV['MEMCACHEDCLOUD_SERVERS'].present?
     memcached_config = {

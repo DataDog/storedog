@@ -1,0 +1,22 @@
+[
+  {
+    "id": "1",
+    "name": "xss",
+    "active": false
+  },
+  {
+    "id": "2",
+    "name": "dbm",
+    "active": false
+  },
+  {
+    "id": "3",
+    "name": "error-tracking",
+    "active": false
+  },
+  {
+    "id": "4",
+    "name": "api-errors",
+    "active": false
+  }
+]
