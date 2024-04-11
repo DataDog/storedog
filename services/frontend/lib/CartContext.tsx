@@ -13,6 +13,7 @@ import {
   addToCart,
   removeFromCart,
   updateQuantity,
+  applyCouponCode,
 } from '@lib/api/cart'
 import { datadogRum } from '@datadog/browser-rum'
 import userData from '@config/user_data.json'
@@ -34,6 +35,7 @@ type CartContextType = {
   cartAdd: (variantId: string, quantity: number) => Promise<any>
   cartRemove: (lineItemId: string) => Promise<any>
   cartUpdate: (lineItemId: string, quantity: number) => Promise<any>
+  applyDiscount: (couponCode: string) => Promise<any>
 }
 
 export const CartContext = createContext<CartContextType>({
@@ -48,6 +50,7 @@ export const CartContext = createContext<CartContextType>({
   cartAdd: async () => {},
   cartRemove: async () => {},
   cartUpdate: async () => {},
+  applyDiscount: async () => {},
 })
 
 export const CartProvider = ({ children }: CartProviderProps) => {
@@ -122,9 +125,9 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   // empty cart
   const cartEmpty = async () => {
     try {
-      if (cartToken) {
-        await emptyCart({ order_token: cartToken })
-      }
+      // if (cartToken) {
+      //   await emptyCart({ order_token: cartToken })
+      // }
       setCart(null)
       setCartToken(null)
       setCartError(null)
@@ -233,6 +236,31 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     }
   }
 
+  const applyDiscount = async (couponCode: string) => {
+    try {
+      if (cartToken) {
+        const cart = await applyCouponCode({
+          order_token: cartToken,
+          couponCode,
+          include:
+            'line_items,variants,variants.images,billing_address,shipping_address,user,payments,shipments,promotions',
+        })
+
+        console.log('Discount Applied response', cart)
+        if (!cart?.id) {
+          throw new Error(cart)
+        }
+        setCart(cart)
+        setCartError(null)
+      } else {
+        setCartError('Cart not found')
+      }
+    } catch (error) {
+      console.log(error)
+      setCartError(error)
+    }
+  }
+
   return (
     <CartContext.Provider
       value={{
@@ -247,6 +275,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         cartAdd,
         cartRemove,
         cartUpdate,
+        applyDiscount,
       }}
     >
       {children}

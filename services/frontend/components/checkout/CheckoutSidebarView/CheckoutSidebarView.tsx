@@ -20,7 +20,7 @@ const CheckoutSidebarView: FC = () => {
   const [discountInput, setDiscountInput] = useState('')
   const [checkoutError, setCheckoutError] = useState(null)
   const { setSidebarView, closeSidebar } = useUI()
-  const { cart: cartData, cartEmpty, cartInit } = useCart()
+  const { cart: cartData, cartEmpty, cartInit, applyDiscount } = useCart()
   const {
     shippingRate,
     addressStatus,
@@ -48,6 +48,7 @@ const CheckoutSidebarView: FC = () => {
       event.preventDefault()
 
       const res = await handleCompleteCheckout()
+      console.log('checkout response', res)
       if (res.error) {
         throw res.error
       }
@@ -60,7 +61,7 @@ const CheckoutSidebarView: FC = () => {
         lineItems: cartData.lineItems,
       })
 
-      clearCheckoutFields()
+      // clearCheckoutFields()
       setLoadingSubmit(false)
       await cartEmpty()
       await cartInit()
@@ -81,7 +82,9 @@ const CheckoutSidebarView: FC = () => {
     }
 
     try {
-      const discountPath = `${process.env.NEXT_PUBLIC_DISCOUNTS_ROUTE}:${process.env.NEXT_PUBLIC_DISCOUNTS_PORT}`
+      const discountPath =
+        `${process.env.NEXT_PUBLIC_DISCOUNTS_URL_FULL}` ||
+        `${process.env.NEXT_PUBLIC_DISCOUNTS_ROUTE}:${process.env.NEXT_PUBLIC_DISCOUNTS_PORT}`
       const discountCode = discountInput.toUpperCase()
       // call discounts service
       const res = await fetch(
@@ -94,6 +97,9 @@ const CheckoutSidebarView: FC = () => {
       }
 
       console.log('discount accepted', discount)
+
+      await applyDiscount('FREESHIP')
+
       setDiscountInput('')
     } catch (err) {
       console.error(err)

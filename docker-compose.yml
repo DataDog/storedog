@@ -23,7 +23,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /proc/:/host/proc/:ro
       - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
-      - ./services/datadog-agent/postgres/dd-agent-conf.yaml:/conf.d/postgres.d/conf.yaml
   frontend:
     build:
       context: ./services/frontend
@@ -144,7 +143,10 @@ services:
         },
         "max_relations": 400,
         "collect_function_metrics": true,
-        "collection_interval": 1
+        "collection_interval": 1,
+        "collect_schemas": {
+        "enabled": true
+        }
         },
         {
         "dbm":true,
@@ -162,7 +164,10 @@ services:
         },
         "max_relations": 400,
         "collect_function_metrics": true,
-        "collection_interval": 1
+        "collection_interval": 1,
+        "collect_schemas": {
+        "enabled": true
+        }
         }]'
       com.datadoghq.ad.logs: '[{"source": "postgresql", "service": "postgres", "auto_multi_line_detection":true }]'
       my.custom.label.team: 'database'
@@ -233,6 +238,8 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - DB_HOST=postgres
       - DB_PORT=5432
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
       - DISABLE_SPRING=1
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV-dev}

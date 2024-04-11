@@ -4,7 +4,6 @@ import 'keen-slider/keen-slider.min.css'
 
 import { FC, useEffect } from 'react'
 import type { AppProps } from 'next/app'
-import { useRouter } from 'next/router'
 import { CartProvider, useCart } from '@lib/CartContext'
 
 import { Head } from '@components/common'

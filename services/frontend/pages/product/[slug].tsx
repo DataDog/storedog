@@ -1,4 +1,7 @@
-import type { GetServerSidePropsContext, InferGetStaticPropsType } from 'next'
+import type {
+  GetServerSidePropsContext,
+  InferGetServerSidePropsType,
+} from 'next'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { Layout } from '@components/common'
@@ -47,7 +50,7 @@ export default function ProductPage({
   relatedProducts,
   headers,
   pages,
-}: InferGetStaticPropsType<typeof getServerSideProps>) {
+}: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
 

@@ -3,7 +3,7 @@ import { Text } from '@components/ui'
 
 import { Page } from '@customTypes/page'
 
-export async function getStaticProps() {
+export async function getServerSideProps() {
   // get pages for the footer
   const baseUrl =
     process.env.NODE_ENV === 'development'

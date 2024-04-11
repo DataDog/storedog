@@ -1,9 +1,9 @@
-import type { GetStaticPropsContext } from 'next'
+import type { GetServerSidePropsContext } from 'next'
 import Search from '@components/search'
 import { getProducts } from '@lib/api/products'
 import { getPages } from '@lib/api/pages'
 
-export async function getStaticProps(context: GetStaticPropsContext) {
+export async function getServerSideProps(context: GetServerSidePropsContext) {
   const products = await getProducts({
     include: 'default_variant,images,primary_variant',
     page: 1,
@@ -16,7 +16,6 @@ export async function getStaticProps(context: GetStaticPropsContext) {
       products,
       pages,
     },
-    revalidate: 60,
   }
 }
 
