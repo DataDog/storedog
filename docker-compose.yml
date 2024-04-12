@@ -114,7 +114,7 @@ services:
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
     volumes:
-      - 'postgres:/var/lib/postgresql/data'
+      # - 'postgres:/var/lib/postgresql/data'
       - ./services/backend/db/restore:/docker-entrypoint-initdb.d
       - ./services/backend/db/postgresql.conf:/postgresql.conf
     labels:
@@ -258,7 +258,7 @@ services:
   ads:
     build:
       context: ./services/ads/python
-    command: flask run --port=${ADS_PORT} --host=0.0.0.0 # If using any other port besides the default 9292, overriding the CMD is required
+    command: wait-for-it postgres:5432 -- flask run --port=${ADS_PORT} --host=0.0.0.0 # If using any other port besides the default 9292, overriding the CMD is required
     depends_on:
       - postgres
       - dd-agent
@@ -289,7 +289,7 @@ services:
   discounts:
     build:
       context: ./services/discounts
-    command: ./my-wrapper-script.sh ${DISCOUNTS_PORT}
+    command: wait-for-it postgres:5432 -- ./my-wrapper-script.sh ${DISCOUNTS_PORT}
     depends_on:
       - postgres
       - dd-agent

@@ -3,11 +3,12 @@ import type {
   InferGetServerSidePropsType,
 } from 'next'
 import { useRouter } from 'next/router'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Layout } from '@components/common'
 import { ProductView } from '@components/product'
 import { getProducts, getProduct } from '@lib/api/products'
 import { getPages } from '@lib/api/pages'
+import { Product } from '@customTypes/product'
 
 function later(delay) {
   return new Promise(function (resolve) {
@@ -18,20 +19,21 @@ function later(delay) {
 export async function getServerSideProps({
   req,
   params,
-  locale,
-  locales,
-  preview,
 }: GetServerSidePropsContext<{ slug: string }>) {
+  const baseUrl =
+    process.env.NODE_ENV === 'development'
+      ? 'http://localhost:3000/api'
+      : '/api'
+
   const product = await getProduct({
     id: params!.slug,
     include:
       'default_variant,variants,option_types,product_properties,taxons,images,primary_variant',
   })
 
-  const relatedProducts = await getProducts({
-    include: 'images',
-    per_page: 4,
-  })
+  const relatedProducts: Product[] = await fetch(
+    `${baseUrl}/products?limit=4&include=images`
+  ).then((res) => res.json())
 
   const pages = await getPages()
 
@@ -54,27 +56,23 @@ export default function ProductPage({
   const router = useRouter()
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if (loading) {
-      loadData()
-    }
-  }, [loading])
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
     if (headers?.referer?.includes('/search')) {
       await later(Math.round(Math.random() * 7000) + 500)
     }
     setLoading(false)
-  }
+  }, [headers?.referer])
+
+  useEffect(() => {
+    if (loading) {
+      loadData()
+    }
+  }, [loading, loadData])
 
   return router.isFallback || loading ? (
     <h1>Loading...</h1>
   ) : (
-    <ProductView
-      product={product}
-      relatedProducts={relatedProducts}
-      referer={headers.referer}
-    />
+    <ProductView product={product} relatedProducts={relatedProducts} />
   )
 }
 

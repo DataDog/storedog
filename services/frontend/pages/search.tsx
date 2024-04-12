@@ -1,20 +1,30 @@
 import type { GetServerSidePropsContext } from 'next'
 import Search from '@components/search'
-import { getProducts } from '@lib/api/products'
-import { getPages } from '@lib/api/pages'
+import { getTaxons } from '@lib/api/taxons'
+import { Page } from '@customTypes/page'
+import { Product } from '@customTypes/product'
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const products = await getProducts({
-    include: 'default_variant,images,primary_variant',
-    page: 1,
-  })
+  const baseUrl =
+    process.env.NODE_ENV === 'development'
+      ? 'http://localhost:3000/api'
+      : '/api'
 
-  const pages = await getPages()
+  const products: Product[] = await fetch(`${baseUrl}/products`).then((res) =>
+    res.json()
+  )
+  const pages: Page[] = await fetch(`${baseUrl}/pages`).then((res) =>
+    res.json()
+  )
+  const taxons = await getTaxons({
+    include: 'parent,taxonomy,children,image,products',
+  })
 
   return {
     props: {
       products,
       pages,
+      taxons,
     },
   }
 }
