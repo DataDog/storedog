@@ -46,3 +46,56 @@ export const getTaxons = async (options: any = {}): Promise<Taxon[] | any> => {
     return error
   }
 }
+
+// get taxon
+export const getTaxon = async (options: any = {}): Promise<Taxon | any> => {
+  try {
+    const url = `${SPREE_URL_SERVERSIDE}/storefront/taxons/${
+      options.id
+    }?include=${encodeURIComponent(options.include || '')}`
+
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (!res.ok) {
+      throw res
+    }
+
+    const taxonApi = await res.json()
+
+    const taxonsObj: Taxon = {
+      id: taxonApi.data.id,
+      type: taxonApi.data.type,
+      attributes: {
+        name: taxonApi.data.attributes.name,
+        pretty_name: taxonApi.data.attributes.pretty_name,
+        permalink: taxonApi.data.attributes.permalink,
+      },
+      children: taxonApi.included
+        .filter((taxon: any) => taxon.type === 'taxon')
+        .map((taxon: any) => {
+          return {
+            id: taxon.id,
+            name: taxon.attributes.name,
+            pretty_name: taxon.attributes.pretty_name,
+            permalink: taxon.attributes.permalink,
+          }
+        }),
+      image: taxonApi.included.find(
+        (taxon: any) => taxon.type === 'taxon_image'
+      ),
+      products: taxonApi.included
+        .filter((taxon: any) => taxon.type === 'product')
+        .map((product: any) => product.id),
+    }
+
+    return taxonsObj
+  } catch (error) {
+    console.log(error)
+    return error
+  }
+}

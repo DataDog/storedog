@@ -28,27 +28,6 @@ const Navbar: FC<NavbarProps> = ({}) => {
   const [userEmail, setUserEmail] = useState<string | undefined>()
   const [productInfo, setProductInfo] = useState<object | undefined>()
 
-  useEffect(() => {
-    if (config) {
-      codeStash('xss', { file: config })
-        .then((r: boolean) => setXssFlag(r))
-        .catch((e) => console.log(e))
-      codeStash('dbm', { file: config })
-        .then((r: boolean) => setDbmFlag(r))
-        .catch((e) => console.log(e))
-    }
-  }, [])
-
-  // Specific to the dbm lab, will only be active if the dbm flag is tru
-  useEffect(() => {
-    if (dbmFlag) {
-      // To simulate the ticker effect, we call this every 5 seconds, which will also run the query every 5 seconds
-      setTimeout(async () => {
-        await fetchRandomOrderCount()
-      }, 5000)
-    }
-  }, [dbmFlag, productInfo])
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     // Bail early if env var isn't set
     if (!xssFlag) return
@@ -92,7 +71,7 @@ const Navbar: FC<NavbarProps> = ({}) => {
     }
   }
 
-  const fetchRandomOrderCount = async () => {
+  const fetchRandomOrderCount = useCallback(async () => {
     try {
       // List of products on the site
       const randomProducts = [
@@ -135,7 +114,28 @@ const Navbar: FC<NavbarProps> = ({}) => {
     } catch (e) {
       console.error((e as Error).message)
     }
-  }
+  }, [productInfo, setProductInfo])
+
+  useEffect(() => {
+    if (config) {
+      codeStash('xss', { file: config })
+        .then((r: boolean) => setXssFlag(r))
+        .catch((e) => console.log(e))
+      codeStash('dbm', { file: config })
+        .then((r: boolean) => setDbmFlag(r))
+        .catch((e) => console.log(e))
+    }
+  }, [])
+
+  // Specific to the dbm lab, will only be active if the dbm flag is tru
+  useEffect(() => {
+    if (dbmFlag) {
+      // To simulate the ticker effect, we call this every 5 seconds, which will also run the query every 5 seconds
+      setTimeout(async () => {
+        await fetchRandomOrderCount()
+      }, 5000)
+    }
+  }, [dbmFlag, productInfo, fetchRandomOrderCount])
 
   return (
     <NavbarRoot>
@@ -148,7 +148,7 @@ const Navbar: FC<NavbarProps> = ({}) => {
               </a>
             </Link>
             <nav className={s.navMenu} id="main-navbar">
-              <Link href="/search">
+              <Link href="/products">
                 <a className={s.link} id="all-products-link">
                   All Products
                 </a>

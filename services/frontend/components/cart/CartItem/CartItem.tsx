@@ -90,7 +90,7 @@ const CartItem = ({
     >
       <div className="flex flex-row space-x-4 py-4">
         <div className="w-16 h-16 bg-violet relative overflow-hidden cursor-pointer z-0">
-          <Link href={`/product/${item.path}`}>
+          <Link href={`/products/${item.path}`}>
             <a>
               <Image
                 onClick={() => closeSidebarIfPresent()}
@@ -105,7 +105,7 @@ const CartItem = ({
           </Link>
         </div>
         <div className="flex-1 flex flex-col text-base">
-          <Link href={`/product/${item.path}`}>
+          <Link href={`/products/${item.path}`}>
             <a>
               <span
                 className={s.productName}

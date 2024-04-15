@@ -16,9 +16,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const pages: Page[] = await fetch(`${baseUrl}/pages`).then((res) =>
     res.json()
   )
-  const taxons = await getTaxons({
-    include: 'parent,taxonomy,children,image,products',
-  })
+
+  const taxons = await fetch(`${baseUrl}/taxonomies`).then((res) => res.json())
 
   return {
     props: {

@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { getProduct } from '@lib/api/products'
-import { Product } from '@customTypes/product'
+import { getTaxon } from '@lib/api/taxons'
 
 export default async function handler(
   req: NextApiRequest,
@@ -9,18 +8,16 @@ export default async function handler(
   try {
     const options = {
       id: req.query.slug as string,
-      include:
-        req.query.include ||
-        'default_variant,variants,option_types,product_properties,taxons,images,primary_variant',
+      include: req.query.include || 'parent,taxonomy,children,image,products',
     }
 
-    const product: Product = await getProduct(options)
+    const taxon = await getTaxon(options)
 
-    if (!product?.id) {
+    if (!taxon?.id) {
       return res.status(404).json({ error: 'Not Found' })
     }
 
-    res.status(200).json(product)
+    res.status(200).json(taxon)
   } catch (error) {
     console.error(error)
     res.status(500).json({ error: 'Internal Server Error' })

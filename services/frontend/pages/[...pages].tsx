@@ -35,7 +35,6 @@ export async function getServerSideProps({
 
 export default function Pages({ page }: { page: Page }) {
   const router = useRouter()
-  console.log(page)
 
   return router.isFallback ? (
     <h1>Loading...</h1>

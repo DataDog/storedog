@@ -69,7 +69,7 @@ const randomlyCloseSession = async (browser, page, skipSessionClose) => {
   }
 };
 
-// select cool bits product on search page
+// select cool bits product on products page
 const selectCoolBits = async (page) => {
   console.log('In selectHomePageProduct on page', await page.title());
   await page.waitForTimeout(8000);
@@ -133,8 +133,8 @@ const selectRelatedProduct = async (page) => {
   return;
 };
 
-// select product on search page
-const selectSearchPageProduct = async (page) => {
+// select product on all products page
+const selectProductsPageProduct = async (page) => {
   // go to all products page
   let selector = 'nav#main-navbar a:first-child';
   const button = await page.$(selector);
@@ -217,10 +217,10 @@ const goToFooterPage = async (page) => {
   const links = await page.$$('.footer-link');
   let linkIndex = Math.floor(Math.random() * links.length);
   console.log('link index', linkIndex);
-  let link = links[linkIndex];
+  let selector = `span:nth-of-type(${linkIndex}) .footer-link`;
   // click on link
   let [_, navigation] = await Promise.allSettled([
-    page.click(link),
+    page.$eval(selector, (el) => el.click()),
     page.waitForNavigation(),
   ]);
 
@@ -489,7 +489,7 @@ const mainSession = async () => {
   }
 };
 
-// has some frustration signals due to a incorrect product item UI component configuration in the search page
+// has some frustration signals due to a incorrect product item UI component configuration in the product page
 const secondSession = async () => {
   const browser = await getNewBrowser();
 
@@ -516,10 +516,10 @@ const secondSession = async () => {
     console.log(`"${pageTitle}" loaded`);
 
     // go to all products page (and maybe leave)
-    await selectSearchPageProduct(page);
+    await selectProductsPageProduct(page);
     await addToCart(page);
 
-    await selectSearchPageProduct(page);
+    await selectProductsPageProduct(page);
     await addToCart(page);
 
     // maybe select a related product
@@ -528,17 +528,17 @@ const secondSession = async () => {
       await addToCart(page);
     }
 
-    // maybe try to find another product on the search page
+    // maybe try to find another product on the products page
     if (Math.floor(Math.random() * 4) === 0) {
-      await selectSearchPageProduct(page);
+      await selectProductsPageProduct(page);
       await addToCart(page);
     }
 
     await goToFooterPage(page);
 
-    // maybe try to find another product on the search page
+    // maybe try to find another product on the products page
     if (Math.floor(Math.random() * 4) === 0) {
-      await selectSearchPageProduct(page);
+      await selectProductsPageProduct(page);
       await addToCart(page);
     }
 

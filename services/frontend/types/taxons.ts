@@ -10,4 +10,8 @@ export type Taxon = {
     meta_description?: string
     meta_keywords?: string
   }
+  children?: any[]
+  parent?: string
+  products?: any[]
+  image?: any
 }

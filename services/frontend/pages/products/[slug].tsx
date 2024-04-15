@@ -25,15 +25,23 @@ export async function getServerSideProps({
       ? 'http://localhost:3000/api'
       : '/api'
 
-  const product = await getProduct({
-    id: params!.slug,
-    include:
-      'default_variant,variants,option_types,product_properties,taxons,images,primary_variant',
-  })
+  const product: Product = await fetch(
+    `${baseUrl}/products/${params?.slug}?include=default_variant,variants,option_types,product_properties,taxons,images,primary_variant`
+  )
+    .then((res) => res.json())
+    .catch((error) => {
+      console.error(error)
+      return {}
+    })
 
   const relatedProducts: Product[] = await fetch(
-    `${baseUrl}/products?limit=4&include=images`
-  ).then((res) => res.json())
+    `${baseUrl}/products?per_page=4&include=images`
+  )
+    .then((res) => res.json())
+    .catch((error) => {
+      console.error(error)
+      return []
+    })
 
   const pages = await getPages()
 
