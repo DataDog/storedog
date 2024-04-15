@@ -1,4 +1,3 @@
-version: '3.7'
 services:
   dd-agent:
     image: gcr.io/datadoghq/agent:latest
