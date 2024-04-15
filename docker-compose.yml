@@ -255,6 +255,8 @@ services:
     depends_on:
       - postgres
       - dd-agent
+    profiles:
+      - python-ads
     environment:
       - FLASK_APP=ads.py
       - FLASK_DEBUG=0
@@ -362,6 +364,8 @@ services:
       - STOREDOG_URL=${STOREDOG_URL-http://localhost}
       - PUPPETEER_TIMEOUT
       - SKIP_SESSION_CLOSE
+    profiles:
+      - puppeteer
     depends_on:
       - frontend
     command: bash puppeteer.sh
