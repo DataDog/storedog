@@ -12,12 +12,13 @@ export default async function handler(
         req.query?.includes || 'default_variant,images,primary_variant,taxons',
       page: req.query.page || 1,
       per_page: req.query.per_page || 25,
+      ...req.query,
     }
 
     const products: Product[] = await getProducts(options)
 
     if (products?.length === 0) {
-      return res.status(404).json({ error: 'Not Found' })
+      return res.status(404).json({ error: 'No products found' })
     }
 
     res.status(200).json(products)

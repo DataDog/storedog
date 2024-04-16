@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
 import { Layout } from '@components/common'
 import { ProductCard } from '@components/product/ProductCard/ProductCard-v2'
 import { Container, Skeleton } from '@components/ui'
@@ -11,13 +12,23 @@ interface Props {
   products: Product[]
   pages: Page[]
   taxons: any
+  taxon?: any
 }
 
-export default function Search({ products, pages, taxons }: Props) {
-  console.log(taxons)
+export default function ProductList({ products, pages, taxons, taxon }: Props) {
+  // if products prop is still empty after 5 seconds, show not found message
+  const [notFound, setNotFound] = useState(false)
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (products.length === 0) {
+        setNotFound(true)
+      }
+    }, 5000)
+    return () => clearTimeout(timeout)
+  }, [products])
+
   function renderTaxonsList(taxons: any) {
     return Object.keys(taxons).map((taxon) => {
-      console.log(taxons[taxon])
       return (
         <li
           className={taxons[taxon].children?.length ? 'list-none' : 'list-disc'}
@@ -46,7 +57,13 @@ export default function Search({ products, pages, taxons }: Props) {
         </div>
         {/* Products */}
         <div className="col-span-8 order-3 lg:order-none">
-          {products ? (
+          <h2 className="mb-4 text-3xl font-bold">
+            Products{' '}
+            {taxon?.id ? (
+              <span className="text-accent">in {taxon.attributes.name}</span>
+            ) : null}
+          </h2>
+          {products?.length ? (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 product-grid">
               {products.map((product: Product) => (
                 <ProductCard
@@ -60,6 +77,10 @@ export default function Search({ products, pages, taxons }: Props) {
                   }}
                 />
               ))}
+            </div>
+          ) : notFound ? (
+            <div className="">
+              <p>No products found!</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -80,4 +101,4 @@ export default function Search({ products, pages, taxons }: Props) {
   )
 }
 
-Search.Layout = Layout
+ProductList.Layout = Layout

@@ -12,6 +12,7 @@ export default async function handler(
       include:
         req.query.include ||
         'default_variant,variants,option_types,product_properties,taxons,images,primary_variant',
+      ...req.query,
     }
 
     const product: Product = await getProduct(options)

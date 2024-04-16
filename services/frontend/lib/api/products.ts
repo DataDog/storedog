@@ -12,7 +12,9 @@ export const getProducts = async (
   try {
     const url = `${SPREE_URL_SERVERSIDE}/storefront/products?include=${encodeURIComponent(
       options.include
-    )}&page=${options.page || 1}&per_page=${options.per_page || 25}`
+    )}&page=${options.page || 1}&per_page=${
+      options.per_page || 25
+    }&filter[taxons]=${encodeURIComponent(options.taxons)}`
 
     const res = await fetch(url, {
       method: 'GET',

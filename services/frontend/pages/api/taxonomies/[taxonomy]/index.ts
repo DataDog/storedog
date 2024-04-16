@@ -7,7 +7,7 @@ export default async function handler(
 ) {
   try {
     const options = {
-      id: req.query.slug as string,
+      id: req.query.taxonomy as string,
       include: req.query.include || 'parent,taxonomy,children,image,products',
     }
 

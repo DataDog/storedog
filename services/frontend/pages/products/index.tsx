@@ -1,6 +1,5 @@
 import type { GetServerSidePropsContext } from 'next'
-import Search from '@components/search'
-import { getTaxons } from '@lib/api/taxons'
+import { ProductList } from '@components/product'
 import { Page } from '@customTypes/page'
 import { Product } from '@customTypes/product'
 
@@ -28,4 +27,4 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 }
 
-export default Search
+export default ProductList
