@@ -1,15 +1,9 @@
 import s from './ProductSidebar.module.css'
 import { datadogRum } from '@datadog/browser-rum'
 import { FC, useEffect, useState } from 'react'
-import { ProductOptions } from '@components/product'
 import { useCart } from '@lib/CartContext'
 import type { Product } from '@customTypes/product'
-import { Button, Text, Rating, Collapse, useUI } from '@components/ui'
-import {
-  getProductVariant,
-  selectDefaultOptionFromProduct,
-  SelectedOptions,
-} from '../helpers'
+import { Button, Text, Collapse, useUI } from '@components/ui'
 
 interface ProductSidebarProps {
   product: Product
@@ -20,13 +14,13 @@ const ProductSidebar: FC<ProductSidebarProps> = ({ product, className }) => {
   const { cart, cartAdd, cartError } = useCart()
   const { openSidebar, setSidebarView } = useUI()
   const [loading, setLoading] = useState(false)
-  const [selectedOptions, setSelectedOptions] = useState<SelectedOptions>({})
+  const [variant, setVariant] = useState<any>(null)
 
   useEffect(() => {
-    selectDefaultOptionFromProduct(product, setSelectedOptions)
+    if (!product) return
+    setVariant(product.variants[0])
   }, [product])
 
-  const variant = getProductVariant(product, selectedOptions)
   const addToCart = async () => {
     setLoading(true)
     try {
@@ -61,27 +55,37 @@ const ProductSidebar: FC<ProductSidebarProps> = ({ product, className }) => {
 
   return (
     <div className={className}>
-      {product.options?.length && (
-        <ProductOptions
-          options={product.options}
-          selectedOptions={selectedOptions}
-          setSelectedOptions={setSelectedOptions}
-        />
-      )}
       <Text
         className="pb-4 break-words w-full max-w-xl"
         html={product.descriptionHtml || product.description}
       />
-      <div className="flex flex-row justify-between items-center">
-        <Rating value={4} />
-        <div className="text-accent-6 pr-1 font-medium text-sm">36 reviews</div>
-      </div>
+
       {cartError && (
         <div className="text-red border border-red p-1 mb-2">
           {cartError.message}
         </div>
       )}
       <div>
+        {product.variants && product.variants.length > 1 ? (
+          <select
+            value={variant?.id}
+            className="my-2 block w-full rounded-md border-0 py-1.5 pl-3 pr-12 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            onChange={(e) => {
+              const selectedVariant = product.variants.find(
+                (v) => v.id === e.target.value
+              )
+              setVariant(selectedVariant)
+            }}
+          >
+            {product.variants
+              .filter((v: any) => v.availableForSale)
+              .map((v: any) => (
+                <option key={v.id} value={v.id}>
+                  {v.attributes.name}
+                </option>
+              ))}
+          </select>
+        ) : null}
         <Button
           aria-label="Add to Cart"
           type="button"
