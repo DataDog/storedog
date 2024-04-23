@@ -53,12 +53,23 @@ const CheckoutSidebarView: FC = () => {
         throw res.error
       }
 
+      console.log('cartData', cartData)
+
       datadogRum.addAction('Successful Checkout', {
         id: cartData.id,
-        cartTotal: cartData.totalPrice,
-        createdAt: cartData.createdAt,
+        cart_total: cartData.totalPrice,
+        created_at: cartData.createdAt,
         discounts: cartData.discounts,
-        lineItems: cartData.lineItems,
+      })
+
+      cartData.lineItems.forEach((item: any) => {
+        datadogRum.addAction('Product Purchased', {
+          id: item.id,
+          name: item.name,
+          variant: item.variant.name,
+          quantity: item.quantity,
+          price: item.variant.price,
+        })
       })
 
       // clearCheckoutFields()

@@ -45,6 +45,17 @@ datadogRum.init({
   ],
   traceSampleRate: 100,
   allowUntrustedEvents: true,
+  beforeSend: (event) => {
+    if (
+      event.type === 'error' &&
+      event.error.message ===
+        'The resource you were looking for could not be found.'
+    ) {
+      console.log(event)
+      return false
+    }
+    return true
+  },
 })
 
 const Noop: FC = ({ children }) => <>{children}</>
@@ -58,14 +69,6 @@ const CartWatcher = () => {
 
     datadogRum.setGlobalContextProperty('cart_status', {
       cartTotal: cart.totalPrice,
-      lineItems: cart.lineItems,
-    })
-
-    datadogRum.addAction('Cart Updated', {
-      cartTotal: cart.totalPrice,
-      discounts: cart.discounts,
-      id: cart.id,
-      lineItems: cart.lineItems,
     })
   }, [cart])
 

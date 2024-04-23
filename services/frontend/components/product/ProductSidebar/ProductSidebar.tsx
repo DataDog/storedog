@@ -41,6 +41,7 @@ const ProductSidebar: FC<ProductSidebarProps> = ({ product, className }) => {
           id: product.id,
           price: product.price.value,
           slug: product.slug,
+          variantName: variant.attributes.name || 'default',
         },
       })
 

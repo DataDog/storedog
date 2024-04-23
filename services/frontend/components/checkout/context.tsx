@@ -210,8 +210,6 @@ export const CheckoutProvider: FC = (props) => {
             ],
           },
         })
-
-        console.log('updatedCheckout', updatedCheckout)
       } catch (error) {
         console.log(error)
       }
@@ -262,7 +260,6 @@ export const CheckoutProvider: FC = (props) => {
 
   useEffect(() => {
     if (cartToken && shippingRate?.id) {
-      console.log('cartToken', cartToken, 'shippingRate', shippingRate)
       updateShipping({
         id: shippingRate.id,
         selected_shipping_rate_id: shippingRate.selected_rate_id,

@@ -50,9 +50,9 @@ export const formatCart = (cartApi: any): Cart => {
           productId: lineItemData.attributes.product_id,
           discounts: [],
           variant: {
-            id: variant.attributes.variant_id,
+            id: variant.id,
             sku: variant.attributes.sku,
-            name: variant.attributes.name,
+            name: variant.attributes.options_text,
             price: Number(variant.attributes.price),
             requiresShipping: false,
             availableForSale: true,
