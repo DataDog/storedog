@@ -64,11 +64,13 @@ const CheckoutSidebarView: FC = () => {
 
       cartData.lineItems.forEach((item: any) => {
         datadogRum.addAction('Product Purchased', {
-          id: item.id,
-          name: item.name,
-          variant: item.variant.name,
-          quantity: item.quantity,
-          price: item.variant.price,
+          product: {
+            id: item.id,
+            name: item.name,
+            variant: item.variant.name,
+            quantity: item.quantity,
+            price: item.variant.price,
+          },
         })
       })
 

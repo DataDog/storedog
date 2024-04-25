@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import cn from 'clsx'
 import { Layout } from '@components/common'
 import { ProductCard } from '@components/product/ProductCard/ProductCard-v2'
 import { Container, Skeleton } from '@components/ui'
@@ -34,9 +35,13 @@ export default function ProductList({ products, pages, taxons, taxon }: Props) {
           className={taxons[taxon].children?.length ? 'list-none' : 'list-disc'}
           key={taxons[taxon].id}
         >
-          <Link href={`/taxonomies/${taxons[taxon].attributes.permalink}`}>
-            {taxons[taxon].attributes.name}
-          </Link>
+          {taxons[taxon].children?.length ? (
+            taxons[taxon].attributes.name
+          ) : (
+            <Link href={`/taxonomies/${taxons[taxon].attributes.permalink}`}>
+              {taxons[taxon].attributes.name}
+            </Link>
+          )}
           {taxons[taxon].children?.length > 0 && (
             <ul className="ps-5 mt-2 space-y-1 list-disc list-inside">
               {renderTaxonsList(taxons[taxon].children)}
@@ -51,7 +56,10 @@ export default function ProductList({ products, pages, taxons, taxon }: Props) {
     <Container>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-3 mb-20">
         <div className="col-span-8 lg:col-span-2 order-1 lg:order-none">
-          <ul className="space-y-4 text-gray-500 list-disc list-inside dark:text-gray-400">
+          <ul
+            id="taxons-list"
+            className="space-y-4 text-gray-500 list-disc list-inside dark:text-gray-400"
+          >
             {renderTaxonsList(taxons)}
           </ul>
         </div>

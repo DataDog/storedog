@@ -1,15 +1,15 @@
-import Link from 'next/link';
-import s from './MenuSidebarView.module.css';
-import { useUI } from '@components/ui/context';
-import SidebarLayout from '@components/common/SidebarLayout';
-import type { Link as LinkProps } from './index';
+import Link from 'next/link'
+import s from './MenuSidebarView.module.css'
+import { useUI } from '@components/ui/context'
+import SidebarLayout from '@components/common/SidebarLayout'
+import type { Link as LinkProps } from './index'
 
 export default function MenuSidebarView({
   links = [],
 }: {
-  links?: LinkProps[];
+  links?: LinkProps[]
 }) {
-  const { closeSidebar } = useUI();
+  const { closeSidebar } = useUI()
 
   return (
     <SidebarLayout handleClose={() => closeSidebar()}>
@@ -17,8 +17,8 @@ export default function MenuSidebarView({
         <nav>
           <ul>
             <li className={s.item} onClick={() => closeSidebar()}>
-              <Link href='/search'>
-                <a>All Products</a>
+              <Link href="/products">
+                <a>Products</a>
               </Link>
             </li>
             {links.map((l: any) => (
@@ -36,7 +36,7 @@ export default function MenuSidebarView({
         </nav>
       </div>
     </SidebarLayout>
-  );
+  )
 }
 
-MenuSidebarView;
+MenuSidebarView

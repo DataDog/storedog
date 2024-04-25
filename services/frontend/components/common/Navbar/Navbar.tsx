@@ -150,25 +150,30 @@ const Navbar: FC<NavbarProps> = ({}) => {
             <nav className={s.navMenu} id="main-navbar">
               <Link href="/products">
                 <a className={s.link} id="all-products-link">
-                  All Products
+                  Products
+                </a>
+              </Link>
+              <Link href="/taxonomies/categories/bestsellers">
+                <a className={s.link} id="bestsellers-link">
+                  Best Sellers
+                </a>
+              </Link>
+              <Link href="/taxonomies/categories/new">
+                <a className={s.link} id="new-items-link">
+                  New
+                </a>
+              </Link>
+              <Link href="/taxonomies/categories/tops">
+                <a className={s.link} id="tops-link">
+                  Tops
                 </a>
               </Link>
             </nav>
           </div>
-          {process.env.COMMERCE_SEARCH_ENABLED && (
-            <div className="justify-center flex-1 hidden lg:flex">
-              <Searchbar />
-            </div>
-          )}
           <div className="flex items-center justify-end flex-1 space-x-8">
             <UserNav />
           </div>
         </div>
-        {process.env.COMMERCE_SEARCH_ENABLED && (
-          <div className="flex pb-4 lg:px-6 lg:hidden">
-            <Searchbar id="mobile-search" />
-          </div>
-        )}
         {xssFlag && showEmailInput && (
           // Used as an example for XSS detection in Datadog
           <div className=" pb-1">
