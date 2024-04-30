@@ -23,6 +23,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       products,
       pages,
       taxons,
+      cardVersion: 'v2',
     },
   }
 }

@@ -2,7 +2,8 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import cn from 'clsx'
 import { Layout } from '@components/common'
-import { ProductCard } from '@components/product/ProductCard/ProductCard-v2'
+import ProductCard from '@components/product/ProductCard'
+import { ProductCard as ProductCardV2 } from '@components/product/ProductCard/ProductCard-v2'
 import { Container, Skeleton } from '@components/ui'
 import rangeMap from '@lib/range-map'
 
@@ -14,9 +15,16 @@ interface Props {
   pages: Page[]
   taxons: any
   taxon?: any
+  cardVersion?: 'v1' | 'v2'
 }
 
-export default function ProductList({ products, pages, taxons, taxon }: Props) {
+export default function ProductList({
+  products,
+  pages,
+  taxons,
+  taxon,
+  cardVersion,
+}: Props) {
   // if products prop is still empty after 5 seconds, show not found message
   const [notFound, setNotFound] = useState(false)
   useEffect(() => {
@@ -52,6 +60,9 @@ export default function ProductList({ products, pages, taxons, taxon }: Props) {
     })
   }
 
+  const ProductCardComponent =
+    cardVersion === 'v2' ? ProductCardV2 : ProductCard
+
   return (
     <Container>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-3 mb-20">
@@ -74,7 +85,7 @@ export default function ProductList({ products, pages, taxons, taxon }: Props) {
           {products?.length ? (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 product-grid">
               {products.map((product: Product) => (
-                <ProductCard
+                <ProductCardComponent
                   variant="simple"
                   key={product.slug}
                   className="animated fadeIn"
