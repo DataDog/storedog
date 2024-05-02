@@ -47,14 +47,14 @@ public class AdsJavaApplication {
 	public HashMap[] ads(@RequestHeader HashMap<String, String> headers) {
 
         boolean errorFlag = false;
-        if(headers.get("x-throw-error") != null) {
-            errorFlag = Boolean.parseBoolean(headers.get("x-throw-error"));
+        if(headers.get("X-Throw-Error") != null) {
+            errorFlag = Boolean.parseBoolean(headers.get("X-Throw-Error"));
         }
 
         // if x-error-rate is present, set to variable errorRate (if missing, set to 1)
         double errorRate = 1;
-        if(headers.get("x-error-rate") != null) {
-            errorRate = Double.parseDouble(headers.get("x-error-rate"));
+        if(headers.get("X-Error-Rate") != null) {
+            errorRate = Double.parseDouble(headers.get("X-Error-Rate"));
         }
 
         if(errorFlag && Math.random() < errorRate) {

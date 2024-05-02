@@ -268,7 +268,7 @@ services:
       - DD_VERSION=${DD_VERSION-7}
       - DD_ENV=${DD_ENV-dev}
     ports:
-      - '3030:8080'
+      - '${ADS_PORT}:8080'
     labels:
       com.datadoghq.ad.logs: '[{"source": "java", "service": "ads-java"}]'
       com.datadoghq.tags.env: '${DD_ENV-dev}'
