@@ -51,7 +51,13 @@ public class AdsJavaApplication {
             errorFlag = Boolean.parseBoolean(headers.get("x-throw-error"));
         }
 
-        if(errorFlag) {
+        // if x-error-rate is present, set to variable errorRate (if missing, set to 1)
+        double errorRate = 1;
+        if(headers.get("x-error-rate") != null) {
+            errorRate = Double.parseDouble(headers.get("x-error-rate"));
+        }
+
+        if(errorFlag && Math.random() < errorRate) {
             // Intentionally throw error here to demonstrate Logs Error Tracking behavior
             try {
                 throw new TimeoutException("took too long to get a response");

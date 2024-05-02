@@ -77,11 +77,9 @@ def status():
 
         # fetch error rate from header if present (0 - 1)
         if 'X-Error-Rate' in flask_request.headers:
-            error_rate = int(flask_request.headers['X-Error-Rate'])
+            error_rate = float(flask_request.headers['X-Error-Rate'])
         else:
             error_rate = 1
-            
-
 
         if throw_error and random.random() < error_rate:
             try:

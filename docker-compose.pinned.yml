@@ -23,7 +23,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /proc/:/host/proc/:ro
       - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
-      - ./services/datadog-agent/postgres/dd-agent-conf.yaml:/conf.d/postgres.d/conf.yaml
   frontend:
     image: public.ecr.aws/x2b9z2t7/storedog/frontend:1.2.0
     command: npm run dev
@@ -88,7 +87,6 @@ services:
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
     volumes:
-      - 'postgres:/var/lib/postgresql/data'
       - ./services/backend/db/restore:/docker-entrypoint-initdb.d
       - ./services/backend/db/postgresql.conf:/postgresql.conf
     labels:
@@ -117,7 +115,10 @@ services:
         },
         "max_relations": 400,
         "collect_function_metrics": true,
-        "collection_interval": 1
+        "collection_interval": 1,
+        "collect_schemas": {
+        "enabled": true
+        }
         },
         {
         "dbm":true,
@@ -135,7 +136,10 @@ services:
         },
         "max_relations": 400,
         "collect_function_metrics": true,
-        "collection_interval": 1
+        "collection_interval": 1,
+        "collect_schemas": {
+        "enabled": true
+        }
         }]'
       com.datadoghq.ad.logs: '[{"source": "postgresql", "service": "postgres", "auto_multi_line_detection":true }]'
       my.custom.label.team: 'database'
@@ -221,7 +225,7 @@ services:
       my.custom.label.team: 'backend'
   discounts:
     image: public.ecr.aws/x2b9z2t7/storedog/discounts:1.2.0
-    command: ./my-wrapper-script.sh ${DISCOUNTS_PORT}
+    command: wait-for-it postgres:5432 -- ./my-wrapper-script.sh ${DISCOUNTS_PORT}
     depends_on:
       - postgres
       - dd-agent
@@ -274,4 +278,3 @@ services:
 
 volumes:
   redis:
-  postgres:
