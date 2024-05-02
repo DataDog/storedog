@@ -17,6 +17,9 @@ export async function getServerSideProps() {
     res.json()
   )
 
+  // reverse the order of the products
+  products.reverse()
+
   const pages: Page[] = await fetch(`${baseUrl}/pages`).then((res) =>
     res.json()
   )
@@ -42,7 +45,7 @@ InferGetServerSidePropsType<typeof getServerSideProps>) {
   return (
     <>
       <Grid variant="filled">
-        {products.slice(0, 3).map((product: any, i: number) => (
+        {products.slice(0, 6).map((product: any, i: number) => (
           <ProductCard
             key={product.id}
             product={product}

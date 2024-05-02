@@ -4,10 +4,9 @@
 }
 
 .root .name {
-  @apply pt-0 w-full max-w-3xl leading-extra-loose;
-  font-size: 2rem;
+  @apply pt-0 w-full max-w-3xl leading-10;
+  font-size: 1.725rem;
   letter-spacing: 0.4px;
-  line-height: 2.1em;
 }
 
 .root .name span {
