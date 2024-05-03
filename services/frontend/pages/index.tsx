@@ -1,9 +1,9 @@
+import type { InferGetServerSidePropsType } from 'next'
 import { Layout } from '@components/common'
 import Ad from '@components/common/Ad'
 import { ProductCard } from '@components/product'
 import { Grid, Marquee, Hero } from '@components/ui'
-import { getProducts } from '@lib/api/products'
-import type { InferGetServerSidePropsType } from 'next'
+import { getTaxons } from '@lib/api/taxons'
 import { Product } from '@customTypes/product'
 import { Page } from '@customTypes/page'
 
@@ -13,19 +13,24 @@ export async function getServerSideProps() {
       ? 'http://localhost:3000/api'
       : '/api'
 
-  const products: Product[] = await getProducts({
-    include: 'default_variant,images,primary_variant',
-    page: 1,
-  })
+  const products: Product[] = await fetch(`${baseUrl}/products`).then((res) =>
+    res.json()
+  )
+
+  // reverse the order of the products
+  products.reverse()
 
   const pages: Page[] = await fetch(`${baseUrl}/pages`).then((res) =>
     res.json()
   )
 
+  const taxons = await fetch(`${baseUrl}/taxonomies`).then((res) => res.json())
+
   return {
     props: {
       products,
       pages,
+      taxons,
     },
   }
 }
@@ -33,11 +38,14 @@ export async function getServerSideProps() {
 export default function Home({
   products,
   pages,
-}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+  taxons,
+}: // taxons,
+InferGetServerSidePropsType<typeof getServerSideProps>) {
+  console.log(taxons)
   return (
     <>
       <Grid variant="filled">
-        {products.slice(0, 3).map((product: any, i: number) => (
+        {products.slice(0, 6).map((product: any, i: number) => (
           <ProductCard
             key={product.id}
             product={product}

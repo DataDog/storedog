@@ -23,6 +23,7 @@ function Ad() {
     (flag: boolean) => {
       const headers = {
         'X-Throw-Error': `${flag}`,
+        'X-Error-Rate': process.env.NEXT_PUBLIC_ADS_ERROR_RATE || '0.25',
       }
       fetch(`${adsPath}/ads`, { headers })
         .then((res) => res.json())

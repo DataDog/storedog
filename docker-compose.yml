@@ -22,7 +22,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /proc/:/host/proc/:ro
       - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
-      - ./services/datadog-agent/postgres/dd-agent-conf.yaml:/conf.d/postgres.d/conf.yaml
   frontend:
     build:
       context: ./services/frontend
@@ -114,7 +113,6 @@ services:
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
     volumes:
-      - 'postgres:/var/lib/postgresql/data'
       - ./services/backend/db/restore:/docker-entrypoint-initdb.d
       - ./services/backend/db/postgresql.conf:/postgresql.conf
     labels:
@@ -143,7 +141,10 @@ services:
         },
         "max_relations": 400,
         "collect_function_metrics": true,
-        "collection_interval": 1
+        "collection_interval": 1,
+        "collect_schemas": {
+        "enabled": true
+        }
         },
         {
         "dbm":true,
@@ -161,7 +162,10 @@ services:
         },
         "max_relations": 400,
         "collect_function_metrics": true,
-        "collection_interval": 1
+        "collection_interval": 1,
+        "collect_schemas": {
+        "enabled": true
+        }
         }]'
       com.datadoghq.ad.logs: '[{"source": "postgresql", "service": "postgres", "auto_multi_line_detection":true }]'
       my.custom.label.team: 'database'
@@ -232,6 +236,8 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - DB_HOST=postgres
       - DB_PORT=5432
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
       - DISABLE_SPRING=1
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV-dev}
@@ -250,7 +256,7 @@ services:
   ads:
     build:
       context: ./services/ads/python
-    command: flask run --port=${ADS_PORT} --host=0.0.0.0 # If using any other port besides the default 9292, overriding the CMD is required
+    command: wait-for-it postgres:5432 -- flask run --port=${ADS_PORT} --host=0.0.0.0 # If using any other port besides the default 9292, overriding the CMD is required
     depends_on:
       - postgres
       - dd-agent
@@ -283,7 +289,7 @@ services:
   discounts:
     build:
       context: ./services/discounts
-    command: ./my-wrapper-script.sh ${DISCOUNTS_PORT}
+    command: wait-for-it postgres:5432 -- ./my-wrapper-script.sh ${DISCOUNTS_PORT}
     depends_on:
       - postgres
       - dd-agent
@@ -305,7 +311,6 @@ services:
       - ./services/discounts:/app
     ports:
       - '${DISCOUNTS_PORT}:${DISCOUNTS_PORT}'
-      - '22:22'
     labels:
       com.datadoghq.ad.logs: '[{"source": "python", "service": "store-discounts"}]'
       com.datadoghq.tags.env: '${DD_ENV-dev}'
@@ -363,8 +368,6 @@ services:
       - STOREDOG_URL=${STOREDOG_URL-http://localhost}
       - PUPPETEER_TIMEOUT
       - SKIP_SESSION_CLOSE
-    profiles:
-      - puppeteer
     depends_on:
       - frontend
     command: bash puppeteer.sh
@@ -374,4 +377,3 @@ services:
 
 volumes:
   redis:
-  postgres:

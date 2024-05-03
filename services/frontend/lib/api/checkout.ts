@@ -19,7 +19,6 @@ export const listPaymentMethods = async (
         'X-Spree-Order-Token': options.order_token || '',
       },
     })
-
     if (!response.ok) {
       throw new Error(response.statusText)
     }

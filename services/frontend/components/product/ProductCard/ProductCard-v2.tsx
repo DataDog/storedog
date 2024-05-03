@@ -41,7 +41,7 @@ export const ProductCard: FC<Props> = ({
       {variant === 'slim' && (
         <>
           <div className={s.header}>
-            <Link href={`/product/${product.slug}`}>
+            <Link href={`/products/${product.slug}`}>
               <a aria-label={product.name}>{product.name}</a>
             </Link>
           </div>
@@ -64,17 +64,10 @@ export const ProductCard: FC<Props> = ({
 
       {variant === 'simple' && (
         <>
-          {/* {process.env.COMMERCE_WISHLIST_ENABLED && (
-            <WishlistButton
-              className={s.wishlistButton}
-              productId={product.id}
-              variant={product.variants[0]}
-            />
-          )} */}
           {!noNameTag && (
             <div className={s.header}>
               <h3 className={s.name}>
-                <Link href={`/product/${product.slug}`}>
+                <Link href={`/products/${product.slug}`}>
                   <a aria-label={product.name} className={s.link}>
                     {product.name}
                   </a>
@@ -107,14 +100,7 @@ export const ProductCard: FC<Props> = ({
 
       {variant === 'default' && (
         <>
-          {/* {process.env.COMMERCE_WISHLIST_ENABLED && (
-            <WishlistButton
-              className={s.wishlistButton}
-              productId={product.id}
-              variant={product.variants[0] as any}
-            />
-          )} */}
-          <Link href={`/product/${product.slug}`}>
+          <Link href={`/products/${product.slug}`}>
             <a aria-label={product.name}>
               <ProductTag
                 name={product.name}

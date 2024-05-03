@@ -12,7 +12,9 @@ export const getProducts = async (
   try {
     const url = `${SPREE_URL_SERVERSIDE}/storefront/products?include=${encodeURIComponent(
       options.include
-    )}&page=${options.page || 1}&per_page=${options.per_page || 25}`
+    )}&page=${options.page || 1}&per_page=${
+      options.per_page || 25
+    }&filter[taxons]=${encodeURIComponent(options.taxons)}`
 
     const res = await fetch(url, {
       method: 'GET',
@@ -93,6 +95,9 @@ export const getProduct = async (options: any): Promise<Product | any> => {
 
     const productApi: any = await res.json()
 
+    console.log('PRODUCT API RETURN')
+    console.log(productApi)
+
     const product: Product = {
       id: productApi.data.id,
       name: productApi.data.attributes.name,
@@ -130,7 +135,16 @@ export const getProduct = async (options: any): Promise<Product | any> => {
       }
 
       acc.id = i.id
-      acc.availableforSale = i.attributes.purchasable
+      acc.availableForSale = i.attributes.purchasable
+      acc.attributes = {
+        name: i.attributes.options_text,
+        inStock: i.attributes.in_stock,
+        price: i.attributes.price,
+        depth: i.attributes.depth,
+        width: i.attributes.width,
+        height: i.attributes.height,
+        weight: i.attributes.weight,
+      }
       acc.options = [
         {
           id: i.id,
@@ -146,8 +160,45 @@ export const getProduct = async (options: any): Promise<Product | any> => {
       return acc
     }, {})
 
+    const otherVariants = productApi.included.reduce((acc: any, i: any) => {
+      if (
+        i.type !== 'variant' ||
+        i.id === productApi.data.relationships.default_variant.data.id
+      ) {
+        return acc
+      }
+
+      acc.push({
+        id: i.id,
+        availableForSale: i.attributes.purchasable,
+        attributes: {
+          name: i.attributes.options_text,
+          inStock: i.attributes.in_stock,
+          price: i.attributes.price,
+          depth: i.attributes.depth,
+          width: i.attributes.width,
+          height: i.attributes.height,
+          weight: i.attributes.weight,
+        },
+        options: [
+          {
+            id: i.id,
+            displayName: 'Options',
+            values: [
+              {
+                label: 'Default',
+                hexColors: [],
+              },
+            ],
+          },
+        ],
+      })
+
+      return acc
+    }, [])
+
     // set up for only one variant for now
-    product.variants = [defaultVariant]
+    product.variants = [defaultVariant, ...otherVariants]
 
     return product
   } catch (error) {

@@ -15,8 +15,17 @@ export interface Product {
     url: string
     alt: string
   }[]
-  variants?: {
+  variants: {
     id: string | number
+    attributes: {
+      name: string
+      inStock: boolean
+      price: number
+      depth?: number
+      width?: number
+      height?: number
+      weight?: number
+    }
     options: {
       __typename?: 'MultipleChoiceOption'
       id: string

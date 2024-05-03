@@ -69,11 +69,11 @@ const randomlyCloseSession = async (browser, page, skipSessionClose) => {
   }
 };
 
-// select cool bits product on search page
-const selectCoolBits = async (page) => {
-  console.log('In selectHomePageProduct on page', await page.title());
+// select cool bits product on products page
+const selectSunsetBits = async (page) => {
+  console.log('In selectSunsetBits on page', await page.title());
   await page.waitForTimeout(8000);
-  let productAriaLabel = 'Cool Bits';
+  let productAriaLabel = 'Sunset Bits';
   const selector = `[aria-label="${productAriaLabel}"]`;
 
   await Promise.all([page.waitForNavigation(), page.click(selector)]);
@@ -112,12 +112,36 @@ const addToCart = async (page) => {
     visible: true,
   });
 
+  // select a variant if it exists
+  const variantSelector = 'select#variant-select';
+  const variantSelect = await page.$(variantSelector);
+  console.log('variantSelect', variantSelect);
+  if (variantSelect) {
+    // get all the values
+    const variantOptions = await page.$$eval(
+      `${variantSelector} option`,
+      (options) => options.map((option) => option.value)
+    );
+
+    // select a random value
+    const randomVariantIndex = Math.floor(
+      Math.random() * variantOptions.length
+    );
+    const randomVariantValue = variantOptions[randomVariantIndex];
+
+    await page.select(variantSelector, randomVariantValue);
+
+    console.log('selected variant', randomVariantValue);
+    await page.waitForTimeout(2000);
+  }
+
   await page.click('#add-to-cart-button');
+  console.log('clicked add to cart');
 
   await page.waitForSelector('#close-sidebar', {
     visible: true,
   });
-
+  console.log('close sidebar is visible');
   await page.click('#close-sidebar');
 
   return;
@@ -133,17 +157,9 @@ const selectRelatedProduct = async (page) => {
   return;
 };
 
-// select product on search page
-const selectSearchPageProduct = async (page) => {
-  // go to all products page
-  let selector = 'nav#main-navbar a:first-child';
-  const button = await page.$(selector);
-  await Promise.all([
-    button.evaluate((b) => b.click()),
-    page.waitForNavigation(),
-  ]);
-
-  selector = '.product-grid';
+const selectProduct = async (page) => {
+  const pageUrl = await page.url();
+  let selector = '.product-grid';
   await page.waitForSelector(selector);
   // does selector exist
   const productGrid = await page.$(selector);
@@ -158,22 +174,27 @@ const selectSearchPageProduct = async (page) => {
   console.log('product index', productIndex);
   let product = products[productIndex];
   let productThumbnail = await product.$('img');
+
+  const rect = await page.evaluate(async (selector) => {
+    console.log('GETTING ELEMENT COORDS');
+    const box = selector.getBoundingClientRect();
+    const x = (box.left + box.right) / 2;
+    const y = (box.top + box.bottom) / 2;
+    return { x, y };
+  }, productThumbnail);
+  console.log(rect);
   // click on product
-  let [_, navigation] = await Promise.allSettled([
-    page.click(productThumbnail),
-    page.waitForNavigation(),
-  ]);
+  await page.mouse.click(rect.x, rect.y);
   console.log('clicked first time');
+  try {
+    await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
+  } catch (e) {
+    console.log('navigation failed...');
+  }
   // if it didn't go anywhere, try again
-  if (navigation.status !== 'fulfilled') {
-    const rect = await page.evaluate(async (selector) => {
-      console.log('GETTING ELEMENT COORDS');
-      const box = selector.getBoundingClientRect();
-      const x = (box.left + box.right) / 2;
-      const y = (box.top + box.bottom) / 2;
-      return { x, y };
-    }, productThumbnail);
-    console.log('rect', rect);
+  const newPageUrl = await page.url();
+
+  if (newPageUrl === pageUrl) {
     await page.mouse.click(rect.x, rect.y, { count: 6, clickCount: 4 });
 
     console.log('clicked second time (3x), trying a different item');
@@ -202,14 +223,37 @@ const selectSearchPageProduct = async (page) => {
     console.log('clicking on the product title this time');
     await Promise.all([
       page.click(`.product-item:nth-child(${productIndex}) a`),
-      page.waitForNavigation(),
+      page.waitForNavigation({
+        waitUntil: 'domcontentloaded',
+      }),
     ]);
 
     pageTitle = await page.title();
 
     console.log(`"${pageTitle}" loaded`);
     return;
+  } else {
+    console.log('navigation fulfilled, continuing');
+    await page.waitForTimeout(2500);
+    const pageTitle = await page.title();
+    console.log(`"${pageTitle}" loaded`);
+    return;
   }
+};
+
+// select product on all products page
+const selectProductsPageProduct = async (page) => {
+  // go to all products page
+  let selector = 'nav#main-navbar a:first-child';
+  const button = await page.$(selector);
+  await Promise.all([
+    button.evaluate((b) => b.click()),
+    page.waitForNavigation(),
+  ]);
+
+  await selectProduct(page);
+
+  return true;
 };
 
 const goToFooterPage = async (page) => {
@@ -217,10 +261,10 @@ const goToFooterPage = async (page) => {
   const links = await page.$$('.footer-link');
   let linkIndex = Math.floor(Math.random() * links.length);
   console.log('link index', linkIndex);
-  let link = links[linkIndex];
+  let selector = `span:nth-of-type(${linkIndex}) .footer-link`;
   // click on link
-  let [_, navigation] = await Promise.allSettled([
-    page.click(link),
+  let [_, navigation] = await Promise.all([
+    page.$eval(selector, (el) => el.click()),
     page.waitForNavigation(),
   ]);
 
@@ -489,7 +533,7 @@ const mainSession = async () => {
   }
 };
 
-// has some frustration signals due to a incorrect product item UI component configuration in the search page
+// has some frustration signals due to a incorrect product item UI component configuration in the product page
 const secondSession = async () => {
   const browser = await getNewBrowser();
 
@@ -516,10 +560,10 @@ const secondSession = async () => {
     console.log(`"${pageTitle}" loaded`);
 
     // go to all products page (and maybe leave)
-    await selectSearchPageProduct(page);
+    await selectProductsPageProduct(page);
     await addToCart(page);
 
-    await selectSearchPageProduct(page);
+    await selectProductsPageProduct(page);
     await addToCart(page);
 
     // maybe select a related product
@@ -528,17 +572,17 @@ const secondSession = async () => {
       await addToCart(page);
     }
 
-    // maybe try to find another product on the search page
+    // maybe try to find another product on the products page
     if (Math.floor(Math.random() * 4) === 0) {
-      await selectSearchPageProduct(page);
+      await selectProductsPageProduct(page);
       await addToCart(page);
     }
 
     await goToFooterPage(page);
 
-    // maybe try to find another product on the search page
+    // maybe try to find another product on the products page
     if (Math.floor(Math.random() * 4) === 0) {
-      await selectSearchPageProduct(page);
+      await selectProductsPageProduct(page);
       await addToCart(page);
     }
 
@@ -562,14 +606,148 @@ const secondSession = async () => {
   }
 };
 
-// set up 10 staggered sessions
-for (let i = 0; i < 10; i++) {
+// third session visits taxonomy pages and purchases products
+const thirdSession = async () => {
+  const browser = await getNewBrowser();
+
+  try {
+    const page = await browser.newPage();
+
+    await page.setUserAgent(
+      `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36`
+    );
+
+    await page.setViewport({
+      width: 1366,
+      height: 768,
+      deviceScaleFactor: 1,
+    });
+
+    await page.setDefaultNavigationTimeout(
+      process.env.PUPPETEER_TIMEOUT || 40000
+    );
+
+    // go to home page
+    await page.goto(startUrl, { waitUntil: 'domcontentloaded' });
+    let pageTitle = await page.title();
+    console.log(`"${pageTitle}" loaded`);
+
+    // go to bestsellers page in navbar
+    let selector = 'nav#main-navbar #bestsellers-link';
+    const bestsellersLink = await page.$(selector);
+    await Promise.all([
+      bestsellersLink.evaluate((el) => el.click()),
+      page.waitForNavigation(),
+    ]);
+    pageTitle = await page.title();
+    console.log(`"${pageTitle}" loaded`);
+
+    // select a product
+    await selectProduct(page);
+
+    // add to cart
+    await addToCart(page);
+
+    console.log('moving on to checkout');
+    await page.waitForTimeout(3000);
+    await checkout(page);
+    await page.waitForTimeout(3000);
+    const url = await page.url();
+    await page.goto(`${url}?end_session=true`, {
+      waitUntil: 'domcontentloaded',
+    });
+    console.log('Third session complete');
+  } catch (err) {
+    console.log(`Third session failed: ${err}`);
+  } finally {
+    console.log('closing browser');
+    await browser.close();
+    if (browser && browser.process() != null) browser.process().kill('SIGINT');
+  }
+};
+
+// third session visits taxonomy pages and purchases products
+const fourthSession = async () => {
+  console.log('Starting fourth session');
+  const browser = await getNewBrowser();
+
+  try {
+    const page = await browser.newPage();
+
+    await page.setUserAgent(
+      `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36`
+    );
+
+    await page.setViewport({
+      width: 1366,
+      height: 768,
+      deviceScaleFactor: 1,
+    });
+
+    await page.setDefaultNavigationTimeout(
+      process.env.PUPPETEER_TIMEOUT || 40000
+    );
+
+    // go to home page
+    await page.goto(startUrl, { waitUntil: 'domcontentloaded' });
+    let pageTitle = await page.title();
+    console.log(`"${pageTitle}" loaded`);
+
+    // go to bestsellers page in navbar
+    let selector = 'nav#main-navbar #new-items-link';
+    const newItemsLink = await page.$(selector);
+    await Promise.all([
+      newItemsLink.evaluate((el) => el.click()),
+      page.waitForNavigation(),
+    ]);
+    pageTitle = await page.title();
+    console.log(`"${pageTitle}" loaded`);
+
+    // select a product
+    await selectProduct(page);
+
+    // add to cart
+    await addToCart(page);
+
+    console.log('moving on to checkout');
+    await page.waitForTimeout(3000);
+    await checkout(page);
+    await page.waitForTimeout(3000);
+    const url = await page.url();
+    await page.goto(`${url}?end_session=true`, {
+      waitUntil: 'domcontentloaded',
+    });
+    console.log('Fourth session complete');
+  } catch (err) {
+    console.log(`Fourth session failed: ${err}`);
+  } finally {
+    console.log('closing browser');
+    await browser.close();
+    if (browser && browser.process() != null) browser.process().kill('SIGINT');
+  }
+};
+
+for (let i = 0; i < 6; i++) {
   setTimeout(() => {
-    // randomly select a session type
-    if (Math.floor(Math.random() * 2) === 0) {
-      (() => mainSession())();
-    } else {
-      (() => secondSession())();
+    // randomly select a session to run
+    const session = Math.floor(Math.random() * 4);
+    console.log('running session', session + 1);
+    switch (session) {
+      case 0:
+        (() => mainSession())();
+        break;
+      case 1:
+        (() => secondSession())();
+        break;
+      case 2:
+        (() => thirdSession())();
+        break;
+      case 3:
+        (() => fourthSession())();
+        break;
+      default:
+        (() => mainSession())();
+        break;
     }
   }, 500 * i);
 }

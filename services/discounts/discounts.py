@@ -109,3 +109,31 @@ def status():
         err = jsonify({'error': 'Invalid request method'})
         err.status_code = 405
         return err
+    
+@app.route("/discount-code", methods=["GET"])
+def getDiscount():
+    if flask_request.method == "GET":
+        try:
+           # get the discount code from the query string
+            discount_code = flask_request.args.get("discount_code")
+            # log the discount code
+            logger.info(f"Discount code: {discount_code}")
+            discount = Discount.query.filter_by(code=discount_code).first()
+            
+            if discount:
+                response = discount.serialize()
+                response.update({"status": 1})
+                return jsonify(response)
+            else:
+                err = jsonify({"error": "Discount not found", "status": 0})
+                err.status_code = 404
+                return err
+        except:
+            logger.error("An error occurred while getting discount.")
+            err = jsonify({'error': 'Internal Server Error'})
+            err.status_code = 500
+            return err
+    else:
+        err = jsonify({"error": "Invalid request method"})
+        err.status_code = 405
+        return err

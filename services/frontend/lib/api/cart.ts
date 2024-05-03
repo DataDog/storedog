@@ -50,9 +50,9 @@ export const formatCart = (cartApi: any): Cart => {
           productId: lineItemData.attributes.product_id,
           discounts: [],
           variant: {
-            id: variant.attributes.variant_id,
+            id: variant.id,
             sku: variant.attributes.sku,
-            name: variant.attributes.name,
+            name: variant.attributes.options_text,
             price: Number(variant.attributes.price),
             requiresShipping: false,
             availableForSale: true,
@@ -319,6 +319,42 @@ export const updateQuantity = async (
       body: JSON.stringify({
         line_item_id: options.line_item_id,
         quantity: options.quantity,
+      }),
+    })
+
+    if (!res.ok) {
+      throw res
+    }
+
+    const cartApi = await res.json()
+    const cart = formatCart(cartApi)
+    return cart
+  } catch (error) {
+    console.log(error)
+    return error
+  }
+}
+
+export const applyCouponCode = async (
+  options: CartOptionsBase & { couponCode: string }
+): Promise<Cart | any> => {
+  if (!options.order_token && !options.bearer_token) {
+    return new Error('You must provide either an order_token or a bearer_token')
+  }
+
+  try {
+    const url = `${SPREE_URL_CLIENTSIDE}/storefront/cart/apply_coupon_code?include=${encodeURIComponent(
+      options.include
+    )}`
+
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Spree-Order-Token': options.order_token || '',
+      },
+      body: JSON.stringify({
+        coupon_code: options.couponCode,
       }),
     })
 

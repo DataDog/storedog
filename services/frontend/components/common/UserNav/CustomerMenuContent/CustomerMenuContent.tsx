@@ -3,7 +3,7 @@ import { useTheme } from 'next-themes'
 import { useRouter } from 'next/router'
 import { Moon, Sun } from '@components/icons'
 import s from './CustomerMenuContent.module.css'
-// import useLogout from '@framework/auth/use-logout'
+
 import {
   DropdownContent,
   DropdownMenuItem,
@@ -73,14 +73,6 @@ export default function CustomerMenuContent() {
           </div>
         </a>
       </DropdownMenuItem>
-      {/* <DropdownMenuItem>
-        <a
-          className={cn(s.link, 'border-t border-accent-2 mt-4')}
-          onClick={() => logout()}
-        >
-          Logout
-        </a>
-      </DropdownMenuItem> */}
     </DropdownContent>
   )
 }

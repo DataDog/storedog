@@ -1,6 +1,7 @@
 import React, {
   FC,
   useState,
+  useRef,
   useEffect,
   useCallback,
   useMemo,
@@ -8,8 +9,6 @@ import React, {
   useContext,
   createContext,
 } from 'react'
-
-import { datadogRum } from '@datadog/browser-rum'
 
 import {
   listPaymentMethods,
@@ -132,7 +131,6 @@ export const CheckoutProvider: FC = (props) => {
   const getShippingRates = useCallback(async () => {
     // get shipping rates
     const shippingRates = await listShippingRates({ order_token: cartToken })
-
     setShippingRate({
       id: shippingRates.data[0].id,
       selected_rate_id:
@@ -212,7 +210,6 @@ export const CheckoutProvider: FC = (props) => {
             ],
           },
         })
-        console.log(updatedCheckout)
       } catch (error) {
         console.log(error)
       }

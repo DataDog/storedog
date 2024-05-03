@@ -71,8 +71,17 @@ def weighted_image(weight):
 def status():
     if flask_request.method == 'GET':
 
+        # determine if should throw error and save to variable
+        throw_error = False
         if 'X-Throw-Error' in flask_request.headers and flask_request.headers['X-Throw-Error'] == 'true':
+            throw_error = True
 
+        # fetch error rate from header if present (0 - 1)
+        error_rate = 1
+        if 'X-Error-Rate' in flask_request.headers:
+            error_rate = float(flask_request.headers['X-Error-Rate'])
+
+        if throw_error and random.random() < error_rate:
             try:
                 raise ValueError('something went wrong')
             except ValueError:
