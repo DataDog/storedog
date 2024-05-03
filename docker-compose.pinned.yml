@@ -247,7 +247,6 @@ services:
       - ./services/discounts:/app
     ports:
       - '${DISCOUNTS_PORT}:${DISCOUNTS_PORT}'
-      - '22:22'
     labels:
       com.datadoghq.ad.logs: '[{"source": "python", "service": "store-discounts"}]'
       com.datadoghq.tags.env: '${DD_ENV-dev}'
