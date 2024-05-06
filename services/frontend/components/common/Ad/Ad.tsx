@@ -26,6 +26,12 @@ function Ad() {
         'X-Error-Rate': process.env.NEXT_PUBLIC_ADS_ERROR_RATE || '0.25',
       }
       fetch(`${adsPath}/ads`, { headers })
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error('Error fetching ad')
+          }
+          return res
+        })
         .then((res) => res.json())
         .then((data) => {
           const index = getRandomArbitrary(0, data.length)
