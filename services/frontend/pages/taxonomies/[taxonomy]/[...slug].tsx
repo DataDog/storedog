@@ -1,62 +1,42 @@
-import { useEffect, useState, useCallback } from 'react'
-import { useRouter } from 'next/router'
+import { Page } from '@customTypes/page'
+import { Taxon } from '@customTypes/taxons'
 import { ProductList } from '@components/product'
 import { Layout } from '@components/common'
 
-const TaxonomyPage = () => {
-  const router = useRouter()
-  const { taxonomy, slug } = router.query
+export const getServerSideProps = async ({ params }) => {
+  const baseUrl =
+    process.env.NODE_ENV === 'development'
+      ? 'http://localhost:3000/api'
+      : '/api'
 
-  const [products, setProducts] = useState([])
-  const [pages, setPages] = useState([])
-  const [taxons, setTaxons] = useState([])
-  const [taxon, setTaxon] = useState<{ id?: string }>({})
+  const { taxonomy, slug } = params
 
-  const fetchPages = useCallback(async () => {
-    const pages = await fetch(`/api/pages`).then((res) => res.json())
-    setPages(pages)
-  }, [])
+  const pages: Page[] = await fetch(`${baseUrl}/pages`).then((res) =>
+    res.json()
+  )
+  const taxon: Taxon = await fetch(
+    `${baseUrl}/taxonomies/${taxonomy}/${slug}`
+  ).then((res) => res.json())
 
-  const fetchTaxons = useCallback(async () => {
-    const taxons = await fetch(`/api/taxonomies`).then((res) => res.json())
-    setTaxons(taxons)
-  }, [])
+  const taxons: any = await fetch(`${baseUrl}/taxonomies`).then((res) =>
+    res.json()
+  )
 
-  const fetchTaxon = useCallback(async () => {
-    if (!slug) return
+  const products: any = await fetch(
+    `${baseUrl}/products?taxons=${taxon.id}`
+  ).then((res) => res.json())
 
-    const taxon = await fetch(`/api/taxonomies/${taxonomy}/${slug}`).then(
-      (res) => res.json()
-    )
-    setTaxon(taxon)
-  }, [slug, taxonomy])
+  return {
+    props: {
+      pages,
+      taxon,
+      taxons,
+      products,
+    },
+  }
+}
 
-  const fetchProducts = useCallback(async (taxonId) => {
-    if (!taxonId) return
-    const products = await fetch(`/api/products?taxons=${taxonId}`).then(
-      (res) => res.json()
-    )
-
-    if (products?.length === 0 || products?.error) {
-      console.log('No products found')
-      return
-    }
-
-    setProducts(products)
-  }, [])
-
-  useEffect(() => {
-    fetchPages()
-    fetchTaxons()
-    fetchTaxon()
-  }, [fetchPages, fetchTaxons, fetchTaxon])
-
-  useEffect(() => {
-    if (taxon.id) {
-      fetchProducts(taxon.id)
-    }
-  }, [taxon, fetchProducts])
-
+const TaxonomyPage = ({ pages, taxon, taxons, products }) => {
   return (
     <ProductList
       products={products}
