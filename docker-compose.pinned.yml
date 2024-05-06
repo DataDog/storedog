@@ -24,7 +24,7 @@ services:
       - /proc/:/host/proc/:ro
       - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
   frontend:
-    image: public.ecr.aws/x2b9z2t7/storedog/frontend:1.2.0
+    image: public.ecr.aws/x2b9z2t7/storedog/frontend:1.2.2
     command: npm run dev
     depends_on:
       - worker
@@ -49,7 +49,7 @@ services:
       com.datadoghq.tags.version: '${DD_VERSION-7}'
       my.custom.label.team: 'frontend'
   nginx:
-    image: public.ecr.aws/x2b9z2t7/storedog/nginx:1.2.0
+    image: public.ecr.aws/x2b9z2t7/storedog/nginx:1.2.2
     restart: always
     ports:
       - '80:80'
@@ -163,7 +163,7 @@ services:
       - 'postgres'
       - 'redis'
       - 'dd-agent'
-    image: public.ecr.aws/x2b9z2t7/storedog/backend:1.2.0
+    image: public.ecr.aws/x2b9z2t7/storedog/backend:1.2.2
     command: wait-for-it postgres:5432 -- bundle exec rails s -b 0.0.0.0 -p 4000
     ports:
       - '${DOCKER_HOST_WEB_PORT:-4000}:4000'
@@ -193,7 +193,7 @@ services:
       com.datadoghq.tags.version: '1.0.9'
       my.custom.label.team: 'backend'
   worker:
-    image: public.ecr.aws/x2b9z2t7/storedog/backend:1.2.0
+    image: public.ecr.aws/x2b9z2t7/storedog/backend:1.2.2
     command: wait-for-it postgres:5432 -- bundle exec sidekiq -C config/sidekiq.yml
     depends_on:
       - 'postgres'
@@ -224,7 +224,7 @@ services:
       com.datadoghq.tags.version: '1.0.9'
       my.custom.label.team: 'backend'
   discounts:
-    image: public.ecr.aws/x2b9z2t7/storedog/discounts:1.2.0
+    image: public.ecr.aws/x2b9z2t7/storedog/discounts:1.2.2
     command: wait-for-it postgres:5432 -- ./my-wrapper-script.sh ${DISCOUNTS_PORT}
     depends_on:
       - postgres
@@ -254,7 +254,7 @@ services:
       com.datadoghq.tags.version: '${DD_VERSION-7}'
       my.custom.label.team: 'discounts'
   ads-java:
-    image: public.ecr.aws/x2b9z2t7/storedog/ads-java:1.2.0
+    image: public.ecr.aws/x2b9z2t7/storedog/ads-java:1.2.2
     depends_on:
       - dd-agent
     environment:
@@ -274,6 +274,23 @@ services:
       com.datadoghq.tags.service: 'store-ads-java'
       com.datadoghq.tags.version: '${DD_VERSION-7}'
       my.custom.label.team: 'advertisements'
+  puppeteer:
+    image: ghcr.io/puppeteer/puppeteer:20.0.0
+    platform: linux/amd64
+    network_mode: host
+    volumes:
+      - ./services/puppeteer/puppeteer.js:/home/pptruser/puppeteer.js
+      - ./services/puppeteer/puppeteer.sh:/home/pptruser/puppeteer.sh
+    environment:
+      - STOREDOG_URL=${STOREDOG_URL-http://localhost}
+      - PUPPETEER_TIMEOUT
+      - SKIP_SESSION_CLOSE
+    depends_on:
+      - frontend
+    command: bash puppeteer.sh
+    shm_size: '4gb' # Increase shared memory size
+    cap_add:
+      - 'SYS_ADMIN' # Required for Puppeteer to run in Docker
 
 volumes:
   redis:
