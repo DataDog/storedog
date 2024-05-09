@@ -45,6 +45,7 @@ jobs:
             ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/nginx
             ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/frontend
             ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/dbm
+            ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/postgres
           )
 
           for i in "${IMAGES[@]}"
