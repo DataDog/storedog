@@ -95,7 +95,8 @@ services:
     ports:
       - '${DBM_PORT}:${DBM_PORT}'
   postgres:
-    image: postgres:13-alpine
+    build:
+      context: ./services/postgres
     command: ['postgres', '-c', 'config_file=/postgresql.conf']
     restart: always
     depends_on:
@@ -112,9 +113,6 @@ services:
       - DD_LOGS_INJECTION=true
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
-    volumes:
-      - ./services/backend/db/restore:/docker-entrypoint-initdb.d
-      - ./services/backend/db/postgresql.conf:/postgresql.conf
     labels:
       com.datadoghq.tags.env: '${DD_ENV}'
       com.datadoghq.tags.service: 'storedog-db'
