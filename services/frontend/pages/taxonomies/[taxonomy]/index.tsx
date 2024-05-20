@@ -6,10 +6,9 @@ import { Container } from '@components/ui'
 import Link from 'next/link'
 
 export const getServerSideProps = async ({ params }) => {
-  const baseUrl =
-    process.env.NODE_ENV === 'development'
-      ? 'http://localhost:3000/api'
-      : '/api'
+  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL
+    ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/api`
+    : 'http://localhost/api'
 
   const pages: Page[] = await fetch(`${baseUrl}/pages`).then((res) =>
     res.json()

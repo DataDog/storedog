@@ -25,7 +25,7 @@ services:
   frontend:
     build:
       context: ./services/frontend
-    command: npm run dev
+    command: wait-for-it web:4000 -- npm run dev
     depends_on:
       - worker
       - dd-agent

@@ -18,5 +18,10 @@
     "id": "4",
     "name": "api-errors",
     "active": false
+  },
+  {
+    "id": "5",
+    "name": "product-card-frustration",
+    "active": false
   }
 ]
