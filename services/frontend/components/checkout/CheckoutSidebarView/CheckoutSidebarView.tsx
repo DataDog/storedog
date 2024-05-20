@@ -103,10 +103,16 @@ const CheckoutSidebarView: FC = () => {
       const res = await fetch(
         `${discountPath}/discount-code?discount_code=${discountCode}`
       )
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw error
+      }
+
       const discount = await res.json()
 
       if (discount?.error) {
-        throw 'No discount found!'
+        throw discount.error
       }
 
       console.log('discount accepted', discount)
@@ -115,7 +121,9 @@ const CheckoutSidebarView: FC = () => {
 
       setDiscountInput('')
     } catch (err) {
-      console.error(err)
+      datadogRum.addError(err, {
+        discount_code: discountInput,
+      })
     }
   }
 

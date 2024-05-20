@@ -42,11 +42,13 @@ function Discount() {
         <span>GET FREE SHIPPING WITH DISCOUNT CODE</span>
       ) : !data ? (
         <span>
-          GET FREE SHIPPING WITH DISCOUNT CODE <strong>STOREDOG</strong>
+          GET FREE SHIPPING WITH DISCOUNT CODE{' '}
+          <strong id="discount-code">STOREDOG</strong>
         </span>
       ) : (
         <span>
-          GET FREE SHIPPING WITH DISCOUNT CODE &nbsp; <strong>{data}</strong>
+          GET FREE SHIPPING WITH DISCOUNT CODE &nbsp;{' '}
+          <strong id="discount-code">{data}</strong>
         </span>
       )}
     </div>

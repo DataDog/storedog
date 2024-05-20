@@ -3,22 +3,22 @@ import { Layout } from '@components/common'
 import Ad from '@components/common/Ad'
 import { ProductCard } from '@components/product'
 import { Grid, Marquee, Hero } from '@components/ui'
-import { getTaxons } from '@lib/api/taxons'
 import { Product } from '@customTypes/product'
 import { Page } from '@customTypes/page'
 
 export async function getServerSideProps() {
-  const baseUrl =
-    process.env.NODE_ENV === 'development'
-      ? 'http://localhost:3000/api'
-      : '/api'
+  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL
+    ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/api`
+    : 'http://localhost/api'
 
   const products: Product[] = await fetch(`${baseUrl}/products`).then((res) =>
     res.json()
   )
 
-  // reverse the order of the products
-  products.reverse()
+  // if products exists and is an array, reverse it
+  if (products && Array.isArray(products)) {
+    products.reverse()
+  }
 
   const pages: Page[] = await fetch(`${baseUrl}/pages`).then((res) =>
     res.json()

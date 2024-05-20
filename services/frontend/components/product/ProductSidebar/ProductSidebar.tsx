@@ -29,6 +29,9 @@ const ProductSidebar: FC<ProductSidebarProps> = ({ product, className }) => {
         1
       )
 
+      // wait 2 seconds to simulate loading
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+
       if (cartRes.error) {
         throw new Error(cartRes.error)
       }

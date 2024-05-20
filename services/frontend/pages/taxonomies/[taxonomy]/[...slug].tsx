@@ -4,10 +4,9 @@ import { ProductList } from '@components/product'
 import { Layout } from '@components/common'
 
 export const getServerSideProps = async ({ params }) => {
-  const baseUrl =
-    process.env.NODE_ENV === 'development'
-      ? 'http://localhost:3000/api'
-      : '/api'
+  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL
+    ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/api`
+    : 'http://localhost/api'
 
   const { taxonomy, slug } = params
 

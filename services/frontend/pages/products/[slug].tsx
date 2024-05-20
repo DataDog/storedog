@@ -6,7 +6,6 @@ import { useRouter } from 'next/router'
 import { useEffect, useState, useCallback } from 'react'
 import { Layout } from '@components/common'
 import { ProductView } from '@components/product'
-import { getProducts, getProduct } from '@lib/api/products'
 import { getPages } from '@lib/api/pages'
 import { Product } from '@customTypes/product'
 
@@ -20,10 +19,9 @@ export async function getServerSideProps({
   req,
   params,
 }: GetServerSidePropsContext<{ slug: string }>) {
-  const baseUrl =
-    process.env.NODE_ENV === 'development'
-      ? 'http://localhost:3000/api'
-      : '/api'
+  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL
+    ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/api`
+    : 'http://localhost/api'
 
   const product: Product = await fetch(
     `${baseUrl}/products/${params?.slug}?include=default_variant,variants,option_types,product_properties,taxons,images,primary_variant`
