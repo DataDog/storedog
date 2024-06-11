@@ -9,7 +9,6 @@ if [ $status -ne 0 ]; then
 fi
 
 # Start the second process
-# ddtrace-run flask run --port=$1 --host=0.0.0.0
 python3 -m flask run --port=$1 --host=0.0.0.0
 # python discounts.py
 status=$?
