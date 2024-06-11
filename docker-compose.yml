@@ -34,14 +34,14 @@ services:
       - /storedog-app/node_modules
     ports:
       - 3000:3000
-    environment:
-      - DD_VERSION=${DD_VERSION-7}
-      - DD_SERVICE=store-frontend
-      - DD_ENV=${DD_ENV-dev}
-      - DD_AGENT_HOST=dd-agent
-      - DD_LOGS_INJECTION=true
-      - DD_RUNTIME_METRICS_ENABLED=true
-      - DD_PROFILING_ENABLED=true
+    # environment:
+      # - DD_VERSION=${DD_VERSION-7}
+      # - DD_SERVICE=store-frontend
+      # - DD_ENV=${DD_ENV-dev}
+      # - DD_AGENT_HOST=dd-agent
+      # - DD_LOGS_INJECTION=true
+      # - DD_RUNTIME_METRICS_ENABLED=true
+      # - DD_PROFILING_ENABLED=true
     labels:
       com.datadoghq.ad.logs: '[{"source": "nodejs", "service": "store-frontend", "auto_multi_line_detection":true }]'
       com.datadoghq.tags.env: '${DD_ENV-dev}'
@@ -84,12 +84,12 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_HOST=postgres
-      - DD_SERVICE=storedog-dbm
-      - DD_AGENT_HOST=dd-agent
-      - DD_LOGS_INJECTION=true
-      - DD_TRACE_ANALYTICS_ENABLED=true
-      - DD_PROFILING_ENABLED=true
-      - DD_APPSEC_ENABLED=true
+      # - DD_SERVICE=storedog-dbm
+      # - DD_AGENT_HOST=dd-agent
+      # - DD_LOGS_INJECTION=true
+      # - DD_TRACE_ANALYTICS_ENABLED=true
+      # - DD_PROFILING_ENABLED=true
+      # - DD_APPSEC_ENABLED=true
     volumes:
       - './services/dbm:/app'
     ports:
@@ -182,7 +182,7 @@ services:
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":6379}]'
       com.datadoghq.ad.logs: '[{"source": "redis", "service": "redis"}]'
       my.custom.label.team: 'database'
-  web:
+  backend:
     depends_on:
       - 'postgres'
       - 'redis'
@@ -202,15 +202,15 @@ services:
       - POSTGRES_USER
       - POSTGRES_PASSWORD
       - DISABLE_SPRING=1
-      - DD_APPSEC_ENABLED=true
-      - DD_AGENT_HOST=dd-agent
-      - DD_VERSION=${DD_VERSION-7}
-      - DD_SERVICE=store-backend
-      - DD_ENV=${DD_ENV-dev}
-      - DD_LOGS_INJECTION=true
-      - DD_RUNTIME_METRICS_ENABLED=true
-      - DD_PROFILING_ENABLED=true
       - RAILS_ENV=development
+      # - DD_APPSEC_ENABLED=true
+      # - DD_AGENT_HOST=dd-agent
+      # - DD_VERSION=${DD_VERSION-7}
+      # - DD_SERVICE=store-backend
+      # - DD_ENV=${DD_ENV-dev}
+      # - DD_LOGS_INJECTION=true
+      # - DD_RUNTIME_METRICS_ENABLED=true
+      # - DD_PROFILING_ENABLED=true
     labels:
       com.datadoghq.ad.logs: '[{"source": "ruby", "service": "store-backend",  "auto_multi_line_detection":true }]'
       com.datadoghq.tags.env: '${DD_ENV}'
@@ -229,7 +229,7 @@ services:
     volumes:
       - ./services/backend:/app
       - .env:/app/.env
-      - ./services/worker/config/initializers/datadog-tracer.rb:/app/config/initializers/datadog-tracer.rb
+      # - ./services/worker/config/initializers/datadog-tracer.rb:/app/config/initializers/datadog-tracer.rb
     environment:
       - REDIS_URL=redis://redis:6379/0
       - DB_HOST=postgres
@@ -237,53 +237,53 @@ services:
       - POSTGRES_USER
       - POSTGRES_PASSWORD
       - DISABLE_SPRING=1
-      - DD_AGENT_HOST=dd-agent
-      - DD_ENV=${DD_ENV-dev}
-      - DD_SERVICE=store-worker
-      - DD_VERSION=${DD_VERSION-7}
-      - DD_LOGS_INJECTION=true
-      - DD_RUNTIME_METRICS_ENABLED=true
-      - DD_PROFILING_ENABLED=true
-      - DD_APPSEC_ENABLED=true
+      # - DD_AGENT_HOST=dd-agent
+      # - DD_ENV=${DD_ENV-dev}
+      # - DD_SERVICE=store-worker
+      # - DD_VERSION=${DD_VERSION-7}
+      # - DD_LOGS_INJECTION=true
+      # - DD_RUNTIME_METRICS_ENABLED=true
+      # - DD_PROFILING_ENABLED=true
+      # - DD_APPSEC_ENABLED=true
     labels:
       com.datadoghq.ad.logs: '[{"source": "ruby", "service": "storedog-worker",  "auto_multi_line_detection":true }]'
       com.datadoghq.tags.env: '${DD_ENV}'
       com.datadoghq.tags.service: 'store-worker'
       com.datadoghq.tags.version: '1.0.9'
       my.custom.label.team: 'backend'
-  ads:
-    build:
-      context: ./services/ads/python
-    command: wait-for-it postgres:5432 -- flask run --port=${ADS_PORT} --host=0.0.0.0 # If using any other port besides the default 9292, overriding the CMD is required
-    depends_on:
-      - postgres
-      - dd-agent
-    profiles:
-      - python-ads
-    environment:
-      - FLASK_APP=ads.py
-      - FLASK_DEBUG=0
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_HOST=postgres
-      - DD_AGENT_HOST=dd-agent
-      - DD_LOGS_INJECTION=true
-      - DD_TRACE_ANALYTICS_ENABLED=true
-      - DD_PROFILING_ENABLED=true
-      - DD_APPSEC_ENABLED=true
-      - DD_VERSION=${DD_VERSION-7}
-      - DD_SERVICE=store-ads
-      - DD_ENV=${DD_ENV-dev}
-    volumes:
-      - ./services/ads/python:/app
-    ports:
-      - '${ADS_PORT}:${ADS_PORT}'
-    labels:
-      com.datadoghq.ad.logs: '[{"source": "python", "service": "store-ads"}]'
-      com.datadoghq.tags.env: '${DD_ENV}'
-      com.datadoghq.tags.service: 'store-ads'
-      com.datadoghq.tags.version: '1.0.9'
-      my.custom.label.team: 'advertisements'
+  # ads:
+  #   build:
+  #     context: ./services/ads/python
+  #   command: wait-for-it postgres:5432 -- flask run --port=${ADS_PORT} --host=0.0.0.0 # If using any other port besides the default 9292, overriding the CMD is required
+  #   depends_on:
+  #     - postgres
+  #     - dd-agent
+  #   profiles:
+  #     - python-ads
+  #   environment:
+  #     - FLASK_APP=ads.py
+  #     - FLASK_DEBUG=0
+  #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+  #     - POSTGRES_USER=${POSTGRES_USER}
+  #     - POSTGRES_HOST=postgres
+  #     - DD_AGENT_HOST=dd-agent
+  #     - DD_LOGS_INJECTION=true
+  #     - DD_TRACE_ANALYTICS_ENABLED=true
+  #     - DD_PROFILING_ENABLED=true
+  #     - DD_APPSEC_ENABLED=true
+  #     - DD_VERSION=${DD_VERSION-7}
+  #     - DD_SERVICE=store-ads
+  #     - DD_ENV=${DD_ENV-dev}
+  #   volumes:
+  #     - ./services/ads/python:/app
+  #   ports:
+  #     - '${ADS_PORT}:${ADS_PORT}'
+  #   labels:
+  #     com.datadoghq.ad.logs: '[{"source": "python", "service": "store-ads"}]'
+  #     com.datadoghq.tags.env: '${DD_ENV}'
+  #     com.datadoghq.tags.service: 'store-ads'
+  #     com.datadoghq.tags.version: '1.0.9'
+  #     my.custom.label.team: 'advertisements'
   discounts:
     build:
       context: ./services/discounts
@@ -297,14 +297,14 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_HOST=postgres
-      - DD_AGENT_HOST=dd-agent
-      - DD_LOGS_INJECTION=true
-      - DD_TRACE_ANALYTICS_ENABLED=true
-      - DD_PROFILING_ENABLED=true
-      - DD_APPSEC_ENABLED=true
-      - DD_VERSION=${DD_VERSION-7}
-      - DD_SERVICE=store-discounts
-      - DD_ENV=${DD_ENV-dev}
+      # - DD_AGENT_HOST=dd-agent
+      # - DD_LOGS_INJECTION=true
+      # - DD_TRACE_ANALYTICS_ENABLED=true
+      # - DD_PROFILING_ENABLED=true
+      # - DD_APPSEC_ENABLED=true
+      # - DD_VERSION=${DD_VERSION-7}
+      # - DD_SERVICE=store-discounts
+      # - DD_ENV=${DD_ENV-dev}
     volumes:
       - ./services/discounts:/app
     ports:
@@ -320,15 +320,15 @@ services:
       context: ./services/ads/java
     depends_on:
       - dd-agent
-    environment:
-      - DD_SERVICE=store-ads-java
-      - DD_AGENT_HOST=dd-agent
-      - DD_LOGS_INJECTION=true
-      - DD_TRACE_ANALYTICS_ENABLED=true
-      - DD_PROFILING_ENABLED=true
-      - DD_TRACE_SAMPLE_RATE=1
-      - DD_VERSION=${DD_VERSION-7}
-      - DD_ENV=${DD_ENV-dev}
+    # environment:
+    #   - DD_SERVICE=store-ads-java
+    #   - DD_AGENT_HOST=dd-agent
+    #   - DD_LOGS_INJECTION=true
+    #   - DD_TRACE_ANALYTICS_ENABLED=true
+    #   - DD_PROFILING_ENABLED=true
+    #   - DD_TRACE_SAMPLE_RATE=1
+    #   - DD_VERSION=${DD_VERSION-7}
+    #   - DD_ENV=${DD_ENV-dev}
     ports:
       - '3030:8080'
     labels:
@@ -337,24 +337,24 @@ services:
       com.datadoghq.tags.service: 'store-ads-java'
       com.datadoghq.tags.version: '${DD_VERSION-7}'
       my.custom.label.team: 'advertisements'
-  attackbox:
-    build:
-      context: ./services/attackbox
-    profiles:
-      - attackbox
-    environment:
-      - ATTACK_GOBUSTER
-      - ATTACK_HYDRA
-      - ATTACK_GOBUSTER_INTERVAL
-      - ATTACK_HYDRA_INTERVAL
-      - ATTACK_SSH
-      - ATTACK_SSH_INTERVAL
-      - ATTACK_HOST
-      - ATTACK_PORT
-    depends_on:
-      - web
-      - discounts
-      - dd-agent
+  # attackbox:
+  #   build:
+  #     context: ./services/attackbox
+  #   profiles:
+  #     - attackbox
+  #   environment:
+  #     - ATTACK_GOBUSTER
+  #     - ATTACK_HYDRA
+  #     - ATTACK_GOBUSTER_INTERVAL
+  #     - ATTACK_HYDRA_INTERVAL
+  #     - ATTACK_SSH
+  #     - ATTACK_SSH_INTERVAL
+  #     - ATTACK_HOST
+  #     - ATTACK_PORT
+  #   depends_on:
+  #     - web
+  #     - discounts
+  #     - dd-agent
   puppeteer:
     image: ghcr.io/puppeteer/puppeteer:20.0.0
     platform: linux/amd64
@@ -373,5 +373,5 @@ services:
     cap_add:
       - 'SYS_ADMIN' # Required for Puppeteer to run in Docker
 
-volumes:
-  redis:
+# volumes:
+#   redis:
