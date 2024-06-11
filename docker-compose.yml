@@ -11,7 +11,6 @@ services:
       - DD_CONTAINER_LABELS_AS_TAGS={"my.custom.label.team":"team"}
       - DD_TAGS=${DD_TAGS-env:storedog}
       - DD_HOSTNAME=${DD_HOSTNAME-storedog-host}
-      - DD_DBM_PROPAGATION_MODE=full
       # Enable Single Step APM
       - DD_APM_ENABLED=true
       - DD_APM_NON_LOCAL_TRAFFIC=true
@@ -74,31 +73,6 @@ services:
       com.datadoghq.ad.check_names: '["nginx"]'
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]'
-  dbm:
-    build:
-      context: ./services/dbm
-    command: gunicorn --bind 0.0.0.0:${DBM_PORT} dbm:app # If using any other port besides the default 8282, overriding the CMD is required
-    depends_on:
-      - postgres
-      - dd-agent
-    profiles:
-      - dbm
-    environment:
-      - FLASK_APP=dbm.py
-      - FLASK_DEBUG=0
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_HOST=postgres
-      # - DD_SERVICE=storedog-dbm
-      # - DD_AGENT_HOST=dd-agent
-      # - DD_LOGS_INJECTION=true
-      # - DD_TRACE_ANALYTICS_ENABLED=true
-      # - DD_PROFILING_ENABLED=true
-      # - DD_APPSEC_ENABLED=true
-    volumes:
-      - './services/dbm:/app'
-    ports:
-      - '${DBM_PORT}:${DBM_PORT}'
   postgres:
     build:
       context: ./services/postgres
@@ -114,7 +88,6 @@ services:
       - DD_SERVICE=storedog-db
       - DD_VERSION=${DD_VERSION-7}
       - DD_AGENT_HOST=dd-agent
-      - DD_DBM_PROPAGATION_MODE=full
       - DD_LOGS_INJECTION=true
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
@@ -124,52 +97,6 @@ services:
       com.datadoghq.tags.version: '13'
       com.datadoghq.ad.check_names: '["postgres", "postgres"]'
       com.datadoghq.ad.init_configs: '[{}, {}]'
-      com.datadoghq.ad.instances: '[
-        {
-        "dbm":true,
-        "host":"%%host%%",
-        "port":5432,
-        "username":"datadog",
-        "password":"datadog",
-        "relations": [{
-        "relation_name": "advertisement",
-        "relation_name": "discount",
-        "relation_name": "items",
-        "relation_name": "preorder_items",
-        "relation_name": "influencer"
-        }],
-        "query_samples": {
-        "enabled": true,
-        "explain_parameterized_queries": true
-        },
-        "max_relations": 400,
-        "collect_function_metrics": true,
-        "collection_interval": 1,
-        "collect_schemas": {
-        "enabled": true
-        }
-        },
-        {
-        "dbm":true,
-        "host":"%%host%%",
-        "port":5432,
-        "username":"datadog",
-        "password":"datadog",
-        "dbname": "spree_starter_development",
-        "relations": [{
-        "relation_regex": "spree_.*"
-        }],
-        "query_samples": {
-        "enabled": true,
-        "explain_parameterized_queries": true
-        },
-        "max_relations": 400,
-        "collect_function_metrics": true,
-        "collection_interval": 1,
-        "collect_schemas": {
-        "enabled": true
-        }
-        }]'
       com.datadoghq.ad.logs: '[{"source": "postgresql", "service": "postgres", "auto_multi_line_detection":true }]'
       my.custom.label.team: 'database'
   redis:
