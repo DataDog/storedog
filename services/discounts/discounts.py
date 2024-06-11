@@ -17,9 +17,9 @@ from sqlalchemy.orm import joinedload
 from bootstrap import create_app
 from models import Discount, DiscountType, db
 
-from ddtrace import patch; patch(logging=True)
+# from ddtrace import patch; patch(logging=True)
 import logging
-from ddtrace import tracer
+# from ddtrace import tracer
 import json_log_formatter
 
 formatter = json_log_formatter.VerboseJSONFormatter()
@@ -52,12 +52,12 @@ remove_color_filter =NoEscape()
 logger.addFilter(remove_color_filter)
 
 # Hello world
-@tracer.wrap()
+# @tracer.wrap()
 @app.route('/')
 def hello():
     return Response({'Hello from Discounts!': 'world'}, mimetype='application/json')
 
-@tracer.wrap()
+# @tracer.wrap()
 @app.route('/discount', methods=['GET', 'POST'])
 def status():
     if flask_request.method == 'GET':
