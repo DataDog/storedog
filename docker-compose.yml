@@ -3,8 +3,6 @@ services:
     image: gcr.io/datadoghq/agent:latest
     environment:
       - DD_API_KEY=${DD_API_KEY}
-      - DD_APM_ENABLED=true
-      - DD_APM_NON_LOCAL_TRAFFIC=true
       - DD_LOGS_ENABLED=true
       - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
       - DD_CONTAINER_EXCLUDE="name:dd-agent,name:puppeteer"
@@ -13,8 +11,13 @@ services:
       - DD_CONTAINER_LABELS_AS_TAGS={"my.custom.label.team":"team"}
       - DD_TAGS=${DD_TAGS-env:storedog}
       - DD_HOSTNAME=${DD_HOSTNAME-storedog-host}
-      - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
       - DD_DBM_PROPAGATION_MODE=full
+      # Enable Single Step APM
+      - DD_APM_ENABLED=true
+      - DD_APM_NON_LOCAL_TRAFFIC=true
+      - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
+      - DD_APM_RECEIVER_SOCKET=/opt/datadog/apm/inject/run/apm.socket
+      - DD_DOGSTATSD_SOCKET=/opt/datadog/apm/inject/run/dsd.socket
     ports:
       - '8126:8126/tcp'
       - '8125:8125/udp'
@@ -22,6 +25,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /proc/:/host/proc/:ro
       - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+      # Enable Single Step APM
+      - /opt/datadog/apm:/opt/datadog/apm
   frontend:
     build:
       context: ./services/frontend
