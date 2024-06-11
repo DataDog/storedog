@@ -16,9 +16,10 @@ from sqlalchemy.orm import joinedload
 from bootstrap import create_app
 from models import Discount, DiscountType, db
 
-app = create_app()
+app = Flask(__name__)
 CORS(app)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+port=os.getenv('DISCOUNTS_PORT', 5000)
 
 # Hello world
 @app.route('/')
@@ -76,3 +77,6 @@ def status():
         err = jsonify({'error': 'Invalid request method'})
         err.status_code = 405
         return err
+
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=port)
