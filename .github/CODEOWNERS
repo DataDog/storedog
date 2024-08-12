@@ -1,0 +1,6 @@
+# These owners will be the default owners for everything in
+# the repo. Any future lines will overwrite this default. The last pattern
+# that matches, will be the final pattern.
+# See https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+* @DataDog/training

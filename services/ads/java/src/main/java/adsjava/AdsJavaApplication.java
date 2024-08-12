@@ -16,10 +16,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.concurrent.TimeoutException;
 import org.springframework.web.bind.annotation.RequestHeader;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 @SpringBootApplication
 @RestController
 public class AdsJavaApplication {
+
+    private static final Logger logger = LoggerFactory.getLogger(AdsJavaApplication.class);
+
+	@RequestMapping("/")
+	public String home() {
+        logger.info("home url for ads called");
+        return "Welcome to Java - Ads Service";
+	}
 
     @CrossOrigin(origins = {"*"})
     @RequestMapping(
@@ -27,6 +38,7 @@ public class AdsJavaApplication {
         produces = MediaType.IMAGE_JPEG_VALUE
     )
     public @ResponseBody byte[] getImageWithMediaType() throws IOException {
+        logger.info("/banners/{id} called");
         int randomNum = ThreadLocalRandom.current().nextInt(1, 3 + 1);
         String imagePath = "/static/ads/ad" + randomNum + ".jpg";
         InputStream in = getClass()
@@ -34,17 +46,13 @@ public class AdsJavaApplication {
         return IOUtils.toByteArray(in);
     }
 
-	@RequestMapping("/")
-	public String home() {
-        return "Welcome to Java - Ads Service";
-	}
-
     @CrossOrigin(origins = {"*"})
     @RequestMapping(
         value = "/ads",
         produces = MediaType.APPLICATION_JSON_VALUE
     )
 	public HashMap[] ads(@RequestHeader HashMap<String, String> headers) {
+        logger.info("/ads called");
 
         boolean errorFlag = false;
         if(headers.get("x-throw-error") != null) {
@@ -62,7 +70,7 @@ public class AdsJavaApplication {
             try {
                 throw new TimeoutException("took too long to get a response");
             } catch  (Exception e) {
-                System.out.println("took too long to get a response");
+                logger.error("Request failed, check the request headers.");
                 throw new RuntimeException(e);
             }
         } else {
@@ -80,8 +88,8 @@ public class AdsJavaApplication {
             map3.put("id", "3");
             map3.put("name", "Nic Bags");
             map3.put("path", "3.jpg");
-            System.out.println("ads called");
             HashMap[] myArr = { map1, map2, map3 };
+            logger.info("Total responses available: " + myArr.length);
             return myArr;
         }
 	}
