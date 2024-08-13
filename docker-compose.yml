@@ -332,7 +332,7 @@ services:
     ports:
       - '3030:8080'
     labels:
-      com.datadoghq.ad.logs: '[{"source": "java", "service": "ads-java"}]'
+      com.datadoghq.ad.logs: '[{"source": "java", "service": "store-ads-java"}]'
       com.datadoghq.tags.env: '${DD_ENV-dev}'
       com.datadoghq.tags.service: 'store-ads-java'
       com.datadoghq.tags.version: '${DD_VERSION-7}'

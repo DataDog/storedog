@@ -48,15 +48,21 @@ function Ad() {
   }, [data, fetchAd])
 
   if (isLoading)
-    return <div className="flex flex-row justify-center h-10">AD HERE</div>
+    return (
+      <div className="flex flex-row justify-center h-10 advertisment-wrapper">
+        AD HERE
+      </div>
+    )
   if (!data)
     return (
-      <div className="flex flex-row justify-center h-10">AD DIDN'T LOAD</div>
+      <div className="flex flex-row justify-center h-10 advertisment-wrapper">
+        AD DIDN'T LOAD
+      </div>
     )
 
   return (
-    <div className="flex flex-row justify-center py-4">
-      <picture>
+    <div className="flex flex-row justify-center py-4 advertisement-wrapper">
+      <picture className="advertisement-banner">
         <source srcSet={`${adsPath}/banners/${data.path}`} type="image/webp" />
         <img src={`${adsPath}/banners/${data.path}`} alt="Landscape picture" />
       </picture>

@@ -205,7 +205,7 @@ const CheckoutSidebarView: FC = () => {
           </li>
           <li className="flex justify-between py-1">
             <span>Shipping</span>
-            <span className="font-bold tracking-wide">
+            <span className="font-bold tracking-wide" id="shipping-rate">
               {shippingRate?.price || 'TBD'}
             </span>
           </li>

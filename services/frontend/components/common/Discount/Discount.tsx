@@ -37,13 +37,12 @@ function Discount() {
   }, [])
 
   return (
-    <div className="flex flex-row justify-center py-4 bg-primary-2 text-white">
+    <div className="flex flex-row justify-center py-4 bg-primary-2 text-white discount-wrapper">
       {isLoading ? (
         <span>GET FREE SHIPPING WITH DISCOUNT CODE</span>
       ) : !data ? (
         <span>
-          GET FREE SHIPPING WITH DISCOUNT CODE{' '}
-          <strong id="discount-code">STOREDOG</strong>
+          GET FREE SHIPPING WITH DISCOUNT CODE <strong>STOREDOG</strong>
         </span>
       ) : (
         <span>

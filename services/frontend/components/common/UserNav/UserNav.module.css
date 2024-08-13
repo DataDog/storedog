@@ -49,6 +49,10 @@
   @apply hidden -z-10;
 }
 
+.toggle-cart {
+  color: var(--text-primary) !important;
+}
+
 @media screen(lg) {
   .dropdownDesktop {
     @apply block;
