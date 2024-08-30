@@ -8,7 +8,7 @@ on:
     paths:
       - services/ads/java/**
   workflow_dispatch:
-    branches: [ main, ccole/gh-workflow-perm ]
+    branches: [ main ]
 
 defaults:
   run:
