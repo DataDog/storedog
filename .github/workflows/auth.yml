@@ -1,5 +1,7 @@
 name: Auth
 
+permissions: {}
+
 on:
   push:
     branches: [ main ]

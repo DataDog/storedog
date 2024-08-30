@@ -1,5 +1,7 @@
 name: Discounts
 
+permissions: {}
+
 on:
   push:
     branches: [ main ]

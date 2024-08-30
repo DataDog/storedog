@@ -1,5 +1,7 @@
 name: Publish release
 
+permissions: {}
+
 # Only release on a new tag that is a version number.
 on:
   push:
