@@ -1,5 +1,7 @@
 name: Attackbox
 
+permissions: {}
+
 on:
   push:
     branches: [ main ]

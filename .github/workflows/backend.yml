@@ -1,5 +1,7 @@
 name: Backend
 
+permissions: {}
+
 on:
   push:
     branches: [ main ]

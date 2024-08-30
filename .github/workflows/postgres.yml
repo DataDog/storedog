@@ -1,5 +1,7 @@
 name: postgres
 
+permissions: {}
+
 on:
   push:
     branches: [ main ]

@@ -1,5 +1,7 @@
 name: Ads - Java
 
+permissions: {}
+
 on:
   push:
     branches: [ main ]
