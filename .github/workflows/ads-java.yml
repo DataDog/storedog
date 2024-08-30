@@ -1,12 +1,14 @@
 name: Ads - Java
 
+permissions: {}
+
 on:
   push:
     branches: [ main ]
     paths:
       - services/ads/java/**
   workflow_dispatch:
-    branches: [ main ]
+    branches: [ main, ccole/gh-workflow-perm ]
 
 defaults:
   run:
