@@ -22,6 +22,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /proc/:/host/proc/:ro
       - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+      - postgres_logs:/var/log/postgres
   frontend:
     build:
       context: ./services/frontend
@@ -97,7 +98,7 @@ services:
   postgres:
     build:
       context: ./services/postgres
-    command: ['postgres', '-c', 'config_file=/postgresql.conf']
+    command: [ 'postgres', '-c', 'config_file=/postgresql.conf' ]
     restart: always
     depends_on:
       - dd-agent
@@ -119,54 +120,11 @@ services:
       com.datadoghq.tags.version: '13'
       com.datadoghq.ad.check_names: '["postgres", "postgres"]'
       com.datadoghq.ad.init_configs: '[{}, {}]'
-      com.datadoghq.ad.instances: '[
-        {
-        "dbm":true,
-        "host":"%%host%%",
-        "port":5432,
-        "username":"datadog",
-        "password":"datadog",
-        "relations": [{
-        "relation_name": "advertisement",
-        "relation_name": "discount",
-        "relation_name": "items",
-        "relation_name": "preorder_items",
-        "relation_name": "influencer"
-        }],
-        "query_samples": {
-        "enabled": true,
-        "explain_parameterized_queries": true
-        },
-        "max_relations": 400,
-        "collect_function_metrics": true,
-        "collection_interval": 1,
-        "collect_schemas": {
-        "enabled": true
-        }
-        },
-        {
-        "dbm":true,
-        "host":"%%host%%",
-        "port":5432,
-        "username":"datadog",
-        "password":"datadog",
-        "dbname": "spree_starter_development",
-        "relations": [{
-        "relation_regex": "spree_.*"
-        }],
-        "query_samples": {
-        "enabled": true,
-        "explain_parameterized_queries": true
-        },
-        "max_relations": 400,
-        "collect_function_metrics": true,
-        "collection_interval": 1,
-        "collect_schemas": {
-        "enabled": true
-        }
-        }]'
+      com.datadoghq.ad.instances: '[ { "dbm":true, "host":"%%host%%", "port":5432, "username":"datadog", "password":"datadog", "relations": [{ "relation_name": "advertisement", "relation_name": "discount", "relation_name": "items", "relation_name": "preorder_items", "relation_name": "influencer" }], "query_samples": { "enabled": true, "explain_parameterized_queries": true }, "max_relations": 400, "collect_function_metrics": true, "collection_interval": 1, "collect_schemas": { "enabled": true } }, { "dbm":true, "host":"%%host%%", "port":5432, "username":"datadog", "password":"datadog", "dbname": "spree_starter_development", "relations": [{ "relation_regex": "spree_.*" }], "query_samples": { "enabled": true, "explain_parameterized_queries": true }, "max_relations": 400, "collect_function_metrics": true, "collection_interval": 1, "collect_schemas": { "enabled": true } }]'
       com.datadoghq.ad.logs: '[{"source": "postgresql", "service": "postgres", "auto_multi_line_detection":true }]'
       my.custom.label.team: 'database'
+    volumes:
+      - postgres_logs:/var/lib/postgresql/data/logs
   redis:
     image: redis:6.2-alpine
     depends_on:
@@ -375,3 +333,4 @@ services:
 
 volumes:
   redis:
+  postgres_logs:

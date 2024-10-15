@@ -346,10 +346,10 @@ instances:
         #
         # payload_row_limit: 3500
 
-    ## This block defines the configuration for AWS RDS and Aurora instances. 
+    ## This block defines the configuration for AWS RDS and Aurora instances.
     ##
-    ## Complete this section if you have installed the Datadog AWS Integration 
-    ## (https://docs.datadoghq.com/integrations/amazon_web_services) to enrich instances 
+    ## Complete this section if you have installed the Datadog AWS Integration
+    ## (https://docs.datadoghq.com/integrations/amazon_web_services) to enrich instances
     ## with Postgres integration telemetry.
     ##
     ## These values are only applied when `dbm: true` option is set.
@@ -357,18 +357,18 @@ instances:
     # aws:
 
         ## @param instance_endpoint - string - optional - default: mydb.cfxgae8cilcf.us-east-1.rds.amazonaws.com
-        ## Equal to the Endpoint.Address of the instance the agent is connecting to. 
+        ## Equal to the Endpoint.Address of the instance the agent is connecting to.
         ## This value is optional if the value of `host` is already configured to the instance endpoint.
         ##
-        ## For more information on instance endpoints, 
+        ## For more information on instance endpoints,
         ## see the AWS docs https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_Endpoint.html
         #
         # instance_endpoint: mydb.cfxgae8cilcf.us-east-1.rds.amazonaws.com
 
     ## This block defines the configuration for Google Cloud SQL instances.
     ##
-    ## Complete this section if you have installed the Datadog GCP Integration 
-    ## (https://docs.datadoghq.com/integrations/google_cloud_platform) to enrich instances 
+    ## Complete this section if you have installed the Datadog GCP Integration
+    ## (https://docs.datadoghq.com/integrations/google_cloud_platform) to enrich instances
     ## with Postgres integration telemetry.
     ##
     ## These values are only applied when `dbm: true` option is set.
@@ -393,22 +393,22 @@ instances:
 
     ## This block defines the configuration for Azure Database for PostgreSQL.
     ##
-    ## Complete this section if you have installed the Datadog Azure Integration 
-    ## (https://docs.datadoghq.com/integrations/azure) to enrich instances 
+    ## Complete this section if you have installed the Datadog Azure Integration
+    ## (https://docs.datadoghq.com/integrations/azure) to enrich instances
     ## with Postgres integration telemetry.
     ## These values are only applied when `dbm: true` option is set.
     #
     # azure:
 
         ## @param deployment_type - string - optional - default: flexible_server
-        ## Equal to the deployment type for the managed database. 
+        ## Equal to the deployment type for the managed database.
         ##
         ## Acceptable values are:
-        ##   - `flexible_server` 
+        ##   - `flexible_server`
         ##   - `single_server`
         ##   - `virtual_machine`
         ##
-        ## For more information on deployment types, 
+        ## For more information on deployment types,
         ## see the Azure docs https://docs.microsoft.com/en-us/azure/postgresql/overview-postgres-choose-server-options
         #
         # deployment_type: flexible_server
@@ -529,12 +529,12 @@ instances:
 ##
 ## Discover Datadog log collection: https://docs.datadoghq.com/logs/log_collection/
 #
-# logs:
-#   - type: file
-#     path: /pg-log/postgres.log
-#     source: postgresql
-#     service: postgres
-#     log_processing_rules:
-#     - type: multi_line
-#       pattern: \d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])
-#       name: new_log_start_with_date
+logs:
+  - type: file
+    path: /pg-log/postgres.log
+    source: postgresql
+    service: postgres
+    log_processing_rules:
+    - type: multi_line
+      pattern: \d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])
+      name: new_log_start_with_date
