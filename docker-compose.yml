@@ -124,7 +124,7 @@ services:
       com.datadoghq.ad.logs: '[{"source": "postgresql", "service": "postgres", "auto_multi_line_detection":true }]'
       my.custom.label.team: 'database'
     volumes:
-      - postgres_logs:/var/lib/postgresql/data/logs
+      - ./postgres_logs:/var/lib/postgresql/data/postgres_logs
   redis:
     image: redis:6.2-alpine
     depends_on:
