@@ -22,6 +22,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /proc/:/host/proc/:ro
       - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+      - ./services/postgres/data/pg_log:/var/log/pg_log
   frontend:
     build:
       context: ./services/frontend
@@ -101,12 +102,15 @@ services:
     restart: always
     depends_on:
       - dd-agent
+    volumes:
+      # save postgres logs to a volume for datadog to collect
+      - './services/postgres/data/pg_log:/var/log/pg_log'
     environment:
       - POSTGRES_HOST_AUTH_METHOD=trust
       - POSTGRES_USER
       - POSTGRES_PASSWORD
       - DD_ENV=${DD_ENV-dev}
-      - DD_SERVICE=storedog-db
+      - DD_SERVICE=postgres
       - DD_VERSION=${DD_VERSION-7}
       - DD_AGENT_HOST=dd-agent
       - DD_DBM_PROPAGATION_MODE=full
@@ -115,7 +119,7 @@ services:
       - DD_PROFILING_ENABLED=true
     labels:
       com.datadoghq.tags.env: '${DD_ENV}'
-      com.datadoghq.tags.service: 'storedog-db'
+      com.datadoghq.tags.service: 'postgres'
       com.datadoghq.tags.version: '13'
       com.datadoghq.ad.check_names: '["postgres", "postgres"]'
       com.datadoghq.ad.init_configs: '[{}, {}]'
@@ -165,7 +169,7 @@ services:
         "enabled": true
         }
         }]'
-      com.datadoghq.ad.logs: '[{"source": "postgresql", "service": "postgres", "auto_multi_line_detection":true }]'
+      com.datadoghq.ad.logs: '[{"source": "postgresql", "service": "postgres", "auto_multi_line_detection":true, "path": "/var/log/pg_log/postgresql_logs.json", "type": "file"}]'
       my.custom.label.team: 'database'
   redis:
     image: redis:6.2-alpine
@@ -375,3 +379,4 @@ services:
 
 volumes:
   redis:
+  postgres_logs:
