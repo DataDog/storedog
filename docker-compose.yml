@@ -22,7 +22,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /proc/:/host/proc/:ro
       - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
-      - ./services/postgres/data/pg_log:/var/log/pg_log
+      - postgres_logs:/var/log/pg_log:ro
   frontend:
     build:
       context: ./services/frontend
@@ -104,7 +104,7 @@ services:
       - dd-agent
     volumes:
       # save postgres logs to a volume for datadog to collect
-      - './services/postgres/data/pg_log:/var/log/pg_log'
+      - postgres_logs:/var/log/pg_log:rw
     environment:
       - POSTGRES_HOST_AUTH_METHOD=trust
       - POSTGRES_USER
@@ -169,7 +169,7 @@ services:
         "enabled": true
         }
         }]'
-      com.datadoghq.ad.logs: '[{"source": "postgresql", "service": "postgres", "auto_multi_line_detection":true, "path": "/var/log/pg_log/postgresql_logs.json", "type": "file"}]'
+      com.datadoghq.ad.logs: '[{"source": "postgresql", "service": "postgres", "auto_multi_line_detection":true, "path": "/var/log/pg_log/postgresql*.json", "type": "file"}]'
       my.custom.label.team: 'database'
   redis:
     image: redis:6.2-alpine
