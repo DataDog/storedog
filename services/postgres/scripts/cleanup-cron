@@ -1,0 +1,1 @@
+*/1 * * * * /usr/bin/find /var/log/pg_log/ -type f -name "*" -mmin +5 -delete >> /var/log/cron.log 2>&1
