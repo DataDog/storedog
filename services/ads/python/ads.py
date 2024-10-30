@@ -16,6 +16,14 @@ from models import Advertisement, db
 
 from ddtrace import patch
 patch(logging=True)
+from datadog import initialize, statsd
+
+options = {
+    'statsd_host': '127.0.0.1',
+    'statsd_port': 8125
+}
+
+initialize(**options)
 
 formatter = json_log_formatter.VerboseJSONFormatter()
 json_handler = logging.StreamHandler(sys.stdout)
@@ -56,6 +64,7 @@ logger.addFilter(remove_color_filter)
 @app.route('/')
 def hello():
     logger.info("home url for ads called")
+    statsd.increment('ads.home_called', tags=["environment:dev"])
     return Response({'Hello from Advertisements!': 'world'}, mimetype='application/json')
 
 
@@ -63,6 +72,7 @@ def hello():
 @app.route('/banners/<path:banner>')
 def banner_image(banner):
     logger.info(f"attempting to grab banner at {banner}")
+    statsd.increment('ads.banner_requested', tags=["environment:dev"])
     return send_from_directory('ads', banner)
 
 
@@ -120,14 +130,18 @@ def status():
         try:
             # create a new advertisement with random name and value
             advertisements_count = len(Advertisement.query.all())
+            value = random.randint(10, 500)
             new_advertisement = Advertisement('Advertisement ' + str(advertisements_count + 1),
                                               '/',
-                                              random.randint(10, 500))
+                                              value)
+
             logger.info(f"Adding advertisement {new_advertisement}")
+            statsd.increment('ads.advertisement_served', tags=["environment:dev"])
+            statsd.gauge('ads.advertisement_value', value, tags=["environment:dev"])
+            statsd.histogram('ads.advertisement_value', value, tags=["environment:dev"])
             db.session.add(new_advertisement)
             db.session.commit()
             advertisements = Advertisement.query.all()
-
             return jsonify([b.serialize() for b in advertisements])
 
         except:

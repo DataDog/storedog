@@ -13,12 +13,13 @@ repositories {
 }
 
 dependencies {
-	implementation ( 
+	implementation (
     'commons-io:commons-io:2.4',
     'org.springframework.boot:spring-boot-starter-web'
   )
 	implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
   implementation 'net.logstash.logback:logstash-logback-encoder:7.0'
+  implementation 'com.datadoghq:java-dogstatsd-client:4.4.3'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 

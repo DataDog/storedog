@@ -1,4 +1,4 @@
-version: '3.7'
+version: "3.7"
 services:
   dd-agent:
     image: gcr.io/datadoghq/agent:latest
@@ -15,10 +15,12 @@ services:
       - DD_TAGS=${DD_TAGS-env:storedog}
       - DD_HOSTNAME=${DD_HOSTNAME-storedog-host}
       - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
+      - DD_DOGSTATSD_PORT=8124
       - DD_DBM_PROPAGATION_MODE=full
     ports:
-      - '8126:8126/tcp'
-      - '8125:8125/udp'
+      - "8126:8126/tcp"
+      - "8125:8125/udp"
+      - "8124:8124/udp"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /proc/:/host/proc/:ro
@@ -44,15 +46,15 @@ services:
       - DD_PROFILING_ENABLED=true
     labels:
       com.datadoghq.ad.logs: '[{"source": "nodejs", "service": "store-frontend", "auto_multi_line_detection":true }]'
-      com.datadoghq.tags.env: '${DD_ENV-dev}'
-      com.datadoghq.tags.service: 'store-frontend'
-      com.datadoghq.tags.version: '${DD_VERSION-7}'
-      my.custom.label.team: 'frontend'
+      com.datadoghq.tags.env: "${DD_ENV-dev}"
+      com.datadoghq.tags.service: "store-frontend"
+      com.datadoghq.tags.version: "${DD_VERSION-7}"
+      my.custom.label.team: "frontend"
   nginx:
     image: public.ecr.aws/x2b9z2t7/storedog/nginx:1.2.2
     restart: always
     ports:
-      - '80:80'
+      - "80:80"
     depends_on:
       - frontend
       - dd-agent
@@ -61,16 +63,16 @@ services:
       - ./services/nginx/default.conf:/etc/nginx/conf.d/default.conf
       - ./services/nginx/status.conf:/etc/nginx/conf.d/status.conf
     labels:
-      com.datadog.tags.env: '${DD_ENV}'
-      com.datadog.tags.service: 'store-nginx'
-      com.datadog.tags.version: '1.21.4'
+      com.datadog.tags.env: "${DD_ENV}"
+      com.datadog.tags.service: "store-nginx"
+      com.datadog.tags.version: "1.21.4"
       com.datadoghq.ad.logs: '[{"source": "nginx", "service": "webserver"}]'
       com.datadoghq.ad.check_names: '["nginx"]'
-      com.datadoghq.ad.init_configs: '[{}]'
+      com.datadoghq.ad.init_configs: "[{}]"
       com.datadoghq.ad.instances: '[{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]'
   postgres:
     image: postgres:13-alpine
-    command: ['postgres', '-c', 'config_file=/postgresql.conf']
+    command: ["postgres", "-c", "config_file=/postgresql.conf"]
     restart: always
     depends_on:
       - dd-agent
@@ -90,11 +92,11 @@ services:
       - ./services/backend/db/restore:/docker-entrypoint-initdb.d
       - ./services/backend/db/postgresql.conf:/postgresql.conf
     labels:
-      com.datadoghq.tags.env: '${DD_ENV}'
-      com.datadoghq.tags.service: 'storedog-db'
-      com.datadoghq.tags.version: '13'
+      com.datadoghq.tags.env: "${DD_ENV}"
+      com.datadoghq.tags.service: "storedog-db"
+      com.datadoghq.tags.version: "13"
       com.datadoghq.ad.check_names: '["postgres", "postgres"]'
-      com.datadoghq.ad.init_configs: '[{}, {}]'
+      com.datadoghq.ad.init_configs: "[{}, {}]"
       com.datadoghq.ad.instances: '[
         {
         "dbm":true,
@@ -142,33 +144,33 @@ services:
         }
         }]'
       com.datadoghq.ad.logs: '[{"source": "postgresql", "service": "postgres", "auto_multi_line_detection":true }]'
-      my.custom.label.team: 'database'
+      my.custom.label.team: "database"
   redis:
     image: redis:6.2-alpine
     depends_on:
       - dd-agent
     volumes:
-      - 'redis:/data'
+      - "redis:/data"
     labels:
-      com.datadoghq.tags.env: '${DD_ENV}'
-      com.datadoghq.tags.service: 'redis'
-      com.datadoghq.tags.version: '6.2'
+      com.datadoghq.tags.env: "${DD_ENV}"
+      com.datadoghq.tags.service: "redis"
+      com.datadoghq.tags.version: "6.2"
       com.datadoghq.ad.check_names: '["redisdb"]'
-      com.datadoghq.ad.init_configs: '[{}]'
+      com.datadoghq.ad.init_configs: "[{}]"
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":6379}]'
       com.datadoghq.ad.logs: '[{"source": "redis", "service": "redis"}]'
-      my.custom.label.team: 'database'
+      my.custom.label.team: "database"
   web:
     depends_on:
-      - 'postgres'
-      - 'redis'
-      - 'dd-agent'
+      - "postgres"
+      - "redis"
+      - "dd-agent"
     image: public.ecr.aws/x2b9z2t7/storedog/backend:1.2.2
     command: wait-for-it postgres:5432 -- bundle exec rails s -b 0.0.0.0 -p 4000
     ports:
-      - '${DOCKER_HOST_WEB_PORT:-4000}:4000'
+      - "${DOCKER_HOST_WEB_PORT:-4000}:4000"
     volumes:
-      - './services/backend:/app'
+      - "./services/backend:/app"
       - .env:/app/.env
     environment:
       - REDIS_URL=redis://redis:6379/0
@@ -188,18 +190,18 @@ services:
       - RAILS_ENV=development
     labels:
       com.datadoghq.ad.logs: '[{"source": "ruby", "service": "store-backend",  "auto_multi_line_detection":true }]'
-      com.datadoghq.tags.env: '${DD_ENV}'
-      com.datadoghq.tags.service: 'store-backend'
-      com.datadoghq.tags.version: '1.0.9'
-      my.custom.label.team: 'backend'
+      com.datadoghq.tags.env: "${DD_ENV}"
+      com.datadoghq.tags.service: "store-backend"
+      com.datadoghq.tags.version: "1.0.9"
+      my.custom.label.team: "backend"
   worker:
     image: public.ecr.aws/x2b9z2t7/storedog/backend:1.2.2
     command: wait-for-it postgres:5432 -- bundle exec sidekiq -C config/sidekiq.yml
     depends_on:
-      - 'postgres'
-      - 'redis'
-      - 'web'
-      - 'dd-agent'
+      - "postgres"
+      - "redis"
+      - "web"
+      - "dd-agent"
     volumes:
       - ./services/backend:/app
       - .env:/app/.env
@@ -219,10 +221,10 @@ services:
       - DD_APPSEC_ENABLED=true
     labels:
       com.datadoghq.ad.logs: '[{"source": "ruby", "service": "storedog-worker",  "auto_multi_line_detection":true }]'
-      com.datadoghq.tags.env: '${DD_ENV}'
-      com.datadoghq.tags.service: 'store-worker'
-      com.datadoghq.tags.version: '1.0.9'
-      my.custom.label.team: 'backend'
+      com.datadoghq.tags.env: "${DD_ENV}"
+      com.datadoghq.tags.service: "store-worker"
+      com.datadoghq.tags.version: "1.0.9"
+      my.custom.label.team: "backend"
   discounts:
     image: public.ecr.aws/x2b9z2t7/storedog/discounts:1.2.2
     command: wait-for-it postgres:5432 -- ./my-wrapper-script.sh ${DISCOUNTS_PORT}
@@ -246,13 +248,13 @@ services:
     volumes:
       - ./services/discounts:/app
     ports:
-      - '${DISCOUNTS_PORT}:${DISCOUNTS_PORT}'
+      - "${DISCOUNTS_PORT}:${DISCOUNTS_PORT}"
     labels:
       com.datadoghq.ad.logs: '[{"source": "python", "service": "store-discounts"}]'
-      com.datadoghq.tags.env: '${DD_ENV-dev}'
-      com.datadoghq.tags.service: 'store-discounts'
-      com.datadoghq.tags.version: '${DD_VERSION-7}'
-      my.custom.label.team: 'discounts'
+      com.datadoghq.tags.env: "${DD_ENV-dev}"
+      com.datadoghq.tags.service: "store-discounts"
+      com.datadoghq.tags.version: "${DD_VERSION-7}"
+      my.custom.label.team: "discounts"
   ads-java:
     image: public.ecr.aws/x2b9z2t7/storedog/ads-java:1.2.2
     depends_on:
@@ -267,13 +269,13 @@ services:
       - DD_VERSION=${DD_VERSION-7}
       - DD_ENV=${DD_ENV-dev}
     ports:
-      - '${ADS_PORT}:8080'
+      - "${ADS_PORT}:8080"
     labels:
       com.datadoghq.ad.logs: '[{"source": "java", "service": "ads-java"}]'
-      com.datadoghq.tags.env: '${DD_ENV-dev}'
-      com.datadoghq.tags.service: 'store-ads-java'
-      com.datadoghq.tags.version: '${DD_VERSION-7}'
-      my.custom.label.team: 'advertisements'
+      com.datadoghq.tags.env: "${DD_ENV-dev}"
+      com.datadoghq.tags.service: "store-ads-java"
+      com.datadoghq.tags.version: "${DD_VERSION-7}"
+      my.custom.label.team: "advertisements"
   puppeteer:
     image: ghcr.io/puppeteer/puppeteer:20.0.0
     platform: linux/amd64
@@ -288,9 +290,9 @@ services:
     depends_on:
       - frontend
     command: bash puppeteer.sh
-    shm_size: '4gb' # Increase shared memory size
+    shm_size: "4gb" # Increase shared memory size
     cap_add:
-      - 'SYS_ADMIN' # Required for Puppeteer to run in Docker
+      - "SYS_ADMIN" # Required for Puppeteer to run in Docker
 
 volumes:
   redis:
