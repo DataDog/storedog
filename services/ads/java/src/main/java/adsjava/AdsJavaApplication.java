@@ -27,10 +27,11 @@ import org.slf4j.LoggerFactory;
 public class AdsJavaApplication {
 
   private static final Logger logger = LoggerFactory.getLogger(AdsJavaApplication.class);
+
   private static final StatsDClient StatsD = new NonBlockingStatsDClientBuilder()
       .prefix("statsd")
-      .hostname("localhost")
-      .port(8124)
+      .hostname("dd-agent")
+      .port(8125)
       .build();
   private static String[] tags = new String[] { "environment:dev", "service:ads" };
 
@@ -107,6 +108,7 @@ public class AdsJavaApplication {
 
   public static void main(String[] args) {
     SpringApplication.run(AdsJavaApplication.class, args);
+
     logger.info("Attempting to start the application with statsd");
 
   }
