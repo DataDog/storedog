@@ -30,7 +30,7 @@ ENV PATH="${BUNDLE_BIN}:${PATH}"
 
 COPY . .
 
-RUN bundle install
+RUN bundle install || exit 1
 RUN yarn install
 RUN yarn build
 
