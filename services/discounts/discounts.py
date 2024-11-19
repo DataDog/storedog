@@ -18,7 +18,6 @@ import re
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-
 patch(logging=True)
 
 formatter = json_log_formatter.VerboseJSONFormatter()
@@ -58,16 +57,12 @@ class NoEscape(logging.Filter):
 remove_color_filter = NoEscape()
 logger.addFilter(remove_color_filter)
 
-# Hello world
 
-
-@tracer.wrap()
 @app.route('/')
 def hello():
     return Response({'Hello from Discounts!': 'world'}, mimetype='application/json')
 
 
-@tracer.wrap()
 @app.route('/discount', methods=['GET', 'POST'])
 def status():
     if flask_request.method == 'GET':

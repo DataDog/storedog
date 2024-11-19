@@ -103,7 +103,6 @@ services:
     depends_on:
       - dd-agent
     volumes:
-      # save postgres logs to a volume for datadog to collect
       - postgres_logs:/var/log/pg_log:rw
     environment:
       - POSTGRES_HOST_AUTH_METHOD=trust
@@ -360,19 +359,16 @@ services:
       - discounts
       - dd-agent
   puppeteer:
-    image: ghcr.io/puppeteer/puppeteer:20.0.0
+    build:
+      context: ./services/puppeteer
     platform: linux/amd64
     network_mode: host
-    volumes:
-      - ./services/puppeteer/puppeteer.js:/home/pptruser/puppeteer.js
-      - ./services/puppeteer/puppeteer.sh:/home/pptruser/puppeteer.sh
     environment:
-      - STOREDOG_URL=${STOREDOG_URL-http://localhost}
+      - STOREDOG_URL=${STOREDOG_URL-http://nginx:80}
       - PUPPETEER_TIMEOUT
       - SKIP_SESSION_CLOSE
     depends_on:
       - frontend
-    command: bash puppeteer.sh
     shm_size: '4gb' # Increase shared memory size
     cap_add:
       - 'SYS_ADMIN' # Required for Puppeteer to run in Docker
