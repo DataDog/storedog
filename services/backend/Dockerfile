@@ -31,8 +31,8 @@ ENV PATH="${BUNDLE_BIN}:${PATH}"
 COPY . .
 
 RUN bundle install || exit 1
-RUN yarn install
-RUN yarn build
+RUN npm install
+RUN npm run build
 
 EXPOSE 4000
 

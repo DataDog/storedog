@@ -39,4 +39,3 @@ RUN apt-get update \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/* \
   && chmod -R 644 /usr/lib/nginx/modules/ngx_http_geoip2_module.so 
-

@@ -11,7 +11,7 @@ destination=$root/services/backend/db/restore/restore-$(date +%Y-%m-%d-%H-%M-%S)
 rm -f $root/services/backend/db/restore/*.sql
 
 # exec dump
-docker compose exec postgres pg_dump -U postgres spree_starter_development > $destination
+docker compose exec postgres pg_dump -U postgres storedog_db > $destination
 
 echo "Backup created at $destination"
 

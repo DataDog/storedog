@@ -105,7 +105,6 @@ Username: spree@example.com
 Password: spree123
 ```
 
-
 # Frontend
 
 ## Considerations
@@ -120,38 +119,6 @@ Password: spree123
 ### Enable RUM
 
 To enable RUM, generate a new RUM application in DD and then set the `NEXT_PUBLIC_DD_APPLICATION_KEY` and `NEXT_PUBLIC_CLIENT_TOKEN` values in `./site/.env.local`. Then start the app, click around the site, and you should start to see RUM metrics populating in DD.
-
-### Features
-
-Every provider defines the features that it supports under `packages/{provider}/src/commerce.config.json`
-
-#### Features Available
-
-The following features can be enabled or disabled. This means that the UI will remove all code related to the feature.
-For example: Turning `cart` off will disable Cart capabilities.
-
-- cart
-- search
-- wishlist
-- customerAuth
-- customCheckout
-
-#### How to turn Features on and off
-
-> NOTE: The selected provider should support the feature that you are toggling. (This means that you can't turn wishlist on if the provider doesn't support this functionality out the box)
-
-- Open `site/commerce.config.json`
-- You'll see a config file like this:
-  ```json
-  {
-    "features": {
-      "wishlist": false,
-      "customCheckout": true
-    }
-  }
-  ```
-- Turn `wishlist` on by setting `wishlist` to `true`.
-- Run the app and the wishlist functionality should be back on.
 
 #### How to run the DBM backend to test the Database Monitoring in the product and incrementally improve for the workshop
 

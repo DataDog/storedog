@@ -26,10 +26,11 @@ services:
   frontend:
     build:
       context: ./services/frontend
-    command: wait-for-it web:4000 -- npm run dev
+    command: bash -c "wait-for-it backend:4000 -- npm run build && npm run start"
     depends_on:
       - worker
       - dd-agent
+      - backend
     volumes:
       - ./services/frontend:/storedog-app
       - /storedog-app/node_modules
@@ -55,13 +56,10 @@ services:
     restart: always
     ports:
       - '80:80'
+      - '81:81'
     depends_on:
       - frontend
       - dd-agent
-    volumes:
-      - ./services/nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./services/nginx/default.conf:/etc/nginx/conf.d/default.conf
-      - ./services/nginx/status.conf:/etc/nginx/conf.d/status.conf
     labels:
       com.datadog.tags.env: '${DD_ENV}'
       com.datadog.tags.service: 'store-nginx'
@@ -98,7 +96,6 @@ services:
   postgres:
     build:
       context: ./services/postgres
-    command: ['postgres', '-c', 'config_file=/postgresql.conf']
     restart: always
     depends_on:
       - dd-agent
@@ -153,7 +150,7 @@ services:
         "port":5432,
         "username":"datadog",
         "password":"datadog",
-        "dbname": "spree_starter_development",
+        "dbname": "storedog_db",
         "relations": [{
         "relation_regex": "spree_.*"
         }],
@@ -185,14 +182,14 @@ services:
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":6379}]'
       com.datadoghq.ad.logs: '[{"source": "redis", "service": "redis"}]'
       my.custom.label.team: 'database'
-  web:
+  backend:
+    build:
+      context: ./services/backend
+    command: wait-for-it postgres:5432 -- bundle exec rails s -b 0.0.0.0 -p 4000
     depends_on:
       - 'postgres'
       - 'redis'
       - 'dd-agent'
-    build:
-      context: ./services/backend
-    command: wait-for-it postgres:5432 -- bundle exec rails s -b 0.0.0.0 -p 4000
     ports:
       - '${DOCKER_HOST_WEB_PORT:-4000}:4000'
     volumes:
@@ -213,7 +210,7 @@ services:
       - DD_LOGS_INJECTION=true
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
-      - RAILS_ENV=development
+      - RAILS_ENV=${RAILS_ENV-production}
     labels:
       com.datadoghq.ad.logs: '[{"source": "ruby", "service": "store-backend",  "auto_multi_line_detection":true }]'
       com.datadoghq.tags.env: '${DD_ENV}'
@@ -227,7 +224,7 @@ services:
     depends_on:
       - 'postgres'
       - 'redis'
-      - 'web'
+      - 'backend'
       - 'dd-agent'
     volumes:
       - ./services/backend:/app
@@ -355,7 +352,7 @@ services:
       - ATTACK_HOST
       - ATTACK_PORT
     depends_on:
-      - web
+      - backend
       - discounts
       - dd-agent
   puppeteer:
