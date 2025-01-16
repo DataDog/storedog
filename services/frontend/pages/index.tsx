@@ -11,20 +11,33 @@ export async function getServerSideProps() {
     ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/api`
     : 'http://localhost/api'
 
-  const products: Product[] = await fetch(`${baseUrl}/products`).then((res) =>
-    res.json()
-  )
+  let products: Product[] = await fetch(`${baseUrl}/products`)
+    .then((res) => res.json())
+    .catch((error) => {
+      console.error(error)
+      return []
+    })
 
   // if products exists and is an array, reverse it
   if (products && Array.isArray(products)) {
     products.reverse()
+  } else {
+    products = []
   }
 
-  const pages: Page[] = await fetch(`${baseUrl}/pages`).then((res) =>
-    res.json()
-  )
+  const pages: Page[] = await fetch(`${baseUrl}/pages`)
+    .then((res) => res.json())
+    .catch((error) => {
+      console.error(error)
+      return []
+    })
 
-  const taxons = await fetch(`${baseUrl}/taxonomies`).then((res) => res.json())
+  const taxons = await fetch(`${baseUrl}/taxonomies`)
+    .then((res) => res.json())
+    .catch((error) => {
+      console.error(error)
+      return []
+    })
 
   return {
     props: {
@@ -39,9 +52,8 @@ export default function Home({
   products,
   pages,
   taxons,
-}: // taxons,
-InferGetServerSidePropsType<typeof getServerSideProps>) {
-  console.log(taxons)
+}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+  console.log(pages)
   return (
     <>
       <Grid variant="filled">

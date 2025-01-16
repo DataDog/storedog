@@ -10,7 +10,6 @@ services:
       - DD_CONTAINER_EXCLUDE="name:dd-agent,name:puppeteer"
       - DD_HOSTNAME_TRUST_UTS_NAMESPACE=true
       - DD_PROCESS_AGENT_ENABLED=true
-      - DD_CONTAINER_LABELS_AS_TAGS={"my.custom.label.team":"team"}
       - DD_TAGS=${DD_TAGS-env:storedog}
       - DD_HOSTNAME=${DD_HOSTNAME-storedog-host}
       - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
@@ -18,6 +17,8 @@ services:
     ports:
       - '8126:8126/tcp'
       - '8125:8125/udp'
+    networks:
+      - storedog-network
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /proc/:/host/proc/:ro
@@ -26,7 +27,7 @@ services:
   frontend:
     build:
       context: ./services/frontend
-    command: bash -c "wait-for-it backend:4000 -- npm run build && npm run start"
+    command: bash -c "wait-for-it backend:4000 -- npm run dev"
     depends_on:
       - worker
       - dd-agent
@@ -36,6 +37,8 @@ services:
       - /storedog-app/node_modules
     ports:
       - 3000:3000
+    networks:
+      - storedog-network
     environment:
       - DD_VERSION=${DD_VERSION-7}
       - DD_SERVICE=store-frontend
@@ -49,7 +52,6 @@ services:
       com.datadoghq.tags.env: '${DD_ENV-dev}'
       com.datadoghq.tags.service: 'store-frontend'
       com.datadoghq.tags.version: '${DD_VERSION-7}'
-      my.custom.label.team: 'frontend'
   nginx:
     build:
       context: ./services/nginx
@@ -57,9 +59,13 @@ services:
     ports:
       - '80:80'
       - '81:81'
+    networks:
+      - storedog-network
     depends_on:
       - frontend
       - dd-agent
+    volumes:
+      - ./services/nginx/default.conf:/etc/nginx/conf.d/default.conf
     labels:
       com.datadog.tags.env: '${DD_ENV}'
       com.datadog.tags.service: 'store-nginx'
@@ -93,6 +99,8 @@ services:
       - './services/dbm:/app'
     ports:
       - '${DBM_PORT}:${DBM_PORT}'
+    networks:
+      - storedog-network
   postgres:
     build:
       context: ./services/postgres
@@ -101,6 +109,8 @@ services:
       - dd-agent
     volumes:
       - postgres_logs:/var/log/pg_log:rw
+    networks:
+      - storedog-network
     environment:
       - POSTGRES_HOST_AUTH_METHOD=trust
       - POSTGRES_USER
@@ -166,13 +176,14 @@ services:
         }
         }]'
       com.datadoghq.ad.logs: '[{"source": "postgresql", "service": "postgres", "auto_multi_line_detection":true, "path": "/var/log/pg_log/postgresql*.json", "type": "file"}]'
-      my.custom.label.team: 'database'
   redis:
     image: redis:6.2-alpine
     depends_on:
       - dd-agent
     volumes:
       - 'redis:/data'
+    networks:
+      - storedog-network
     labels:
       com.datadoghq.tags.env: '${DD_ENV}'
       com.datadoghq.tags.service: 'redis'
@@ -181,7 +192,6 @@ services:
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":6379}]'
       com.datadoghq.ad.logs: '[{"source": "redis", "service": "redis"}]'
-      my.custom.label.team: 'database'
   backend:
     build:
       context: ./services/backend
@@ -192,6 +202,8 @@ services:
       - 'dd-agent'
     ports:
       - '${DOCKER_HOST_WEB_PORT:-4000}:4000'
+    networks:
+      - storedog-network
     volumes:
       - './services/backend:/app'
       - .env:/app/.env
@@ -216,7 +228,6 @@ services:
       com.datadoghq.tags.env: '${DD_ENV}'
       com.datadoghq.tags.service: 'store-backend'
       com.datadoghq.tags.version: '1.0.9'
-      my.custom.label.team: 'backend'
   worker:
     build:
       context: ./services/backend
@@ -226,6 +237,8 @@ services:
       - 'redis'
       - 'backend'
       - 'dd-agent'
+    networks:
+      - storedog-network
     volumes:
       - ./services/backend:/app
       - .env:/app/.env
@@ -250,7 +263,6 @@ services:
       com.datadoghq.tags.env: '${DD_ENV}'
       com.datadoghq.tags.service: 'store-worker'
       com.datadoghq.tags.version: '1.0.9'
-      my.custom.label.team: 'backend'
   ads:
     build:
       context: ./services/ads/python
@@ -283,11 +295,10 @@ services:
       com.datadoghq.tags.env: '${DD_ENV}'
       com.datadoghq.tags.service: 'store-ads'
       com.datadoghq.tags.version: '1.0.9'
-      my.custom.label.team: 'advertisements'
   discounts:
     build:
       context: ./services/discounts
-    command: wait-for-it postgres:5432 -- ./my-wrapper-script.sh ${DISCOUNTS_PORT}
+    command: wait-for-it postgres:5432 -- ddtrace-run flask run --port=${DISCOUNTS_PORT} --host=0.0.0.0
     depends_on:
       - postgres
       - dd-agent
@@ -309,12 +320,13 @@ services:
       - ./services/discounts:/app
     ports:
       - '${DISCOUNTS_PORT}:${DISCOUNTS_PORT}'
+    networks:
+      - storedog-network
     labels:
       com.datadoghq.ad.logs: '[{"source": "python", "service": "store-discounts"}]'
       com.datadoghq.tags.env: '${DD_ENV-dev}'
       com.datadoghq.tags.service: 'store-discounts'
       com.datadoghq.tags.version: '${DD_VERSION-7}'
-      my.custom.label.team: 'discounts'
   ads-java:
     build:
       context: ./services/ads/java
@@ -330,13 +342,14 @@ services:
       - DD_VERSION=${DD_VERSION-7}
       - DD_ENV=${DD_ENV-dev}
     ports:
-      - '3030:8080'
+      - '3030:3030'
+    networks:
+      - storedog-network
     labels:
       com.datadoghq.ad.logs: '[{"source": "java", "service": "store-ads-java"}]'
       com.datadoghq.tags.env: '${DD_ENV-dev}'
       com.datadoghq.tags.service: 'store-ads-java'
       com.datadoghq.tags.version: '${DD_VERSION-7}'
-      my.custom.label.team: 'advertisements'
   attackbox:
     build:
       context: ./services/attackbox
@@ -359,11 +372,12 @@ services:
     build:
       context: ./services/puppeteer
     platform: linux/amd64
-    network_mode: host
     environment:
       - STOREDOG_URL=${STOREDOG_URL-http://nginx:80}
       - PUPPETEER_TIMEOUT
       - SKIP_SESSION_CLOSE
+    networks:
+      - storedog-network
     depends_on:
       - frontend
     shm_size: '4gb' # Increase shared memory size
@@ -373,3 +387,6 @@ services:
 volumes:
   redis:
   postgres_logs:
+
+networks:
+  storedog-network:

@@ -10,9 +10,7 @@ export interface AdDataResults {
 function Ad() {
   const [data, setData] = useState<AdDataResults | null>(null)
   const [isLoading, setLoading] = useState(false)
-  const adsPath =
-    `${process.env.NEXT_PUBLIC_ADS_URL_FULL}` ||
-    `${process.env.NEXT_PUBLIC_ADS_ROUTE}:${process.env.NEXT_PUBLIC_ADS_PORT}`
+  const adsPath = process.env.NEXT_PUBLIC_ADS_ROUTE
 
   const getRandomArbitrary = useCallback((min: number, max: number) => {
     return Math.floor(Math.random() * (max - min) + min)
@@ -21,14 +19,15 @@ function Ad() {
   const fetchAd = useCallback(async () => {
     setLoading(true)
     const flag = (await codeStash('error-tracking', { file: config })) || false
-
+    console.log(adsPath)
     const headers = {
       'X-Throw-Error': `${flag}`,
       'X-Error-Rate': process.env.NEXT_PUBLIC_ADS_ERROR_RATE || '0.25',
     }
 
     try {
-      const res = await fetch(`${adsPath}/ads`, { headers })
+      console.log('ads path', adsPath)
+      const res = await fetch(`/services/ads-java/ads`, { headers })
       if (!res.ok) {
         throw new Error('Error fetching ad')
       }

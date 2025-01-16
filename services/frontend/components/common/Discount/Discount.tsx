@@ -7,9 +7,7 @@ export interface DiscountCodeResults {
 function Discount() {
   const [data, setData] = React.useState<DiscountCodeResults | null>(null)
   const [isLoading, setLoading] = React.useState(false)
-  const discountPath =
-    `${process.env.NEXT_PUBLIC_DISCOUNTS_URL_FULL}` ||
-    `${process.env.NEXT_PUBLIC_DISCOUNTS_ROUTE}:${process.env.NEXT_PUBLIC_DISCOUNTS_PORT}`
+  const discountPath = process.env.NEXT_PUBLIC_DISCOUNTS_ROUTE
 
   function getRandomArbitrary(min: number, max: number) {
     return Math.floor(Math.random() * (max - min) + min)
