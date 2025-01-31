@@ -8,7 +8,6 @@ on:
     paths:
       - services/discounts/**
   workflow_dispatch:
-    branches: [ main ]
 
 defaults:
   run:
@@ -19,6 +18,9 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
 
     steps:
     - name: Checkout
@@ -27,13 +29,13 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    - name: Login to ECR
-      id: login-ecr
+    - name: Login to GHCR
+      id: login-ghcr
       uses: docker/login-action@v3
       with:
-        registry: public.ecr.aws
-        username: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build and push
       uses: docker/build-push-action@v5
@@ -41,5 +43,4 @@ jobs:
         context: ./services/discounts
         platforms: linux/amd64,linux/arm64
         push: true
-        tags: ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/discounts:latest
-
+        tags: ghcr.io/DataDog/storedog/discounts:latest
