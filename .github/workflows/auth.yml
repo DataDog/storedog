@@ -8,7 +8,6 @@ on:
     paths:
       - services/auth/**
   workflow_dispatch:
-    branches: [ main ]
 
 defaults:
   run:

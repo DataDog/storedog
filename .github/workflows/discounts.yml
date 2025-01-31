@@ -8,7 +8,6 @@ on:
     paths:
       - services/discounts/**
   workflow_dispatch:
-    branches: [ main ]
 
 defaults:
   run:

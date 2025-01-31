@@ -8,7 +8,6 @@ on:
     paths:
       - services/backend/**
   workflow_dispatch:
-    branches: [ main ]
 
 defaults:
   run:
