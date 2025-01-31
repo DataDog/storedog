@@ -13,6 +13,10 @@ jobs:
   publish_service_containers:
     name: Publish all images
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,29 +29,29 @@ jobs:
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to ECR
+      - name: Login to GHCR
         id: login-ecr
         uses: docker/login-action@v3
         with:
-           registry: public.ecr.aws
-           username: ${{ secrets.AWS_ACCESS_KEY_ID }}
-           password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download, Tag, and Push Service Images
         run: |
           TAG=${GITHUB_REF/refs\/tags\//}
 
           IMAGES=(
-            ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/backend
-            ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/discounts
-            ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/ads
-            ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/ads-java
-            ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/attackbox
-            ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/auth
-            ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/nginx
-            ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/frontend
-            ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/dbm
-            ${{ secrets.PUBLIC_ECR_REGISTRY }}/storedog/postgres
+            ghcr.io/DataDog/storedog/backend
+            ghcr.io/DataDog/storedog/discounts
+            ghcr.io/DataDog/storedog/ads
+            ghcr.io/DataDog/storedog/ads-java
+            ghcr.io/DataDog/storedog/attackbox
+            ghcr.io/DataDog/storedog/auth
+            ghcr.io/DataDog/storedog/nginx
+            ghcr.io/DataDog/storedog/frontend
+            ghcr.io/DataDog/storedog/dbm
+            ghcr.io/DataDog/storedog/postgres
           )
 
           for i in "${IMAGES[@]}"
