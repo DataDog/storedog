@@ -43,4 +43,4 @@ jobs:
         context: ./services/discounts
         platforms: linux/amd64,linux/arm64
         push: true
-        tags: ghcr.io/DataDog/storedog/discounts:latest
+        tags: ghcr.io/datadog/storedog/discounts:latest

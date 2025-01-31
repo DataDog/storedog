@@ -43,5 +43,5 @@ jobs:
           context: ./services/auth
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/DataDog/storedog/auth:latest
+          tags: ghcr.io/datadog/storedog/auth:latest
 

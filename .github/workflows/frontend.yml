@@ -43,5 +43,5 @@ jobs:
         context: ./services/frontend
         platforms: linux/arm64, linux/amd64
         push: true
-        tags: ghcr.io/DataDog/storedog/frontend:latest
+        tags: ghcr.io/datadog/storedog/frontend:latest
 
