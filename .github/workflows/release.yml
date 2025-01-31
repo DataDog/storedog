@@ -42,16 +42,16 @@ jobs:
           TAG=${GITHUB_REF/refs\/tags\//}
 
           IMAGES=(
-            ghcr.io/DataDog/storedog/backend
-            ghcr.io/DataDog/storedog/discounts
-            ghcr.io/DataDog/storedog/ads
-            ghcr.io/DataDog/storedog/ads-java
-            ghcr.io/DataDog/storedog/attackbox
-            ghcr.io/DataDog/storedog/auth
-            ghcr.io/DataDog/storedog/nginx
-            ghcr.io/DataDog/storedog/frontend
-            ghcr.io/DataDog/storedog/dbm
-            ghcr.io/DataDog/storedog/postgres
+            ghcr.io/datadog/storedog/backend
+            ghcr.io/datadog/storedog/discounts
+            ghcr.io/datadog/storedog/ads
+            ghcr.io/datadog/storedog/ads-java
+            ghcr.io/datadog/storedog/attackbox
+            ghcr.io/datadog/storedog/auth
+            ghcr.io/datadog/storedog/nginx
+            ghcr.io/datadog/storedog/frontend
+            ghcr.io/datadog/storedog/dbm
+            ghcr.io/datadog/storedog/postgres
           )
 
           for i in "${IMAGES[@]}"

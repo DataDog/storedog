@@ -43,5 +43,5 @@ jobs:
           context: ./services/postgres
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/DataDog/storedog/postgres:latest
+          tags: ghcr.io/datadog/storedog/postgres:latest
 

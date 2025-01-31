@@ -43,5 +43,5 @@ jobs:
         context: ./services/ads/java
         platforms: linux/amd64,linux/arm64
         push: true
-        tags: ghcr.io/DataDog/storedog/ads-java:latest
+        tags: ghcr.io/datadog/storedog/ads-java:latest
 

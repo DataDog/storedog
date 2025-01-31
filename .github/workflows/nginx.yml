@@ -43,5 +43,5 @@ jobs:
           context: ./services/nginx
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/DataDog/storedog/nginx:latest
+          tags: ghcr.io/datadog/storedog/nginx:latest
 
