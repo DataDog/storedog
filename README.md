@@ -2,6 +2,10 @@
 
 This a dockerized [Spree Commerce](https://spreecommerce.org) application consumed by a NextJS frontend.
 
+This application is built and tested to run within [Datadog Learning Center](https://learn.datadoghq.com/) lab environments. No guarantees are made that this application will run outside of the Datadog Learning Center lab environments.
+
+Many parts of this application were intentionally modified to introduce performance issues, security vulnerabilities, and other intentionally problematic code. This is to help you learn how to use Datadog to troubleshoot and fix these issues. This application is not intended to be used in production.
+
 ## Local development
 
 **1.** Before starting the containers, you will need to define the required env vars. Run the following command to copy the env var template:
@@ -33,7 +37,7 @@ Enables a mock cross site scripting attack to demonstrate ASM
 6. Enter anything into the input (it being an email isn't important) and submit
 7. You should get a thank you message with the input you entered at the end
 
-#### dbm 
+#### DBM
 Enables a product ticker on the homepage with a long-running query to demonstrate DBM
 
 **How to use**:
