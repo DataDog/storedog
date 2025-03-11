@@ -7,8 +7,8 @@ import { Product } from '@customTypes/product'
 import { Page } from '@customTypes/page'
 
 export async function getServerSideProps() {
-  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL
-    ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/api`
+  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_API_ROUTE
+    ? `${process.env.NEXT_PUBLIC_FRONTEND_API_ROUTE}/api`
     : 'http://localhost/api'
 
   let products: Product[] = await fetch(`${baseUrl}/products`)

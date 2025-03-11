@@ -6,8 +6,8 @@ import { codeStash } from 'code-stash'
 import config from '../../featureFlags.config.json'
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL
-    ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/api`
+  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_API_ROUTE
+    ? `${process.env.NEXT_PUBLIC_FRONTEND_API_ROUTE}/api`
     : 'http://localhost/api'
 
   const products: Product[] = await fetch(`${baseUrl}/products`).then((res) =>

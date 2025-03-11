@@ -19,8 +19,8 @@ export async function getServerSideProps({
   req,
   params,
 }: GetServerSidePropsContext<{ slug: string }>) {
-  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL
-    ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/api`
+  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_API_ROUTE
+    ? `${process.env.NEXT_PUBLIC_FRONTEND_API_ROUTE}/api`
     : 'http://localhost/api'
 
   const product: Product = await fetch(

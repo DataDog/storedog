@@ -10,7 +10,7 @@ export interface AdDataResults {
 function Ad() {
   const [data, setData] = useState<AdDataResults | null>(null)
   const [isLoading, setLoading] = useState(false)
-  const adsPath = process.env.NEXT_PUBLIC_ADS_ROUTE
+  const adsPath = process.env.NEXT_PUBLIC_ADS_ROUTE || `/services/ads`
 
   const getRandomArbitrary = useCallback((min: number, max: number) => {
     return Math.floor(Math.random() * (max - min) + min)
@@ -27,7 +27,7 @@ function Ad() {
 
     try {
       console.log('ads path', adsPath)
-      const res = await fetch(`/services/ads-java/ads`, { headers })
+      const res = await fetch(`${adsPath}/ads`, { headers })
       if (!res.ok) {
         throw new Error('Error fetching ad')
       }
