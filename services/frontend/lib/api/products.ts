@@ -3,7 +3,7 @@ import { Product } from '@customTypes/product'
 
 const SPREE_URL_SERVERSIDE = process.env.NEXT_PUBLIC_SPREE_API_HOST
   ? `${process.env.NEXT_PUBLIC_SPREE_API_HOST}/api/v2`
-  : 'http://web:4000/api/v2'
+  : 'http://nginx/services/backend/api/v2'
 
 //  GET CONTENT API
 export const getProducts = async (
@@ -49,9 +49,9 @@ export const getProducts = async (
         )
 
         return {
-          url: `${process.env.NEXT_PUBLIC_SPREE_API_HOST || 'http://web:4000'}${
-            imageData.attributes.original_url
-          }`,
+          url: `${
+            process.env.NEXT_PUBLIC_SPREE_API_HOST || 'http://backend:4000'
+          }${imageData.attributes.original_url}`,
           alt: imageData.attributes.alt,
         }
       })
@@ -118,9 +118,9 @@ export const getProduct = async (options: any): Promise<Product | any> => {
         )
 
         return {
-          url: `${process.env.NEXT_PUBLIC_SPREE_API_HOST || 'http://web:4000'}${
-            imageData.attributes.original_url
-          }`,
+          url: `${
+            process.env.NEXT_PUBLIC_SPREE_API_HOST || 'http://backend:4000'
+          }${imageData.attributes.original_url}`,
           alt: imageData.attributes.alt,
         }
       }),

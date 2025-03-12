@@ -1,5 +1,5 @@
 {
-  "name": "Spree Commerce Demo",
+  "name": "Storedog ecommerce backend",
   "description": "Spree is a is a headless open source e-commerce platform for global brands",
   "keywords": [
     "spree commerce",
@@ -22,8 +22,7 @@
       "value": "spree123"
     }
   },
-  "formation": {
-  },
+  "formation": {},
   "scripts": {
     "postdeploy": "bundle exec rails db:seed && SKIP_SAMPLE_IMAGES=true bundle exec rake spree_sample:load"
   },
@@ -35,13 +34,5 @@
     "sendgrid",
     "sentry",
     "scout"
-  ],
-  "buildpacks": [
-    {
-      "url": "heroku/nodejs"
-    },
-    {
-      "url": "heroku/ruby"
-    }
   ]
 }

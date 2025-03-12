@@ -7,8 +7,8 @@ import { Page } from '@customTypes/page'
 export async function getServerSideProps({
   params,
 }: GetServerSidePropsContext<{ pages: string }>) {
-  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL
-    ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/api`
+  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_API_ROUTE
+    ? `${process.env.NEXT_PUBLIC_FRONTEND_API_ROUTE}/api`
     : 'http://localhost/api'
   const slug = params?.pages as string
 

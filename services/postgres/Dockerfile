@@ -4,8 +4,8 @@ FROM postgres:15-alpine
 RUN apk update && apk add --no-cache dcron su-exec
 
 # Copy SQL dump and PostgreSQL configuration
-COPY ./scripts/restore-2024-04-25-22-06-17.sql /docker-entrypoint-initdb.d/
-COPY ./scripts/postgresql.conf /postgresql.conf
+COPY ./db/restore.sql /docker-entrypoint-initdb.d/
+COPY ./postgresql.conf /postgresql.conf
 
 # Create log directory and set permissions
 RUN mkdir -p /var/log/pg_log && \

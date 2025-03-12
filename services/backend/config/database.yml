@@ -23,7 +23,7 @@ default: &default
 
 development:
   <<: *default
-  database: spree_starter_development
+  database: storedog_db
   host: <%= ENV.fetch('DB_HOST', 'localhost') %>
   username: postgres
   port: <%= ENV.fetch('DB_PORT', '5432') %>
@@ -86,5 +86,9 @@ test:
 #
 production:
   <<: *default
-  url: <%= ENV['DATABASE_URL'] %>
+  database: storedog_db
+  host: <%= ENV.fetch('DB_HOST', 'localhost') %>
+  username: <%= ENV.fetch('POSTGRES_USER', 'postgres') %>
+  password: <%= ENV.fetch('POSTGRES_PASSWORD', 'postgres') %>
+  port: <%= ENV.fetch('DB_PORT', '5432') %>
   pool: <%= ENV["DB_POOL"] || ENV['MAX_THREADS'] || 25 %>

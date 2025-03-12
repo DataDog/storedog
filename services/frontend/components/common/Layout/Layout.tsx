@@ -29,17 +29,6 @@ const dynamicProps = {
   loading: Loading,
 }
 
-// const SignUpView = dynamic(() => import('@components/auth/SignUpView'), {
-//   ...dynamicProps,
-// })
-
-// const ForgotPassword = dynamic(
-//   () => import('@components/auth/ForgotPassword'),
-//   {
-//     ...dynamicProps,
-//   }
-// )
-
 const FeatureBar = dynamic(() => import('@components/common/FeatureBar'), {
   ...dynamicProps,
 })
@@ -83,7 +72,7 @@ const SidebarView: React.FC<{
       {sidebarView === 'SHIPPING_VIEW' && <ShippingView />}
       {sidebarView === 'PAYMENT_VIEW' && <PaymentMethodView />}
       {sidebarView === 'CHECKOUT_VIEW' && <CheckoutSidebarView />}
-      {/* {sidebarView === 'MOBILE_MENU_VIEW' && <MenuSidebarView links={links} />} */}
+      {sidebarView === 'MOBILE_MENU_VIEW' && <MenuSidebarView links={links} />}
       {sidebarView === 'ORDER_CONFIRM_VIEW' && <OrderConfirmView />}
     </Sidebar>
   )

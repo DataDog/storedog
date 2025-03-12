@@ -49,7 +49,7 @@
   @apply hidden -z-10;
 }
 
-.toggle-cart {
+button.toggle-cart {
   color: var(--text-primary) !important;
 }
 

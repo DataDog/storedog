@@ -7,26 +7,35 @@ export interface DiscountCodeResults {
 function Discount() {
   const [data, setData] = React.useState<DiscountCodeResults | null>(null)
   const [isLoading, setLoading] = React.useState(false)
-  const discountPath =
-    `${process.env.NEXT_PUBLIC_DISCOUNTS_URL_FULL}` ||
-    `${process.env.NEXT_PUBLIC_DISCOUNTS_ROUTE}:${process.env.NEXT_PUBLIC_DISCOUNTS_PORT}`
+  const discountPath = process.env.NEXT_PUBLIC_DISCOUNTS_ROUTE
 
   function getRandomArbitrary(min: number, max: number) {
     return Math.floor(Math.random() * (max - min) + min)
   }
 
   function fetchDiscountCode() {
+    setLoading(true) // Ensure the loading state is set before fetching
     fetch(`${discountPath}/discount`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          // Handle HTTP errors explicitly
+          throw new Error(`HTTP error! status: ${res.status}`)
+        }
+        return res.json()
+      })
       .then((data) => {
-        const index = getRandomArbitrary(0, data.length)
-        setData(data[index]['code'])
+        if (data && Array.isArray(data) && data.length > 0) {
+          const index = getRandomArbitrary(0, data.length)
+          setData(data[index]['code'])
+        } else {
+          throw new Error('No discount data found.')
+        }
       })
       .catch((e) => {
-        console.error(e.message)
+        console.error('An error occurred while fetching the discount code:', e)
       })
       .finally(() => {
-        setLoading(false)
+        setLoading(false) // Ensure loading state is updated
       })
   }
 

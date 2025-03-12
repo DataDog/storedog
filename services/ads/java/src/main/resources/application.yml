@@ -1,0 +1,2 @@
+server:
+  port: ${ADS_SERVER_PORT:3030}

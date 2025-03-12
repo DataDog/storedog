@@ -7,69 +7,12 @@ import { Searchbar, UserNav } from '@components/common'
 import { codeStash } from 'code-stash'
 import config from '../../../featureFlags.config.json'
 
-let authUrl = `${process.env.NEXT_PUBLIC_AUTH_ROUTE}/email`
-let dbmUrl = `${process.env.NEXT_PUBLIC_DBM_ROUTE}/get-item`
-
-if (process.env.NEXT_PUBLIC_AUTH_PORT) {
-  authUrl = `${process.env.NEXT_PUBLIC_AUTH_ROUTE}:${process.env.NEXT_PUBLIC_AUTH_PORT}/email`
-}
-
-if (process.env.NEXT_PUBLIC_DBM_PORT) {
-  dbmUrl = `${process.env.NEXT_PUBLIC_DBM_ROUTE}:${process.env.NEXT_PUBLIC_DBM_PORT}/get-item`
-}
+const dbmUrl = `${process.env.NEXT_PUBLIC_DBM_ROUTE}/get-item`
 
 const Navbar: FC<NavbarProps> = ({}) => {
   // Set the input value from the form to state
-  const [inputValue, setInputValue] = useState<string | undefined>()
-  const [showWarningMessage, setShowWarningMessage] = useState<boolean>(false)
-  const [showEmailInput, setShowEmailInput] = useState<boolean>(true)
-  const [xssFlag, setXssFlag] = useState<boolean>()
   const [dbmFlag, setDbmFlag] = useState<boolean>()
-  const [userEmail, setUserEmail] = useState<string | undefined>()
   const [productInfo, setProductInfo] = useState<object | undefined>()
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    // Bail early if env var isn't set
-    if (!xssFlag) return
-    e.preventDefault()
-    // Display warning if there is no input
-    if (!inputValue) {
-      setShowWarningMessage(true)
-      return
-    }
-
-    try {
-      // Clear warning if any
-      if (showWarningMessage) setShowWarningMessage(false)
-      // set options for fetch
-      const options = {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST',
-        },
-        body: `email=${inputValue}`,
-      }
-      // Execute our post request to the server
-      const res = await fetch(authUrl, options)
-      // Parse our response
-      const response = await res.json()
-      // Grab the users email from the response on a successful request
-      const user = response['User_Email']
-      // Set the username to state to be added to the DOM
-      setUserEmail(user)
-      // Exit the function
-      return
-    } catch (e) {
-      // Log out any errors
-      console.error((e as Error).message)
-    } finally {
-      // Reset the input and hide it
-      setInputValue(undefined)
-      setShowEmailInput(false)
-    }
-  }
 
   const fetchRandomOrderCount = useCallback(async () => {
     try {
@@ -118,9 +61,6 @@ const Navbar: FC<NavbarProps> = ({}) => {
 
   useEffect(() => {
     if (config) {
-      codeStash('xss', { file: config })
-        .then((r: boolean) => setXssFlag(r))
-        .catch((e) => console.log(e))
       codeStash('dbm', { file: config })
         .then((r: boolean) => setDbmFlag(r))
         .catch((e) => console.log(e))
@@ -174,36 +114,7 @@ const Navbar: FC<NavbarProps> = ({}) => {
             <UserNav />
           </div>
         </div>
-        {xssFlag && showEmailInput && (
-          // Used as an example for XSS detection in Datadog
-          <div className=" pb-1">
-            <form className="flex flex-col" onSubmit={handleSubmit}>
-              <label htmlFor="email-input" className="mb-1">
-                Enter email for discounts:
-              </label>
-              <div className="flex items-center">
-                <input
-                  onChange={(e) => setInputValue(e.target.value)}
-                  id="email-input"
-                  className="py-2 px-2 mr-2 relative"
-                  type="text"
-                  placeholder="bits@dtdg.co"
-                />
-                <button className="border-2 px-2 py-1 rounded cursor-pointer hover:border-purple-600">
-                  submit
-                </button>
-              </div>
-              {showWarningMessage && (
-                <p className="font-bold pt-1 text-rose-700 italic lg:absolute -bottom-7">
-                  *You must enter an email address to submit
-                </p>
-              )}
-            </form>
-          </div>
-        )}
-        {!showEmailInput && xssFlag && (
-          <p className="font-bold">Thank you for signing up {userEmail}!</p>
-        )}
+
         {dbmFlag && productInfo && (
           <p className="flex justify-center py-3 font-semibold">
             {productInfo.productName} was ordered {productInfo.count} times in

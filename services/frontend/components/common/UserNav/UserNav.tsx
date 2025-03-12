@@ -1,15 +1,12 @@
 import React from 'react'
 import cn from 'clsx'
-import Link from 'next/link'
 import s from './UserNav.module.css'
 import { useUI } from '@components/ui/context'
 import { Bag, Menu } from '@components/icons'
 import { useCart } from '@lib/CartContext'
 import { Button } from '@components/ui'
 
-import type { LineItem } from '@commerce/types/cart'
-
-const countItem = (count: number, item: LineItem) => count + item.quantity
+const countItem = (count: number, item: any) => count + item.quantity
 
 const UserNav: React.FC<{
   className?: string
