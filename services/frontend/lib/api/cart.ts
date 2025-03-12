@@ -3,7 +3,7 @@ import { Cart } from '@customTypes/cart'
 
 const SPREE_URL_CLIENTSIDE = process.env.NEXT_PUBLIC_SPREE_CLIENT_HOST
   ? `${process.env.NEXT_PUBLIC_SPREE_CLIENT_HOST}/api/v2`
-  : 'http://localhost:4000/api/v2'
+  : '/services/backend/api/v2'
 
 // CART API
 interface CartOptionsBase {
