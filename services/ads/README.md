@@ -142,7 +142,7 @@ To use the Python ads service, replace the `ads` definition with the following i
 ads:
     build:
       context: ./services/ads/python
-    command: wait-for-it postgres:5432 -- flask run --port=${ADS_PORT} --host=0.0.0.0 # If using any other port besides the default 9292, overriding the CMD is required
+    command: wait-for-it postgres:5432 -- flask run --port=3030 --host=0.0.0.0 # If using any other port besides the default 9292, overriding the CMD is required
     depends_on:
       - postgres
       - dd-agent
@@ -162,8 +162,6 @@ ads:
       - DD_ENV=${DD_ENV-dev}
     volumes:
       - ./services/ads/python:/app
-    ports:
-      - '${ADS_PORT}:${ADS_PORT}'
     labels:
       com.datadoghq.ad.logs: '[{"source": "python", "service": "store-ads"}]'
       com.datadoghq.tags.env: '${DD_ENV-dev}'

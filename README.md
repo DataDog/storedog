@@ -1,196 +1,136 @@
 # Storedog
 
-This a dockerized [Spree Commerce](https://spreecommerce.org) application consumed by a NextJS frontend.
+Storedog is a Dockerized e-commerce site used primarily in labs run at [learn.datadoghq.com](https://learn.datadoghq.com). It consists of multiple services:
+
+- **Frontend**: A Next.js app that serves the homepage and product pages.
+- **Backend**: A Rails app built using the Spree e-commerce framework that provides the main product catalog and order management APIs. Also includes a Redis cache.
+- **Ads**: A service that serves banner ads to the homepage. The Java version of the service is primarily used, but see [the Python service's README](./services/ads/python/README.md) for details on how to run that one in it's place
+- **Discounts**: A Python service that provides a discount API for the frontend.
+- **Postgres**: A Postgres database that stores the product catalog and order data, as well as the Discount service's data.
+- **Nginx**: A reverse proxy that routes requests to the appropriate service.
+- **DBM**: An optional Python service that runs a long-running query to demonstrate Database Monitoring. See [the DBM service's README](./services/dbm/README.md) for details on how to run this service.
+- **The Datadog Agent**: collects metrics and traces from the other services and sends them to Datadog.
+- **Puppeteer**: A Node.js service that runs a headless browser to generate RUM data for the frontend.
+
 
 ## Local development
 
-**1.** Before starting the containers, you will need to define the required env vars. Run the following command to copy the env var template:
+1. Before starting the containers, you will need to define the required env vars. Run the following command to copy the env var template:
 
-`cp .env.template .env && cp .env.template ./deploy/docker-compose/.env && cp .env.template ./services/frontend/site/.env.local`
+  ```sh
+  cp .env.template .env
+  ```
 
-**2.**
-Open the `.env` file under the project root and enter the values for the variables. The default values should all work except for the empty `DD_API_KEY`, which is required to run the DD agent.
+1. Open the `.env` file under the project root and enter the values for the variables. The default values should all work except for the empty `DD_*` variables, which are required to enable different Datadog services and features. 
 
-**3.**
-Open the `./services/frontend/site/.env.local` file and enter the values for the variables. The default values should all work except for the empty `NEXT_PUBLIC_DD_APPLICATION_KEY` and `NEXT_PUBLIC_CLIENT_TOKEN`, which are required to enable RUM.
+  You'll need to bring your own Datadog API key, application key, and RUM Client Token/Application ID values. You can find these in your Datadog org.
 
-**4.** Start the app: `make local-start`
-    **4a.** If you want to work with a profile for a specific lab, you can pass that in as an argument `make local-start PROFILE=<profile-name>`
-**5.** When you're finished you can run `make local-stop` or `make local-stop PROFILE=<profile-name>` if working with a profile
+1. Start the app's services via `docker compose up`:
+
+  ```sh
+  docker compose up
+  ```
+
+1. Visit http://localhost to use the app. The homepage will take a few seconds to load as the backend is still starting up.
+
+  If you see a 502 error for a while, confirm services are healthy by running `docker compose logs <service-name>` and checking logs.
 
 ## Feature flags
 Some capabilities are hidden behind feature flags, which can be controlled via `services/frontend/site/featureFlags.config.json`. 
 
-#### xss
-Enables a mock cross site scripting attack to demonstrate ASM
-
-**How to use**: 
-1. Start the app via `docker compose --csrf up`
-2. Set the `xss` feature flag to true
-3. Visit http://localhost and reload the home page a few times
-4. On the homepage in the nav you should see an option to input your email, this will have a few testing steps:
-5. Click submit with no input, you should get a validation error
-6. Enter anything into the input (it being an email isn't important) and submit
-7. You should get a thank you message with the input you entered at the end
-
-#### dbm 
-Enables a product ticker on the homepage with a long-running query to demonstrate DBM
+### DBM 
+Enables a product ticker on the homepage with a long-running query to demonstrate DBM. 
 
 **How to use**:
-1. Start the app via `docker-compose --profile dbm up`
-2. Set the `dbm` feature flag to true
-3. Visit http://localhost and reload the home page a few times
-4. The ticker will appear after 5 seconds and will subsequently update every 5 seconds with a new product and amount ordered
+1. First, set up the DBM service as described in the [DBM README](./services/dbm/README.md)
+1. Start the app via `docker-compose up`
+1. Set the `dbm` feature flag to true
+1. Visit http://localhost and reload the home page a few times
+1. The ticker will appear after 5 seconds and will subsequently update every 5 seconds with a new product and amount ordered
 
+You can modify the ticker functionality in `services/frontend/components/common/NavBar.tsx`.
 
-#### error-tracking 
-Introduces an exception in the Ads python service to demonstrate Error Tracking
+### error-tracking 
+Introduces an exception in the Ads services to demonstrate Error Tracking by setting a header in to a value that is not expected by the Ads service.
 
 **How to use**:
-
+1. Start the app via `docker-compose up`
 1. Set the `error-tracking` feature flag to true
-2. Rebuild the frontend and ads service via `docker-compose build frontend ads`
-3. Start the app via `docker-compose up`
-4. Visit http://localhost and reload the home page a few times
-5. You should start seeing 500s being generated in the logs, in addition to the banner ads not loading on the homepage
+1. Visit http://localhost and reload the home page a few times
+1. You should start seeing 500s being generated in the logs, in addition to the banner ads not loading on the homepage
+
+Modify this functionality in `services/frontend/components/common/Ad/Ad.tsx` and respective Ads service being used.
 
 ## Image publication
-Images are stored in our public ECR repo `public.ecr.aws/x2b9z2t7`. On PR merges, only the affected services will be pushed to the ECR repo, using the `latest` tag. For example, if you only made changes to the `backend` service, then only the `backend` Github workflow will trigger and publish `public.ecr.aws/x2b9z2t7/storedog/backend:latest`. 
+Images are stored in GHCR. On PR merges, only the affected services will be pushed to GHCR, using the `latest` tag. For example, if you only made changes to the `backend` service, then only the `backend` Github workflow will trigger and publish `ghcr.io/datadog/storedog/backend:latest`. 
 
-Separately, we tag and publish *all* images when a new release is created with the corresponding release tag e.g. `public.ecr.aws/x2b9z2t7/storedog/backend:1.0.1`. New releases are made on an ad-hoc basis, depending on the recent features that are added.
+Separately, we tag and publish *all* images when a new release is created with the corresponding release tag e.g. `ghcr.io/datadog/storedog/backend:1.0.1`. New releases are made on an ad-hoc basis, depending on the recent features that are added.
 
-# Ads
-There are two advertisement services, one built in Python `ads` running on port 7676 and another built in Java `ads-java` running on port 3030. The frontend can consume either of these services and serve ads to the homepage. To select which service is consumed, update the `NEXT_PUBLIC_ADS_PORT` in `services/frontend/site/.env.local`.
+## Breakdown of services
 
-# Backend
-## Database rebuild
+Below is a breakdown of services and some instructions on how to use them.
 
-The current database is based off sample data provided by the Spree starter kit. To create a new `.sql` dump file, run the following command while the application is running.
+### Ads
+There are two advertisement services, the default service is built in Java and there is another option available in Python. These services do the same thing, have the same endpoints, run on the same port (`3030`), and have the same failure modes. The biggest difference is the Python service uses a Postgres database to store the ads, while the Java service uses an in-memory list. These ads are served through the `Ads.tsx` component in the frontend service.
 
-```
-docker exec -t storedog-backend_postgres_1 pg_dumpall -c -U postgres > db/restore/dump_`date +%d-%m-%Y"_"%H_%M_%S`.sql
-```
+To switch between the Java and Python services, see the instructions in the [Ads service README](./services/ads/README.md).
 
-You will then need to remove the following code from the `.sql` file. It should be lines 10 - 31. These commands are not necessary and produce a conflict error when executed because the refereneced DB and roles do not yet exist, so they cannot be dropped.
+### Backend
 
-```
---
--- Drop databases (except postgres and template1)
---
-DROP DATABASE spree_starter_development;
-DROP DATABASE spree_starter_test;
---
--- Drop roles
---
-DROP ROLE postgres;
+The backend service is where all of the product and order data is managed. It is built using the Spree e-commerce framework, which is a Ruby on Rails application.
 
---
--- Roles
---
-
-CREATE ROLE postgres;
-```
-
-**Notes**
-Any `.sh` or `.sql` script under `/db/restore` will be run during init in the Postgres container.
-
-Ref: https://hub.docker.com/_/postgres -> Initialization scripts
-
-## Spree admin
-
-Visit http://localhost:4000/admin
+It's accessible at `http://localhost:4000`, but there's nothing at that path since we run the service as a headless API. The admin interface is available at `http://localhost:4000/admin`. Login with the following credentials to access the admin interface if you would like to add products or manage orders:
 
 ```
-Username: spree@example.com
-Password: spree123
+Username: admin@storedog.com
+Password: password
 ```
 
-# Frontend
+If you make any changes to the backend service, you will need to rebuild the Docker image to ensure new images uploaded are saved. You'll also need to create a restore point to ensure the new images are available in the database. 
 
-## Considerations
+#### Database rebuild
 
-- `packages/commerce` contains all types, helpers and functions to be used as base to build a new **provider**.
-- **Providers** live under `packages`'s root folder and they will extend Next.js Commerce types and functionality (`packages/commerce`).
-- We have a **Features API** to ensure feature parity between the UI and the Provider. The UI should update accordingly and no extra code should be bundled. All extra configuration for features will live under `features` in `commerce.config.json` and if needed it can also be accessed programatically.
-- Each **provider** should add its corresponding `next.config.js` and `commerce.config.json` adding specific data related to the provider. For example in case of BigCommerce, the images CDN and additional API routes.
+To create a new `.sql` restore file, run the following command while the application is running.
 
-## Configuration
-
-### Enable RUM
-
-To enable RUM, generate a new RUM application in DD and then set the `NEXT_PUBLIC_DD_APPLICATION_KEY` and `NEXT_PUBLIC_CLIENT_TOKEN` values in `./site/.env.local`. Then start the app, click around the site, and you should start to see RUM metrics populating in DD.
-
-#### How to run the DBM backend to test the Database Monitoring in the product and incrementally improve for the workshop
-
-- complete the startup steps up under Local Development to number 3
-- in `services/frontend/site/featureFlags.config.json` find the object with `name:dbm` and set `active:true`
-- run `docker-compose --profile dbm up -d`
-- once all the containers are up, run `docker exec storedog-postgres-1 ./dbm_exec.sh` this will add a few things we need for dbm to the database
-- run `docker restart storedog-postgres-1` to restart the postgres container
-
-You should now see your logs in DBM!
-
-Once the metrics are showing in DBM, direct the users to the `dbm.py` file in `services/dbm/dbm.py`.
-
-Have them update the query to change the 2 `{random.randint(1, 7000)}` to `{random.randint(5000, 7000)}` so only the most popular items show in the ticker.
-
-Then explain that preorder items get marked as false or `f` in the table once they are now regular items. Say that best practice would be to update the `items` table to include the items marked `f`. Now we will update the query to the following to only look at the `items` table.
-
-```sql
-SELECT *
-FROM items
-WHERE order_count::int > {random.randint(5000, 7000)}
+```sh
+sh ./scripts/backup-db.sh
 ```
 
-This will greatly reduce the amount of cost per query
+This will create a new `restore.sql` file in the `services/postgres/db` directory and get it set up with all of necessary SQL statements to prepare the database for Datadog monitoring. When done running, you'll want to rebuild the Postgres database image with the new restore point. 
 
-## Troubleshoot
+### Discounts
 
-<details>
-<summary>When run locally I get `Error: Cannot find module '...@vercel/commerce/dist/config'`</summary>
+The discounts service is a Python service that provides an API for serving discount codes to the frontend that can be used to apply discounts to orders. The discounts are stored in a Postgres database and are served through the `Discounts.tsx` component in the frontend service.
 
-```bash
-commerce/site
-❯ yarn dev
-yarn run v1.22.17
-$ next dev
-ready - started server on 0.0.0.0:3000, url: http://localhost:3000
-info  - Loaded env from /commerce/site/.env.local
-error - Failed to load next.config.js, see more info here https://nextjs.org/docs/messages/next-config-error
-Error: Cannot find module '/Users/dom/work/vercel/commerce/node_modules/@vercel/commerce/dist/config.cjs'
-    at createEsmNotFoundErr (node:internal/modules/cjs/loader:960:15)
-    at finalizeEsmResolution (node:internal/modules/cjs/loader:953:15)
-    at resolveExports (node:internal/modules/cjs/loader:482:14)
-    at Function.Module._findPath (node:internal/modules/cjs/loader:522:31)
-    at Function.Module._resolveFilename (node:internal/modules/cjs/loader:919:27)
-    at Function.mod._resolveFilename (/Users/dom/work/vercel/commerce/node_modules/next/dist/build/webpack/require-hook.js:179:28)
-    at Function.Module._load (node:internal/modules/cjs/loader:778:27)
-    at Module.require (node:internal/modules/cjs/loader:1005:19)
-    at require (node:internal/modules/cjs/helpers:102:18)
-    at Object.<anonymous> (/Users/dom/work/vercel/commerce/site/commerce-config.js:9:14) {
-  code: 'MODULE_NOT_FOUND',
-  path: '/Users/dom/work/vercel/commerce/node_modules/@vercel/commerce/package.json'
-}
-error Command failed with exit code 1.
-info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
-```
+Currently, when applying a successful discount code, we it will automatically apply a "Free shipping" discount that exists in the backend service. This is to demonstrate the discount functionality in the frontend, but is a bit of a hack.
 
-The error usually occurs when running yarn dev inside of the `/site/` folder after installing a fresh repository.
+### Frontend
 
-In order to fix this, run `yarn dev` in the monorepo root folder first.
+The frontend service is a Next.js application that serves the homepage and product pages. It is accessible at `http://localhost`.
 
-> Using `yarn dev` from the root is recommended for developing, which will run watch mode on all packages.
+In the shipped `docker-compose.yml` file, the frontend service is set to run in development mode, which means it will automatically reload when you make changes to the code. If you want to run the frontend service in production mode, you can do so by changing the `command` in the `frontend` service in the `docker-compose.yml` file to `npm run build && npm run start`.
 
-</details>
+### Postgres
 
-<details>
-<summary>When run locally I get `Error: Spree API cannot be reached'`</summary>
+The Postgres service is a Postgres database that stores the product catalog and order data, as well as the discount data for the discounts service.
 
-The error usually occurs when the backend containers are not yet fully healthy, but the frontend has already started making API requests.
+There's information under the [Backend](#backend) section on how to rebuild the Postgres database image with a new restore point.
 
-In the docker logs output for storedog-backend, check to see if the backend has fully started. You should see the following log for the `web` container:
-```
-web_1       | [1] * Listening on http://0.0.0.0:4000
-```
+The Postgres service also has logging set up to write to a JSON file and a fairly quick log rotation, which get saved in a Docker volume. 
 
-</details>
+### Nginx
+
+The Nginx service is a reverse proxy that routes requests to the appropriate service. It is accessible at `http://localhost`.
+
+### DBM
+
+The DBM service is an optional Python service that runs a long-running query to demonstrate Database Monitoring. See [the DBM service's README](./services/dbm/README.md) for details on how to run this service.
+
+### Puppeteer
+
+The Puppeteer service is a Node.js service that runs a headless browser to generate RUM data for the frontend.
+
+## Contributing
+
+While we don't accept contributions to the Storedog project from members outside of Datadog, we encourage you to fork the project and make it your own! 
+

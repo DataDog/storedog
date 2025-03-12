@@ -120,7 +120,7 @@ services:
   discounts:
     build:
       context: ./services/discounts
-    command: wait-for-it postgres:5432 -- ddtrace-run flask run --port=${DISCOUNTS_PORT} --host=0.0.0.0
+    command: wait-for-it postgres:5432 -- ddtrace-run flask run --port=2814 --host=0.0.0.0
     depends_on:
       - postgres
       - dd-agent
