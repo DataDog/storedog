@@ -13,6 +13,10 @@ Storedog is a Dockerized e-commerce site used primarily in labs run at [learn.da
 - **Puppeteer**: A Node.js service that runs a headless browser to generate RUM data for the frontend.
 
 
+This application is built and tested to run within [Datadog Learning Center](https://learn.datadoghq.com/) lab environments. No guarantees are made that this application will run outside of the Datadog Learning Center lab environments.
+
+Many parts of this application were intentionally modified to introduce performance issues, security vulnerabilities, and other intentionally problematic code. This is to help you learn how to use Datadog to troubleshoot and fix these issues. This application is not intended to be used in production.
+
 ## Local development
 
 1. Before starting the containers, you will need to define the required env vars. Run the following command to copy the env var template:
@@ -38,7 +42,7 @@ Storedog is a Dockerized e-commerce site used primarily in labs run at [learn.da
 ## Feature flags
 Some capabilities are hidden behind feature flags, which can be controlled via `services/frontend/site/featureFlags.config.json`. 
 
-### DBM 
+### dbm 
 Enables a product ticker on the homepage with a long-running query to demonstrate DBM. 
 
 **How to use**:
