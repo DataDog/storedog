@@ -88,6 +88,8 @@ Separately, we tag and publish *all* images when a new release is created with t
 
 ## Breakdown of services
 
+All of the services in the Storedog application are Dockerized and run in containers. See the [docker-compose.yml](./docker-compose.yml) file for the full list of services and how they are connected. You'll also find specific Datadog configurations, volume mounts, and environment variables for each service in there.
+
 Below is a breakdown of services and some instructions on how to use them.
 
 ### Ads
@@ -116,7 +118,10 @@ To create a new `.sql` restore file, run the following command while the applica
 sh ./scripts/backup-db.sh
 ```
 
-This will create a new `restore.sql` file in the `services/postgres/db` directory and get it set up with all of necessary SQL statements to prepare the database for Datadog monitoring. When done running, you'll want to rebuild the Postgres database image with the new restore point. 
+This will create a new `restore.sql` file in the `services/postgres/db/` directory and get it set up with all of necessary SQL statements to prepare the database for Datadog monitoring. When done running, you'll want to rebuild the Postgres database image with the new restore point. 
+
+#### Worker
+The Spree application has a worker process that runs in the background. There is a specific Datadog tracer configuration for it in the `services/worker/` directory and is mounted into the worker container.
 
 ### Discounts
 
