@@ -43,7 +43,7 @@ Enables a product ticker on the homepage with a long-running query to demonstrat
 
 **How to use**:
 1. First, set up the DBM service as described in the [DBM README](./services/dbm/README.md)
-1. Start the app via `docker-compose up`
+1. Start the app via `docker compose up`
 1. Set the `dbm` feature flag to true
 1. Visit http://localhost and reload the home page a few times
 1. The ticker will appear after 5 seconds and will subsequently update every 5 seconds with a new product and amount ordered
@@ -54,12 +54,32 @@ You can modify the ticker functionality in `services/frontend/components/common/
 Introduces an exception in the Ads services to demonstrate Error Tracking by setting a header in to a value that is not expected by the Ads service.
 
 **How to use**:
-1. Start the app via `docker-compose up`
+1. Start the app via `docker compose up`
 1. Set the `error-tracking` feature flag to true
 1. Visit http://localhost and reload the home page a few times
 1. You should start seeing 500s being generated in the logs, in addition to the banner ads not loading on the homepage
 
 Modify this functionality in `services/frontend/components/common/Ad/Ad.tsx` and respective Ads service being used.
+
+### api-errors
+This introduces random errors that occur in the frontend service's `/api` routes.
+
+**How to use**:
+1. Start the app via `docker compose up`
+1. Set the `api-errors` feature flag to true
+1. Visit http://localhost and reload the home page a few times, footer links will randomly return 400s and 500s.
+
+Modify this functionality in `services/frontend/pages/api/*`.
+
+### product-card-frustration
+This will swap out the product card component with a version that doesn't have the thumbnails linked to the product page. When paired with the Puppeteer service, this can be used to demonstrate Frustration Signals in RUM.
+
+**How to use**:
+1. Start the app via `docker compose up`
+1. Set the `product-card-frustration` feature flag to true
+1. Visit http://localhost/products and try clicking on the product thumbnails to see the frustration signal in action.
+
+Modify this functionality in `services/frontend/components/Product/ProductCard.tsx` and `services/frontend/components/Product/ProductCard-v2.tsx`.
 
 ## Image publication
 Images are stored in GHCR. On PR merges, only the affected services will be pushed to GHCR, using the `latest` tag. For example, if you only made changes to the `backend` service, then only the `backend` Github workflow will trigger and publish `ghcr.io/datadog/storedog/backend:latest`. 
