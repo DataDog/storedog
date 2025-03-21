@@ -27,7 +27,7 @@ module SpreeStarter
     # -- all .rb files in that directory are automatically loaded after loading
     # the framework and any gems in your application.
 
-        # Set Time.zone default to the specified zone and make Active Record auto-convert to this zone.
+    # Set Time.zone default to the specified zone and make Active Record auto-convert to this zone.
     # Run "rake -D time" for a list of tasks for finding time zone names. Default is UTC.
     config.time_zone = 'Central Time (US & Canada)'
 
@@ -41,10 +41,10 @@ module SpreeStarter
     # adds support for Services
     config.autoload_paths += %W(#{config.root}/services #{config.root}/app/services/concerns)
 
-    if Rails.env.production?
-      # CloudFlare middleware for proper visitors IP addresses
-      require "#{Rails.root}/lib/cloud_flare_middleware"
-      config.middleware.insert_before(0, Rack::CloudFlareMiddleware)
-    end
+    # if Rails.env.production?
+    #   # CloudFlare middleware for proper visitors IP addresses
+    #   require "#{Rails.root}/lib/cloud_flare_middleware"
+    #   config.middleware.insert_before(0, Rack::CloudFlareMiddleware)
+    # end
   end
 end
