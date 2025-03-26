@@ -76,9 +76,6 @@ gem 'spree_dev_tools', require: false, group: %w[test development]
 # Sentry Client
 gem 'sentry-raven'
 
-# Scout Client
-gem 'scout_apm'
-
 # Rack CORS Middleware
 gem 'rack-cors'
 

@@ -36,8 +36,8 @@ services:
     networks:
       - storedog-network
     environment:
-      - DD_VERSION=${DD_VERSION_FRONTEND-1.0.0}
-      - DD_SERVICE=store-frontend
+      - DD_VERSION=${NEXT_PUBLIC_DD_VERSION_FRONTEND-1.0.0}
+      - DD_SERVICE=${NEXT_PUBLIC_DD_SERVICE_FRONTEND-store-frontend}
       - DD_ENV=${DD_ENV-dev}
       - DD_AGENT_HOST=dd-agent
       - DD_LOGS_INJECTION=true
@@ -47,7 +47,7 @@ services:
       com.datadoghq.ad.logs: '[{"source": "nodejs", "service": "store-frontend", "auto_multi_line_detection":true }]'
       com.datadoghq.tags.env: '${DD_ENV-dev}'
       com.datadoghq.tags.service: 'store-frontend'
-      com.datadoghq.tags.version: '${DD_VERSION_FRONTEND-1.0.0}'
+      com.datadoghq.tags.version: '${NEXT_PUBLIC_DD_VERSION_FRONTEND-1.0.0}'
   backend:
     build:
       context: ./services/backend
