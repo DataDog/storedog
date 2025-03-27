@@ -76,9 +76,6 @@ gem 'spree_dev_tools', require: false, group: %w[test development]
 # Sentry Client
 gem 'sentry-raven'
 
-# Scout Client
-gem 'scout_apm'
-
 # Rack CORS Middleware
 gem 'rack-cors'
 
@@ -97,11 +94,11 @@ gem 'oj'
 gem 'sassc', github: 'sass/sassc-ruby', group: :development
 
 # monitoring
-gem 'ddtrace', require: 'ddtrace/auto_instrument'
+gem 'datadog', '~> 2.12.2', require: 'datadog/auto_instrument'
 # needed for Datadog Continuous Profiler
-gem 'google-protobuf', '~> 3.0'
+gem 'google-protobuf', '~> 4.30'
 # needed for runtime metrics
-gem 'dogstatsd-ruby', require: 'datadog/statsd'
+gem 'dogstatsd-ruby', '~> 5.6', require: 'datadog/statsd'
 
 # JSON log formatter
 gem 'lograge'

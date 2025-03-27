@@ -10,6 +10,7 @@ export default function MenuSidebarView({
   links?: LinkProps[]
 }) {
   const { closeSidebar } = useUI()
+  console.log(links)
 
   return (
     <SidebarLayout handleClose={() => closeSidebar()}>

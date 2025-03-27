@@ -1,5 +1,7 @@
 ---
 :concurrency: 5
+:max_memory: 512 # MB
+:gc_interval: 10 # GC every 10 jobs
 :queues:
   - default
   - mailers

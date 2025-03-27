@@ -48,13 +48,13 @@ RETURNS NULL ON NULL INPUT
 SECURITY DEFINER;
 
 --
--- Name: spree_starter_development; Type: DATABASE; Schema: -; Owner: postgres
+-- Name: storedog_db; Type: DATABASE; Schema: -; Owner: postgres
 --
 
-CREATE DATABASE spree_starter_development WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE = 'en_US.utf8';
+CREATE DATABASE storedog_db WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE = 'en_US.utf8';
 
 
-ALTER DATABASE spree_starter_development OWNER TO postgres;
+ALTER DATABASE storedog_db OWNER TO postgres;
 
-\connect spree_starter_development
+\connect storedog_db
 

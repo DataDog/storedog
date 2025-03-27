@@ -1,26 +1,21 @@
 [
   {
     "id": "1",
-    "name": "xss",
-    "active": false
-  },
-  {
-    "id": "2",
     "name": "dbm",
     "active": false
   },
   {
-    "id": "3",
+    "id": "2",
     "name": "error-tracking",
     "active": false
   },
   {
-    "id": "4",
+    "id": "3",
     "name": "api-errors",
     "active": false
   },
   {
-    "id": "5",
+    "id": "4",
     "name": "product-card-frustration",
     "active": false
   }

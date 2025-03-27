@@ -23,4 +23,4 @@ ENV FLASK_APP=ads.py
 
 # Start the app using ddtrace so we have profiling and tracing
 ENTRYPOINT ["ddtrace-run"]
-CMD flask run --port=9292 --host=0.0.0.0
+CMD flask run --port=3030 --host=0.0.0.0

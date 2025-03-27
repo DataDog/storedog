@@ -134,4 +134,36 @@ The `ads` table has the following schema:
 | weight | float | Weight of the advertisement (used for A/B testing) |
 | path | string | Path to the advertisement image |
 
+### Using the Python ads service
 
+To use the Python ads service, replace the `ads` definition with the following in your `docker-compose.yml` file:
+
+```yaml
+ads:
+    build:
+      context: ./services/ads/python
+    command: wait-for-it postgres:5432 -- flask run --port=3030 --host=0.0.0.0 # If using any other port besides the default 9292, overriding the CMD is required
+    depends_on:
+      - postgres
+      - dd-agent
+    environment:
+      - FLASK_APP=ads.py
+      - FLASK_DEBUG=0
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_HOST=postgres
+      - DD_AGENT_HOST=dd-agent
+      - DD_LOGS_INJECTION=true
+      - DD_TRACE_ANALYTICS_ENABLED=true
+      - DD_PROFILING_ENABLED=true
+      - DD_APPSEC_ENABLED=true
+      - DD_VERSION=${DD_VERSION_ADS-1.0.0}
+      - DD_SERVICE=store-ads
+      - DD_ENV=${DD_ENV-dev}
+    volumes:
+      - ./services/ads/python:/app
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "python", "service": "store-ads"}]'
+      com.datadoghq.tags.env: '${DD_ENV-dev}'
+      com.datadoghq.tags.service: 'store-ads'
+      com.datadoghq.tags.version: ${DD_VERSION_ADS-1.0.0}

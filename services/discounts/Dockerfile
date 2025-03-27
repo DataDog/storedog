@@ -21,19 +21,13 @@ USER test
 WORKDIR /app
 COPY . .
 
-# Create SSH config for attack scenario
-RUN mkdir -p /home/test/.ssh
-COPY keys/storedog-leaked-key.pub /home/test/.ssh
-RUN touch /home/test/.ssh/authorized_keys
-RUN cat /home/test/.ssh/storedog-leaked-key.pub >> /home/test/.ssh/authorized_keys
-
 USER root
 # Let Flask know what to boot
 ENV FLASK_APP=discounts.py
 
 # Install dependencies via pip and avoid caching build artifacts
 RUN pip install --no-cache-dir -r requirements.txt
-RUN chmod +x ./my-wrapper-script.sh
+# RUN chmod +x ./my-wrapper-script.sh
 
 # Pass in Port mapping (default to 8282)
 ARG DISCOUNTS_PORT=8282
@@ -44,5 +38,4 @@ ENV DISCOUNTS_PORT ${DISCOUNTS_PORT}
 # required to get logs out of the container
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
-# runs sshd and flask server
-CMD ./my-wrapper-script.sh ${DISCOUNTS_PORT}
+CMD ["sh", "-c", "ddtrace-run", "flask", "run", "--port=${DISCOUNTS_PORT}", "--host=0.0.0.0"]
