@@ -51,7 +51,7 @@ services:
   backend:
     build:
       context: ./services/backend
-    command: wait-for-it postgres:5432 -- bundle exec rails s -b 0.0.0.0 -p 4000
+    command: wait-for-it postgres:5432 -- bundle exec rails s -b 0.0.0.0 -p 4000 --pid /app/tmp/pids/server.pid
     depends_on:
       - 'postgres'
       - 'redis'
