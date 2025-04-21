@@ -23,11 +23,17 @@ COPY . .
 
 USER root
 # Let Flask know what to boot
-ENV FLASK_APP=discounts.py
+ENV FLASK_APP=discounts.py \
+    # Default environment variables
+    DD_ENV=development \
+    DD_VERSION=1.0.0 \
+    DD_SERVICE=store-discounts \
+    FLASK_DEBUG=0 \
+    POSTGRES_HOST=postgres \
+    POSTGRES_PORT=5432
 
 # Install dependencies via pip and avoid caching build artifacts
 RUN pip install --no-cache-dir -r requirements.txt
-# RUN chmod +x ./my-wrapper-script.sh
 
 # Pass in Port mapping (default to 8282)
 ARG DISCOUNTS_PORT=8282

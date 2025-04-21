@@ -49,6 +49,7 @@ jobs:
             ghcr.io/datadog/storedog/frontend
             ghcr.io/datadog/storedog/dbm
             ghcr.io/datadog/storedog/postgres
+            ghcr.io/datadog/storedog/puppeteer
           )
 
           for i in "${IMAGES[@]}"

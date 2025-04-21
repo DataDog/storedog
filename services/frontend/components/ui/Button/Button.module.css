@@ -37,11 +37,13 @@
 
 .naked {
   @apply bg-transparent font-semibold border-none shadow-none outline-none py-0 px-0;
+  color: var(--text-primary) !important;
 }
 
 .naked:hover,
 .naked:focus {
   @apply bg-transparent border-none;
+  color: var(--text-primary) !important;
 }
 
 .disabled,
@@ -49,8 +51,11 @@
   @apply text-accent-4 border-accent-2 bg-accent-1 cursor-not-allowed;
   filter: grayscale(1);
   -webkit-transform: translateZ(0);
+  transform: translateZ(0);
   -webkit-perspective: 1000;
+  perspective: 1000;
   -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 .progress {

@@ -95,14 +95,11 @@ const CheckoutSidebarView: FC = () => {
     }
 
     try {
-      const discountPath =
-        `${process.env.NEXT_PUBLIC_DISCOUNTS_URL_FULL}` ||
-        `${process.env.NEXT_PUBLIC_DISCOUNTS_ROUTE}:${process.env.NEXT_PUBLIC_DISCOUNTS_PORT}`
+      const discountPath = process.env.NEXT_PUBLIC_DISCOUNTS_ROUTE
       const discountCode = discountInput.toUpperCase()
+      const discountCodeUrl = `${discountPath}/discount-code?discount_code=${discountCode}`
       // call discounts service
-      const res = await fetch(
-        `${discountPath}/discount-code?discount_code=${discountCode}`
-      )
+      const res = await fetch(discountCodeUrl)
 
       if (!res.ok) {
         const error = await res.json()
@@ -117,6 +114,7 @@ const CheckoutSidebarView: FC = () => {
 
       console.log('discount accepted', discount)
 
+      // always hardcode this to FREESHIP because that's all that's set up in spree
       await applyDiscount('FREESHIP')
 
       setDiscountInput('')
