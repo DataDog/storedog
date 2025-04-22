@@ -91,6 +91,8 @@ services:
       - DD_PROFILING_ENABLED=true
       - DD_PROFILING_ALLOCATION_ENABLED=true
       - RAILS_ENV=${RAILS_ENV-production}
+      - DB_POOL=${DB_POOL-25}
+      - MAX_THREADS=${MAX_THREADS-5}
     labels:
       com.datadoghq.ad.logs: '[{"source": "ruby", "service": "store-backend",  "auto_multi_line_detection":true }]'
       com.datadoghq.tags.env: '${DD_ENV-dev}'
@@ -124,6 +126,8 @@ services:
       - DD_LOGS_INJECTION=true
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
+      - DB_POOL=${DB_POOL-25}
+      - MAX_THREADS=${MAX_THREADS-5}
     labels:
       com.datadoghq.ad.logs: '[{"source": "ruby", "service": "storedog-worker",  "auto_multi_line_detection":true }]'
       com.datadoghq.tags.env: '${DD_ENV-dev}'

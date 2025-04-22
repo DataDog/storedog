@@ -19,25 +19,40 @@ Many parts of this application were intentionally modified to introduce performa
 
 ## Local development
 
-1. Before starting the containers, you will need to define the required env vars. Run the following command to copy the env var template:
+The Storedog application comes pre-configured with default values for all services. These defaults are baked into:
+- Service Dockerfiles
+- docker-compose.yml
+- .env.template
 
+The only values you need to provide are your Datadog credentials to enable Datadog features:
+
+1. Copy the environment template:
   ```sh
   cp .env.template .env
   ```
 
-1. Open the `.env` file under the project root and enter the values for the variables. The default values should all work except for the empty `DD_*` variables, which are required to enable different Datadog services and features. 
+1. Open the `.env` file and provide your Datadog credentials:
+   - `DD_API_KEY`: Required for Datadog Agent and APM
+   - `DD_APP_KEY`: Required for Datadog API access
+   - `NEXT_PUBLIC_DD_APPLICATION_ID`: Required for RUM in frontend service
+   - `NEXT_PUBLIC_DD_CLIENT_TOKEN`: Required for RUM in frontend service
 
-  You'll need to bring your own Datadog API key, application key, and RUM Client Token/Application ID values. You can find these in your Datadog org.
+   You can find these values in your Datadog organization. All other variables have sensible defaults and can be left as-is.
 
-1. Start the app's services via `docker compose up`:
-
+1. Start the application:
   ```sh
-  docker compose up
+  docker compose up -d
   ```
 
-1. Visit http://localhost to use the app. The homepage will take a few seconds to load as the backend is still starting up.
+1. Visit http://localhost to use the app. The homepage will take a few seconds to load as the backend services initialize.
 
-  If you see a 502 error for a while, confirm services are healthy by running `docker compose logs <service-name>` and checking logs.
+   If you see a 502 error for an extended period, check the service health with:
+   ```sh
+   docker compose logs <service-name>
+   ```
+
+> [!NOTE]
+> By default, the frontend service runs in development mode. If you want to run it in production, you can set the `FRONTEND_COMMAND` environment variable to `npm run build && npm run start`. This can be done either on the host or in the `.env` file.
 
 ## Feature flags
 Some capabilities are hidden behind feature flags, which can be controlled via `services/frontend/site/featureFlags.config.json`. 
