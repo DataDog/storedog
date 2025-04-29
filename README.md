@@ -19,14 +19,47 @@ Many parts of this application were intentionally modified to introduce performa
 
 ## Local development
 
-The Storedog application comes pre-configured with default values for all services. These defaults are baked into:
+The Storedog application comes pre-configured with default environment variable values for all services. You just need to run `docker compose -f docker-compose.dev.yml up -d` and you're good to go. These defaults are baked into the following files for your convenience and reference:
+
 - Service Dockerfiles
-- docker-compose.yml
+- docker-compose.dev.yml
 - .env.template
 
-The only values you need to provide are your Datadog credentials to enable Datadog features:
+> [!NOTE]
+> The production `docker-compose.yml` file is primarily used for lab environments. If you want to run the application in production, you can use the `docker-compose.yml` file, but you'll need to set image versions or build local images of the services.
+>
+> You'll also notice the `docker-compose.yml` file has less environment variables set. This is to make it easier to run in lab environments and rely more on default values.
+
+The only values you need to provide are your Datadog credentials to enable Datadog features. You can set these in the Docker Compose file, on the host, or in a `.env` file. If you use the `.env` file, you can use the `.env.template` file as a reference for the available variables.
+
+See the [Environment Variables](#environment-variables) section below for more details on the available environment variables.
+
+> [!WARNING]
+> While you can mix and match the environment variables in the Docker Compose file, host, and `.env` file, be mindful of the order of precedence. See the [Docker Compose documentation](https://docs.docker.com/compose/compose-file/compose-file-v3/#environment-variables) for more details.
+
+### Using the Docker Compose file
+
+1. Go into the Docker Compose file and set or overwrite the environment variables you need to override.
+
+  ```yaml
+  environment:
+    - DD_API_KEY=your_datadog_api_key
+    - DD_APP_KEY=your_datadog_app_key
+  ```
+
+### Using the host
+
+1. Set the environment variables in your shell
+
+  ```sh
+  export DD_API_KEY=your_datadog_api_key
+  export DD_APP_KEY=your_datadog_app_key
+  ```
+
+### Using the `.env` file
 
 1. Copy the environment template:
+
   ```sh
   cp .env.template .env
   ```
@@ -39,23 +72,107 @@ The only values you need to provide are your Datadog credentials to enable Datad
 
    You can find these values in your Datadog organization. All other variables have sensible defaults and can be left as-is.
 
+### Starting the application
+
 1. Start the application:
+
   ```sh
-  docker compose up -d
+  docker compose -f docker-compose.dev.yml up -d
   ```
+
+  > [!NOTE]
+  > You can also use the commands in the [Makefile](./Makefile) to start the application. For example, `make dev` will start the application in development mode.
+  >
+  > Run `make help` to see all of the available commands.
 
 1. Visit http://localhost to use the app. The homepage will take a few seconds to load as the backend services initialize.
 
    If you see a 502 error for an extended period, check the service health with:
+
    ```sh
-   docker compose logs <service-name>
+   docker compose -f docker-compose.dev.yml logs <service-name>
    ```
 
 > [!NOTE]
-> By default, the frontend service runs in development mode. If you want to run it in production, you can set the `FRONTEND_COMMAND` environment variable to `npm run build && npm run start`. This can be done either on the host or in the `.env` file.
+> By default, the frontend service runs in development mode when using `docker compose -f docker-compose.dev.yml up -d`. If you want to run it in production, you can set the `FRONTEND_COMMAND` environment variable to `npm run build && npm run start`. This can be done either in the Docker Compose file, on the host, or in the `.env` file.
+
+## Environment Variables
+
+### Core Datadog Variables
+
+These variables must be set for core functionality with Datadog, but will not affect the application's behavior:
+
+- `DD_API_KEY`: Your Datadog API key (required for monitoring)
+- `DD_APP_KEY`: Your Datadog application key (required for API access)
+- `NEXT_PUBLIC_DD_APPLICATION_ID`: Datadog RUM application ID (required for RUM in frontend service)
+- `NEXT_PUBLIC_DD_CLIENT_TOKEN`: Datadog RUM client token (required for RUM in frontend service)
+
+### Frontend Service Variables
+
+- `FRONTEND_COMMAND`: Command to run the frontend service (default: `npm run dev`)
+- `NEXT_PUBLIC_ADS_ROUTE`: Route to the ads service (default: `/services/ads`)
+- `NEXT_PUBLIC_DISCOUNTS_ROUTE`: Route to the discounts service (default: `/services/discounts`)
+- `NEXT_PUBLIC_DBM_ROUTE`: Route to the DBM service (default: `/services/dbm`)
+- `NEXT_PUBLIC_FRONTEND_API_ROUTE`: Frontend API host (default: `http://nginx:80`)
+- `NEXT_PUBLIC_SPREE_API_HOST`: Spree API host (default: `http://nginx/services/backend`)
+- `NEXT_PUBLIC_SPREE_CLIENT_HOST`: Spree client host (default: `/services/backend`)
+- `NEXT_PUBLIC_SPREE_IMAGE_HOST`: Spree image host (default: `/services/backend`)
+- `NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN`: Allowed image domain (default: `nginx`)
+
+### Database Variables
+
+- `POSTGRES_USER`: Database username (default: `postgres`)
+- `POSTGRES_PASSWORD`: Database password (default: `postgres`)
+- `DB_HOST`: PostgreSQL host (default: `postgres`)
+- `DB_PORT`: PostgreSQL port (default: `5432`)
+- `DB_POOL`: Database connection pool size (default: `25`)
+
+### Backend and Worker Variables
+
+- `REDIS_URL`: Redis connection URL (default: `redis://redis:6379/0`)
+- `MAX_THREADS`: Maximum worker threads (default: `5`)
+- `RAILS_ENV`: Rails environment (default: `production`)
+
+### Datadog Configuration Variables
+
+Common Datadog variables that can be set for all services:
+
+- `DD_ENV`: Environment name (default: `development`)
+- `DD_SITE`: Datadog site (e.g., `datadoghq.com`, `datadoghq.eu`)
+- `DD_HOSTNAME`: Override default hostname
+- `DD_LOGS_INJECTION`: Enable automatic log injection (default: `true`)
+- `DD_PROFILING_ENABLED`: Enable profiling (default: `true`)
+- `DD_RUNTIME_METRICS_ENABLED`: Enable runtime metrics (default: `true`)
+
+Service-specific versions:
+- `DD_VERSION_FRONTEND`: Frontend version (default: `1.0.0`)
+- `DD_VERSION_BACKEND`: Backend version (default: `1.0.0`)
+- `DD_VERSION_DISCOUNTS`: Discounts service version (default: `1.0.0`)
+- `DD_VERSION_ADS`: Ads service version (default: `1.0.0`)
+- `DD_VERSION_NGINX`: Nginx version (default: `1.0.0`)
+- `DD_VERSION_POSTGRES`: PostgreSQL version (default: `15`)
+- `DD_VERSION_REDIS`: Redis version (default: `6.2`)
+
+> [!NOTE]
+> Most of the time, these service versions will remain at the same version as one another. The reason for having defined separately is to allow for the ability to change the version of one service without having to change the version of all of the other services, something that may be common when working in a lab environment.
+
+### Puppeteer user session simulation variables
+
+Puppeteer service configuration:
+- `STOREDOG_URL`: Application URL to test (default: `http://nginx:80`, but use Instruqt's when running in the lab, which would likely be something like `)
+- `PUPPETEER_TIMEOUT`: Sets max timeout for Puppeteer, in case the session is unresponsive
+- `SKIP_SESSION_CLOSE`: Skip closing browser sessions
 
 ## Feature flags
 Some capabilities are hidden behind feature flags, which can be controlled via `services/frontend/site/featureFlags.config.json`. 
+
+> [!NOTE]
+> Feature flags are available by default when running the application in development mode. If running in production, you'll need update the file and mount it into the frontend service container in the `docker-compose.yml` file.
+>
+> ```yaml
+> volumes:
+>   - ./services/frontend/site/featureFlags.config.json:/app/featureFlags.config.json
+> ```
 
 ### dbm 
 Enables a product ticker on the homepage with a long-running query to demonstrate DBM. 
