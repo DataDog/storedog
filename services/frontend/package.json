@@ -4,6 +4,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "NODE_OPTIONS='--require dd-trace/init --require next-logger' next dev",
+    "prod": "next build && NODE_OPTIONS='--require dd-trace/init --require next-logger' next start",
     "build": "next build",
     "start": "NODE_OPTIONS='--require dd-trace/init --require next-logger' next start",
     "analyze": "BUNDLE_ANALYZE=both next build",

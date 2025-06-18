@@ -22,6 +22,10 @@ WORKDIR /app
 COPY . .
 
 USER root
+
+ARG DD_GIT_REPOSITORY_URL
+ARG DD_GIT_COMMIT_SHA
+
 # Let Flask know what to boot
 ENV FLASK_APP=discounts.py \
     # Default environment variables
@@ -30,7 +34,9 @@ ENV FLASK_APP=discounts.py \
     DD_SERVICE=store-discounts \
     FLASK_DEBUG=0 \
     POSTGRES_HOST=postgres \
-    POSTGRES_PORT=5432
+    POSTGRES_PORT=5432 \
+    DD_GIT_REPOSITORY_URL=${DD_GIT_REPOSITORY_URL} \
+    DD_GIT_COMMIT_SHA=${DD_GIT_COMMIT_SHA}
 
 # Install dependencies via pip and avoid caching build artifacts
 RUN pip install --no-cache-dir -r requirements.txt

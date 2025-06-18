@@ -19,6 +19,9 @@ WORKDIR /app
 # install specific version of bundler
 RUN gem install bundler -v 2.2.32
 
+ARG DD_GIT_REPOSITORY_URL
+ARG DD_GIT_COMMIT_SHA
+
 ENV BUNDLE_GEMFILE=/app/Gemfile \
   BUNDLE_JOBS=20 \
   BUNDLE_PATH=/bundle \
@@ -32,7 +35,9 @@ ENV BUNDLE_GEMFILE=/app/Gemfile \
   REDIS_URL=redis://redis:6379/0 \
   DB_HOST=postgres \
   DB_PORT=5432 \
-  DISABLE_SPRING=1
+  DISABLE_SPRING=1 \
+  DD_GIT_REPOSITORY_URL=${DD_GIT_REPOSITORY_URL} \
+  DD_GIT_COMMIT_SHA=${DD_GIT_COMMIT_SHA}
 
 ENV PATH="${BUNDLE_BIN}:${PATH}"
 

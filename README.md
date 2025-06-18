@@ -12,8 +12,10 @@ Storedog is a Dockerized e-commerce site used primarily in labs run at [learn.da
 - **The Datadog Agent**: collects metrics and traces from the other services and sends them to Datadog.
 - **Puppeteer**: A Node.js service that runs a headless browser to generate RUM data for the frontend.
 
-
-This application is built and tested to run within [Datadog Learning Center](https://learn.datadoghq.com/) lab environments. No guarantees are made that this application will run outside of the Datadog Learning Center lab environments.
+> [!NOTE]
+> This application is built and tested to run within [Datadog Learning Center](https://learn.datadoghq.com/) lab environments. This application can be run outside of the Datadog Learning Center lab environments, but some features may not work as expected. 
+> 
+> This documentation includes instructions for running the application locally and in lab environments.
 
 Many parts of this application were intentionally modified to introduce performance issues, security vulnerabilities, and other intentionally problematic code. This is to help you learn how to use Datadog to troubleshoot and fix these issues. This application is not intended to be used in production.
 
@@ -150,16 +152,25 @@ Service-specific versions:
 - `DD_VERSION_DISCOUNTS`: Discounts service version (default: `1.0.0`)
 - `DD_VERSION_ADS`: Ads service version (default: `1.0.0`)
 - `DD_VERSION_NGINX`: Nginx version (default: `1.0.0`)
-- `DD_VERSION_POSTGRES`: PostgreSQL version (default: `15`)
+- `DD_VERSION_POSTGRES`: PostgreSQL version (default: `1.0.0`)
 - `DD_VERSION_REDIS`: Redis version (default: `6.2`)
 
 > [!NOTE]
-> Most of the time, these service versions will remain at the same version as one another. The reason for having defined separately is to allow for the ability to change the version of one service without having to change the version of all of the other services, something that may be common when working in a lab environment.
+> Most of the time, these service versions will remain at the same version as one another. The reason for having them defined separately is to allow for the ability to change the version of one service without having to change the version of all of the other services, something that may be common when working in a lab environment.
 
 ### Puppeteer user session simulation variables
 
 Puppeteer service configuration:
-- `STOREDOG_URL`: Application URL to test (default: `http://nginx:80`, but use Instruqt's when running in the lab, which would likely be something like `)
+- `STOREDOG_URL`: Application URL to run user sessions on (default: `http://nginx:80`) 
+  - In lab environments, use the URL running on the host instead to have more realistic looking URLs in your session data.
+
+  ```
+  STOREDOG_URL=$HOSTNAME.$_SANDBOX_ID.instruqt.io
+  ```
+
+  > [!NOTE]
+  > The `$HOSTNAME` and `$_SANDBOX_ID` variables are automatically set by Instruqt. Notice how this differs from what is used in the Storedog website tab in lab environments (`https://[HOSTNAME]-[PORT]-[PARTICIPANT_ID].env.play.instruqt.com`), as that is for authenticated traffic and the Puppeteer service is using an unauthenticated session.
+
 - `PUPPETEER_TIMEOUT`: Sets max timeout for Puppeteer, in case the session is unresponsive
 - `SKIP_SESSION_CLOSE`: Skip closing browser sessions
 

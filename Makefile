@@ -99,11 +99,11 @@ build:
 
 ## Switch to development environment
 dev:
-	@make up ENV=dev
+	@make up ENV=dev FRONTEND_COMMAND="npm run dev"
 
 ## Switch to production environment
 prod:
-	@make up ENV=prod
+	@make up ENV=prod FRONTEND_COMMAND="npm run prod"
 
 ## Create a database backup
 backup-db:

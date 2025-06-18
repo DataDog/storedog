@@ -6,7 +6,7 @@ import { Layout } from '@components/common'
 export const getServerSideProps = async ({ params }) => {
   const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_API_ROUTE
     ? `${process.env.NEXT_PUBLIC_FRONTEND_API_ROUTE}/api`
-    : 'http://localhost/api'
+    : 'http://localhost:3000/api'
 
   const { taxonomy, slug } = params
 
