@@ -53,7 +53,7 @@ services:
 
   # Background job processor (Sidekiq)
   worker:
-    image: localhost:5000/storedog-worker:latest
+    image: localhost:5000/storedog-backend:latest
     build:
       context: ./services/backend
     command: wait-for-it postgres:5432 -- bundle exec sidekiq -C config/sidekiq.yml
