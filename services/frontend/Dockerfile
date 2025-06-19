@@ -8,15 +8,15 @@ RUN npm install -g @datadog/datadog-ci
 
 # Set default environment variables
 ENV NEXT_TELEMETRY_DISABLED=1 \
-  NODE_ENV=development \
-  NEXT_PUBLIC_ADS_ROUTE=/services/ads \
-  NEXT_PUBLIC_DISCOUNTS_ROUTE=/services/discounts \
-  NEXT_PUBLIC_DBM_ROUTE=/services/dbm \
-  NEXT_PUBLIC_FRONTEND_API_ROUTE=http://nginx:80 \
-  NEXT_PUBLIC_SPREE_API_HOST=http://nginx/services/backend \
-  NEXT_PUBLIC_SPREE_CLIENT_HOST=/services/backend \
-  NEXT_PUBLIC_SPREE_IMAGE_HOST=/services/backend \
-  NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN=nginx \
+    NODE_ENV=development \
+    NEXT_PUBLIC_ADS_ROUTE=/services/ads \
+    NEXT_PUBLIC_DISCOUNTS_ROUTE=/services/discounts \
+    NEXT_PUBLIC_DBM_ROUTE=/services/dbm \
+    NEXT_PUBLIC_FRONTEND_API_ROUTE=http://nginx:80 \
+    NEXT_PUBLIC_SPREE_API_HOST=http://nginx/services/backend \
+    NEXT_PUBLIC_SPREE_CLIENT_HOST=/services/backend \
+    NEXT_PUBLIC_SPREE_IMAGE_HOST=/services/backend \
+    NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN=nginx
 
 WORKDIR /app
 COPY package*.json ./
