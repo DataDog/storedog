@@ -131,34 +131,19 @@ services:
   discounts:
     build:
       context: ./services/discounts
-    command: wait-for-it postgres:5432 -- ddtrace-run flask run --port=2814 --host=0.0.0.0
+    command: wait-for-it postgres:5432 -- flask run --port=2814 --host=0.0.0.0
     depends_on:
       - postgres
-      - dd-agent
     environment:
       - FLASK_APP=discounts.py
       - FLASK_DEBUG=0
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_HOST=postgres
-      - DD_AGENT_HOST=dd-agent
-      - DD_SERVICE=store-discounts
-      - DD_ENV=${DD_ENV:-development}
-      - DD_VERSION=${DD_VERSION_DISCOUNTS:-1.0.0}
-      - DD_LOGS_INJECTION=true
-      - DD_PROFILING_ENABLED=true
-      - DD_PROFILING_TIMELINE_ENABLED=true
-      - DD_PROFILING_ALLOCATION_ENABLED=true
-      - DD_TRACE_REMOVE_INTEGRATION_SERVICE_NAMES_ENABLED=true
     volumes:
       - ./services/discounts:/app
     networks:
       - storedog-network
-    labels:
-      com.datadoghq.ad.logs: '[{"source": "python", "service": "store-discounts"}]'
-      com.datadoghq.tags.service: 'store-discounts'
-      com.datadoghq.tags.env: '${DD_ENV:-development}'
-      com.datadoghq.tags.version: '${DD_VERSION_DISCOUNTS:-1.0.0}'
 
   # Advertisement service (Java)
   ads:
