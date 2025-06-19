@@ -26,7 +26,8 @@ spec:
     spec:
       containers:
         - name: ads
-          image: storedog-ads:latest  # You'll need to build and push this image
+          image: localhost:5000/storedog-ads:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 8080
           resources:

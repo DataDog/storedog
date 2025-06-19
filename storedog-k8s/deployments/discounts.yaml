@@ -30,7 +30,8 @@ spec:
           command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done;']
       containers:
         - name: discounts
-          image: storedog-discounts:latest  # You'll need to build and push this image
+          image: localhost:5000/storedog-discounts:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 2814
           command: ["flask", "run", "--port=2814", "--host=0.0.0.0"]

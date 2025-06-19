@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: puppeteer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: puppeteer
+  template:
+    metadata:
+      labels:
+        app: puppeteer
+    spec:
+      containers:
+        - name: puppeteer
+          image: localhost:5000/storedog-puppeteer:latest
+          env:
+            - name: STOREDOG_URL
+              value: "http://nginx"
+            - name: PUPPETEER_TIMEOUT
+              value: "30000"
+            - name: SKIP_SESSION_CLOSE
+              value: "false"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          securityContext:
+            capabilities:
+              add:
+                - SYS_ADMIN  # Required for Puppeteer to run in Docker
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 4Gi  # Equivalent to shm_size: '4gb' in docker-compose 

@@ -30,7 +30,7 @@ spec:
           command: ['sh', '-c', 'until nc -z backend 4000; do echo waiting for backend; sleep 2; done;']
       containers:
         - name: frontend
-          image: storedog-frontend:latest  # You'll need to build and push this image
+          image: localhost:5000/storedog-frontend:latest
           ports:
             - containerPort: 3000
           command: ["npm", "run", "dev"]

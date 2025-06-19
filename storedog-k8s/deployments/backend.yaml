@@ -30,7 +30,8 @@ spec:
           command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done;']
       containers:
         - name: backend
-          image: storedog-backend:latest  # You'll need to build and push this image
+          image: localhost:5000/storedog-backend:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 4000
           command: ["bundle", "exec", "rails", "s", "-b", "0.0.0.0", "-p", "4000"]

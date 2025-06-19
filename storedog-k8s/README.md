@@ -4,10 +4,9 @@ This directory contains Kubernetes manifests for deploying the Storedog applicat
 
 ## Prerequisites
 
-- Kubernetes cluster (e.g., minikube, kind, or a cloud provider's Kubernetes service)
+- Kubernetes cluster with control plane and worker nodes
 - kubectl CLI tool
 - Docker (for building images)
-- Container registry access (to store your container images)
 
 ## Directory Structure
 
@@ -30,31 +29,46 @@ storedog-k8s/
     └── nginx-ingress.yaml
 ```
 
-## Building and Pushing Images
+## Using a Local Registry
 
-Before deploying, you need to build and push the container images:
+For a standard Kubernetes cluster, you'll need to set up a local registry that your cluster can access:
 
-1. Build the images:
+1. Start a local Docker registry:
 ```bash
-# From the root directory
-docker build -t storedog-frontend:latest ./services/frontend
-docker build -t storedog-backend:latest ./services/backend
-docker build -t storedog-discounts:latest ./services/discounts/python
-docker build -t storedog-ads:latest ./services/ads/java
+docker run -d -p 5000:5000 --restart=always --name registry registry:2
 ```
 
-2. Tag and push the images to your container registry:
-```bash
-# Replace 'your-registry' with your container registry
-docker tag storedog-frontend:latest your-registry/storedog-frontend:latest
-docker tag storedog-backend:latest your-registry/storedog-backend:latest
-docker tag storedog-discounts:latest your-registry/storedog-discounts:latest
-docker tag storedog-ads:latest your-registry/storedog-ads:latest
+2. Configure your worker nodes to trust the insecure registry:
+   - On each worker node, add the following to `/etc/docker/daemon.json`:
+   ```json
+   {
+     "insecure-registries": ["localhost:5000"]
+   }
+   ```
+   - Restart Docker on each worker node:
+   ```bash
+   sudo systemctl restart docker
+   ```
 
-docker push your-registry/storedog-frontend:latest
-docker push your-registry/storedog-backend:latest
-docker push your-registry/storedog-discounts:latest
-docker push your-registry/storedog-ads:latest
+3. Build and push images to local registry:
+```bash
+# Build and tag images
+docker build -t localhost:5000/storedog-frontend:latest ./services/frontend
+docker build -t localhost:5000/storedog-backend:latest ./services/backend
+docker build -t localhost:5000/storedog-discounts:latest ./services/discounts/python
+docker build -t localhost:5000/storedog-ads:latest ./services/ads/java
+docker build -t localhost:5000/storedog-nginx:latest ./services/nginx
+docker build -t localhost:5000/storedog-puppeteer:latest ./services/puppeteer
+docker build -t localhost:5000/storedog-postgres:latest ./services/postgres
+
+# Push to local registry
+docker push localhost:5000/storedog-frontend:latest
+docker push localhost:5000/storedog-backend:latest
+docker push localhost:5000/storedog-discounts:latest
+docker push localhost:5000/storedog-ads:latest
+docker push localhost:5000/storedog-nginx:latest
+docker push localhost:5000/storedog-puppeteer:latest
+docker push localhost:5000/storedog-postgres:latest
 ```
 
 ## Deployment Steps
@@ -85,9 +99,10 @@ kubectl apply -f deployments/discounts.yaml
 kubectl apply -f deployments/ads.yaml
 ```
 
-5. Deploy the frontend:
+5. Deploy the frontend and nginx:
 ```bash
 kubectl apply -f deployments/frontend.yaml
+kubectl apply -f deployments/nginx.yaml
 ```
 
 6. Deploy the ingress:
@@ -95,12 +110,9 @@ kubectl apply -f deployments/frontend.yaml
 kubectl apply -f ingress/nginx-ingress.yaml
 ```
 
-## Accessing the Application
-
-Once deployed, you can access the application through your ingress controller's IP address or hostname. If you're using minikube, you can get the IP address with:
-
+7. (Optional) Deploy the testing service:
 ```bash
-minikube ip
+kubectl apply -f deployments/puppeteer.yaml
 ```
 
 ## Important Notes

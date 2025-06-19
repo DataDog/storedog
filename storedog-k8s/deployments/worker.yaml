@@ -18,7 +18,8 @@ spec:
           command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done;']
       containers:
         - name: worker
-          image: storedog-backend:latest  # Same image as backend
+          image: localhost:5000/storedog-backend:latest
+          imagePullPolicy: Never  # Use local image
           command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
           env:
             - name: WORKER
