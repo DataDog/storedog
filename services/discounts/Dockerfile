@@ -28,7 +28,7 @@ ENV FLASK_APP=discounts.py \
     # Default environment variables
     FLASK_DEBUG=0 \
     POSTGRES_HOST=postgres \
-    POSTGRES_PORT=5432 \
+    POSTGRES_PORT=5432
 
 # Install dependencies via pip and avoid caching build artifacts
 RUN pip install --no-cache-dir -r requirements.txt
