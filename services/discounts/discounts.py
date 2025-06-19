@@ -1,6 +1,4 @@
-from ddtrace import patch
 import json_log_formatter
-from ddtrace import tracer
 import traceback
 import logging
 from models import Discount, DiscountType, db
