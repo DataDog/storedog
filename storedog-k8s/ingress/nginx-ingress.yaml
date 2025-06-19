@@ -1,0 +1,38 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: storedog-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /()(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 3000
+          - path: /services/backend(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 4000
+          - path: /services/ads(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: ads
+                port:
+                  number: 8080
+          - path: /services/discounts(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: discounts
+                port:
+                  number: 2814

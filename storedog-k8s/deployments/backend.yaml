@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+spec:
+  ports:
+    - port: 4000
+      targetPort: 4000
+      name: http
+  selector:
+    app: backend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      initContainers:
+        - name: wait-for-db
+          image: busybox
+          command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done;']
+      containers:
+        - name: backend
+          image: storedog-backend:latest  # You'll need to build and push this image
+          ports:
+            - containerPort: 4000
+          command: ["bundle", "exec", "rails", "s", "-b", "0.0.0.0", "-p", "4000"]
+          env:
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: REDIS_URL
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: DB_PORT
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: storedog-secrets
+                  key: POSTGRES_PASSWORD
+            - name: RAILS_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: RAILS_ENV
+            - name: DB_POOL
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: DB_POOL
+            - name: MAX_THREADS
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: MAX_THREADS
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"

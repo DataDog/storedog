@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+spec:
+  ports:
+    - port: 3000
+      targetPort: 3000
+      name: http
+  selector:
+    app: frontend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      initContainers:
+        - name: wait-for-backend
+          image: busybox
+          command: ['sh', '-c', 'until nc -z backend 4000; do echo waiting for backend; sleep 2; done;']
+      containers:
+        - name: frontend
+          image: storedog-frontend:latest  # You'll need to build and push this image
+          ports:
+            - containerPort: 3000
+          command: ["npm", "run", "dev"]
+          env:
+            - name: NEXT_PUBLIC_ADS_ROUTE
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: NEXT_PUBLIC_ADS_ROUTE
+            - name: NEXT_PUBLIC_DISCOUNTS_ROUTE
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: NEXT_PUBLIC_DISCOUNTS_ROUTE
+            - name: NEXT_PUBLIC_DBM_ROUTE
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: NEXT_PUBLIC_DBM_ROUTE
+            - name: NEXT_PUBLIC_FRONTEND_API_ROUTE
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: NEXT_PUBLIC_FRONTEND_API_ROUTE
+            - name: NEXT_PUBLIC_SPREE_API_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: NEXT_PUBLIC_SPREE_API_HOST
+            - name: NEXT_PUBLIC_SPREE_CLIENT_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: NEXT_PUBLIC_SPREE_CLIENT_HOST
+            - name: NEXT_PUBLIC_SPREE_IMAGE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: NEXT_PUBLIC_SPREE_IMAGE_HOST
+            - name: NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "200m"
