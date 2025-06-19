@@ -19,19 +19,9 @@ COPY . .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Set default Flask app and development environment
-ENV FLASK_APP=ads.py
-ENV DD_ENV=dev
-ENV DD_SERVICE=ads
-ENV DD_VERSION=1.0.0
-ENV POSTGRES_PASSWORD=postgres
-ENV POSTGRES_USER=postgres
-ENV POSTGRES_HOST=postgres
-ENV DD_AGENT_HOST=dd-agent
-ENV DD_LOGS_INJECTION=true
-ENV DD_TRACE_ANALYTICS_ENABLED=true
-ENV DD_PROFILING_ENABLED=true
-ENV DD_APPSEC_ENABLED=true
+ENV FLASK_APP=ads.py \
+    POSTGRES_PASSWORD=postgres \
+    POSTGRES_USER=postgres \
+    POSTGRES_HOST=postgres
 
-# Start the app using ddtrace so we have profiling and tracing
-ENTRYPOINT ["ddtrace-run"]
 CMD ["flask", "run", "--port=3030", "--host=0.0.0.0"]

@@ -8,18 +8,6 @@ This service is responsible for managing the banner advertisements served to the
 
 The Python service is a Flask application that uses SQLAlchemy to connect to a PostgreSQL database. The service is packaged as a Docker image and typically used in a Docker Compose file (see the root of this repo).
 
-### Datadog configuration
-
-#### Logs
-
-Logging is configured in the `docker-compose.yml` file along with the Datadog Agent.
-
-#### APM
-
-The `ddtrace` library is used to instrument the Python service. The `ddtrace` library is installed in the `requirements.txt` file. The `ddtrace-run` command is used to run the service in the `Dockerfile`.
-
-Log injection is enabled in the `docker-compose.yml` file, but the logs are formatted in the `ads.py` file.
-
 ### Endpoints (Python)
 
 Use the following endpoints to interact with the service.

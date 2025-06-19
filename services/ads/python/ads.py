@@ -1,5 +1,4 @@
 import json_log_formatter
-from ddtrace import tracer
 import logging
 import requests
 import random
@@ -14,7 +13,6 @@ from flask_cors import CORS
 from bootstrap import create_app
 from models import Advertisement, db
 
-from ddtrace import patch
 patch(logging=True)
 
 formatter = json_log_formatter.VerboseJSONFormatter()
@@ -52,21 +50,18 @@ remove_color_filter = NoEscape()
 logger.addFilter(remove_color_filter)
 
 
-@tracer.wrap()
 @app.route('/')
 def hello():
     logger.info("home url for ads called")
     return Response({'Hello from Advertisements!': 'world'}, mimetype='application/json')
 
 
-@tracer.wrap()
 @app.route('/banners/<path:banner>')
 def banner_image(banner):
     logger.info(f"attempting to grab banner at {banner}")
     return send_from_directory('ads', banner)
 
 
-@tracer.wrap()
 @app.route('/weighted-banners/<float:weight>')
 def weighted_image(weight):
     logger.info(f"attempting to grab banner weight of less than {weight}")
@@ -76,7 +71,6 @@ def weighted_image(weight):
             return jsonify(ad.serialize())
 
 
-@tracer.wrap()
 @app.route('/ads', methods=['GET', 'POST'])
 def status():
     if flask_request.method == 'GET':
