@@ -57,7 +57,7 @@ docker run -d -p 5000:5000 --restart=always --name registry registry:2
 # Build and tag images
 docker build -t localhost:5000/storedog-frontend:latest ./services/frontend
 docker build -t localhost:5000/storedog-backend:latest ./services/backend
-docker build -t localhost:5000/storedog-discounts:latest ./services/discounts/python
+docker build -t localhost:5000/storedog-discounts:latest ./services/discounts
 docker build -t localhost:5000/storedog-ads:latest ./services/ads/java
 docker build -t localhost:5000/storedog-nginx:latest ./services/nginx
 docker build -t localhost:5000/storedog-puppeteer:latest ./services/puppeteer
