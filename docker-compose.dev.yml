@@ -1,32 +1,6 @@
 # Storedog Development Environment
 # This docker-compose file sets up a complete development environment for the Storedog application.
-
-version: '3'
 services:
-  # Datadog Agent for monitoring and observability
-  dd-agent:
-    image: gcr.io/datadoghq/agent:latest
-    pid: host
-    environment:
-      - DD_API_KEY=${DD_API_KEY}
-      - DD_APM_NON_LOCAL_TRAFFIC=true
-      - DD_LOGS_ENABLED=true
-      - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
-      - DD_CONTAINER_EXCLUDE=image:agent name:puppeteer
-      - DD_HOSTNAME=${DD_HOSTNAME-development-host}
-      - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
-    ports:
-      - '8126:8126/tcp'
-      - '8125:8125/udp'
-    networks:
-      - storedog-network
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - /proc/:/host/proc/:ro
-      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
-      - postgres_logs:/var/log/pg_log:ro
-
   # Frontend service (Next.js)
   frontend:
     build:
@@ -190,25 +164,8 @@ services:
   ads:
     build:
       context: ./services/ads/java
-    depends_on:
-      - dd-agent
-    environment:
-      - DD_AGENT_HOST=dd-agent
-      - DD_SERVICE=store-ads
-      - DD_ENV=${DD_ENV:-development}
-      - DD_VERSION=${DD_VERSION_ADS:-1.0.0}
-      - DD_LOGS_INJECTION=true
-      - DD_PROFILING_ENABLED=true
-      - DD_PROFILING_TIMELINE_ENABLED=true
-      - DD_PROFILING_ALLOCATION_ENABLED=true
-      - DD_TRACE_REMOVE_INTEGRATION_SERVICE_NAMES_ENABLED=true
     networks:
       - storedog-network
-    labels:
-      com.datadoghq.ad.logs: '[{"source": "java", "service": "store-ads"}]'
-      com.datadoghq.tags.service: 'store-ads'
-      com.datadoghq.tags.env: '${DD_ENV:-development}'
-      com.datadoghq.tags.version: '${DD_VERSION_ADS:-1.0.0}'
 
   # Web server and reverse proxy
   nginx:
