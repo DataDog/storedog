@@ -198,8 +198,6 @@ services:
     build:
       context: ./services/postgres
     restart: always
-    depends_on:
-      - dd-agent
     volumes:
       - postgres_logs:/var/log/pg_log:rw
     networks:
@@ -207,18 +205,6 @@ services:
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - DD_AGENT_HOST=dd-agent
-      - DD_SERVICE=postgres
-      - DD_ENV=${DD_ENV:-development}
-      - DD_VERSION=${DD_VERSION_POSTGRES:-15}
-    labels:
-      com.datadoghq.tags.service: 'postgres'
-      com.datadoghq.tags.env: '${DD_ENV:-development}'
-      com.datadoghq.tags.version: '${DD_VERSION_POSTGRES:-15}'
-      com.datadoghq.ad.check_names: '["postgres"]'
-      com.datadoghq.ad.init_configs: '[{}]'
-      com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":5432, "username":"datadog", "password":"datadog"}]'
-      com.datadoghq.ad.logs: '[{"source": "postgresql", "service": "postgres", "auto_multi_line_detection":true, "path": "/var/log/pg_log/postgresql*.json", "type": "file"}]'
 
   # Cache and job queue
   redis:
