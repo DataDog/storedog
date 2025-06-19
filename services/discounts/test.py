@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import words
 
 class TestWordsFunctions(unittest.TestCase):
-    
+
     def test_get_random(self):
         test_word = words.get_random()
         parts = test_word.split(" ")
@@ -27,7 +27,7 @@ class TestWordsFileFunctions(unittest.TestCase):
     def setUp(self):
         with open("testwords.json", "w") as testfile:
           testfile.write('["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]')
-    
+
     def tearDown(self):
         os.remove("testwords.json")
 

@@ -3,21 +3,16 @@ import traceback
 import logging
 from models import Discount, DiscountType, db
 from bootstrap import create_app
-from sqlalchemy.orm import joinedload
 from flask_cors import CORS
 from flask import request as flask_request
-from flask import Flask, Response, jsonify
+from flask import Response, jsonify
 import words
-import requests
 import random
-import time
 import sys
 import os
 import re
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-patch(logging=True)
 
 formatter = json_log_formatter.VerboseJSONFormatter()
 json_handler = logging.StreamHandler(sys.stdout)

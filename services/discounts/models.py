@@ -1,5 +1,4 @@
 from flask_sqlalchemy import SQLAlchemy
-import datetime
 
 db = SQLAlchemy()
 
@@ -7,7 +6,7 @@ class Influencer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128))
     discount_types = db.relationship("DiscountType", backref="influencer", lazy=True)
-    
+
     def __init__(self, name):
         self.name = name
 
@@ -36,7 +35,6 @@ class DiscountType(db.Model):
             'name': self.name,
             'discount_query': self.discount_query
         }
-    
 
 class Discount(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -50,7 +48,7 @@ class Discount(db.Model):
         self.code = code
         self.value = value
         self.discount_type = discount_type
-    
+
     def serialize(self):
         return {
             'id': self.id,
@@ -59,6 +57,3 @@ class Discount(db.Model):
             'value': self.value,
             'discount_type': self.discount_type.serialize()
         }
-
-
-    

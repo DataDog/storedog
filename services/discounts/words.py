@@ -1,6 +1,5 @@
 import random
 import json
-import sys
 import os
 
 class WordsException(Exception):
@@ -8,7 +7,7 @@ class WordsException(Exception):
 
 def load_words(filename):
     """Returns a list of words loaded from a specified JSON file
-    
+
     Parameters
     ----------
     filename : string,
