@@ -73,9 +73,6 @@ gem 'spree_auth_devise'
 gem 'spree_i18n', '>= 5.0'
 gem 'spree_dev_tools', require: false, group: %w[test development]
 
-# Sentry Client
-gem 'sentry-raven'
-
 # Rack CORS Middleware
 gem 'rack-cors'
 
@@ -92,13 +89,6 @@ gem 'oj'
 
 # Fix SCSS errors with Ruby 3 on MacOS
 gem 'sassc', github: 'sass/sassc-ruby', group: :development
-
-# monitoring
-gem 'datadog', '~> 2.12.2', require: 'datadog/auto_instrument'
-# needed for Datadog Continuous Profiler
-gem 'google-protobuf', '~> 4.30'
-# needed for runtime metrics
-gem 'dogstatsd-ruby', '~> 5.6', require: 'datadog/statsd'
 
 # JSON log formatter
 gem 'lograge'

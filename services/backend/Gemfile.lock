@@ -174,13 +174,6 @@ GEM
       activerecord (>= 5.a)
       database_cleaner-core (~> 2.0.0)
     database_cleaner-core (2.0.1)
-    datadog (2.12.2)
-      datadog-ruby_core_source (~> 3.4)
-      libdatadog (~> 16.0.1.1.0)
-      libddwaf (~> 1.18.0.0.1)
-      logger
-      msgpack
-    datadog-ruby_core_source (3.4.0)
     devise (4.8.1)
       bcrypt (~> 3.0)
       orm_adapter (~> 0.1)
@@ -300,7 +293,6 @@ GEM
       addressable (~> 2.7)
     letter_opener (1.7.0)
       launchy (~> 2.2)
-    libdatadog (16.0.1.1.0-aarch64-linux)
     libddwaf (1.18.0.0.1-aarch64-linux)
       ffi (~> 1.0)
     listen (3.7.1)
@@ -684,11 +676,8 @@ DEPENDENCIES
   aws-sdk-s3
   bootsnap
   dalli
-  datadog (~> 2.12.2)
-  dogstatsd-ruby (~> 5.6)
   dotenv-rails (~> 2.1, >= 2.1.1)
   font_assets
-  google-protobuf (~> 4.30)
   letter_opener
   listen
   lograge

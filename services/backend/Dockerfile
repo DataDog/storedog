@@ -19,25 +19,17 @@ WORKDIR /app
 # install specific version of bundler
 RUN gem install bundler -v 2.2.32
 
-ARG DD_GIT_REPOSITORY_URL
-ARG DD_GIT_COMMIT_SHA
-
 ENV BUNDLE_GEMFILE=/app/Gemfile \
-  BUNDLE_JOBS=20 \
-  BUNDLE_PATH=/bundle \
-  BUNDLE_BIN=/bundle/bin \
-  GEM_HOME=/bundle \
-  # Default environment variables
-  DD_ENV=development \
-  DD_VERSION=1.0.0 \
-  DD_SERVICE=store-backend \
-  RAILS_ENV=production \
-  REDIS_URL=redis://redis:6379/0 \
-  DB_HOST=postgres \
-  DB_PORT=5432 \
-  DISABLE_SPRING=1 \
-  DD_GIT_REPOSITORY_URL=${DD_GIT_REPOSITORY_URL} \
-  DD_GIT_COMMIT_SHA=${DD_GIT_COMMIT_SHA}
+    BUNDLE_JOBS=20 \
+    BUNDLE_PATH=/bundle \
+    BUNDLE_BIN=/bundle/bin \
+    GEM_HOME=/bundle \
+    # Default environment variables
+    RAILS_ENV=production \
+    REDIS_URL=redis://redis:6379/0 \
+    DB_HOST=postgres \
+    DB_PORT=5432 \
+    DISABLE_SPRING=1
 
 ENV PATH="${BUNDLE_BIN}:${PATH}"
 
@@ -49,4 +41,4 @@ RUN npm run build
 
 EXPOSE 4000
 
-CMD ["/bin/bash", "-c", "rm -f /app/tmp/pids/server.pid && bundle exec ddtracerb exec rails s -b 0.0.0.0 -p 4000"]
+CMD ["/bin/bash", "-c", "rm -f /app/tmp/pids/server.pid && bundle exec rails s -b 0.0.0.0 -p 4000"]

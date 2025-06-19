@@ -8,7 +8,6 @@ services:
     command: bash -c "wait-for-it backend:4000 -- ${FRONTEND_COMMAND:-npm run dev}"
     depends_on:
       - worker
-      - dd-agent
       - backend
     volumes:
       - ./services/frontend:/app
@@ -16,21 +15,6 @@ services:
     networks:
       - storedog-network
     environment:
-      - DD_AGENT_HOST=dd-agent
-      - DD_SERVICE=store-frontend
-      - DD_ENV=${DD_ENV-development}
-      - DD_VERSION=${NEXT_PUBLIC_DD_VERSION_FRONTEND-1.0.0}
-      - DD_LOGS_INJECTION=true
-      - DD_RUNTIME_METRICS_ENABLED=true
-      - DD_PROFILING_ENABLED=true
-      - DD_PROFILING_TIMELINE_ENABLED=true
-      - DD_PROFILING_ALLOCATION_ENABLED=true
-      - DD_TRACE_REMOVE_INTEGRATION_SERVICE_NAMES_ENABLED=true
-      - NEXT_PUBLIC_DD_APPLICATION_ID=${NEXT_PUBLIC_DD_APPLICATION_ID:-DD_APPLICATION_ID-not-set}
-      - NEXT_PUBLIC_DD_CLIENT_TOKEN=${NEXT_PUBLIC_DD_CLIENT_TOKEN:-DD_CLIENT_TOKEN-not-set}
-      - NEXT_PUBLIC_DD_SITE=${NEXT_PUBLIC_DD_SITE:-datadoghq.com}
-      - NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend
-      - NEXT_PUBLIC_DD_ENV=${DD_ENV:-development}
       - NEXT_PUBLIC_ADS_ROUTE=${NEXT_PUBLIC_ADS_ROUTE:-/services/ads}
       - NEXT_PUBLIC_DISCOUNTS_ROUTE=${NEXT_PUBLIC_DISCOUNTS_ROUTE:-/services/discounts}
       - NEXT_PUBLIC_DBM_ROUTE=${NEXT_PUBLIC_DBM_ROUTE:-/services/dbm}
@@ -39,11 +23,6 @@ services:
       - NEXT_PUBLIC_SPREE_CLIENT_HOST=${NEXT_PUBLIC_SPREE_CLIENT_HOST:-/services/backend}
       - NEXT_PUBLIC_SPREE_IMAGE_HOST=${NEXT_PUBLIC_SPREE_IMAGE_HOST:-/services/backend}
       - NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN=${NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN:-nginx}
-    labels:
-      com.datadoghq.ad.logs: '[{"source": "nodejs", "service": "store-frontend", "auto_multi_line_detection":true }]'
-      com.datadoghq.tags.service: 'store-frontend'
-      com.datadoghq.tags.env: '${DD_ENV:-development}'
-      com.datadoghq.tags.version: '${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}'
 
   # Backend service (Ruby on Rails/Spree)
   backend:
@@ -53,7 +32,6 @@ services:
     depends_on:
       - 'postgres'
       - 'redis'
-      - 'dd-agent'
     ports:
       - '4000:4000'
     networks:
@@ -70,21 +48,6 @@ services:
       - RAILS_ENV=${RAILS_ENV:-production}
       - DB_POOL=${DB_POOL:-25}
       - MAX_THREADS=${MAX_THREADS:-5}
-      - DD_AGENT_HOST=dd-agent
-      - DD_SERVICE=store-backend
-      - DD_ENV=${DD_ENV:-development}
-      - DD_VERSION=${DD_VERSION_BACKEND:-1.0.0}
-      - DD_LOGS_INJECTION=true
-      - DD_RUNTIME_METRICS_ENABLED=true
-      - DD_PROFILING_ENABLED=true
-      - DD_PROFILING_ALLOCATION_ENABLED=true
-      - DD_PROFILING_TIMELINE_ENABLED=true
-      - DD_TRACE_REMOVE_INTEGRATION_SERVICE_NAMES_ENABLED=true
-    labels:
-      com.datadoghq.ad.logs: '[{"source": "ruby", "service": "store-backend",  "auto_multi_line_detection":true }]'
-      com.datadoghq.tags.service: 'store-backend'
-      com.datadoghq.tags.env: '${DD_ENV:-development}'
-      com.datadoghq.tags.version: '${DD_VERSION_BACKEND:-1.0.0}'
 
   # Background job processor (Sidekiq)
   worker:
@@ -95,7 +58,6 @@ services:
       - 'postgres'
       - 'redis'
       - 'backend'
-      - 'dd-agent'
     networks:
       - storedog-network
     volumes:
@@ -111,21 +73,6 @@ services:
       - DISABLE_SPRING=1
       - DB_POOL=${DB_POOL:-25}
       - MAX_THREADS=${MAX_THREADS:-5}
-      - DD_AGENT_HOST=dd-agent
-      - DD_SERVICE=store-worker
-      - DD_ENV=${DD_ENV:-development}
-      - DD_VERSION=${DD_VERSION_BACKEND:-1.0.0}
-      - DD_LOGS_INJECTION=true
-      - DD_RUNTIME_METRICS_ENABLED=true
-      - DD_PROFILING_ENABLED=true
-      - DD_PROFILING_TIMELINE_ENABLED=true
-      - DD_PROFILING_ALLOCATION_ENABLED=true
-      - DD_TRACE_REMOVE_INTEGRATION_SERVICE_NAMES_ENABLED=true
-    labels:
-      com.datadoghq.ad.logs: '[{"source": "ruby", "service": "storedog-worker",  "auto_multi_line_detection":true }]'
-      com.datadoghq.tags.service: 'store-worker'
-      com.datadoghq.tags.env: '${DD_ENV:-development}'
-      com.datadoghq.tags.version: '${DD_VERSION_BACKEND:-1.0.0}'
 
   # Discounts service (Python/Flask)
   discounts:
@@ -163,21 +110,6 @@ services:
       - storedog-network
     depends_on:
       - frontend
-      - dd-agent
-    environment:
-      - DD_AGENT_HOST=dd-agent
-      - DD_SERVICE=api-gateway
-      - DD_ENV=${DD_ENV:-development}
-      - DD_VERSION=${DD_VERSION_NGINX:-1.0.0}
-    labels:
-      com.datadoghq.tags.service: 'api-gateway'
-      com.datadoghq.tags.env: '${DD_ENV:-development}'
-      com.datadoghq.tags.version: '${DD_VERSION_NGINX:-1.0.0}'
-      com.datadoghq.ad.logs: '[{"source": "nginx", "service": "api-gateway"}]'
-      com.datadoghq.ad.check_names: '["nginx"]'
-      com.datadoghq.ad.init_configs: '[{}]'
-      com.datadoghq.ad.instances: '[{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]'
-
   # Primary database
   postgres:
     build:
@@ -194,25 +126,10 @@ services:
   # Cache and job queue
   redis:
     image: redis:6.2-alpine
-    depends_on:
-      - dd-agent
-    environment:
-      - DD_AGENT_HOST=dd-agent
-      - DD_SERVICE=redis
-      - DD_ENV=${DD_ENV:-development}
-      - DD_VERSION=${DD_VERSION_REDIS:-6.2}
     volumes:
       - 'redis:/data'
     networks:
       - storedog-network
-    labels:
-      com.datadoghq.tags.service: 'redis'
-      com.datadoghq.tags.env: '${DD_ENV:-development}'
-      com.datadoghq.tags.version: '${DD_VERSION_REDIS:-6.2}'
-      com.datadoghq.ad.check_names: '["redisdb"]'
-      com.datadoghq.ad.init_configs: '[{}]'
-      com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":6379}]'
-      com.datadoghq.ad.logs: '[{"source": "redis", "service": "redis"}]'
 
   # Browser automation for testing
   puppeteer:
