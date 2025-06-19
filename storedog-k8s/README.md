@@ -38,17 +38,19 @@ For a standard Kubernetes cluster, you'll need to set up a local registry that y
 docker run -d -p 5000:5000 --restart=always --name registry registry:2
 ```
 
-2. Configure your worker nodes to trust the insecure registry:
-   - On each worker node, add the following to `/etc/docker/daemon.json`:
+2. Configure worker nodes (NOT control plane) to trust the insecure registry:
+   - On each WORKER node only (not needed on control plane), add the following to `/etc/docker/daemon.json`:
    ```json
    {
      "insecure-registries": ["localhost:5000"]
    }
    ```
-   - Restart Docker on each worker node:
+   - Restart Docker on each WORKER node:
    ```bash
    sudo systemctl restart docker
    ```
+
+   Note: This step is only required on worker nodes because they are the ones that pull and run containers. The control plane node doesn't need this configuration as it doesn't run application containers.
 
 3. Build and push images to local registry:
 ```bash
