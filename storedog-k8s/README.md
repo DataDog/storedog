@@ -80,9 +80,14 @@ docker push localhost:5000/storedog-postgres:latest
 kubectl create namespace storedog
 ```
 
-2. Deploy everything:
+1. Deploy everything:
 ```bash
 kubectl apply -R -f storedog-k8s/ -n storedog
+```
+
+1. Delete everything to start over:
+```bash
+kubectl delete all,pvc --all -n storedog
 ```
 
 ## Important Notes

@@ -4,7 +4,7 @@ metadata:
   name: standard
   annotations:
     storageclass.kubernetes.io/is-default-class: "true"
-provisioner: docker.io/hostpath
+provisioner: rancher.io/local-path
 # If the above provisioner doesn't work, your Kubernetes environment may be different.
 # For Minikube, try: k8s.io/minikube-hostpath
 # For Kind, try: rancher.io/local-path
