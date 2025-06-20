@@ -9,4 +9,4 @@ provisioner: docker.io/hostpath
 # For Minikube, try: k8s.io/minikube-hostpath
 # For Kind, try: rancher.io/local-path
 reclaimPolicy: Delete
-volumeBindingMode: Immediate 
+volumeBindingMode: Immediate
