@@ -34,7 +34,8 @@ server {
         proxy_pass http://backend:4000/;
     }
 
-    resolver 127.0.0.11 valid=30s;  # Docker DNS resolver
+    # Docker-specific resolver. For Kubernetes, this will be replaced.
+    resolver ${NGINX_RESOLVER} valid=30s;
 
     # Reverse proxy for dbm service (not used that often)
     location /services/dbm {

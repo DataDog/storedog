@@ -30,6 +30,9 @@ spec:
           image: localhost:5000/storedog-nginx:latest
           ports:
             - containerPort: 80
+          env:
+            - name: NGINX_RESOLVER
+              value: "kube-dns.kube-system.svc.cluster.local"
           resources:
             requests:
               memory: "128Mi"

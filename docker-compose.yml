@@ -98,7 +98,7 @@ services:
 
   # Advertisement service (Java)
   ads:
-    image: localhost:5000/storedog-ads:latest
+    image: localhost:5000/storedog-ads-java:latest
     build:
       context: ./services/ads/java
     networks:
@@ -116,6 +116,7 @@ services:
       - storedog-network
     depends_on:
       - frontend
+
   # Primary database
   postgres:
     image: localhost:5000/storedog-postgres:latest
