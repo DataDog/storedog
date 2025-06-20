@@ -4,9 +4,8 @@ This directory contains Kubernetes manifests for deploying the Storedog applicat
 
 ## Prerequisites
 
-- Kubernetes cluster with control plane and worker nodes
-- kubectl CLI tool
-- Docker (for building images)
+- A working Kubernetes cluster (e.g., Docker Desktop, Minikube, or a self-hosted cluster).
+- `kubectl` CLI tool.
 
 ## Directory Structure
 
@@ -25,9 +24,21 @@ storedog-k8s/
 ├── statefulsets/
 │   ├── postgres.yaml
 │   └── redis.yaml
+├── provisioner/
+│   └── local-path-storage.yaml
+├── storage/
+│   └── storageclass.yaml
 └── ingress/
     └── nginx-ingress.yaml
 ```
+
+## Storage
+
+This deployment requires Persistent Volumes for PostgreSQL and Redis. For this to work on a non-cloud or local Kubernetes cluster, a storage provisioner is required.
+
+This repository includes a vendored manifest for the **Rancher Local Path Provisioner** in the `provisioner/` directory. When you run `kubectl apply`, it will be installed automatically, providing the necessary storage capabilities from the host node's filesystem.
+
+A default `StorageClass` is also defined in `storage/` to use this provisioner. No manual storage setup is required.
 
 ## Using a Local Registry
 
@@ -49,46 +60,42 @@ docker run -d -p 5000:5000 --restart=always --name registry registry:2
    ```bash
    sudo systemctl restart docker
    ```
-
-   Note: This step is only required on worker nodes because they are the ones that pull and run containers. The control plane node doesn't need this configuration as it doesn't run application containers.
+   Note: This step is only required on worker nodes because they are the ones that pull and run containers.
 
 3. Build and push images to local registry:
 ```bash
-# Build and tag images
-docker build -t localhost:5000/storedog-frontend:latest ./services/frontend
-docker build -t localhost:5000/storedog-backend:latest ./services/backend
-docker build -t localhost:5000/storedog-discounts:latest ./services/discounts
-docker build -t localhost:5000/storedog-ads:latest ./services/ads/java
-docker build -t localhost:5000/storedog-nginx:latest ./services/nginx
-docker build -t localhost:5000/storedog-puppeteer:latest ./services/puppeteer
-docker build -t localhost:5000/storedog-postgres:latest ./services/postgres
+# Set your registry URL
+REGISTRY_URL=localhost:5000
 
-# Push to local registry
-docker push localhost:5000/storedog-frontend:latest
-docker push localhost:5000/storedog-backend:latest
-docker push localhost:5000/storedog-discounts:latest
-docker push localhost:5000/storedog-ads:latest
-docker push localhost:5000/storedog-nginx:latest
-docker push localhost:5000/storedog-puppeteer:latest
-docker push localhost:5000/storedog-postgres:latest
+# Build, tag, and push all service images
+docker build -t $REGISTRY_URL/storedog-frontend:latest ./services/frontend && docker push $REGISTRY_URL/storedog-frontend:latest
+docker build -t $REGISTRY_URL/storedog-backend:latest ./services/backend && docker push $REGISTRY_URL/storedog-backend:latest
+docker build -t $REGISTRY_URL/storedog-discounts:latest ./services/discounts && docker push $REGISTRY_URL/storedog-discounts:latest
+docker build -t $REGISTRY_URL/storedog-ads:latest ./services/ads/java && docker push $REGISTRY_URL/storedog-ads:latest
+docker build -t $REGISTRY_URL/storedog-nginx:latest ./services/nginx && docker push $REGISTRY_URL/storedog-nginx:latest
+docker build -t $REGISTRY_URL/storedog-puppeteer:latest ./services/puppeteer && docker push $REGISTRY_URL/storedog-puppeteer:latest
+docker build -t $REGISTRY_URL/storedog-postgres:latest ./services/postgres && docker push $REGISTRY_URL/storedog-postgres:latest
 ```
 
 ## Deployment Steps
 
-1. Create the namespace (optional):
+All required components, including the storage provisioner, are defined in this directory. A single recursive `apply` command is all that is needed.
+
+1. **Create a namespace for the application:**
 ```bash
 kubectl create namespace storedog
 ```
 
-1. Deploy everything:
+2. **Deploy everything:**
 ```bash
-kubectl apply -R -f storedog-k8s/ -n storedog
+kubectl apply -R -f . -n storedog
 ```
 
-1. Delete everything to start over:
+3. **To reset the deployment:**
 ```bash
-kubectl delete all,pvc --all -n storedog
+kubectl delete namespace storedog
 ```
+*Note: Deleting the namespace is the cleanest way to reset, as it removes all associated resources including pods, PVCs, services, etc.*
 
 ## Important Notes
 
@@ -106,26 +113,35 @@ kubectl delete all,pvc --all -n storedog
    - Use proper SSL/TLS certificates
    - Configure proper network policies
 
-4. The services use initContainers to handle dependencies, but you might want to use a more sophisticated solution like [Helm](https://helm.sh/) for complex deployments.
-
 ## Troubleshooting
 
-1. Check pod status:
+1. Check pod status in the namespace:
 ```bash
-kubectl get pods
+kubectl get pods -n storedog
 ```
 
 2. Check pod logs:
 ```bash
-kubectl logs <pod-name>
+kubectl logs <pod-name> -n storedog
 ```
 
 3. Check service status:
 ```bash
-kubectl get services
+kubectl get services -n storedog
 ```
 
 4. Check ingress status:
 ```bash
-kubectl get ingress
+kubectl get ingress -n storedog
+```
+
+5. Check Persistent Volume Claims:
+```bash
+kubectl get pvc -n storedog
+```
+*The status should be `Bound`.*
+
+6. Check the provisioner's logs (if storage issues persist):
+```bash
+kubectl logs -n local-path-storage -l app=local-path-provisioner
 ```
