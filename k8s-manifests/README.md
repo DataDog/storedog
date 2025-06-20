@@ -1,32 +1,37 @@
 # Storedog Kubernetes Deployment
 
-This directory contains Kubernetes manifests for deploying the Storedog application on a Kubernetes cluster.
+This directory contains all the Kubernetes manifests for deploying the Storedog application.
 
 ## Directory Structure
 
+The manifests are split into two logical groups:
+
 ```
-storedog-k8s/
-├── configmaps/
-├── deployments/
-├── ingress/
-├── secrets/
-├── statefulsets/
-├── provisioner/
-├── ingress-controller/
-└── storage/
+k8s-manifests/
+├── cluster-setup/
+│   ├── storage/
+│   ├── provisioner/
+│   └── ingress-controller/
+└── storedog-app/
+    ├── configmaps/
+    ├── secrets/
+    ├── deployments/
+    ├── statefulsets/
+    └── ingress/
 ```
+
+- **`cluster-setup/`**: Contains manifests for cluster-wide components that are prerequisites for the application. These are typically installed once per cluster.
+- **`storedog-app/`**: Contains all the manifests for the Storedog application itself.
 
 ## Cluster Prerequisites
 
-This deployment requires two cluster-level components to function on a non-cloud or local Kubernetes setup: a storage provisioner and an ingress controller.
+This deployment requires two cluster-level components to function on a non-cloud or local Kubernetes setup: a storage provisioner and an ingress controller. The manifests for both are included in the `cluster-setup/` directory.
 
 ### Storage
-This deployment requires Persistent Volumes for PostgreSQL and Redis. This repository includes a manifest for the **Rancher Local Path Provisioner** in the `provisioner/` directory, which provides storage capabilities from the host node's filesystem. A default `StorageClass` is also defined in `storage/` to use this provisioner.
+A storage provisioner is required for the PostgreSQL and Redis `StatefulSet`s. This repository includes manifests for the **Rancher Local Path Provisioner** and a default `StorageClass` to use it.
 
 ### Ingress
-To expose the application to the outside world, an Ingress Controller is required. This repository includes a manifest for the standard **NGINX Ingress Controller** in the `ingress-controller/` directory. It acts as the front door for all traffic coming into the cluster.
-
-No manual setup is required for these components, as they are deployed in the first step below.
+An Ingress Controller is required to expose the application on standard HTTP/S ports. This repository includes the manifest for the standard **NGINX Ingress Controller**, configured to use the host node's network.
 
 ## Using a Local Registry
 
@@ -67,21 +72,19 @@ docker build -t $REGISTRY_URL/storedog-postgres:latest ./services/postgres && do
 
 ## Deployment Steps
 
-Deployment is a two-stage process. First, we ensure the cluster-level components are installed. Second, we deploy the Storedog application into its dedicated namespace.
+Deployment is a clean, two-stage process.
 
 1. **Deploy Cluster Components (one-time setup per cluster):**
-   This command installs the storage provisioner and the ingress controller, and creates the `StorageClass`. These resources are not namespaced and only need to be applied once.
+   This single command installs the storage provisioner and the ingress controller.
    ```bash
-   kubectl apply -f provisioner/
-   kubectl apply -f ingress-controller/
-   kubectl apply -f storage/
+   kubectl apply -R -f k8s-manifests/cluster-setup/
    ```
 
 2. **Deploy the Storedog Application:**
-   This command creates the namespace and deploys all application components into it.
+   This command creates a `storedog` namespace and deploys all application components into it.
    ```bash
    kubectl create namespace storedog
-   kubectl apply -R -f configmaps/ -f secrets/ -f deployments/ -f statefulsets/ -f ingress/ -n storedog
+   kubectl apply -R -f k8s-manifests/storedog-app/ -n storedog
    ```
 
 3. **To reset the application:**
