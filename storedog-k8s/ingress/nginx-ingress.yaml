@@ -10,28 +10,28 @@ spec:
     - http:
         paths:
           - path: /()(.*)
-            pathType: Prefix
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: frontend
                 port:
                   number: 3000
           - path: /services/backend(/|$)(.*)
-            pathType: Prefix
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: backend
                 port:
                   number: 4000
           - path: /services/ads(/|$)(.*)
-            pathType: Prefix
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: ads
                 port:
                   number: 8080
           - path: /services/discounts(/|$)(.*)
-            pathType: Prefix
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: discounts
