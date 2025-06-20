@@ -81,40 +81,9 @@ kubectl create namespace storedog
 kubectl config set-context --current --namespace=storedog
 ```
 
-2. Apply the ConfigMap and Secrets:
+2. Deploy everything:
 ```bash
-kubectl apply -f configmaps/shared-config.yaml
-kubectl apply -f secrets/shared-secrets.yaml
-```
-
-3. Deploy the stateful services:
-```bash
-kubectl apply -f statefulsets/postgres.yaml
-kubectl apply -f statefulsets/redis.yaml
-```
-
-4. Deploy the backend services:
-```bash
-kubectl apply -f deployments/backend.yaml
-kubectl apply -f deployments/worker.yaml
-kubectl apply -f deployments/discounts.yaml
-kubectl apply -f deployments/ads.yaml
-```
-
-5. Deploy the frontend and nginx:
-```bash
-kubectl apply -f deployments/frontend.yaml
-kubectl apply -f deployments/nginx.yaml
-```
-
-6. Deploy the ingress:
-```bash
-kubectl apply -f ingress/nginx-ingress.yaml
-```
-
-7. (Optional) Deploy the testing service:
-```bash
-kubectl apply -f deployments/puppeteer.yaml
+kubectl apply -f storedog-k8s -R
 ```
 
 ## Important Notes

@@ -19,7 +19,6 @@ spec:
       containers:
         - name: worker
           image: localhost:5000/storedog-backend:latest
-          imagePullPolicy: Never  # Use local image
           command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
           env:
             - name: WORKER

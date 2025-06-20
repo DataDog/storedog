@@ -31,7 +31,6 @@ spec:
       containers:
         - name: backend
           image: localhost:5000/storedog-backend:latest
-          imagePullPolicy: Never
           ports:
             - containerPort: 4000
           command: ["bundle", "exec", "rails", "s", "-b", "0.0.0.0", "-p", "4000"]

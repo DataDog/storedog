@@ -27,7 +27,6 @@ spec:
       containers:
         - name: ads
           image: localhost:5000/storedog-ads:latest
-          imagePullPolicy: Never
           ports:
             - containerPort: 8080
           resources:

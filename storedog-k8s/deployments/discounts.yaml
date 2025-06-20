@@ -31,7 +31,6 @@ spec:
       containers:
         - name: discounts
           image: localhost:5000/storedog-discounts:latest
-          imagePullPolicy: Never
           ports:
             - containerPort: 2814
           command: ["flask", "run", "--port=2814", "--host=0.0.0.0"]
