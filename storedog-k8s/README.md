@@ -2,43 +2,31 @@
 
 This directory contains Kubernetes manifests for deploying the Storedog application on a Kubernetes cluster.
 
-## Prerequisites
-
-- A working Kubernetes cluster (e.g., Docker Desktop, Minikube, or a self-hosted cluster).
-- `kubectl` CLI tool.
-
 ## Directory Structure
 
 ```
 storedog-k8s/
 ├── configmaps/
-│   └── shared-config.yaml
-├── secrets/
-│   └── shared-secrets.yaml
 ├── deployments/
-│   ├── frontend.yaml
-│   ├── backend.yaml
-│   ├── worker.yaml
-│   ├── discounts.yaml
-│   └── ads.yaml
+├── ingress/
+├── secrets/
 ├── statefulsets/
-│   ├── postgres.yaml
-│   └── redis.yaml
 ├── provisioner/
-│   └── local-path-storage.yaml
-├── storage/
-│   └── storageclass.yaml
-└── ingress/
-    └── nginx-ingress.yaml
+├── ingress-controller/
+└── storage/
 ```
 
-## Storage
+## Cluster Prerequisites
 
-This deployment requires Persistent Volumes for PostgreSQL and Redis. For this to work on a non-cloud or local Kubernetes cluster, a storage provisioner is required.
+This deployment requires two cluster-level components to function on a non-cloud or local Kubernetes setup: a storage provisioner and an ingress controller.
 
-This repository includes a vendored manifest for the **Rancher Local Path Provisioner** in the `provisioner/` directory. When you run `kubectl apply`, it will be installed automatically, providing the necessary storage capabilities from the host node's filesystem.
+### Storage
+This deployment requires Persistent Volumes for PostgreSQL and Redis. This repository includes a manifest for the **Rancher Local Path Provisioner** in the `provisioner/` directory, which provides storage capabilities from the host node's filesystem. A default `StorageClass` is also defined in `storage/` to use this provisioner.
 
-A default `StorageClass` is also defined in `storage/` to use this provisioner. No manual storage setup is required.
+### Ingress
+To expose the application to the outside world, an Ingress Controller is required. This repository includes a manifest for the standard **NGINX Ingress Controller** in the `ingress-controller/` directory. It acts as the front door for all traffic coming into the cluster.
+
+No manual setup is required for these components, as they are deployed in the first step below.
 
 ## Using a Local Registry
 
@@ -79,23 +67,28 @@ docker build -t $REGISTRY_URL/storedog-postgres:latest ./services/postgres && do
 
 ## Deployment Steps
 
-All required components, including the storage provisioner, are defined in this directory. A single recursive `apply` command is all that is needed.
+Deployment is a two-stage process. First, we ensure the cluster-level components are installed. Second, we deploy the Storedog application into its dedicated namespace.
 
-1. **Create a namespace for the application:**
-```bash
-kubectl create namespace storedog
-```
+1. **Deploy Cluster Components (one-time setup per cluster):**
+   This command installs the storage provisioner and the ingress controller, and creates the `StorageClass`. These resources are not namespaced and only need to be applied once.
+   ```bash
+   kubectl apply -f provisioner/
+   kubectl apply -f ingress-controller/
+   kubectl apply -f storage/
+   ```
 
-2. **Deploy everything:**
-```bash
-kubectl apply -R -f . -n storedog
-```
+2. **Deploy the Storedog Application:**
+   This command creates the namespace and deploys all application components into it.
+   ```bash
+   kubectl create namespace storedog
+   kubectl apply -R -f configmaps/ -f secrets/ -f deployments/ -f statefulsets/ -f ingress/ -n storedog
+   ```
 
-3. **To reset the deployment:**
-```bash
-kubectl delete namespace storedog
-```
-*Note: Deleting the namespace is the cleanest way to reset, as it removes all associated resources including pods, PVCs, services, etc.*
+3. **To reset the application:**
+   You only need to delete the application's namespace. The cluster components can remain installed.
+   ```bash
+   kubectl delete namespace storedog
+   ```
 
 ## Important Notes
 
@@ -141,7 +134,11 @@ kubectl get pvc -n storedog
 ```
 *The status should be `Bound`.*
 
-6. Check the provisioner's logs (if storage issues persist):
-```bash
-kubectl logs -n local-path-storage -l app=local-path-provisioner
-```
+6. Check the logs for cluster components (if issues persist):
+   ```bash
+   # Storage Provisioner Logs
+   kubectl logs -n local-path-storage -l app=local-path-provisioner
+   
+   # Ingress Controller Logs
+   kubectl logs -n ingress-nginx -l app.kubernetes.io/name=ingress-nginx
+   ```
