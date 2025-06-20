@@ -78,12 +78,11 @@ docker push localhost:5000/storedog-postgres:latest
 1. Create the namespace (optional):
 ```bash
 kubectl create namespace storedog
-kubectl config set-context --current --namespace=storedog
 ```
 
 2. Deploy everything:
 ```bash
-kubectl apply -f storedog-k8s -R
+kubectl apply -R -f storedog-k8s/ -n storedog
 ```
 
 ## Important Notes
