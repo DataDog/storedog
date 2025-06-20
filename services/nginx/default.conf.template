@@ -9,8 +9,9 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
 
         rewrite ^/services/ads(/.*)$ $1 break;
-        # Proxy to ads-java, ensure trailing slash for proper URI handling
-        proxy_pass http://ads:3030/;
+        # Use a variable to force runtime DNS resolution
+        set $upstream_ads "http://ads:3030/";
+        proxy_pass $upstream_ads;
     }
 
     # Reverse proxy for discounts 
@@ -20,8 +21,9 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
 
-        # Proxy to discounts service
-        proxy_pass http://discounts:2814/;
+        # Use a variable to force runtime DNS resolution
+        set $upstream_discounts "http://discounts:2814/";
+        proxy_pass $upstream_discounts;
     }
 
     # Reverse proxy for backend
@@ -31,11 +33,18 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
 
-        proxy_pass http://backend:4000/;
+        # Use a variable to force runtime DNS resolution
+        set $upstream_backend "http://backend:4000/";
+        proxy_pass $upstream_backend;
     }
 
     # Docker-specific resolver. For Kubernetes, this will be replaced.
     resolver ${NGINX_RESOLVER} valid=30s;
+
+    # Globally intercept 502 errors and show a custom loading page.
+    # This makes the UI more user-friendly if a backend service is starting up.
+    proxy_intercept_errors on;
+    error_page 502 = @frontend_loading;
 
     # Reverse proxy for dbm service (not used that often)
     location /services/dbm {
@@ -49,7 +58,6 @@ server {
         proxy_pass $upstream_dbm;
         
         # Error handling as suggested before
-        proxy_intercept_errors on;
         proxy_connect_timeout 5s;
     }
 
@@ -68,12 +76,6 @@ server {
         # Use variable for proxy_pass to resolve at runtime
         set $upstream_frontend "http://frontend:3000";
         proxy_pass $upstream_frontend;
-        
-        # Enable intercepting errors
-        proxy_intercept_errors on;
-        
-        # Custom error page for 502 (Bad Gateway)
-        error_page 502 = @frontend_loading;
     }
 
     # Custom location block for the loading message
