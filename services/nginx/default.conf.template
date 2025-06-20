@@ -80,8 +80,12 @@ server {
 
     # Custom location block for the loading message
     location @frontend_loading {
+        # By clearing the types and setting a default, we ensure the
+        # Content-Type header is correctly set to text/html.
+        types { }
+        default_type text/html;
+
         # Return a basic HTML page with the loading message
-        add_header Content-Type text/html;
         return 200 '<!DOCTYPE html>
     <html>
     <head>
