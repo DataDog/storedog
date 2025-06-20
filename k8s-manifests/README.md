@@ -64,7 +64,7 @@ REGISTRY_URL=localhost:5000
 docker build -t $REGISTRY_URL/storedog-frontend:latest ./services/frontend && docker push $REGISTRY_URL/storedog-frontend:latest
 docker build -t $REGISTRY_URL/storedog-backend:latest ./services/backend && docker push $REGISTRY_URL/storedog-backend:latest
 docker build -t $REGISTRY_URL/storedog-discounts:latest ./services/discounts && docker push $REGISTRY_URL/storedog-discounts:latest
-docker build -t $REGISTRY_URL/storedog-ads:latest ./services/ads/java && docker push $REGISTRY_URL/storedog-ads:latest
+docker build -t $REGISTRY_URL/storedog-ads-java:latest ./services/ads/java && docker push $REGISTRY_URL/storedog-ads-java:latest
 docker build -t $REGISTRY_URL/storedog-nginx:latest ./services/nginx && docker push $REGISTRY_URL/storedog-nginx:latest
 docker build -t $REGISTRY_URL/storedog-puppeteer:latest ./services/puppeteer && docker push $REGISTRY_URL/storedog-puppeteer:latest
 docker build -t $REGISTRY_URL/storedog-postgres:latest ./services/postgres && docker push $REGISTRY_URL/storedog-postgres:latest
