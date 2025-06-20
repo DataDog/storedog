@@ -3,37 +3,27 @@ kind: Ingress
 metadata:
   name: storedog-ingress
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    # This annotation is no longer needed as we are not rewriting at the ingress level
+    # nginx.ingress.kubernetes.io/rewrite-target: /$2
 spec:
   ingressClassName: nginx
+  # All traffic that doesn't match a more specific rule below will
+  # be sent to our central nginx reverse proxy.
+  defaultBackend:
+    service:
+      name: nginx
+      port:
+        number: 80
   rules:
     - http:
         paths:
-          - path: /()(.*)
-            pathType: ImplementationSpecific
+          # This rule directs all traffic (path: /) to the nginx service.
+          # The nginx service will then use its internal configuration
+          # to route requests to the appropriate backend service.
+          - path: /
+            pathType: Prefix
             backend:
               service:
-                name: frontend
+                name: nginx
                 port:
-                  number: 3000
-          - path: /services/backend(/|$)(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: backend
-                port:
-                  number: 4000
-          - path: /services/ads(/|$)(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: ads
-                port:
-                  number: 8080
-          - path: /services/discounts(/|$)(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: discounts
-                port:
-                  number: 2814
+                  number: 80
