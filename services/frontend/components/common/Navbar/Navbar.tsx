@@ -115,7 +115,7 @@ const Navbar: FC<NavbarProps> = ({}) => {
           </div>
         </div>
 
-        {dbmFlag && productInfo && (
+        {dbmFlag && productInfo?.productName && (
           <p className="flex justify-center py-3 font-semibold">
             {productInfo.productName} was ordered {productInfo.count} times in
             the last hour 🔥
