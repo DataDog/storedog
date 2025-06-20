@@ -44,7 +44,7 @@ server {
     # Globally intercept 502 errors and show a custom loading page.
     # This makes the UI more user-friendly if a backend service is starting up.
     proxy_intercept_errors on;
-    error_page 502 = @frontend_loading;
+    error_page 502 503 504 = @frontend_loading;
 
     # Reverse proxy for dbm service (not used that often)
     location /services/dbm {
