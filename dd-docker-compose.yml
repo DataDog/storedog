@@ -47,6 +47,7 @@ services:
       - NEXT_PUBLIC_SPREE_CLIENT_HOST=${NEXT_PUBLIC_SPREE_CLIENT_HOST:-/services/backend}
       - NEXT_PUBLIC_SPREE_IMAGE_HOST=${NEXT_PUBLIC_SPREE_IMAGE_HOST:-/services/backend}
       - NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN=${NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN:-nginx}
+      - DD_APM_INSTRUMENTATION_DEBUG=true
 
   # Backend service (Ruby on Rails/Spree)
   backend:
@@ -71,6 +72,7 @@ services:
       - RAILS_ENV=${RAILS_ENV:-production}
       - DB_POOL=${DB_POOL:-25}
       - MAX_THREADS=${MAX_THREADS:-5}
+      - DD_APM_INSTRUMENTATION_DEBUG=true
 
   # Background job processor (Sidekiq)
   worker:
@@ -95,6 +97,7 @@ services:
       - DISABLE_SPRING=1
       - DB_POOL=${DB_POOL:-25}
       - MAX_THREADS=${MAX_THREADS:-5}
+      - DD_APM_INSTRUMENTATION_DEBUG=true
 
   # Discounts service (Python/Flask)
   discounts:
@@ -108,6 +111,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_HOST=postgres
+      - DD_APM_INSTRUMENTATION_DEBUG=true
     volumes:
       - ./services/discounts:/app
     networks:
@@ -116,6 +120,8 @@ services:
   # Advertisement service (Java)
   ads:
     image: localhost:5000/storedog-ads:latest
+    environment:
+      - DD_APM_INSTRUMENTATION_DEBUG=true
     networks:
       - storedog-network
 
