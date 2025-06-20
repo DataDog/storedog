@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: postgres:latest  # You should specify a fixed version
+          image: localhost:5000/storedog-postgres:latest
           ports:
             - containerPort: 5432
               name: postgres
