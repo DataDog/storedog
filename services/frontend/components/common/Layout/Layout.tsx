@@ -85,7 +85,10 @@ const SidebarUI: React.FC<{}> = ({}) => {
   ) : null
 }
 
-const Layout: React.FC<Props> = ({ children, pageProps: { ...pageProps } }) => {
+const Layout: React.FC<Props> = ({
+  children,
+  pageProps: { ...pageProps } = {},
+}) => {
   const [pages, setPages] = useState<Page[]>([])
 
   useEffect(() => {
