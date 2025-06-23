@@ -2,6 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: storedog-ingress
+  namespace: storedog
   annotations:
     # This annotation is no longer needed as we are not rewriting at the ingress level
     # nginx.ingress.kubernetes.io/rewrite-target: /$2
