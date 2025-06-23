@@ -17,6 +17,7 @@ import Discount from '@components/common/Discount'
 import Ad from '@components/common/Ad'
 import type { Page } from '@customTypes/page'
 import type { Link as LinkProps } from '../UserNav/MenuSidebarView'
+import Pages from 'pages/[...pages]'
 
 const Loading = () => (
   <div className="w-80 h-80 flex items-center text-center justify-center p-3">
@@ -84,10 +85,7 @@ const SidebarUI: React.FC<{}> = ({}) => {
   ) : null
 }
 
-const Layout: React.FC<Props> = ({
-  children,
-  pageProps: { ...pageProps } = {},
-}) => {
+const Layout: React.FC<Props> = ({ children, pageProps: { ...pageProps } }) => {
   const [pages, setPages] = useState<Page[]>([])
 
   useEffect(() => {
