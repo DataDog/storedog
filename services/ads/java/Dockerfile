@@ -1,5 +1,5 @@
 # compile via gradle
-FROM gradle:jdk11 AS TEMP_BUILD_IMAGE
+FROM gradle:jdk11 AS temp_build_image
 ENV APP_HOME=/usr/app/
 WORKDIR $APP_HOME
 COPY build.gradle settings.gradle $APP_HOME
@@ -19,7 +19,7 @@ RUN apk --update add openjdk11-jre
 ARG DD_GIT_REPOSITORY_URL
 ARG DD_GIT_COMMIT_SHA
 
-ENV ARTIFACT_NAME=ads-java-0.0.1-SNAPSHOT.jar \
+ENV ARTIFACT_NAME=store-ads-1.0.0.jar \
   APP_HOME=/usr/app/ \
   ADS_SERVER_PORT=3030 \
   # Default environment variables
@@ -30,7 +30,7 @@ ENV ARTIFACT_NAME=ads-java-0.0.1-SNAPSHOT.jar \
   DD_GIT_COMMIT_SHA=${DD_GIT_COMMIT_SHA} 
 
 WORKDIR $APP_HOME
-COPY --from=TEMP_BUILD_IMAGE $APP_HOME/build/libs/$ARTIFACT_NAME .
+COPY --from=temp_build_image $APP_HOME/build/libs/$ARTIFACT_NAME .
 
 RUN wget -O dd-java-agent.jar 'https://dtdg.co/latest-java-tracer'
 

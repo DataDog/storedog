@@ -3,7 +3,8 @@ ARG NGINX_VERSION=1.26.0
 FROM nginx:$NGINX_VERSION
 
 RUN apt-get update \
-  && apt-get install -y wget \
+  && apt-get install -y gettext-base \
+  && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
 # Set default environment variables
@@ -15,3 +16,4 @@ COPY nginx.conf /etc/nginx/nginx.conf
 COPY default.conf /etc/nginx/conf.d/default.conf
 COPY status.conf /etc/nginx/conf.d/status.conf
 COPY ngx_http_datadog_module.so /usr/lib/nginx/modules/ngx_http_datadog_module.so
+COPY loading.html /usr/share/nginx/html/loading.html
