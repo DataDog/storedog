@@ -35,7 +35,7 @@ server {
         proxy_pass $upstream_backend;
     }
 
-    resolver ${NGINX_RESOLVER:-127.0.0.11} valid=30s;  # Use variable, default to Docker DNS resolver
+    resolver ${NGINX_RESOLVER} valid=30s;
 
     # Globally intercept 502, 503, 504 errors and show a custom loading page.
     proxy_intercept_errors on;
