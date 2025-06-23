@@ -16,7 +16,7 @@ RUN gradle clean build
 FROM alpine:latest
 RUN apk --update add openjdk11-jre
 
-ENV ARTIFACT_NAME=ads-java-0.0.1-SNAPSHOT.jar \
+ENV ARTIFACT_NAME=ads-java.jar \
     APP_HOME=/usr/app/ \
     ADS_SERVER_PORT=3030
 

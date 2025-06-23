@@ -5,7 +5,7 @@ metadata:
 spec:
   ports:
     - port: 8080
-      targetPort: 8080
+      targetPort: 3030
       name: http
   selector:
     app: ads
@@ -28,7 +28,7 @@ spec:
         - name: ads
           image: localhost:5000/storedog-ads-java:latest
           ports:
-            - containerPort: 8080
+            - containerPort: 3030
           resources:
             requests:
               memory: "256Mi"

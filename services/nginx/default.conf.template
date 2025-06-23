@@ -9,7 +9,6 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
 
         rewrite ^/services/ads(/.*)$ $1 break;
-        # Use a variable to force runtime DNS resolution
         set $upstream_ads "http://ads:3030/";
         proxy_pass $upstream_ads;
     }
@@ -21,7 +20,6 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
 
-        # Use a variable to force runtime DNS resolution
         set $upstream_discounts "http://discounts:2814/";
         proxy_pass $upstream_discounts;
     }
@@ -33,16 +31,13 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
 
-        # Use a variable to force runtime DNS resolution
         set $upstream_backend "http://backend:4000/";
         proxy_pass $upstream_backend;
     }
 
-    # Docker-specific resolver. For Kubernetes, this will be replaced.
-    resolver ${NGINX_RESOLVER} valid=30s;
+    resolver ${NGINX_RESOLVER:-127.0.0.11} valid=30s;  # Use variable, default to Docker DNS resolver
 
-    # Globally intercept 502 errors and show a custom loading page.
-    # This makes the UI more user-friendly if a backend service is starting up.
+    # Globally intercept 502, 503, 504 errors and show a custom loading page.
     proxy_intercept_errors on;
     error_page 502 503 504 = @frontend_loading;
 
@@ -53,11 +48,9 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
 
-        # Use a variable for the proxy_pass to force runtime resolution
         set $upstream_dbm "http://dbm:7595/";
         proxy_pass $upstream_dbm;
         
-        # Error handling as suggested before
         proxy_connect_timeout 5s;
     }
 
@@ -73,7 +66,6 @@ server {
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
         
-        # Use variable for proxy_pass to resolve at runtime
         set $upstream_frontend "http://frontend:3000";
         proxy_pass $upstream_frontend;
     }
