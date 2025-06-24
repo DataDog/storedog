@@ -82,12 +82,37 @@ For a standard Kubernetes cluster, you'll need to set up a local registry that y
 
 The Storedog manifest files use two variables to set the container registry URL and the version tag. The default is to use the localhost registry and `latest`. Set these environment variables accordingly when using a different registry location and tag version.
 
+Default values (development):
+
+```bash
+export REGISTRY_URL=localhost:5000
+export SD_TAG=latest
+```
+
+Example values for hosted containers:
+
 ```bash
 export REGISTRY_URL="ghcr.io/datadog/storedog"
 export SD_TAG=1.3.0
 ```
 
-Deployment is a clean, two-stage process.
+### Set default environment variables for Storedog
+
+```bash
+export DD_VERSION_ADS=1.0.0
+export DD_VERSION_BACKEND=1.0.0
+export DD_VERSION_DISCOUNTS=1.0.0
+export DD_VERSION_NGINX=1.0.0
+
+export NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend
+export NEXT_PUBLIC_DD_VERSION_FRONTEND=1.0.0
+
+export DD_ENV=development
+```
+
+### Deploy
+
+The storedog-app definition files contain variables which need to be set before applying them to the cluster. The command below uses `envsubst` to update the variable values in place before applying the definition file.
 
 1. **Deploy Cluster Components (one-time setup per cluster):**
    This single command installs the storage provisioner and the ingress controller.
@@ -101,7 +126,7 @@ Deployment is a clean, two-stage process.
 
    ```bash
    kubectl create namespace storedog
-   kubectl apply -R -f k8s-manifests/storedog-app/ -n storedog
+   for file in k8s-manifests/storedog-app/**/*.yaml; do envsubst < "$file" | kubectl apply -f -; done
    ```
 
 1. **To reset the application:**
