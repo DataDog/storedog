@@ -14,6 +14,10 @@ spec:
         secretName: datadog-secret
         keyName: app-key
   features:
+    orchestratorExplorer:
+      enabled: true
+    liveContainerCollection:
+      enabled: true
     apm:
       enabled: true
     eventCollection:
