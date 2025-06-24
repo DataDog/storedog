@@ -24,6 +24,3 @@ class Advertisement(db.Model):
             'weight': self.weight,
             'path': self.path
         }
-
-
-    
