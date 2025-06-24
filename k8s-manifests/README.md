@@ -66,16 +66,7 @@ For a standard Kubernetes cluster, you'll need to set up a local registry that y
 1. Build and push **ALL** images to local registry:
 
    ```bash
-   REGISTRY_URL=localhost:5000
-
-   find ./services -name Dockerfile | while read dockerfile; do
-   context_dir=$(dirname "$dockerfile")
-   # Create a tag based on the path, e.g., storedog-ads-java for ./services/ads/java/Dockerfile
-   image_name=$(echo "$context_dir" | sed 's|^\./services/||; s|/|-|g')
-   full_tag="$REGISTRY_URL/storedog-$image_name:latest"
-   echo "Building $full_tag from $context_dir"
-   docker build -t "$full_tag" "$context_dir" && docker push "$full_tag"
-   done
+   REGISTRY_URL=localhost:5000; find ./services -name Dockerfile | while read dockerfile; do context_dir=$(dirname "$dockerfile"); image_name=$(echo "$context_dir" | sed 's|^\./services/||; s|/|-|g'); full_tag="$REGISTRY_URL/storedog-$image_name:latest"; echo "Building $full_tag from $context_dir"; docker build -t "$full_tag" "$context_dir" && docker push "$full_tag"; done
    ```
 
 ## Deployment Steps

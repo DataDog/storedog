@@ -1,5 +1,5 @@
 # compile via gradle
-FROM gradle:jdk11 AS TEMP_BUILD_IMAGE
+FROM gradle:jdk11 AS temp_build_image
 ENV APP_HOME=/usr/app/
 WORKDIR $APP_HOME
 COPY build.gradle settings.gradle $APP_HOME
@@ -16,11 +16,10 @@ RUN gradle clean build
 FROM alpine:latest
 RUN apk --update add openjdk11-jre
 
-ENV ARTIFACT_NAME=ads-java.jar \
-    APP_HOME=/usr/app/ \
+ENV APP_HOME=/usr/app/ \
     ADS_SERVER_PORT=3030
 
 WORKDIR $APP_HOME
-COPY --from=TEMP_BUILD_IMAGE $APP_HOME/build/libs/$ARTIFACT_NAME .
+COPY --from=temp_build_image $APP_HOME/build/libs/*.jar ads-java.jar
 
-ENTRYPOINT exec java -jar ${ARTIFACT_NAME}
+ENTRYPOINT ["java", "-jar", "ads-java.jar"]
