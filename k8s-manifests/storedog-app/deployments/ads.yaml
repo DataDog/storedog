@@ -32,14 +32,14 @@ spec:
             path: /var/run/datadog/
       containers:
         - name: ads
-          image: ${REGISTRY_URL:-localhost:5000}/storedog-ads-java:${SD_TAG:-latest}  # (add if needed)
+          image: ${REGISTRY_URL}/storedog-ads-java:${SD_TAG}  # (add if needed)
           ports:
             - containerPort: 3030
           env:
             - name: DD_SERVICE
               value: store-ads
             - name: DD_VERSION
-              value: ${DD_VERSION_ADS-1.0.0}
+              value: ${DD_VERSION_ADS}
             - name: DD_LOGS_INJECTION
               value: "true"
             - name: DD_RUNTIME_METRICS_ENABLED

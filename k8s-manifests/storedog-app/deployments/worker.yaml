@@ -24,7 +24,7 @@ spec:
           command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done;']
       containers:
         - name: worker
-          image: ${REGISTRY_URL:-localhost:5000}/storedog-backend:${SD_TAG:-latest}
+          image: ${REGISTRY_URL}/storedog-backend:${SD_TAG}
           command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
           env:
             - name: WORKER
@@ -67,7 +67,7 @@ spec:
             - name: DD_SERVICE
               value: store-worker
             - name: DD_VERSION
-              value: ${DD_VERSION_BACKEND-1.0.0}
+              value: ${DD_VERSION_BACKEND}
             - name: DD_LOGS_INJECTION
               value: "true"
             - name: DD_RUNTIME_METRICS_ENABLED

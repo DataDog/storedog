@@ -36,7 +36,7 @@ spec:
           command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done;']
       containers:
         - name: backend
-          image: ${REGISTRY_URL:-localhost:5000}/storedog-backend:${SD_TAG:-latest}
+          image: ${REGISTRY_URL}/storedog-backend:${SD_TAG}
           ports:
             - containerPort: 4000
           command: ["bundle", "exec", "rails", "s", "-b", "0.0.0.0", "-p", "4000"]
@@ -84,7 +84,7 @@ spec:
             - name: DD_SERVICE
               value: store-backend
             - name: DD_VERSION
-              value: ${DD_VERSION_BACKEND-1.0.0}
+              value: ${DD_VERSION_BACKEND}
             - name: DD_LOGS_INJECTION
               value: "true"
             - name: DD_RUNTIME_METRICS_ENABLED

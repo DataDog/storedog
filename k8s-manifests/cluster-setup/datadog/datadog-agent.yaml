@@ -4,7 +4,7 @@ metadata:
   name: datadog
 spec:
   global:
-    clusterName: ${DD_ENV:-development}
+    clusterName: ${DD_ENV}
     site: datadoghq.com
     credentials:
       apiSecret:

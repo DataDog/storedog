@@ -45,7 +45,7 @@ spec:
             path: /var/run/datadog/
       containers:
         - name: nginx
-          image: ${REGISTRY_URL:-localhost:5000}/storedog-nginx:${SD_TAG:-latest}
+          image: ${REGISTRY_URL}/storedog-nginx:${SD_TAG}
           ports:
             - containerPort: 80
           env:
@@ -54,7 +54,7 @@ spec:
             - name: DD_SERVICE
               value: api-gateway
             - name: DD_VERSION
-              value: ${DD_VERSION_NGINX:-1.0.0}
+              value: ${DD_VERSION_NGINX}
           resources:
             requests:
               memory: "128Mi"
