@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: localhost:5000/storedog-nginx:latest
+          image: ${REGISTRY_URL-localhost:5000}/storedog-nginx:latest
           ports:
             - containerPort: 80
           env:
