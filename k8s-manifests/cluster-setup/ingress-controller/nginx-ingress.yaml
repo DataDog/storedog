@@ -321,6 +321,19 @@ subjects:
 apiVersion: v1
 data:
   allow-snippet-annotations: "false"
+  http-snippet: |
+    server {
+      listen 18080;
+
+      location /nginx_status {
+        allow all;
+        stub_status on;
+      }
+
+      location / {
+        return 404;
+      }
+    }
 kind: ConfigMap
 metadata:
   labels:
@@ -343,6 +356,15 @@ metadata:
     app.kubernetes.io/version: 1.10.1
   name: ingress-nginx-controller
   namespace: ingress-nginx
+  annotations:
+    ad.datadoghq.com/controller.logs: '[{"service": "controller", "source": "nginx-ingress-controller"}]'
+    ad.datadoghq.com/controller.check_names: '["nginx", "nginx_ingress_controller"]'
+    ad.datadoghq.com/controller.init_configs: '[{}, {}]'
+    ad.datadoghq.com/controller.instances: |
+      [
+        {"nginx_status_url": "http://%%host%%:18080/nginx_status"},
+        {"prometheus_url": "http://%%host%%:10254/metrics", "collect_nginx_histograms": true}
+      ]
 spec:
   ipFamilies:
   - IPv4
