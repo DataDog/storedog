@@ -102,22 +102,6 @@ Deployment is a clean, two-stage process.
    kubectl delete namespace storedog
    ```
 
-## Important Notes
-
-1. The provided secrets are for development only. In production:
-   - Use a proper secrets management solution
-   - Change all default passwords
-   - Enable SSL/TLS
-
-1. The resource limits and requests are estimates and should be adjusted based on your actual needs and monitoring data.
-
-1. For production use:
-   - Configure proper health checks
-   - Set up monitoring and logging
-   - Configure backups for stateful services
-   - Use proper SSL/TLS certificates
-   - Configure proper network policies
-
 ## Troubleshooting
 
 1. Check pod status in the namespace:
