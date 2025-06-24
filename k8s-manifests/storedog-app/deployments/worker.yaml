@@ -69,15 +69,15 @@ spec:
             - name: DD_VERSION
               value: ${DD_VERSION_BACKEND-1.0.0}
             - name: DD_LOGS_INJECTION
-              value: true
+              value: "true"
             - name: DD_RUNTIME_METRICS_ENABLED
-              value: true
+              value: "true"
             - name: DD_PROFILING_ENABLED
-              value: true
+              value: "true"
             - name: DD_PROFILING_ALLOCATION_ENABLED
-              value: true
+              value: "true"
             - name: DD_PROFILING_TIMELINE_ENABLED
-              value: true
+              value: "true"
           resources:
             requests:
               memory: "512Mi"
