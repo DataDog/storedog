@@ -126,7 +126,7 @@ The storedog-app definition files contain variables which need to be set before 
 
    ```bash
    kubectl create namespace storedog
-   for file in k8s-manifests/storedog-app/**/*.yaml; do envsubst < "$file" | kubectl apply -f -; done
+   for file in k8s-manifests/storedog-app/**/*.yaml; do envsubst < "$file" | kubectl apply -n storedog -f -; done
    ```
 
 1. **To reset the application:**
