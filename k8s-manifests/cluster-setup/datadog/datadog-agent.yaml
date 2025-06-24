@@ -16,8 +16,6 @@ spec:
   features:
     apm:
       enabled: true
-      runtimeMetrics:
-        enabled: true
     eventCollection:
       collectKubernetesEvents: true
     logCollection:
@@ -25,19 +23,10 @@ spec:
       containerCollectAll: true
     npm:
       enabled: true
-    override:
-      nodeAgent:
-        image:
-          tag: 7.67.0
-      clusterAgent:
-        image:
-          tag: 7.67.0
-  agent:
-    env:
-      - name: DD_APM_ENV
-        value: ${DD_ENV:-development}
-  clusterAgent:
-    enabled: true
-    config:
-      logs:
-        enabled: true
+  override:
+    nodeAgent:
+      image:
+        tag: 7.67.0
+    clusterAgent:
+      image:
+        tag: 7.67.0
