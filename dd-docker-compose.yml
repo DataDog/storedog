@@ -28,7 +28,7 @@ services:
 
   # Frontend service (Next.js)
   frontend:
-    image: ${REGISTRY_URL-localhost:5000}/storedog-frontend:latest
+    image: ${REGISTRY_URL-localhost:5000}/storedog-frontend:${SD_TAG-latest}
     command: bash -c "wait-for-it backend:4000 -- ${FRONTEND_COMMAND:-npm run dev}"
     depends_on:
       - worker
@@ -51,7 +51,7 @@ services:
 
   # Backend service (Ruby on Rails/Spree)
   backend:
-    image: ${REGISTRY_URL-localhost:5000}/storedog-backend:latest
+    image: ${REGISTRY_URL-localhost:5000}/storedog-backend:${SD_TAG-latest}
     command: wait-for-it postgres:5432 -- bundle exec rails s -b 0.0.0.0 -p 4000 --pid /app/tmp/pids/server.pid
     depends_on:
       - 'postgres'
@@ -76,7 +76,7 @@ services:
 
   # Background job processor (Sidekiq)
   worker:
-    image: ${REGISTRY_URL-localhost:5000}/storedog-backend:latest
+    image: ${REGISTRY_URL-localhost:5000}/storedog-backend:${SD_TAG-latest}
     command: wait-for-it postgres:5432 -- bundle exec sidekiq -C config/sidekiq.yml
     depends_on:
       - 'postgres'
@@ -101,7 +101,7 @@ services:
 
   # Discounts service (Python/Flask)
   discounts:
-    image: ${REGISTRY_URL-localhost:5000}/storedog-discounts:latest
+    image: ${REGISTRY_URL-localhost:5000}/storedog-discounts:${SD_TAG-latest}
     command: wait-for-it postgres:5432 -- flask run --port=2814 --host=0.0.0.0
     depends_on:
       - postgres
@@ -119,7 +119,7 @@ services:
 
   # Advertisement service (Java)
   ads:
-    image: ${REGISTRY_URL-localhost:5000}/storedog-ads:latest
+    image: ${REGISTRY_URL-localhost:5000}/storedog-ads:${SD_TAG-latest}
     environment:
       - DD_APM_INSTRUMENTATION_DEBUG=true
     networks:
@@ -127,7 +127,7 @@ services:
 
   # Web server and reverse proxy
   nginx:
-    image: ${REGISTRY_URL-localhost:5000}/storedog-nginx:latest
+    image: ${REGISTRY_URL-localhost:5000}/storedog-nginx:${SD_TAG-latest}
     restart: always
     ports:
       - '80:80'
@@ -137,7 +137,7 @@ services:
       - frontend
   # Primary database
   postgres:
-    image: ${REGISTRY_URL-localhost:5000}/storedog-postgres:latest
+    image: ${REGISTRY_URL-localhost:5000}/storedog-postgres:${SD_TAG-latest}
     restart: always
     volumes:
       - postgres_logs:/var/log/pg_log:rw
@@ -157,7 +157,7 @@ services:
 
   # Browser automation for testing
   puppeteer:
-    image: ${REGISTRY_URL-localhost:5000}/storedog-puppeteer:latest
+    image: ${REGISTRY_URL-localhost:5000}/storedog-puppeteer:${SD_TAG-latest}
     platform: linux/amd64
     environment:
       - STOREDOG_URL=${STOREDOG_URL:-http://nginx:80}
