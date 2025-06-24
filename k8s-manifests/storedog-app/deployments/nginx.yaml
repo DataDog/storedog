@@ -17,7 +17,7 @@ metadata:
   name: nginx
   labels:
     tags.datadoghq.com/service: api-gateway
-    tags.datadoghq.com/version: ${DD_VERSION_NGINX:-1.0.0}
+    tags.datadoghq.com/version: 1.28.0
 spec:
   replicas: 1
   selector:
@@ -28,7 +28,7 @@ spec:
       labels:
         app: nginx
         tags.datadoghq.com/service: api-gateway
-        tags.datadoghq.com/version: ${DD_VERSION_NGINX:-1.0.0}
+        tags.datadoghq.com/version: 1.28.0
       annotations:
         ad.datadoghq.com/nginx.logs: '[{"source": "nginx"}]'
         ad.datadoghq.com/nginx.checks: |
