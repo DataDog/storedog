@@ -1,11 +1,11 @@
-kind: "DatadogAgent"
-apiVersion: "datadoghq.com/v2alpha1"
+apiVersion: datadoghq.com/v2alpha1
+kind: DatadogAgent
 metadata:
-  name: "datadog"
+  name: datadog
 spec:
   global:
     clusterName: ${DD_ENV:-development}
-    site: "datadoghq.com"
+    site: datadoghq.com
     credentials:
       apiSecret:
         secretName: datadog-secret
