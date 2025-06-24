@@ -22,6 +22,11 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
+bootJar {
+	archiveBaseName = 'store-ads'
+	archiveVersion = ''
+}
+
 tasks.named('test') {
 	useJUnitPlatform()
 }
