@@ -3,7 +3,7 @@
 services:
   # Frontend service (Next.js)
   frontend:
-    image: localhost:5000/storedog-frontend:latest
+    image: ${REGISTRY_URL-localhost:5000}/storedog-frontend:latest
     build:
       context: ./services/frontend
     command: bash -c "wait-for-it backend:4000 -- ${FRONTEND_COMMAND:-npm run dev}"
@@ -27,7 +27,7 @@ services:
 
   # Backend service (Ruby on Rails/Spree)
   backend:
-    image: localhost:5000/storedog-backend:latest
+    image: ${REGISTRY_URL-localhost:5000}/storedog-backend:latest
     build:
       context: ./services/backend
     command: wait-for-it postgres:5432 -- bundle exec rails s -b 0.0.0.0 -p 4000 --pid /app/tmp/pids/server.pid
@@ -53,7 +53,7 @@ services:
 
   # Background job processor (Sidekiq)
   worker:
-    image: localhost:5000/storedog-backend:latest
+    image: ${REGISTRY_URL-localhost:5000}/storedog-backend:latest
     build:
       context: ./services/backend
     command: wait-for-it postgres:5432 -- bundle exec sidekiq -C config/sidekiq.yml
@@ -79,7 +79,7 @@ services:
 
   # Discounts service (Python/Flask)
   discounts:
-    image: localhost:5000/storedog-discounts:latest
+    image: ${REGISTRY_URL-localhost:5000}/storedog-discounts:latest
     build:
       context: ./services/discounts
     command: wait-for-it postgres:5432 -- flask run --port=2814 --host=0.0.0.0
@@ -98,7 +98,7 @@ services:
 
   # Advertisement service (Java)
   ads:
-    image: localhost:5000/storedog-ads-java:latest
+    image: ${REGISTRY_URL-localhost:5000}/storedog-ads-java:latest
     build:
       context: ./services/ads/java
     networks:
@@ -106,7 +106,7 @@ services:
 
   # Web server and reverse proxy
   nginx:
-    image: localhost:5000/storedog-nginx:latest
+    image: ${REGISTRY_URL-localhost:5000}/storedog-nginx:latest
     build:
       context: ./services/nginx
     restart: always
@@ -119,7 +119,7 @@ services:
 
   # Primary database
   postgres:
-    image: localhost:5000/storedog-postgres:latest
+    image: ${REGISTRY_URL-localhost:5000}/storedog-postgres:latest
     build:
       context: ./services/postgres
     restart: always
@@ -141,7 +141,7 @@ services:
 
   # Browser automation for testing
   puppeteer:
-    image: localhost:5000/storedog-puppeteer:latest
+    image: ${REGISTRY_URL-localhost:5000}/storedog-puppeteer:latest
     build:
       context: ./services/puppeteer
     platform: linux/amd64
