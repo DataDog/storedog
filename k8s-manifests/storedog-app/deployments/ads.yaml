@@ -23,12 +23,29 @@ spec:
     metadata:
       labels:
         app: ads
+      annotations:
+        ad.datadoghq.com/app.logs: '[{"source": "java"}]'
     spec:
+      volumes:
+        - name: apmsocketpath
+          hostPath:
+            path: /var/run/datadog/
       containers:
         - name: ads
-          image: ${REGISTRY_URL-localhost:5000}/storedog-ads-java:${SD_TAG-latest}
+          image: ${REGISTRY_URL-localhost:5000}/storedog-ads-java:${SD_TAG-latest}  # (add if needed)
           ports:
             - containerPort: 3030
+          env:
+            - name: DD_LOGS_INJECTION
+              value: true
+            - name: DD_PROFILING_ENABLED
+              value: true
+            - name: DD_SERVICE
+              value: store-ads
+            - name: DD_VERSION
+              value: ${DD_VERSION_ADS-1.0.0}
+            - name: DD_ENV
+              value: ${DD_ENV-dev}
           resources:
             requests:
               memory: "256Mi"
@@ -36,3 +53,6 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "400m"
+          volumeMounts:
+            - name: apmsocketpath
+              mountPath: /var/run/datadog
