@@ -26,12 +26,12 @@ spec:
     npm:
       enabled: true
     override:
-    nodeAgent:
-      image:
-        tag: 7.67.0
-    clusterAgent:
-      image:
-        tag: 7.67.0
+      nodeAgent:
+        image:
+          tag: 7.67.0
+      clusterAgent:
+        image:
+          tag: 7.67.0
   agent:
     env:
       - name: DD_APM_ENV
