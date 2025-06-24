@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: puppeteer
-          image: ${REGISTRY_URL-localhost:5000}/storedog-puppeteer:latest
+          image: ${REGISTRY_URL-localhost:5000}/storedog-puppeteer:${SD_TAG-latest}
           env:
             - name: STOREDOG_URL
               value: "http://nginx"

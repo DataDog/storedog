@@ -26,7 +26,7 @@ spec:
     spec:
       containers:
         - name: ads
-          image: ${REGISTRY_URL-localhost:5000}/storedog-ads-java:latest
+          image: ${REGISTRY_URL-localhost:5000}/storedog-ads-java:${SD_TAG-latest}
           ports:
             - containerPort: 3030
           resources:

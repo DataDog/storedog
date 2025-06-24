@@ -30,7 +30,7 @@ spec:
           command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done;']
       containers:
         - name: discounts
-          image: ${REGISTRY_URL-localhost:5000}/storedog-discounts:latest
+          image: ${REGISTRY_URL-localhost:5000}/storedog-discounts:${SD_TAG-latest}
           ports:
             - containerPort: 2814
           command: ["flask", "run", "--port=2814", "--host=0.0.0.0"]
