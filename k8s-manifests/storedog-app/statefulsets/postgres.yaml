@@ -16,7 +16,7 @@ metadata:
   name: postgres
   labels:
     tags.datadoghq.com/service: store-db
-    tags.datadoghq.com/version: 15.0
+    tags.datadoghq.com/version: "15.0"
 spec:
   serviceName: postgres
   replicas: 1
@@ -28,7 +28,7 @@ spec:
       labels:
         app: postgres
         tags.datadoghq.com/service: store-db
-        tags.datadoghq.com/version: 15.0
+        tags.datadoghq.com/version: "15.0"
       annotations:
         ad.datadoghq.com/postgres.logs: |
           {
