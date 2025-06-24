@@ -1,0 +1,43 @@
+kind: "DatadogAgent"
+apiVersion: "datadoghq.com/v2alpha1"
+metadata:
+  name: "datadog"
+spec:
+  global:
+    clusterName: ${DD_ENV:-development}
+    site: "datadoghq.com"
+    credentials:
+      apiSecret:
+        secretName: datadog-secret
+        keyName: api-key
+      appSecret:
+        secretName: datadog-secret
+        keyName: app-key
+  features:
+    apm:
+      enabled: true
+      runtimeMetrics:
+        enabled: true
+    eventCollection:
+      collectKubernetesEvents: true
+    logCollection:
+      enabled: true
+      containerCollectAll: true
+    npm:
+      enabled: true
+    override:
+    nodeAgent:
+      image:
+        tag: 7.67.0
+    clusterAgent:
+      image:
+        tag: 7.67.0
+  agent:
+    env:
+      - name: DD_APM_ENV
+        value: ${DD_ENV:-development}
+  clusterAgent:
+    enabled: true
+    config:
+      logs:
+        enabled: true
