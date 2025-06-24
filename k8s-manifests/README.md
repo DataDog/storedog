@@ -28,9 +28,11 @@ k8s-manifests/
 This deployment requires two cluster-level components to function on a non-cloud or local Kubernetes setup: a storage provisioner and an ingress controller. The manifests for both are included in the `cluster-setup/` directory.
 
 ### Storage
+
 A storage provisioner is required for the PostgreSQL and Redis `StatefulSet`s. This repository includes manifests for the **Rancher Local Path Provisioner** and a default `StorageClass` to use it.
 
 ### Ingress
+
 An Ingress Controller is required to expose the application on standard HTTP/S ports. This repository includes the manifest for the standard **NGINX Ingress Controller**, configured to use the host node's network.
 
 ## Using a Local Registry
@@ -77,6 +79,13 @@ For a standard Kubernetes cluster, you'll need to set up a local registry that y
    ```
 
 ## Deployment Steps
+
+The Storedog manifest files use two variables to set the container registry URL and the version tag. The default is to use the localhost registry and `latest`. Set these environment variables accordingly when using a different registry location and tag version.
+
+```bash
+export REGISTRY_URL="ghcr.io/datadog/storedog"
+export SD_TAG=1.3.0
+```
 
 Deployment is a clean, two-stage process.
 
