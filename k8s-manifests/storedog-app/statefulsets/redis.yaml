@@ -16,7 +16,7 @@ metadata:
   name: redis
   labels:
     tags.datadoghq.com/service: redis
-    tags.datadoghq.com/version: ${DD_VERSION_REDIS:-6.2}
+    tags.datadoghq.com/version: 6.2
 spec:
   serviceName: redis
   replicas: 1
@@ -24,8 +24,12 @@ spec:
     matchLabels:
       app: redis
       tags.datadoghq.com/service: redis
-      tags.datadoghq.com/version: ${DD_VERSION_REDIS:-6.2}
-    annotations:
+      tags.datadoghq.com/version: 6.2
+  template:
+    metadata:
+      labels:
+        app: redis
+      annotations:
         ad.datadoghq.com/redis.logs: '[{"source": "redis"}]'
         ad.datadoghq.com/redis.checks: |
           {
@@ -34,10 +38,6 @@ spec:
             "instances": [{"host":"%%host%%", "port":6379}]
             }
           }
-  template:
-    metadata:
-      labels:
-        app: redis
     spec:
       containers:
         - name: redis
