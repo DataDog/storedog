@@ -23,12 +23,12 @@ spec:
   selector:
     matchLabels:
       app: redis
-      tags.datadoghq.com/service: redis
-      tags.datadoghq.com/version: "6.2"
   template:
     metadata:
       labels:
         app: redis
+        tags.datadoghq.com/service: redis
+        tags.datadoghq.com/version: "6.2"
       annotations:
         ad.datadoghq.com/redis.logs: '[{"source": "redis"}]'
         ad.datadoghq.com/redis.checks: |
