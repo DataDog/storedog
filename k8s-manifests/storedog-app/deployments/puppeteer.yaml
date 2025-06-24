@@ -40,4 +40,4 @@ spec:
         - name: dshm
           emptyDir:
             medium: Memory
-            sizeLimit: 4Gi  # Equivalent to shm_size: '4gb' in docker-compose 
+            sizeLimit: 4Gi  # Equivalent to shm_size: '4gb' in docker-compose

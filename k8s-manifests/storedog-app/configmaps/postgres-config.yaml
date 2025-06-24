@@ -7,4 +7,4 @@ data:
     listen_addresses = '*'
     max_connections = 200
     shared_buffers = 128MB
-    dynamic_shared_memory_type = posix 
+    dynamic_shared_memory_type = posix

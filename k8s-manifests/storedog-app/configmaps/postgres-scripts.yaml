@@ -14,4 +14,4 @@ data:
     chmod -R 0700 /var/lib/postgresql/data
     
     # Switch to the postgres user and start PostgreSQL using the original entrypoint
-    exec su-exec postgres docker-entrypoint.sh "$@" 
+    exec su-exec postgres docker-entrypoint.sh "$@"
