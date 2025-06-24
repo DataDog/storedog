@@ -34,7 +34,8 @@ server {
         proxy_pass http://backend:4000/;
     }
 
-    resolver 127.0.0.11 valid=30s;  # Docker DNS resolver
+    # The resolver is set in the docker-entrypoint.sh file
+    resolver ${NGINX_RESOLVER} valid=30s;
 
     # Reverse proxy for dbm service (not used that often)
     location /services/dbm {
@@ -46,7 +47,7 @@ server {
         # Use a variable for the proxy_pass to force runtime resolution
         set $upstream_dbm "http://dbm:7595/";
         proxy_pass $upstream_dbm;
-        
+
         # Error handling as suggested before
         proxy_intercept_errors on;
         proxy_connect_timeout 5s;
@@ -54,30 +55,33 @@ server {
 
     # Reverse proxy for frontend (Next.js)
     location / {
-        
+
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        
+
         # Websocket support for Next.js (if applicable)
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
-        
-        # Use variable for proxy_pass to resolve at runtime
-        set $upstream_frontend "http://frontend:3000";
-        proxy_pass $upstream_frontend;
-        
+
+        proxy_pass http://frontend:3000;
+
         # Enable intercepting errors
         proxy_intercept_errors on;
-        
+
         # Custom error page for 502 (Bad Gateway)
-        error_page 502 = @frontend_loading;
+        error_page 502 503 504 = @frontend_loading;
     }
 
     # Custom location block for the loading message
     location @frontend_loading {
+        # By clearing the types and setting a default, we ensure the
+        # Content-Type header is correctly set to text/html.
+        types { }
+        default_type text/html;
+
         # Serve the loading HTML file
         root /usr/share/nginx/html;
         try_files /loading.html =404;
