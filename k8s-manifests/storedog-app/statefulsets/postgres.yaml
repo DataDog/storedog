@@ -14,6 +14,9 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: postgres
+  labels:
+    tags.datadoghq.com/service: store-db
+    tags.datadoghq.com/version: ${DD_VERSION:-1.0.0}
 spec:
   serviceName: postgres
   replicas: 1
@@ -24,10 +27,27 @@ spec:
     metadata:
       labels:
         app: postgres
+        tags.datadoghq.com/service: store-db
+        tags.datadoghq.com/version: ${DD_VERSION:-1.0.0}
+      annotations:
+        ad.datadoghq.com/postgres.logs: |
+          {
+            "source": "postgresql",
+            "auto_multi_line_detection":true,
+            "path": "/var/log/pg_log/postgresql*.json",
+            "type": "file"
+          }
+        ad.datadoghq.com/postgres.checks: |
+          {
+            "postgres": {
+            "init_config": {},
+            "instances": [{"host":"%%host%%", "port":5432, "username":"datadog", "password":"datadog"}]
+            }
+          }
     spec:
       containers:
         - name: postgres
-          image: ${REGISTRY_URL-localhost:5000}/storedog-postgres:${SD_TAG-latest}
+          image: ${REGISTRY_URL:-localhost:5000}/storedog-postgres:${SD_TAG:-latest}
           ports:
             - containerPort: 5432
               name: postgres

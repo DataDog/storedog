@@ -15,6 +15,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nginx
+  labels:
+    tags.datadoghq.com/service: api-gateway
+    tags.datadoghq.com/version: ${DD_VERSION_NGINX:-1.0.0}
 spec:
   replicas: 1
   selector:
@@ -24,15 +27,34 @@ spec:
     metadata:
       labels:
         app: nginx
+        tags.datadoghq.com/service: api-gateway
+        tags.datadoghq.com/version: ${DD_VERSION_NGINX:-1.0.0}
+      annotations:
+        ad.datadoghq.com/nginx.logs: '[{"source": "nginx"}]'
+        ad.datadoghq.com/nginx.checks: |
+          {
+            "nginx": {
+            "init_config": {},
+            "instances": [{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]
+            }
+          }
     spec:
+      volumes:
+        - name: apmsocketpath
+          hostPath:
+            path: /var/run/datadog/
       containers:
         - name: nginx
-          image: ${REGISTRY_URL-localhost:5000}/storedog-nginx:${SD_TAG-latest}
+          image: ${REGISTRY_URL:-localhost:5000}/storedog-nginx:${SD_TAG:-latest}
           ports:
             - containerPort: 80
           env:
             - name: NGINX_RESOLVER
               value: "kube-dns.kube-system.svc.cluster.local"
+            - name: DD_SERVICE
+              value: api-gateway
+            - name: DD_VERSION
+              value: ${DD_VERSION_NGINX:-1.0.0}
           resources:
             requests:
               memory: "128Mi"
@@ -40,3 +62,6 @@ spec:
             limits:
               memory: "256Mi"
               cpu: "200m"
+          volumeMounts:
+            - name: apmsocketpath
+              mountPath: /var/run/datadog
