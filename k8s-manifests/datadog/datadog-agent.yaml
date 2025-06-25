@@ -6,6 +6,8 @@ spec:
   global:
     clusterName: storedog-k8s
     site: datadoghq.com
+    kubelet:
+      tlsVerify: false
     credentials:
       apiSecret:
         secretName: datadog-secret
@@ -27,10 +29,3 @@ spec:
       containerCollectAll: true
     npm:
       enabled: true
-  override:
-    nodeAgent:
-      image:
-        tag: 7.67.0
-    clusterAgent:
-      image:
-        tag: 7.67.0
