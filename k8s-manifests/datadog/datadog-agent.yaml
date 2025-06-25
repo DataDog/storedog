@@ -16,6 +16,8 @@ spec:
         secretName: datadog-secret
         keyName: app-key
   features:
+    remoteConfiguration:
+      enabled: true
     orchestratorExplorer:
       enabled: true
     liveContainerCollection:
@@ -31,6 +33,16 @@ spec:
       enabled: true
     clusterChecks:
       enabled: true
+    cspm:
+      enabled: true
+      hostBenchmarks:
+        enabled: true
+    cws:
+      enabled: true
+    sbom:
+      enabled: true
+      containerImage:
+        enabled: true
   override:
     nodeAgent:
       tolerations:
@@ -45,12 +57,18 @@ spec:
               mountPath: /host/etc/kubernetes/pki/etcd
             - name: disable-etcd-autoconf
               mountPath: /etc/datadog-agent/conf.d/etcd.d
+            - name: klogpath
+              readOnly: true
+              mountPath: /var/log/kubernetes
       volumes:
         - name: etcd-certs
           hostPath:
             path: /etc/kubernetes/pki/etcd
         - name: disable-etcd-autoconf
           emptyDir: {}
+        - name: klogpath
+          hostPath:
+            path: /var/log/kubernetes
       extraConfd:
         configDataMap:
           etcd.yaml: |-
@@ -78,3 +96,9 @@ spec:
             init_config:
             instances:
               - nginx_status_url: http://%%host%%:18080/nginx_status
+          kube_audit.yaml: |-
+            logs:
+              - type: file
+                path: /var/log/kubernetes/apiserver/audit.log
+                service: kube-apiserver-audit
+                source: kubernetes.audit
