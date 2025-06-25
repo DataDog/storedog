@@ -28,13 +28,14 @@ ENV BUNDLE_GEMFILE=/app/Gemfile \
   BUNDLE_BIN=/bundle/bin \
   GEM_HOME=/bundle \
   # Default environment variables
-  DD_ENV=development \
-  DD_VERSION=1.0.0 \
-  DD_SERVICE=store-backend \
   RAILS_ENV=production \
   REDIS_URL=redis://redis:6379/0 \
   DB_HOST=postgres \
   DB_PORT=5432 \
+  POSTGRES_PASSWORD=postgres \
+  POSTGRES_USER=postgres \
+  DB_POOL=25 \
+  MAX_THREADS=5 \
   DISABLE_SPRING=1 \
   DD_GIT_REPOSITORY_URL=${DD_GIT_REPOSITORY_URL} \
   DD_GIT_COMMIT_SHA=${DD_GIT_COMMIT_SHA}

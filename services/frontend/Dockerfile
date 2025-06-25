@@ -11,13 +11,6 @@ ARG DD_GIT_COMMIT_SHA
 
 # Set default environment variables
 ENV NEXT_TELEMETRY_DISABLED=1 \
-  DD_ENV=development \
-  DD_VERSION=1.0.0 \
-  DD_SERVICE=store-frontend \
-  NODE_ENV=development \
-  NEXT_PUBLIC_DD_SITE=datadoghq.com \
-  NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend \
-  NEXT_PUBLIC_DD_ENV=development \
   NEXT_PUBLIC_ADS_ROUTE=/services/ads \
   NEXT_PUBLIC_DISCOUNTS_ROUTE=/services/discounts \
   NEXT_PUBLIC_DBM_ROUTE=/services/dbm \

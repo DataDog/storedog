@@ -7,7 +7,7 @@ Storedog is a Dockerized e-commerce site used primarily in labs run at [learn.da
 - **Ads**: A service that serves banner ads to the homepage. The Java version of the service is primarily used, but see [the Python service's README](./services/ads/python/README.md) for details on how to run that one in it's place
 - **Discounts**: A Python service that provides a discount API for the frontend.
 - **Postgres**: A Postgres database that stores the product catalog and order data, as well as the Discount service's data.
-- **Nginx**: A reverse proxy that routes requests to the appropriate service.
+- **Nginx**: A reverse proxy that routes requests to the appropriate service. Also known as `service-proxy`. 
 - **DBM**: An optional Python service that runs a long-running query to demonstrate Database Monitoring. See [the DBM service's README](./services/dbm/README.md) for details on how to run this service.
 - **The Datadog Agent**: collects metrics and traces from the other services and sends them to Datadog.
 - **Puppeteer**: A Node.js service that runs a headless browser to generate RUM data for the frontend.
@@ -72,7 +72,7 @@ See the [Environment Variables](#environment-variables) section below for more d
    - `NEXT_PUBLIC_DD_APPLICATION_ID`: Required for RUM in frontend service
    - `NEXT_PUBLIC_DD_CLIENT_TOKEN`: Required for RUM in frontend service
 
-   You can find these values in your Datadog organization. All other variables have sensible defaults and can be left as-is.
+   You can find or create these values in your Datadog organization. All other variables have sensible defaults and can be left as-is.
 
 ### Starting the application
 
@@ -96,13 +96,13 @@ See the [Environment Variables](#environment-variables) section below for more d
    ```
 
 > [!NOTE]
-> By default, the frontend service runs in development mode when using `docker compose -f docker-compose.dev.yml up -d`. If you want to run it in production, you can set the `FRONTEND_COMMAND` environment variable to `npm run build && npm run start`. This can be done either in the Docker Compose file, on the host, or in the `.env` file.
+> By default, the frontend service runs in development mode when using `docker compose -f docker-compose.dev.yml up -d`. If you want to run it in production, you can set the `FRONTEND_COMMAND` environment variable to `npm run prod`. This can be done either in the compose file, on the host, or in the `.env` file.
 
 ## Environment Variables
 
 ### Core Datadog Variables
 
-These variables must be set for core functionality with Datadog, but will not affect the application's behavior:
+These variables must be set for core functionality with Datadog, but will not affect the application's behavior. Find these values in your Datadog organization's settings, you'll need to create a RUM application for the `DD_APPLICATION_ID` and `DD_CLIENT_TOKEN` values.
 
 - `DD_API_KEY`: Your Datadog API key (required for monitoring)
 - `DD_APP_KEY`: Your Datadog application key (required for API access)
@@ -112,14 +112,23 @@ These variables must be set for core functionality with Datadog, but will not af
 ### Frontend Service Variables
 
 - `FRONTEND_COMMAND`: Command to run the frontend service (default: `npm run dev`)
+
+> [!IMPORTANT]
+> This variable is set on the host or in the `.env` file. It is not set in the Docker Compose file, as `command` attribute values in compose files cannot reference variable definitions directly set in the `environment` attribute.
+
 - `NEXT_PUBLIC_ADS_ROUTE`: Route to the ads service (default: `/services/ads`)
 - `NEXT_PUBLIC_DISCOUNTS_ROUTE`: Route to the discounts service (default: `/services/discounts`)
 - `NEXT_PUBLIC_DBM_ROUTE`: Route to the DBM service (default: `/services/dbm`)
-- `NEXT_PUBLIC_FRONTEND_API_ROUTE`: Frontend API host (default: `http://nginx:80`)
-- `NEXT_PUBLIC_SPREE_API_HOST`: Spree API host (default: `http://nginx/services/backend`)
+- `NEXT_PUBLIC_FRONTEND_API_ROUTE`: Frontend API host (default: `http://service-proxy:80`)
+- `NEXT_PUBLIC_SPREE_API_HOST`: Spree API host (default: `http://service-proxy/services/backend`)
 - `NEXT_PUBLIC_SPREE_CLIENT_HOST`: Spree client host (default: `/services/backend`)
 - `NEXT_PUBLIC_SPREE_IMAGE_HOST`: Spree image host (default: `/services/backend`)
-- `NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN`: Allowed image domain (default: `nginx`)
+- `NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN`: Allowed image domain (default: `service-proxy`)
+
+> [!NOTE]
+> You'll notice some need the `http://service-proxy` prefix is used in some of the variables. The reason for this difference those specific calls are made from Next.js API routes, which require a full URL to the service. 
+>
+> The ones without the `http://service-proxy` prefix are used in the frontend service's `fetch` calls, which are made from the browser and are caught by the nginx service, because it intercepts calls to Next.js API routes and routes them to the appropriate service.
 
 ### Database Variables
 
@@ -137,22 +146,23 @@ These variables must be set for core functionality with Datadog, but will not af
 
 ### Datadog Configuration Variables
 
-Common Datadog variables that can be set for all services:
+Common Datadog variables that can be set in application services:
 
-- `DD_ENV`: Environment name (default: `development`)
+- `DD_ENV`: Environment name
 - `DD_SITE`: Datadog site (e.g., `datadoghq.com`, `datadoghq.eu`)
 - `DD_HOSTNAME`: Override default hostname
-- `DD_LOGS_INJECTION`: Enable automatic log injection (default: `true`)
-- `DD_PROFILING_ENABLED`: Enable profiling (default: `true`)
-- `DD_RUNTIME_METRICS_ENABLED`: Enable runtime metrics (default: `true`)
+- `DD_LOGS_INJECTION`: Enable log injection into traces. Some languages' trace libraries turn this on by default, but we turn it on explicitly to prevent confusion.
+- `DD_PROFILING_ENABLED`: Enable the Continuous Profiler 
+- `DD_RUNTIME_METRICS_ENABLED`: Enable runtime metrics
+- 
 
 Service-specific versions:
 - `DD_VERSION_FRONTEND`: Frontend version (default: `1.0.0`)
 - `DD_VERSION_BACKEND`: Backend version (default: `1.0.0`)
 - `DD_VERSION_DISCOUNTS`: Discounts service version (default: `1.0.0`)
 - `DD_VERSION_ADS`: Ads service version (default: `1.0.0`)
-- `DD_VERSION_NGINX`: Nginx version (default: `1.0.0`)
-- `DD_VERSION_POSTGRES`: PostgreSQL version (default: `1.0.0`)
+- `DD_VERSION_NGINX`: nginx service version (default: `1.0.0`)
+- `DD_VERSION_POSTGRES`: PostgreSQL service version (default: `1.0.0`)
 - `DD_VERSION_REDIS`: Redis version (default: `6.2`)
 
 > [!NOTE]
@@ -161,7 +171,7 @@ Service-specific versions:
 ### Puppeteer user session simulation variables
 
 Puppeteer service configuration:
-- `STOREDOG_URL`: Application URL to run user sessions on (default: `http://nginx:80`) 
+- `STOREDOG_URL`: Application URL to run user sessions on (default: `http://service-proxy:80`) 
   - In lab environments, use the URL running on the host instead to have more realistic looking URLs in your session data.
 
   ```
@@ -170,6 +180,8 @@ Puppeteer service configuration:
 
   > [!NOTE]
   > The `$HOSTNAME` and `$_SANDBOX_ID` variables are automatically set by Instruqt. Notice how this differs from what is used in the Storedog website tab in lab environments (`https://[HOSTNAME]-[PORT]-[PARTICIPANT_ID].env.play.instruqt.com`), as that is for authenticated traffic and the Puppeteer service is using an unauthenticated session.
+  >
+  > There is no need for a port in the URL, as the nginx service is configured to listen on port 80.
 
 - `PUPPETEER_TIMEOUT`: Sets max timeout for Puppeteer, in case the session is unresponsive
 - `SKIP_SESSION_CLOSE`: Skip closing browser sessions
@@ -290,9 +302,11 @@ There's information under the [Backend](#backend) section on how to rebuild the 
 
 The Postgres service also has logging set up to write to a JSON file and a fairly quick log rotation, which get saved in a Docker volume. 
 
-### Nginx
+### nginx
 
-The Nginx service is a reverse proxy that routes requests to the appropriate service. It is accessible at `http://localhost`.
+The nginx service is a reverse proxy that handles requests for both the frontend and backend API services. It is accessible at `http://localhost`.
+
+When viewing information about the application in Datadog, you'll see it referenced as `service-proxy`.
 
 ### DBM
 
@@ -301,6 +315,14 @@ The DBM service is an optional Python service that runs a long-running query to 
 ### Puppeteer
 
 The Puppeteer service is a Node.js service that runs a headless browser to generate RUM data for the frontend.
+
+It's a pre-built image that has sessions defined to run on the application, found in `services/puppeteer/scripts/puppeteer.js` but you can use Docker volume mounts to bring in your own customized sessions.
+
+```sh
+# add this to puppeteer service definition in a Docker Compose file
+volumes:
+  - ./services/puppeteer/scripts/puppeteer.js:/home/pptruser/puppeteer.js
+```
 
 ## Contributing
 

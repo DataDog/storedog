@@ -10,9 +10,6 @@ services:
       - DD_CONTAINER_EXCLUDE=image:agent name:puppeteer
       - DD_HOSTNAME=${DD_HOSTNAME:-production-host}
       - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
-    ports:
-      - '8126:8126/tcp'
-      - '8125:8125/udp'
     networks:
       - storedog-network
     volumes:
@@ -23,7 +20,7 @@ services:
       - postgres_logs:/var/log/pg_log:ro
   frontend:
     image: ghcr.io/datadog/storedog/frontend:${STOREDOG_IMAGE_VERSION:-latest}
-    command: bash -c "wait-for-it backend:4000 -- ${FRONTEND_COMMAND:-npm run build && npm run start}"
+    command: bash -c "wait-for-it backend:4000 -- ${FRONTEND_COMMAND:-npm run prod}"
     depends_on:
       - worker
       - dd-agent
@@ -32,8 +29,7 @@ services:
       - storedog-network
     environment:
       - DD_AGENT_HOST=dd-agent
-      - DD_SERVICE=store-frontend
-      - DD_ENV=${DD_ENV:-production}
+      - DD_SERVICE=store-frontend-api # used for Next.js API routes
       - DD_VERSION=${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}
       - DD_LOGS_INJECTION=true
       - DD_RUNTIME_METRICS_ENABLED=true
@@ -43,14 +39,11 @@ services:
       - NEXT_PUBLIC_DD_APPLICATION_ID=${NEXT_PUBLIC_DD_APPLICATION_ID:-DD_APPLICATION_ID-not-set}
       - NEXT_PUBLIC_DD_CLIENT_TOKEN=${NEXT_PUBLIC_DD_CLIENT_TOKEN:-DD_CLIENT_TOKEN-not-set}
       - NEXT_PUBLIC_DD_SITE=${NEXT_PUBLIC_DD_SITE:-datadoghq.com}
-      - NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend
+      - NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend # used for client-side Next.js RUM configuration
       - NEXT_PUBLIC_DD_ENV=${DD_ENV:-production}
       - NEXT_PUBLIC_DD_VERSION=${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}
     labels:
-      com.datadoghq.ad.logs: '[{"source": "nodejs", "service": "store-frontend", "auto_multi_line_detection":true }]'
-      com.datadoghq.tags.service: 'store-frontend'
-      com.datadoghq.tags.env: '${DD_ENV:-production}'
-      com.datadoghq.tags.version: '${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}'
+      com.datadoghq.ad.logs: '[{"source": "nodejs", "auto_multi_line_detection":true }]'
   backend:
     image: ghcr.io/datadog/storedog/backend:${STOREDOG_IMAGE_VERSION:-latest}
     command: wait-for-it postgres:5432 -- bundle exec rails s -b 0.0.0.0 -p 4000 --pid /app/tmp/pids/server.pid
@@ -58,8 +51,6 @@ services:
       - 'postgres'
       - 'redis'
       - 'dd-agent'
-    ports:
-      - '4000:4000'
     networks:
       - storedog-network
     volumes:
@@ -67,7 +58,6 @@ services:
     environment:
       - DD_AGENT_HOST=dd-agent
       - DD_SERVICE=store-backend
-      - DD_ENV=${DD_ENV:-production}
       - DD_VERSION=${DD_VERSION_BACKEND:-1.0.0}
       - DD_LOGS_INJECTION=true
       - DD_RUNTIME_METRICS_ENABLED=true
@@ -75,10 +65,7 @@ services:
       - DD_PROFILING_TIMELINE_ENABLED=true
       - DD_PROFILING_ALLOCATION_ENABLED=true
     labels:
-      com.datadoghq.ad.logs: '[{"source": "ruby", "service": "store-backend",  "auto_multi_line_detection":true }]'
-      com.datadoghq.tags.service: 'store-backend'
-      com.datadoghq.tags.env: '${DD_ENV:-production}'
-      com.datadoghq.tags.version: '${DD_VERSION_BACKEND:-1.0.0}'
+      com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection":true }]'
   worker:
     image: ghcr.io/datadog/storedog/backend:${STOREDOG_IMAGE_VERSION:-latest}
     command: wait-for-it postgres:5432 -- bundle exec sidekiq -C config/sidekiq.yml
@@ -93,7 +80,6 @@ services:
       - WORKER=true
       - DD_AGENT_HOST=dd-agent
       - DD_SERVICE=store-worker
-      - DD_ENV=${DD_ENV:-production}
       - DD_VERSION=${DD_VERSION_BACKEND:-1.0.0}
       - DD_LOGS_INJECTION=true
       - DD_RUNTIME_METRICS_ENABLED=true
@@ -101,10 +87,7 @@ services:
       - DD_PROFILING_TIMELINE_ENABLED=true
       - DD_PROFILING_ALLOCATION_ENABLED=true
     labels:
-      com.datadoghq.ad.logs: '[{"source": "ruby", "service": "store-worker",  "auto_multi_line_detection":true }]'
-      com.datadoghq.tags.service: 'store-worker'
-      com.datadoghq.tags.env: '${DD_ENV:-production}'
-      com.datadoghq.tags.version: '${DD_VERSION_BACKEND:-1.0.0}'
+      com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection":true }]'
   discounts:
     image: ghcr.io/datadog/storedog/discounts:${STOREDOG_IMAGE_VERSION:-latest}
     command: wait-for-it postgres:5432 -- ddtrace-run flask run --port=2814 --host=0.0.0.0
@@ -112,28 +95,18 @@ services:
       - postgres
       - dd-agent
     environment:
-      - FLASK_APP=discounts.py
-      - FLASK_DEBUG=0
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_HOST=postgres
       - DD_AGENT_HOST=dd-agent
       - DD_SERVICE=store-discounts
-      - DD_ENV=${DD_ENV:-production}
       - DD_VERSION=${DD_VERSION_DISCOUNTS:-1.0.0}
       - DD_LOGS_INJECTION=true
+      - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
       - DD_PROFILING_TIMELINE_ENABLED=true
       - DD_PROFILING_ALLOCATION_ENABLED=true
-    volumes:
-      - ./services/discounts:/app
     networks:
       - storedog-network
     labels:
-      com.datadoghq.ad.logs: '[{"source": "python", "service": "store-discounts"}]'
-      com.datadoghq.tags.service: 'store-discounts'
-      com.datadoghq.tags.env: '${DD_ENV:-production}'
-      com.datadoghq.tags.version: '${DD_VERSION_DISCOUNTS:-1.0.0}'
+      com.datadoghq.ad.logs: '[{"source": "python"}]'
   ads:
     image: ghcr.io/datadog/storedog/ads-java:${STOREDOG_IMAGE_VERSION:-latest}
     depends_on:
@@ -150,11 +123,11 @@ services:
     networks:
       - storedog-network
     labels:
-      com.datadoghq.ad.logs: '[{"source": "java", "service": "store-ads"}]'
+      com.datadoghq.ad.logs: '[{"source": "java"}]'
       com.datadoghq.tags.service: 'store-ads'
       com.datadoghq.tags.env: '${DD_ENV:-production}'
       com.datadoghq.tags.version: '${DD_VERSION_ADS:-1.0.0}'
-  nginx:
+  service-proxy:
     image: ghcr.io/datadog/storedog/nginx:${STOREDOG_IMAGE_VERSION:-latest}
     restart: always
     ports:
@@ -166,14 +139,10 @@ services:
       - dd-agent
     environment:
       - DD_AGENT_HOST=dd-agent
-      - DD_SERVICE=api-gateway
-      - DD_ENV=${DD_ENV:-production}
+      - DD_SERVICE=service-proxy
       - DD_VERSION=${DD_VERSION_NGINX:-1.0.0}
     labels:
-      com.datadoghq.tags.service: 'api-gateway'
-      com.datadoghq.tags.env: '${DD_ENV-production}'
-      com.datadoghq.tags.version: '${DD_VERSION_NGINX-1.0.0}'
-      com.datadoghq.ad.logs: '[{"source": "nginx", "service": "api-gateway"}]'
+      com.datadoghq.ad.logs: '[{"source": "nginx"}]'
       com.datadoghq.ad.check_names: '["nginx"]'
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]'
@@ -187,27 +156,19 @@ services:
     networks:
       - storedog-network
     environment:
-      - DD_AGENT_HOST=dd-agent
-      - DD_ENV=${DD_ENV:-production}
-      - DD_SERVICE=postgres
-      - DD_VERSION=${DD_VERSION_POSTGRES:-15}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
     labels:
-      com.datadoghq.tags.service: 'postgres'
-      com.datadoghq.tags.env: '${DD_ENV:-production}'
-      com.datadoghq.tags.version: '${DD_VERSION_POSTGRES:-15}'
+      com.datadoghq.tags.service: 'store-db'
+      com.datadoghq.tags.version: '${DD_VERSION_POSTGRES:-1.0.0}'
       com.datadoghq.ad.check_names: '["postgres"]'
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":5432, "username":"datadog", "password":"datadog"}]'
-      com.datadoghq.ad.logs: '[{"source": "postgresql", "service": "postgres", "auto_multi_line_detection":true, "path": "/var/log/pg_log/postgresql*.json", "type": "file"}]'
+      com.datadoghq.ad.logs: '[{"source": "postgresql", "auto_multi_line_detection":true, "path": "/var/log/pg_log/postgresql*.json", "type": "file"}]'
   redis:
     image: redis:6.2-alpine
     depends_on:
       - dd-agent
-    environment:
-      - DD_AGENT_HOST=dd-agent
-      - DD_SERVICE=redis
-      - DD_ENV=${DD_ENV:-production}
-      - DD_VERSION=${DD_VERSION_REDIS:-6.2}
     volumes:
       - 'redis:/data'
     networks:

@@ -19,19 +19,14 @@ RUN apk --update add openjdk11-jre
 ARG DD_GIT_REPOSITORY_URL
 ARG DD_GIT_COMMIT_SHA
 
-ENV ARTIFACT_NAME=store-ads.jar \
-  APP_HOME=/usr/app/ \
+ENV APP_HOME=/usr/app/ \
   ADS_SERVER_PORT=3030 \
-  # Default environment variables
-  DD_ENV=development \
-  DD_VERSION=1.0.0 \
-  DD_SERVICE=store-ads \
   DD_GIT_REPOSITORY_URL=${DD_GIT_REPOSITORY_URL} \
   DD_GIT_COMMIT_SHA=${DD_GIT_COMMIT_SHA} 
 
 WORKDIR $APP_HOME
-COPY --from=temp_build_image $APP_HOME/build/libs/$ARTIFACT_NAME .
+COPY --from=temp_build_image $APP_HOME/build/libs/*.jar store-ads.jar
 
 RUN wget -O dd-java-agent.jar 'https://dtdg.co/latest-java-tracer'
 
-ENTRYPOINT ["java", "-javaagent:/usr/app/dd-java-agent.jar", "-jar", "${ARTIFACT_NAME}"]
+ENTRYPOINT ["java", "-javaagent:/usr/app/dd-java-agent.jar", "-jar", "store-ads.jar"]

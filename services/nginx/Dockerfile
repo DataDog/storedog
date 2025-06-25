@@ -7,11 +7,6 @@ RUN apt-get update \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
-# Set default environment variables
-ENV DD_ENV=development \
-  DD_VERSION=1.0.0 \
-  DD_SERVICE=api-gateway
-
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY default.conf.template /etc/nginx/conf.d/default.conf.template
 COPY status.conf /etc/nginx/conf.d/status.conf

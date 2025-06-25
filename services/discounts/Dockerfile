@@ -26,23 +26,21 @@ USER root
 ARG DD_GIT_REPOSITORY_URL
 ARG DD_GIT_COMMIT_SHA
 
-# Let Flask know what to boot
+# Default environment variables
 ENV FLASK_APP=discounts.py \
-    # Default environment variables
-    DD_ENV=development \
-    DD_VERSION=1.0.0 \
-    DD_SERVICE=store-discounts \
     FLASK_DEBUG=0 \
     POSTGRES_HOST=postgres \
     POSTGRES_PORT=5432 \
+    POSTGRES_PASSWORD=postgres \
+    POSTGRES_USER=postgres \
     DD_GIT_REPOSITORY_URL=${DD_GIT_REPOSITORY_URL} \
     DD_GIT_COMMIT_SHA=${DD_GIT_COMMIT_SHA}
 
 # Install dependencies via pip and avoid caching build artifacts
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Pass in Port mapping (default to 8282)
-ARG DISCOUNTS_PORT=8282
+# Pass in Port mapping (default to 2814)
+ARG DISCOUNTS_PORT=2814
 # Because CMD is a runtime instruction, we have to create an additional ENV var that reads the ARG val
 # Only ENV vars are accessible via CMD
 ENV DISCOUNTS_PORT ${DISCOUNTS_PORT}
