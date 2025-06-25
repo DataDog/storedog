@@ -66,16 +66,7 @@ For a standard Kubernetes cluster, you'll need to set up a local registry that y
 1. Build and push **ALL** images to local registry:
 
    ```bash
-   REGISTRY_URL=localhost:5000
-
-   find ./services -name Dockerfile | while read dockerfile; do
-   context_dir=$(dirname "$dockerfile")
-   # Create a tag based on the path, e.g., storedog-ads-java for ./services/ads/java/Dockerfile
-   image_name=$(echo "$context_dir" | sed 's|^\./services/||; s|/|-|g')
-   full_tag="$REGISTRY_URL/storedog-$image_name:latest"
-   echo "Building $full_tag from $context_dir"
-   docker build -t "$full_tag" "$context_dir" && docker push "$full_tag"
-   done
+   REGISTRY_URL=localhost:5000; find ./services -name Dockerfile | while read dockerfile; do context_dir=$(dirname "$dockerfile"); image_name=$(echo "$context_dir" | sed 's|^\./services/||; s|/|-|g'); full_tag="$REGISTRY_URL/storedog-$image_name:latest"; echo "Building $full_tag from $context_dir"; docker build -t "$full_tag" "$context_dir" && docker push "$full_tag"; done
    ```
 
 ## Deployment Steps
@@ -103,14 +94,34 @@ export DD_VERSION_ADS=1.0.0
 export DD_VERSION_BACKEND=1.0.0
 export DD_VERSION_DISCOUNTS=1.0.0
 export DD_VERSION_NGINX=1.0.0
-
 export NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend
 export NEXT_PUBLIC_DD_VERSION_FRONTEND=1.0.0
-
 export DD_ENV=development
 ```
 
-### Deploy
+### Deploy the Datadog Operator
+
+1. Install the Datadog Operator with Helm:
+
+   ```bash
+   helm repo add datadog https://helm.datadoghq.com
+   helm repo update
+   helm install my-datadog-operator datadog/datadog-operator
+   ```
+
+1. Create a Kubernetes secret with your Datadog API and app keys:
+
+   ```bash
+   kubectl create secret generic datadog-secret --from-literal api-key=$DD_API_KEY --from-literal app-key=$DD_APP_KEY
+   ```
+
+1. Apply the Datadog Agent definition:
+
+   ```bash
+   kubectl apply -f k8s-manifests/datadog/datadog-agent.yaml
+   ```
+
+### Deploy Cluster Setup and Storedog
 
 The storedog-app definition files contain variables which need to be set before applying them to the cluster. The command below uses `envsubst` to update the variable values in place before applying the definition file.
 
