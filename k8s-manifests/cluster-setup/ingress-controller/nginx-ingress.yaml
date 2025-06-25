@@ -372,6 +372,10 @@ spec:
     port: 443
     protocol: TCP
     targetPort: https
+  - name: metrics
+    port: 10254
+    protocol: TCP
+    targetPort: metrics
   selector:
     app.kubernetes.io/component: controller
     app.kubernetes.io/instance: ingress-nginx

@@ -29,6 +29,8 @@ spec:
       containerCollectAll: true
     npm:
       enabled: true
+    clusterChecks:
+      enabled: true
   override:
     nodeAgent:
       tolerations:
@@ -48,7 +50,7 @@ spec:
                 tls_private_key: /host/etc/kubernetes/pki/etcd/server.key
           nginx-ingress-controller.yaml: |-
             ad_identifiers:
-              - ingress-nginx
+              - controller
             init_config:
             instances:
               - prometheus_url: http://%%host%%:10254/metrics
@@ -58,7 +60,7 @@ spec:
                 source: nginx-ingress-controller
           nginx.yaml: |-
             ad_identifiers:
-              - ingress-nginx
+              - controller
             init_config:
             instances:
               - nginx_status_url: http://%%host%%:18080/nginx_status
