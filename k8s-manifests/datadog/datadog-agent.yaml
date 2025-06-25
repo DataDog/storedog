@@ -43,16 +43,9 @@ spec:
             - name: DD_IGNORE_AUTOCONF
               value: "etcd"
       extraConfd:
+        configMap:
+          name: datadog-checks
         configDataMap:
-          etcd.yaml: |-
-            ad_identifiers:
-              - etcd
-            init_config:
-            instances:
-              - prometheus_url: https://%%host%%:2379/metrics
-                tls_ca_cert: /host/etc/kubernetes/pki/etcd/ca.crt
-                tls_cert: /host/etc/kubernetes/pki/etcd/server.crt
-                tls_private_key: /host/etc/kubernetes/pki/etcd/server.key
           nginx-ingress-controller.yaml: |-
             ad_identifiers:
               - controller
@@ -69,3 +62,32 @@ spec:
             init_config:
             instances:
               - nginx_status_url: http://%%host%%:18080/nginx_status
+        volumes:
+        - hostPath:
+            path: /etc/kubernetes/pki/etcd
+          name: etcd-certs
+        - name: disable-etcd-autoconf
+          emptyDir: {}
+        containers:
+        agent:
+          volumeMounts:
+            - name: etcd-certs
+              mountPath: /host/etc/kubernetes/pki/etcd
+              readOnly: true
+            - name: disable-etcd-autoconf
+              mountPath: /etc/datadog-agent/conf.d/etcd.d
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: datadog-checks
+data:
+  etcd.yaml: |-
+    ad_identifiers:
+      - etcd
+    init_config:
+    instances:
+      - prometheus_url: https://%%host%%:2379/metrics
+        tls_ca_cert: /host/etc/kubernetes/pki/etcd/ca.crt
+        tls_cert: /host/etc/kubernetes/pki/etcd/server.crt
+        tls_private_key: /host/etc/kubernetes/pki/etcd/server.key
