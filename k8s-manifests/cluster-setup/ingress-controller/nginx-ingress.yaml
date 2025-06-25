@@ -488,7 +488,7 @@ spec:
         - containerPort: 8443
           name: webhook
           protocol: TCP
-        - containerPort: 2379
+        - containerPort: 10254
           name: metrics
           protocol: TCP
         readinessProbe:
