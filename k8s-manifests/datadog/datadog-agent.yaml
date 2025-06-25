@@ -63,19 +63,19 @@ spec:
             instances:
               - nginx_status_url: http://%%host%%:18080/nginx_status
         volumes:
-        - hostPath:
-            path: /etc/kubernetes/pki/etcd
-          name: etcd-certs
-        - name: disable-etcd-autoconf
-          emptyDir: {}
+          - hostPath:
+              path: /etc/kubernetes/pki/etcd
+            name: etcd-certs
+          - name: disable-etcd-autoconf
+            emptyDir: {}
         containers:
-        agent:
-          volumeMounts:
-            - name: etcd-certs
-              mountPath: /host/etc/kubernetes/pki/etcd
-              readOnly: true
-            - name: disable-etcd-autoconf
-              mountPath: /etc/datadog-agent/conf.d/etcd.d
+          agent:
+            volumeMounts:
+              - name: etcd-certs
+                mountPath: /host/etc/kubernetes/pki/etcd
+                readOnly: true
+              - name: disable-etcd-autoconf
+                mountPath: /etc/datadog-agent/conf.d/etcd.d
 ---
 apiVersion: v1
 kind: ConfigMap
