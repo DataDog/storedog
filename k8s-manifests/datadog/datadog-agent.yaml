@@ -37,6 +37,11 @@ spec:
         - effect: NoSchedule
           key: node-role.kubernetes.io/control-plane
           operator: Exists
+      containers:
+        agent:
+          env:
+            - name: DD_IGNORE_AUTOCONF
+              value: "etcd"
       extraConfd:
         configDataMap:
           etcd.yaml: |-
