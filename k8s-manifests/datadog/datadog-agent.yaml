@@ -52,10 +52,17 @@ spec:
         - name: disable-etcd-autoconf
           emptyDir: {}
       extraConfd:
-        configMap:
-          name: datadog-checks
         configDataMap:
-          nginx-ingress-controller.yaml: |-
+          etcd.yaml: |-
+            ad_identifiers:
+              - etcd
+            init_config:
+            instances:
+              - prometheus_url: https://%%host%%:2379/metrics
+                tls_ca_cert: /host/etc/kubernetes/pki/etcd/ca.crt
+                tls_cert: /host/etc/kubernetes/pki/etcd/server.crt
+                tls_private_key: /host/etc/kubernetes/pki/etcd/server.key
+          nginx_ingress_controller.yaml: |-
             ad_identifiers:
               - controller
             init_config:
@@ -71,18 +78,3 @@ spec:
             init_config:
             instances:
               - nginx_status_url: http://%%host%%:18080/nginx_status
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: datadog-checks
-data:
-  etcd.yaml: |-
-    ad_identifiers:
-      - etcd
-    init_config:
-    instances:
-      - prometheus_url: https://%%host%%:2379/metrics
-        tls_ca_cert: /host/etc/kubernetes/pki/etcd/ca.crt
-        tls_cert: /host/etc/kubernetes/pki/etcd/server.crt
-        tls_private_key: /host/etc/kubernetes/pki/etcd/server.key
