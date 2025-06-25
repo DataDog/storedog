@@ -334,7 +334,7 @@ data:
         return 404;
       }
     }
-  nginx-status-ipv4-whitelist: "192.168.0.0/16"
+  nginx-status-ipv4-whitelist: "0.0.0.0/0"
 kind: ConfigMap
 metadata:
   labels:
