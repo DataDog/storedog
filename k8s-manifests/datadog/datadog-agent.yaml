@@ -34,24 +34,21 @@ spec:
   override:
     nodeAgent:
       tolerations:
-        - effect: NoSchedule
-          key: node-role.kubernetes.io/control-plane
+        - key: node-role.kubernetes.io/control-plane
           operator: Exists
+          effect: NoSchedule
       containers:
         agent:
-          env:
-            - name: DD_IGNORE_AUTOCONF
-              value: "etcd"
           volumeMounts:
             - name: etcd-certs
-              mountPath: /host/etc/kubernetes/pki/etcd
               readOnly: true
+              mountPath: /host/etc/kubernetes/pki/etcd
             - name: disable-etcd-autoconf
               mountPath: /etc/datadog-agent/conf.d/etcd.d
       volumes:
-        - hostPath:
+        - name: etcd-certs
+          hostPath:
             path: /etc/kubernetes/pki/etcd
-          name: etcd-certs
         - name: disable-etcd-autoconf
           emptyDir: {}
       extraConfd:
