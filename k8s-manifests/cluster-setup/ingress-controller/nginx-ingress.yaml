@@ -448,7 +448,7 @@ spec:
         - --validating-webhook=:8443
         - --validating-webhook-certificate=/usr/local/certificates/cert
         - --validating-webhook-key=/usr/local/certificates/key
-        - --enable-metrics=false
+        - --enable-metrics=true
         env:
         - name: POD_NAME
           valueFrom:
@@ -487,6 +487,9 @@ spec:
           protocol: TCP
         - containerPort: 8443
           name: webhook
+          protocol: TCP
+        - containerPort: 2379
+          name: metrics
           protocol: TCP
         readinessProbe:
           failureThreshold: 3
