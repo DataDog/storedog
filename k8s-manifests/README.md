@@ -4,14 +4,14 @@ This directory contains all the Kubernetes manifests for deploying the Storedog 
 
 ## Directory Structure
 
-The manifests are split into two logical groups:
+The manifests are split into logical groups and subdirectories as follows:
 
 ```
 k8s-manifests/
 ├── cluster-setup/
-│   ├── storage/
-│   ├── provisioner/
 │   └── ingress-controller/
+│   ├── provisioner/
+│   ├── storage/
 └── storedog-app/
     ├── configmaps/
     ├── secrets/
@@ -20,8 +20,8 @@ k8s-manifests/
     └── ingress/
 ```
 
-- **`cluster-setup/`**: Contains manifests for cluster-wide components that are prerequisites for the application. These are typically installed once per cluster.
-- **`storedog-app/`**: Contains all the manifests for the Storedog application itself.
+- **`cluster-setup/`**: Manifests for cluster-wide components (storage, provisioner, ingress controller).
+- **`storedog-app/`**: All manifests for the Storedog application, organized by resource type (configmaps, secrets, deployments, statefulsets, ingress).
 
 ## Cluster Prerequisites
 
@@ -69,9 +69,40 @@ For a standard Kubernetes cluster, you'll need to set up a local registry that y
    REGISTRY_URL=localhost:5000; find ./services -name Dockerfile | while read dockerfile; do context_dir=$(dirname "$dockerfile"); image_name=$(echo "$context_dir" | sed 's|^\./services/||; s|/|-|g'); full_tag="$REGISTRY_URL/storedog-$image_name:latest"; echo "Building $full_tag from $context_dir"; docker build -t "$full_tag" "$context_dir" && docker push "$full_tag"; done
    ```
 
+## Prerequisites
+
+Before deploying, ensure you have the following tools installed:
+
+- **kubectl** (v1.20+ recommended): For interacting with your Kubernetes cluster.
+- **helm** (v3+): For installing the Datadog Operator.
+- **docker**: For building and pushing container images.
+- **envsubst**: For substituting environment variables in manifest files.
+
+You should also have access to a running Kubernetes cluster (local or cloud) and sufficient permissions to create namespaces, deployments, and cluster-wide resources.
+
+## Environment Variables Reference
+
+The deployment process uses several environment variables to template image locations, tags, and configuration. Below is a summary:
+
+| Variable                      | Description                                 | Example                        |
+|-------------------------------|---------------------------------------------|---------------------------------|
+| `REGISTRY_URL`                | Container registry base URL                 | `localhost:5000`               |
+| `SD_TAG`                      | Storedog image tag/version                  | `latest`                       |
+
+Set these variables in your shell before running the deployment commands. See the deployment steps below for usage examples.
+
 ## Deployment Steps
 
 The Storedog manifest files use two variables to set the container registry URL and the version tag. The default is to use the localhost registry and `latest`. Set these environment variables accordingly when using a different registry location and tag version.
+
+Default values (development):
+
+```bash
+export REGISTRY_URL=localhost:5000
+export SD_TAG=latest
+```
+
+Example values for hosted containers:
 
 ```bash
 export REGISTRY_URL="ghcr.io/datadog/storedog"
@@ -79,6 +110,9 @@ export SD_TAG=1.3.0
 ```
 
 Deployment is a clean, two-stage process.
+### Deploy Cluster Setup and Storedog
+
+The storedog-app definition files contain variables which need to be set before applying them to the cluster. The command below uses `envsubst` to update the variable values in place before applying the definition file.
 
 1. **Deploy Cluster Components (one-time setup per cluster):**
    This single command installs the storage provisioner and the ingress controller.
@@ -92,7 +126,7 @@ Deployment is a clean, two-stage process.
 
    ```bash
    kubectl create namespace storedog
-   kubectl apply -R -f k8s-manifests/storedog-app/ -n storedog
+   for file in k8s-manifests/storedog-app/**/*.yaml; do envsubst < "$file" | kubectl apply -n storedog -f -; done
    ```
 
 1. **To reset the application:**
