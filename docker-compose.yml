@@ -184,7 +184,7 @@ services:
     image: ghcr.io/datadog/storedog/puppeteer:${STOREDOG_IMAGE_VERSION:-latest}
     platform: linux/amd64
     environment:
-      - STOREDOG_URL=${STOREDOG_URL:-http://nginx:80}
+      - STOREDOG_URL=${STOREDOG_URL:-http://service-proxy:80}
       - PUPPETEER_TIMEOUT=${PUPPETEER_TIMEOUT:-30000}
     networks:
       - storedog-network
