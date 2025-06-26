@@ -36,6 +36,8 @@ spec:
           ports:
             - containerPort: 3030
           env:
+            - name: DD_ENV
+              value: ${DD_ENV}
             - name: DD_SERVICE
               value: store-ads
             - name: DD_VERSION

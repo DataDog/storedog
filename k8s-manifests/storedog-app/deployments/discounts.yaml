@@ -57,6 +57,8 @@ spec:
                   key: POSTGRES_USER
             - name: POSTGRES_HOST
               value: postgres
+            - name: DD_ENV
+              value: ${DD_ENV}
             - name: DD_SERVICE
               value: store-discounts
             - name: DD_VERSION

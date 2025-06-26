@@ -81,6 +81,8 @@ spec:
                 configMapKeyRef:
                   name: storedog-config
                   key: MAX_THREADS
+            - name: DD_ENV
+              value: ${DD_ENV}
             - name: DD_SERVICE
               value: store-backend
             - name: DD_VERSION

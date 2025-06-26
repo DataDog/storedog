@@ -51,6 +51,8 @@ spec:
           env:
             - name: NGINX_RESOLVER
               value: "kube-dns.kube-system.svc.cluster.local"
+            - name: DD_ENV
+              value: ${DD_ENV}
             - name: DD_SERVICE
               value: api-gateway
             - name: DD_VERSION
