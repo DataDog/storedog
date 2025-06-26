@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: nginx
+  name: service-proxy
 spec:
   type: ClusterIP
   ports:
@@ -9,25 +9,25 @@ spec:
       targetPort: 80
       name: http
   selector:
-    app: nginx
+    app: service-proxy
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx
+  name: service-proxy
   labels:
-    tags.datadoghq.com/service: api-gateway
+    tags.datadoghq.com/service: service-proxy
     tags.datadoghq.com/version: 1.28.0
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: nginx
+      app: service-proxy
   template:
     metadata:
       labels:
-        app: nginx
-        tags.datadoghq.com/service: api-gateway
+        app: service-proxy
+        tags.datadoghq.com/service: service-proxy
         tags.datadoghq.com/version: 1.28.0
       annotations:
         ad.datadoghq.com/nginx.logs: '[{"source": "nginx"}]'
@@ -44,7 +44,7 @@ spec:
           hostPath:
             path: /var/run/datadog/
       containers:
-        - name: nginx
+        - name: service-proxy
           image: ${REGISTRY_URL}/storedog-nginx:${SD_TAG}
           ports:
             - containerPort: 80
@@ -54,7 +54,7 @@ spec:
             - name: DD_ENV
               value: ${DD_ENV}
             - name: DD_SERVICE
-              value: api-gateway
+              value: service-proxy
             - name: DD_VERSION
               value: ${DD_VERSION_NGINX}
             - name: DD_TRACE_AGENT_URL

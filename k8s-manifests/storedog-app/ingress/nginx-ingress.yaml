@@ -9,7 +9,7 @@ spec:
   # be sent to our central nginx reverse proxy.
   defaultBackend:
     service:
-      name: nginx
+      name: service-proxy
       port:
         number: 80
   rules:
@@ -22,6 +22,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: nginx
+                name: service-proxy
                 port:
                   number: 80
