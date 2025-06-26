@@ -16,33 +16,26 @@ spec:
         secretName: datadog-secret
         keyName: app-key
   features:
-    remoteConfiguration:
+    orchestratorExplorer: # Orchestrator Explorer
       enabled: true
-    orchestratorExplorer:
+    liveContainerCollection: # Containers View
       enabled: true
-    liveContainerCollection:
-      enabled: true
-    apm:
-      enabled: true
-    eventCollection:
-      collectKubernetesEvents: true
-    logCollection:
+    logCollection: # Logs
       enabled: true
       containerCollectAll: true
-    npm:
+    clusterChecks: # Required for integrations
       enabled: true
-    clusterChecks:
-      enabled: true
-    cspm:
-      enabled: true
-      hostBenchmarks:
-        enabled: true
-    cws:
-      enabled: true
-    sbom:
-      enabled: true
-      containerImage:
-        enabled: true
+    # Datadog security features
+    # cspm: # Cloud Security Posture Management
+    #   enabled: true
+    #   hostBenchmarks:
+    #     enabled: true
+    # cws: # Cloud Workload Security
+    #   enabled: true
+    # sbom: # Software Bill of Materials
+    #   enabled: true
+    #   containerImage:
+    #     enabled: true
   override:
     nodeAgent:
       tolerations:
@@ -96,9 +89,10 @@ spec:
             init_config:
             instances:
               - nginx_status_url: http://%%host%%:18080/nginx_status
-          kube_audit.yaml: |-
-            logs:
-              - type: file
-                path: /var/log/kubernetes/apiserver/audit.log
-                service: kube-apiserver-audit
-                source: kubernetes.audit
+          # Send audit logs to Datadog
+          # kube_audit.yaml: |-
+          #   logs:
+          #     - type: file
+          #       path: /var/log/kubernetes/apiserver/audit.log
+          #       service: kube-apiserver-audit
+          #       source: kubernetes.audit
