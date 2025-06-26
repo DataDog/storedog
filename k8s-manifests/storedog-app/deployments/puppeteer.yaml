@@ -17,7 +17,7 @@ spec:
           image: ${REGISTRY_URL}/storedog-puppeteer:${SD_TAG}
           env:
             - name: STOREDOG_URL
-              value: "http://nginx"
+              value: "http://service-proxy"
             - name: PUPPETEER_TIMEOUT
               value: "30000"
             - name: SKIP_SESSION_CLOSE
