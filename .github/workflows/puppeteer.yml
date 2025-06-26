@@ -1,4 +1,4 @@
-name: Frontend
+name: Puppeteer
 
 permissions: {}
 
@@ -6,12 +6,12 @@ on:
   push:
     branches: [main]
     paths:
-      - services/frontend/**
+      - services/puppeteer/**
   workflow_dispatch:
 
 defaults:
   run:
-    working-directory: frontend
+    working-directory: puppeteer
 
 jobs:
   build:
@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -38,10 +38,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: ./services/frontend
-          platforms: linux/arm64, linux/amd64
+          context: ./services/puppeteer
+          platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/datadog/storedog/frontend:latest
-          build-args: |
-            DD_GIT_REPOSITORY_URL=${{ github.server_url }}/${{ github.repository }}
-            DD_GIT_COMMIT_SHA=${{ github.sha }}
+          tags: ghcr.io/datadog/storedog/puppeteer:latest

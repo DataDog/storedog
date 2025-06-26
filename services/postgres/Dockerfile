@@ -3,6 +3,10 @@ FROM postgres:15-alpine
 # Install dcron and su-exec for user switching
 RUN apk update && apk add --no-cache dcron su-exec
 
+# Set default environment variables
+ENV POSTGRES_USER=postgres \
+  POSTGRES_PASSWORD=postgres
+
 # Copy SQL dump and PostgreSQL configuration
 COPY ./db/restore.sql /docker-entrypoint-initdb.d/
 COPY ./postgresql.conf /postgresql.conf

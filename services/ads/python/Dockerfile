@@ -20,7 +20,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Set default Flask app and development environment
 ENV FLASK_APP=ads.py
+ENV POSTGRES_PASSWORD=postgres
+ENV POSTGRES_USER=postgres
+ENV POSTGRES_HOST=postgres
 
 # Start the app using ddtrace so we have profiling and tracing
 ENTRYPOINT ["ddtrace-run"]
-CMD flask run --port=3030 --host=0.0.0.0
+CMD ["flask", "run", "--port=3030", "--host=0.0.0.0"]

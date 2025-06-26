@@ -1,9 +1,10 @@
 {
   "name": "storedog-frontend",
-  "version": "2.0.0",
+  "version": "1.4.0",
   "license": "MIT",
   "scripts": {
     "dev": "NODE_OPTIONS='--require dd-trace/init --require next-logger' next dev",
+    "prod": "next build && NODE_OPTIONS='--require dd-trace/init --require next-logger' next start",
     "build": "next build",
     "start": "NODE_OPTIONS='--require dd-trace/init --require next-logger' next start",
     "analyze": "BUNDLE_ANALYZE=both next build",
@@ -13,14 +14,14 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@datadog/browser-rum": "^6.0.0",
+    "@datadog/browser-rum": "^6.6.2",
     "@radix-ui/react-dropdown-menu": "^0.1.6",
     "@react-spring/web": "^9.4.1",
     "autoprefixer": "^10.4.2",
     "body-scroll-lock": "^4.0.0-beta.0",
     "clsx": "^1.1.1",
     "code-stash": "https://origin-static-assets.s3.amazonaws.com/corp-node-packages/master/code-stash-v1.0.5.tgz",
-    "dd-trace": "^5.3.0",
+    "dd-trace": "^5.56.0",
     "keen-slider": "^6.6.3",
     "lodash.random": "^3.2.0",
     "lodash.throttle": "^4.1.1",

@@ -95,9 +95,6 @@ export const getProduct = async (options: any): Promise<Product | any> => {
 
     const productApi: any = await res.json()
 
-    console.log('PRODUCT API RETURN')
-    console.log(productApi)
-
     const product: Product = {
       id: productApi.data.id,
       name: productApi.data.attributes.name,

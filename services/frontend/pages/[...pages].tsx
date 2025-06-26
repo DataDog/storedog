@@ -9,7 +9,7 @@ export async function getServerSideProps({
 }: GetServerSidePropsContext<{ pages: string }>) {
   const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_API_ROUTE
     ? `${process.env.NEXT_PUBLIC_FRONTEND_API_ROUTE}/api`
-    : 'http://localhost/api'
+    : 'http://localhost:3000/api'
   const slug = params?.pages as string
 
   const pageRes = await fetch(`${baseUrl}/pages/${slug}`)

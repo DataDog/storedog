@@ -8,7 +8,7 @@ import config from '../../featureFlags.config.json'
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_API_ROUTE
     ? `${process.env.NEXT_PUBLIC_FRONTEND_API_ROUTE}/api`
-    : 'http://localhost/api'
+    : 'http://localhost:3000/api'
 
   const products: Product[] = await fetch(`${baseUrl}/products`).then((res) =>
     res.json()

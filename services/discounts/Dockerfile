@@ -22,15 +22,25 @@ WORKDIR /app
 COPY . .
 
 USER root
-# Let Flask know what to boot
-ENV FLASK_APP=discounts.py
+
+ARG DD_GIT_REPOSITORY_URL
+ARG DD_GIT_COMMIT_SHA
+
+# Default environment variables
+ENV FLASK_APP=discounts.py \
+    FLASK_DEBUG=0 \
+    POSTGRES_HOST=postgres \
+    POSTGRES_PORT=5432 \
+    POSTGRES_PASSWORD=postgres \
+    POSTGRES_USER=postgres \
+    DD_GIT_REPOSITORY_URL=${DD_GIT_REPOSITORY_URL} \
+    DD_GIT_COMMIT_SHA=${DD_GIT_COMMIT_SHA}
 
 # Install dependencies via pip and avoid caching build artifacts
 RUN pip install --no-cache-dir -r requirements.txt
-# RUN chmod +x ./my-wrapper-script.sh
 
-# Pass in Port mapping (default to 8282)
-ARG DISCOUNTS_PORT=8282
+# Pass in Port mapping (default to 2814)
+ARG DISCOUNTS_PORT=2814
 # Because CMD is a runtime instruction, we have to create an additional ENV var that reads the ARG val
 # Only ENV vars are accessible via CMD
 ENV DISCOUNTS_PORT ${DISCOUNTS_PORT}
