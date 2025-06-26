@@ -10,33 +10,15 @@ The manifests are split into logical groups and subdirectories as follows:
 k8s-manifests/
 ├── cluster-setup/
 │   ├── ingress-controller/
-│   │   └── nginx-ingress.yaml
 │   ├── provisioner/
-│   │   └── local-path-storage.yaml
 │   └── storage/
-│       └── storageclass.yaml
 ├── datadog/
-│   └── datadog-agent.yaml
 └── storedog-app/
     ├── configmaps/
-    │   ├── postgres-config.yaml
-    │   ├── postgres-scripts.yaml
-    │   └── shared-config.yaml
     ├── secrets/
-    │   └── shared-secrets.yaml
     ├── deployments/
-    │   ├── ads.yaml
-    │   ├── backend.yaml
-    │   ├── discounts.yaml
-    │   ├── frontend.yaml
-    │   ├── nginx.yaml
-    │   ├── puppeteer.yaml
-    │   └── worker.yaml
     ├── statefulsets/
-    │   ├── postgres.yaml
-    │   └── redis.yaml
     └── ingress/
-        └── nginx-ingress.yaml
 ```
 
 - **`cluster-setup/`**: Manifests for cluster-wide components (storage, provisioner, ingress controller).
