@@ -4,24 +4,44 @@ This directory contains all the Kubernetes manifests for deploying the Storedog 
 
 ## Directory Structure
 
-The manifests are split into two logical groups:
+The manifests are split into logical groups and subdirectories as follows:
 
 ```
 k8s-manifests/
 ├── cluster-setup/
-│   ├── storage/
+│   ├── ingress-controller/
+│   │   └── nginx-ingress.yaml
 │   ├── provisioner/
-│   └── ingress-controller/
+│   │   └── local-path-storage.yaml
+│   └── storage/
+│       └── storageclass.yaml
+├── datadog/
+│   └── datadog-agent.yaml
 └── storedog-app/
     ├── configmaps/
+    │   ├── postgres-config.yaml
+    │   ├── postgres-scripts.yaml
+    │   └── shared-config.yaml
     ├── secrets/
+    │   └── shared-secrets.yaml
     ├── deployments/
+    │   ├── ads.yaml
+    │   ├── backend.yaml
+    │   ├── discounts.yaml
+    │   ├── frontend.yaml
+    │   ├── nginx.yaml
+    │   ├── puppeteer.yaml
+    │   └── worker.yaml
     ├── statefulsets/
+    │   ├── postgres.yaml
+    │   └── redis.yaml
     └── ingress/
+        └── nginx-ingress.yaml
 ```
 
-- **`cluster-setup/`**: Contains manifests for cluster-wide components that are prerequisites for the application. These are typically installed once per cluster.
-- **`storedog-app/`**: Contains all the manifests for the Storedog application itself.
+- **`cluster-setup/`**: Manifests for cluster-wide components (storage, provisioner, ingress controller).
+- **`datadog/`**: Datadog agent manifest for observability.
+- **`storedog-app/`**: All manifests for the Storedog application, organized by resource type (configmaps, secrets, deployments, statefulsets, ingress).
 
 ## Cluster Prerequisites
 
@@ -68,6 +88,37 @@ For a standard Kubernetes cluster, you'll need to set up a local registry that y
    ```bash
    REGISTRY_URL=localhost:5000; find ./services -name Dockerfile | while read dockerfile; do context_dir=$(dirname "$dockerfile"); image_name=$(echo "$context_dir" | sed 's|^\./services/||; s|/|-|g'); full_tag="$REGISTRY_URL/storedog-$image_name:latest"; echo "Building $full_tag from $context_dir"; docker build -t "$full_tag" "$context_dir" && docker push "$full_tag"; done
    ```
+
+## Prerequisites
+
+Before deploying, ensure you have the following tools installed:
+
+- **kubectl** (v1.20+ recommended): For interacting with your Kubernetes cluster.
+- **helm** (v3+): For installing the Datadog Operator.
+- **docker**: For building and pushing container images.
+- **envsubst**: For substituting environment variables in manifest files.
+
+You should also have access to a running Kubernetes cluster (local or cloud) and sufficient permissions to create namespaces, deployments, and cluster-wide resources.
+
+## Environment Variables Reference
+
+The deployment process uses several environment variables to template image locations, tags, and configuration. Below is a summary:
+
+| Variable                      | Description                                 | Example                        |
+|-------------------------------|---------------------------------------------|---------------------------------|
+| `REGISTRY_URL`                | Container registry base URL                 | `localhost:5000`               |
+| `SD_TAG`                      | Storedog image tag/version                  | `latest`                       |
+| `DD_VERSION_ADS`              | Version tag for ads service                 | `1.0.0`                        |
+| `DD_VERSION_BACKEND`          | Version tag for backend & worker services   | `1.0.0`                        |
+| `DD_VERSION_DISCOUNTS`        | Version tag for discounts service           | `1.0.0`                        |
+| `DD_VERSION_NGINX`            | Version tag for nginx                       | `1.0.0`                        |
+| `NEXT_PUBLIC_DD_SERVICE_FRONTEND` | RUM service name for frontend           | `store-frontend`               |
+| `NEXT_PUBLIC_DD_VERSION_FRONTEND` | Version tag for frontend service        | `1.0.0`                        |
+| `DD_ENV`                      | Environment name (e.g., development, prod)  | `development`                   |
+| `DD_API_KEY`                  | Datadog API key (for secret creation)       | `<your-datadog-api-key>`        |
+| `DD_APP_KEY`                  | Datadog App key (for secret creation)       | `<your-datadog-app-key>`        |
+
+Set these variables in your shell before running the deployment commands. See the deployment steps below for usage examples.
 
 ## Deployment Steps
 
