@@ -20,6 +20,6 @@ ENV APP_HOME=/usr/app/ \
     ADS_SERVER_PORT=3030
 
 WORKDIR $APP_HOME
-COPY --from=temp_build_image $APP_HOME/build/libs/*.jar ads-java.jar
+COPY --from=temp_build_image $APP_HOME/build/libs/*.jar store-ads.jar
 
 ENTRYPOINT ["java", "-jar", "ads-java.jar"]

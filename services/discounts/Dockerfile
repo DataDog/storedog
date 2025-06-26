@@ -33,8 +33,8 @@ ENV FLASK_APP=discounts.py \
 # Install dependencies via pip and avoid caching build artifacts
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Pass in Port mapping (default to 8282)
-ARG DISCOUNTS_PORT=8282
+# Pass in Port mapping (default to 2814)
+ARG DISCOUNTS_PORT=2814
 # Because CMD is a runtime instruction, we have to create an additional ENV var that reads the ARG val
 # Only ENV vars are accessible via CMD
 ENV DISCOUNTS_PORT ${DISCOUNTS_PORT}

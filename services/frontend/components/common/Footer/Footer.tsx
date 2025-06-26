@@ -21,7 +21,7 @@ const links = [
 
 const Footer: FC<Props> = ({ className, pages = [] }) => {
   const rootClassName = cn(s.root, className)
-
+  const linkList = pages?.length > 0 ? [...links, ...pages] : links
   return (
     <footer className={rootClassName}>
       <Container>
@@ -37,7 +37,7 @@ const Footer: FC<Props> = ({ className, pages = [] }) => {
           </div>
           <div className="col-span-1 lg:col-span-8">
             <div className="grid md:grid-rows-4 md:grid-cols-3 md:grid-flow-col">
-              {[...links, ...pages].map((page) => (
+              {linkList.map((page) => (
                 <span key={page.name} className="py-3 md:py-0 md:pb-4">
                   <Link href={page.url!}>
                     <a className="text-accent-9 hover:text-accent-6 transition ease-in-out duration-150 footer-link">
