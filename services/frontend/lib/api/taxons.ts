@@ -3,7 +3,7 @@ import type { Taxon } from '@customTypes/taxons'
 
 const SPREE_URL_SERVERSIDE = process.env.NEXT_PUBLIC_SPREE_API_HOST
   ? `${process.env.NEXT_PUBLIC_SPREE_API_HOST}/api/v2`
-  : 'http://nginx/services/backend/api/v2'
+  : 'http://service-proxy/services/backend/api/v2'
 
 //  get taxons
 export const getTaxons = async (options: any = {}): Promise<Taxon[] | any> => {
