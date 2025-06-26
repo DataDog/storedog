@@ -3,7 +3,7 @@ import { Page } from '@customTypes/page'
 
 const SPREE_URL_SERVERSIDE = process.env.NEXT_PUBLIC_SPREE_API_HOST
   ? `${process.env.NEXT_PUBLIC_SPREE_API_HOST}/api/v2`
-  : 'http://nginx/services/backend/api/v2'
+  : 'http://service-proxy/services/backend/api/v2'
 
 export const getPages = async (options: any = {}): Promise<Page[] | any> => {
   try {
