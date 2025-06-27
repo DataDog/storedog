@@ -3,7 +3,7 @@ import { Product } from '@customTypes/product'
 
 const SPREE_URL_SERVERSIDE = process.env.NEXT_PUBLIC_SPREE_API_HOST
   ? `${process.env.NEXT_PUBLIC_SPREE_API_HOST}/api/v2`
-  : 'http://nginx/services/backend/api/v2'
+  : 'http://service-proxy/services/backend/api/v2'
 
 //  GET CONTENT API
 export const getProducts = async (
@@ -94,9 +94,6 @@ export const getProduct = async (options: any): Promise<Product | any> => {
     }
 
     const productApi: any = await res.json()
-
-    console.log('PRODUCT API RETURN')
-    console.log(productApi)
 
     const product: Product = {
       id: productApi.data.id,

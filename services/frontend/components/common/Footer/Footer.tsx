@@ -21,6 +21,7 @@ const links = [
 
 const Footer: FC<Props> = ({ className, pages = [] }) => {
   const rootClassName = cn(s.root, className)
+
   const linkList = pages?.length > 0 ? [...links, ...pages] : links
   return (
     <footer className={rootClassName}>
