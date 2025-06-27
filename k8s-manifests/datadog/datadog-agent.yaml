@@ -20,7 +20,7 @@ spec:
       enabled: true
       containerCollectAll: true
     apm:
-      instrumentation:
+      instrumentation: # Single Step Instrumentation
         enabled: true
         targets:
           - name: "default-target"
