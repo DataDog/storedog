@@ -15,7 +15,6 @@ import {
   updateQuantity,
   applyCouponCode,
 } from '@lib/api/cart'
-import { datadogRum } from '@datadog/browser-rum'
 import userData from '@config/user_data.json'
 import type { Cart } from '@customTypes/cart'
 
@@ -71,11 +70,9 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     // if user exists in local storage, set user or create a new user
     if (localStorage.getItem('rum_user')) {
       const user = JSON.parse(localStorage.getItem('rum_user') || '')
-      datadogRum.setUser(user)
       setCartUser(user)
     } else {
       const user = userData[Math.floor(Math.random() * userData.length)]
-      datadogRum.setUser(user)
       localStorage.setItem('rum_user', JSON.stringify(user))
       setCartUser(user)
     }

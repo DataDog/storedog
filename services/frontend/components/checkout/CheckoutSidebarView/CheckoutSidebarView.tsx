@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { FC, useState } from 'react'
 import cn from 'clsx'
-import { datadogRum } from '@datadog/browser-rum'
 
 import CartItem from '@components/cart/CartItem'
 import { Button, Text } from '@components/ui'
@@ -55,25 +54,6 @@ const CheckoutSidebarView: FC = () => {
 
       console.log('cartData', cartData)
 
-      datadogRum.addAction('Successful Checkout', {
-        id: cartData.id,
-        cart_total: cartData.totalPrice,
-        created_at: cartData.createdAt,
-        discounts: cartData.discounts,
-      })
-
-      cartData.lineItems.forEach((item: any) => {
-        datadogRum.addAction('Product Purchased', {
-          product: {
-            id: item.id,
-            name: item.name,
-            variant: item.variant.name,
-            quantity: item.quantity,
-            price: item.variant.price,
-          },
-        })
-      })
-
       // clearCheckoutFields()
       setLoadingSubmit(false)
       await cartEmpty()
@@ -119,9 +99,6 @@ const CheckoutSidebarView: FC = () => {
 
       setDiscountInput('')
     } catch (err) {
-      datadogRum.addError(err, {
-        discount_code: discountInput,
-      })
     }
   }
 

@@ -1,6 +1,5 @@
 import React from 'react'
 import { withRouter } from 'next/router'
-import { datadogRum } from '@datadog/browser-rum'
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -17,7 +16,6 @@ class ErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     // You can use your own error logging service here
     // console.log({ error, errorInfo });
-    datadogRum.addError(error, errorInfo)
   }
   render() {
     const { router } = this.props

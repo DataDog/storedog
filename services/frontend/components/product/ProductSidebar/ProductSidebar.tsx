@@ -1,5 +1,4 @@
 import s from './ProductSidebar.module.css'
-import { datadogRum } from '@datadog/browser-rum'
 import { FC, useEffect, useState } from 'react'
 import { useCart } from '@lib/CartContext'
 import type { Product } from '@customTypes/product'
@@ -32,18 +31,6 @@ const ProductSidebar: FC<ProductSidebarProps> = ({ product, className }) => {
       if (cartRes.error) {
         throw new Error(cartRes.error)
       }
-
-      datadogRum.addAction('Product Added to Cart', {
-        cartTotal: cart.totalPrice,
-        product: {
-          name: product.name,
-          sku: product.sku,
-          id: product.id,
-          price: product.price.value,
-          slug: product.slug,
-          variantName: variant.attributes.name || 'default',
-        },
-      })
 
       setSidebarView('CART_VIEW')
       openSidebar()

@@ -71,7 +71,7 @@ const initialState: State = {
   addressFields: {
     firstname: 'Jade',
     lastname: 'Angelou',
-    email: 'jade@ddtraining.datadoghq.com',
+    email: 'jade@example.com',
     address1: '32 Stenson Drive',
     address2: '',
     zipcode: '94016',
