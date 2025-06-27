@@ -22,4 +22,4 @@ ENV APP_HOME=/usr/app/ \
 WORKDIR $APP_HOME
 COPY --from=temp_build_image $APP_HOME/build/libs/*.jar store-ads.jar
 
-ENTRYPOINT ["java", "-jar", "ads-java.jar"]
+ENTRYPOINT ["java", "-jar", "store-ads.jar"]
