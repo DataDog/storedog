@@ -1,0 +1,32 @@
+apiVersion: datadoghq.com/v2alpha1
+kind: DatadogAgent
+metadata:
+  name: datadog
+spec:
+  global:
+    clusterName: storedog-k8s
+    site: datadoghq.com
+    kubelet:
+      tlsVerify: false
+    credentials:
+      apiSecret:
+        secretName: datadog-secret
+        keyName: api-key
+      appSecret:
+        secretName: datadog-secret
+        keyName: app-key
+  features:
+    logCollection: # Logs
+      enabled: true
+      containerCollectAll: true
+    apm:
+      instrumentation:
+        enabled: true
+        targets:
+          - name: "default-target"
+            ddTraceVersions:
+              java: "1"
+              python: "3"
+              js: "5"
+              php: "1"
+              dotnet: "3"
