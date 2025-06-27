@@ -126,7 +126,7 @@ services:
       - storedog-network
 
   # Web server and reverse proxy
-  nginx:
+  service-proxy:
     image: ${REGISTRY_URL-localhost:5000}/storedog-nginx:${SD_TAG-latest}
     restart: always
     ports:
