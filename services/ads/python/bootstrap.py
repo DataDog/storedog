@@ -6,6 +6,7 @@ DB_USERNAME = os.environ['POSTGRES_USER']
 DB_PASSWORD = os.environ['POSTGRES_PASSWORD']
 DB_HOST = os.environ['POSTGRES_HOST']
 
+
 def create_app():
     """Create a Flask application"""
     app = Flask(__name__)

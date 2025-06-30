@@ -4,12 +4,14 @@ import random
 import sys
 import re
 
-from flask import jsonify, send_from_directory
+from flask import Response, jsonify, send_from_directory
 from flask import request as flask_request
 from flask_cors import CORS
 
 from bootstrap import create_app
 from models import Advertisement, db
+
+patch(logging=True)
 
 formatter = json_log_formatter.VerboseJSONFormatter()
 json_handler = logging.StreamHandler(sys.stdout)
@@ -39,7 +41,6 @@ class NoEscape(logging.Filter):
             record.args = tuple(map(self.strip_esc, record.args))
         return 1
 
-
 remove_color_filter = NoEscape()
 logger.addFilter(remove_color_filter)
 
@@ -47,18 +48,18 @@ logger.addFilter(remove_color_filter)
 @app.route('/')
 def hello():
     logger.info("home url for ads called")
-    return jsonify({'Hello from Advertisements!': 'world'})
+    return Response({'Hello from Advertisements!': 'world'}, mimetype='application/json')
 
 
 @app.route('/banners/<path:banner>')
 def banner_image(banner):
-    logger.info("attempting to grab banner at {}".format(banner))
+    logger.info(f"attempting to grab banner at {banner}")
     return send_from_directory('ads', banner)
 
 
 @app.route('/weighted-banners/<float:weight>')
 def weighted_image(weight):
-    logger.info("attempting to grab banner weight of less than {}".format(weight))
+    logger.info(f"attempting to grab banner weight of less than {weight}")
     advertisements = Advertisement.query.all()
     for ad in advertisements:
         if ad.weight < weight:
@@ -93,7 +94,8 @@ def status():
 
             try:
                 advertisements = Advertisement.query.all()
-                logger.info("Total advertisements available: {}".format(len(advertisements)))
+                logger.info(
+                    f"Total advertisements available: {len(advertisements)}")
                 return jsonify([b.serialize() for b in advertisements])
 
             except:
@@ -110,7 +112,7 @@ def status():
             new_advertisement = Advertisement('Advertisement ' + str(advertisements_count + 1),
                                               '/',
                                               random.randint(10, 500))
-            logger.info("Adding advertisement {}".format(new_advertisement))
+            logger.info(f"Adding advertisement {new_advertisement}")
             db.session.add(new_advertisement)
             db.session.commit()
             advertisements = Advertisement.query.all()
