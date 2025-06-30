@@ -110,7 +110,7 @@ services:
 
   # Advertisement service (Java)
   ads-java:
-    image: ${REGISTRY_URL-localhost:5000}/storedog-ads:${SD_TAG-latest}
+    image: ${REGISTRY_URL-localhost:5000}/storedog-ads-java:${SD_TAG-latest}
     environment:
       - DD_APM_INSTRUMENTATION_DEBUG=true
     networks:
