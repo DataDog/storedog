@@ -9,7 +9,7 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
 
         rewrite ^/services/ads(/.*)$ $1 break;
-        # Proxy to ads-java, ensure trailing slash for proper URI handling
+        # Proxy to ads, ensure trailing slash for proper URI handling
         proxy_pass http://ads:3030/;
     }
 
