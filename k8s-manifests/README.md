@@ -69,6 +69,19 @@ For a standard Kubernetes cluster, you'll need to set up a local registry that y
    REGISTRY_URL=localhost:5000; find ./services -name Dockerfile | while read dockerfile; do context_dir=$(dirname "$dockerfile"); image_name=$(echo "$context_dir" | sed 's|^\./services/||; s|/|-|g'); full_tag="$REGISTRY_URL/storedog-$image_name:latest"; echo "Building $full_tag from $context_dir"; docker build -t "$full_tag" "$context_dir" && docker push "$full_tag"; done
    ```
 
+1. You may want to rebuild one service while testing. It helps to export the `REGISTRY_URL` so you don't need to keep setting it.
+
+   ```bash
+   export REGISTRY_URL=localhost:5000
+   ```
+
+   > [!IMPORTANT]
+   > Building and pushing containers to the local registry needs to be done on the worker node.
+
+   ```bash
+   docker build -t $REGISTRY_URL/storedog-backend:latest ./services/backend && docker push $REGISTRY_URL/storedog-backend:latest
+   ```
+
 ## Prerequisites
 
 Before deploying, ensure you have the following tools installed:
