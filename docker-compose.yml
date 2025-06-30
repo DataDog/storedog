@@ -38,8 +38,6 @@ services:
       - '4000:4000'
     networks:
       - storedog-network
-    volumes:
-      - './services/backend:/app'
     environment:
       - REDIS_URL=redis://redis:6379/0
       - DB_HOST=postgres
@@ -63,8 +61,6 @@ services:
       - 'backend'
     networks:
       - storedog-network
-    volumes:
-      - ./services/backend:/app
     environment:
       # this will never not be true
       - WORKER=true
@@ -91,16 +87,48 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_HOST=postgres
-    volumes:
-      - ./services/discounts:/app
     networks:
       - storedog-network
 
   # Advertisement service (Java)
+  # ads:
+  #   image: ${REGISTRY_URL-localhost:5000}/storedog-ads-java:${SD_TAG-latest}
+  #   build:
+  #     context: ./services/ads/java
+  #   networks:
+  #     - storedog-network
+
+  # Advertisement service (Python 2.7)
+  # ads:
+  #   image: ${REGISTRY_URL-localhost:5000}/storedog-ads-python:${SD_TAG-latest}
+  #   build:
+  #     context: ./services/ads/python
+  #   command: wait-for-it postgres:5432 -- flask run --port=3030 --host=0.0.0.0
+  #   depends_on:
+  #     - postgres
+  #   environment:
+  #     - FLASK_APP=ads.py
+  #     - FLASK_DEBUG=0
+  #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+  #     - POSTGRES_USER=${POSTGRES_USER:-postgres}
+  #     - POSTGRES_HOST=postgres
+  #   networks:
+  #     - storedog-network
+
+  # Advertisement service (Python 3)
   ads:
-    image: ${REGISTRY_URL-localhost:5000}/storedog-ads-java:${SD_TAG-latest}
+    image: ${REGISTRY_URL-localhost:5000}/storedog-ads-python3:${SD_TAG-latest}
     build:
-      context: ./services/ads/java
+      context: ./services/ads/python3
+    command: wait-for-it postgres:5432 -- flask run --port=3030 --host=0.0.0.0
+    depends_on:
+      - postgres
+    environment:
+      - FLASK_APP=ads.py
+      - FLASK_DEBUG=0
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_HOST=postgres
     networks:
       - storedog-network
 

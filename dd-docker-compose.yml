@@ -33,9 +33,6 @@ services:
     depends_on:
       - worker
       - backend
-    volumes:
-      - ./services/frontend:/app
-      - /app/node_modules
     networks:
       - storedog-network
     environment:
@@ -60,8 +57,6 @@ services:
       - '4000:4000'
     networks:
       - storedog-network
-    volumes:
-      - './services/backend:/app'
     environment:
       - REDIS_URL=redis://redis:6379/0
       - DB_HOST=postgres
@@ -84,8 +79,6 @@ services:
       - 'backend'
     networks:
       - storedog-network
-    volumes:
-      - ./services/backend:/app
     environment:
       # this will never not be true
       - WORKER=true
@@ -112,16 +105,44 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_HOST=postgres
       - DD_APM_INSTRUMENTATION_DEBUG=true
-    volumes:
-      - ./services/discounts:/app
     networks:
       - storedog-network
 
   # Advertisement service (Java)
+  # ads:
+  #   image: ${REGISTRY_URL-localhost:5000}/storedog-ads:${SD_TAG-latest}
+  #   environment:
+  #     - DD_APM_INSTRUMENTATION_DEBUG=true
+  #   networks:
+  #     - storedog-network
+
+  # Advertisement service (Python 2.7)
+  # ads:
+  #   image: ${REGISTRY_URL-localhost:5000}/storedog-ads-python:${SD_TAG-latest}
+  #   command: wait-for-it postgres:5432 -- flask run --port=3030 --host=0.0.0.0
+  #   depends_on:
+  #     - postgres
+  #   environment:
+  #     - FLASK_APP=ads.py
+  #     - FLASK_DEBUG=0
+  #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+  #     - POSTGRES_USER=${POSTGRES_USER:-postgres}
+  #     - POSTGRES_HOST=postgres
+  #   networks:
+  #     - storedog-network
+
+  # Advertisement service (Python 3)
   ads:
-    image: ${REGISTRY_URL-localhost:5000}/storedog-ads:${SD_TAG-latest}
+    image: ${REGISTRY_URL-localhost:5000}/storedog-ads-python3:${SD_TAG-latest}
+    command: wait-for-it postgres:5432 -- flask run --port=3030 --host=0.0.0.0
+    depends_on:
+      - postgres
     environment:
-      - DD_APM_INSTRUMENTATION_DEBUG=true
+      - FLASK_APP=ads.py
+      - FLASK_DEBUG=0
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_HOST=postgres
     networks:
       - storedog-network
 
@@ -135,6 +156,7 @@ services:
       - storedog-network
     depends_on:
       - frontend
+
   # Primary database
   postgres:
     image: ${REGISTRY_URL-localhost:5000}/storedog-postgres:${SD_TAG-latest}
