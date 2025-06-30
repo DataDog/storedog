@@ -11,8 +11,6 @@ from flask_cors import CORS
 from bootstrap import create_app
 from models import Advertisement, db
 
-patch(logging=True)
-
 formatter = json_log_formatter.VerboseJSONFormatter()
 json_handler = logging.StreamHandler(sys.stdout)
 json_handler.setFormatter(formatter)
