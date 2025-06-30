@@ -13,8 +13,6 @@ from flask_cors import CORS
 from bootstrap import create_app
 from models import Advertisement, db
 
-patch(logging=True)
-
 formatter = json_log_formatter.VerboseJSONFormatter()
 json_handler = logging.StreamHandler(sys.stdout)
 json_handler.setFormatter(formatter)
@@ -27,8 +25,6 @@ CORS(app)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Add filter to remove color-encoding from logs e.g. "[37mGET / HTTP/1.1 [0m" 200 -
-
-
 class NoEscape(logging.Filter):
     def __init__(self):
         self.regex = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
