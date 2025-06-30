@@ -1,12 +1,10 @@
 import json_log_formatter
 import logging
-import requests
 import random
-import time
 import sys
 import re
 
-from flask import Flask, Response, jsonify, send_from_directory
+from flask import jsonify, send_from_directory
 from flask import request as flask_request
 from flask_cors import CORS
 
