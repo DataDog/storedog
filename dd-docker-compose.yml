@@ -109,12 +109,12 @@ services:
       - storedog-network
 
   # Advertisement service (Java)
-  # ads:
-  #   image: ${REGISTRY_URL-localhost:5000}/storedog-ads:${SD_TAG-latest}
-  #   environment:
-  #     - DD_APM_INSTRUMENTATION_DEBUG=true
-  #   networks:
-  #     - storedog-network
+  ads-java:
+    image: ${REGISTRY_URL-localhost:5000}/storedog-ads:${SD_TAG-latest}
+    environment:
+      - DD_APM_INSTRUMENTATION_DEBUG=true
+    networks:
+      - storedog-network
 
   # Advertisement service (Python 2.7)
   # ads:

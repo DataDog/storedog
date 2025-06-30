@@ -91,12 +91,12 @@ services:
       - storedog-network
 
   # Advertisement service (Java)
-  # ads:
-  #   image: ${REGISTRY_URL-localhost:5000}/storedog-ads-java:${SD_TAG-latest}
-  #   build:
-  #     context: ./services/ads/java
-  #   networks:
-  #     - storedog-network
+  ads-java:
+    image: ${REGISTRY_URL-localhost:5000}/storedog-ads-java:${SD_TAG-latest}
+    build:
+      context: ./services/ads/java
+    networks:
+      - storedog-network
 
   # Advertisement service (Python 2.7)
   # ads:
