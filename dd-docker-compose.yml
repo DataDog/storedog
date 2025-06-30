@@ -112,6 +112,9 @@ services:
   ads-java:
     image: ${REGISTRY_URL-localhost:5000}/storedog-ads-java:${SD_TAG-latest}
     environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_HOST=postgres
       - DD_APM_INSTRUMENTATION_DEBUG=true
     networks:
       - storedog-network
@@ -143,6 +146,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_HOST=postgres
+      - DD_APM_INSTRUMENTATION_DEBUG=true
     networks:
       - storedog-network
 
