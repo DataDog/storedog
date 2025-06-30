@@ -95,6 +95,10 @@ services:
     image: ${REGISTRY_URL-localhost:5000}/storedog-ads-java:${SD_TAG-latest}
     build:
       context: ./services/ads/java
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_HOST=postgres
     networks:
       - storedog-network
 

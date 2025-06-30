@@ -17,6 +17,9 @@ FROM alpine:latest
 RUN apk --update add openjdk11-jre
 
 ENV APP_HOME=/usr/app/ \
+    POSTGRES_PASSWORD=postgres \
+    POSTGRES_USER=postgres \
+    POSTGRES_HOST=postgres
     ADS_SERVER_PORT=3030
 
 WORKDIR $APP_HOME
