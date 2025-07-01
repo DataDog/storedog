@@ -47,7 +47,7 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: ${REGISTRY_URL}/storedog-postgres:${SD_TAG}
+          image: ${REGISTRY_URL}/postgres:${SD_TAG}
           ports:
             - containerPort: 5432
               name: postgres
