@@ -2,9 +2,7 @@ upstream ads_service_a {
     server ${ADS_A_UPSTREAM} max_fails=1 fail_timeout=1s;
 }
 
-upstream ads_service_b {
-    server ${ADS_B_UPSTREAM} max_fails=1 fail_timeout=1s;
-}
+${ADS_SERVICE_B_BLOCK}
 
 # Conditional upstream based on what's enabled
 upstream ads_upstream {
