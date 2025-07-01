@@ -4,6 +4,8 @@ set -e
 
 # Use 127.0.0.11 as the default resolver for Docker Compose
 export NGINX_RESOLVER=${NGINX_RESOLVER:-127.0.0.11}
+# Set the default ADS_A_UPSTREAM to the Java ads service
+export ADS_A_UPSTREAM=${ADS_A_UPSTREAM:-ads:3030}
 
 # Calculate upstream config based on ADS_B_PERCENT
 ADS_B_PERCENT=${ADS_B_PERCENT:-0}
