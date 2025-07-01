@@ -16,10 +16,6 @@ spec:
         secretName: datadog-secret
         keyName: app-key
   features:
-    orchestratorExplorer: # Orchestrator Explorer
-      enabled: true
-    liveContainerCollection: # Containers View
-      enabled: true
     logCollection: # Logs
       enabled: true
       containerCollectAll: true
@@ -37,25 +33,27 @@ spec:
     #   containerImage:
     #     enabled: true
   override:
-    nodeAgent:
-      tolerations:
-        - key: node-role.kubernetes.io/control-plane
-          operator: Exists
-          effect: NoSchedule
+    # Deploy the Datadog agent to the control plane nodes.
+    # Use this to monitor pods running on the control plane nodes.
+    # nodeAgent:
+    #   tolerations:
+    #     - key: node-role.kubernetes.io/control-plane
+    #       operator: Exists
+    #       effect: NoSchedule
       containers:
         agent:
           volumeMounts:
-            - name: etcd-certs
+            - name: etcd-certs # Used for etcd integration
               readOnly: true
               mountPath: /host/etc/kubernetes/pki/etcd
-            - name: disable-etcd-autoconf
+            - name: disable-etcd-autoconf # Used for etcd integration
               mountPath: /etc/datadog-agent/conf.d/etcd.d
             # Used for audit logs
             # - name: klogpath
             #   readOnly: true
             #   mountPath: /var/log/kubernetes
       volumes:
-        - name: etcd-certs
+        - name: etcd-certs # Used for etcd integration
           hostPath:
             path: /etc/kubernetes/pki/etcd
         - name: disable-etcd-autoconf
@@ -65,8 +63,8 @@ spec:
         #   hostPath:
         #     path: /var/log/kubernetes
       extraConfd:
-        configDataMap:
-          etcd.yaml: |-
+        configDataMap: # Integration configurations
+          etcd.yaml: |- # etcd integration
             ad_identifiers:
               - etcd
             init_config:
@@ -75,7 +73,7 @@ spec:
                 tls_ca_cert: /host/etc/kubernetes/pki/etcd/ca.crt
                 tls_cert: /host/etc/kubernetes/pki/etcd/server.crt
                 tls_private_key: /host/etc/kubernetes/pki/etcd/server.key
-          nginx_ingress_controller.yaml: |-
+          nginx_ingress_controller.yaml: |- # nginx-ingress-controller integration
             ad_identifiers:
               - controller
             init_config:
@@ -85,7 +83,7 @@ spec:
             logs:
               - service: controller
                 source: nginx-ingress-controller
-          nginx.yaml: |-
+          nginx.yaml: |- # nginx integration on the nginx-ingress-controller
             ad_identifiers:
               - controller
             init_config:
