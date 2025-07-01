@@ -36,7 +36,7 @@ spec:
           command: ['sh', '-c', 'until nc -z backend 4000; do echo waiting for backend; sleep 2; done;']
       containers:
         - name: frontend
-          image: ${REGISTRY_URL}/storedog-frontend:${SD_TAG}
+          image: ${REGISTRY_URL}/frontend:${SD_TAG}
           ports:
             - containerPort: 3000
           command: ["npm", "run", "dev"]
