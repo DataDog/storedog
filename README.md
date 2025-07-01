@@ -191,7 +191,7 @@ Puppeteer service configuration:
 These variables control the upstream configuration for the ads services in the Nginx (service-proxy) container, enabling A/B testing and traffic splitting between the Java and Python ads services.
 
 > [!IMPORTANT]
-> When `ADS_B_PERCENT` is greater than zero, the `ADS_B_UPSTREAM` endpoint must be reachable. Otherwise, the service-proxy will crash and restart.
+> When `ADS_B_PERCENT` is greater than zero, the `ADS_B_UPSTREAM` endpoint must be reachable. Otherwise, the service-proxy will crash and restart. Uncomment the `ads-python` section in `docker-compose.yml` to enable the service.
 
 - `ADS_A_UPSTREAM`: Host and port for the primary (A) ads service (default: `ads:3030`)
 - `ADS_B_UPSTREAM`: Host and port for the secondary (B) ads service (default: `ads-python:3030`)
