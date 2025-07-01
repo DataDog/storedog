@@ -220,7 +220,7 @@ services:
       - ADS_B_PERCENT=${ADS_B_PERCENT:-0} # Percent of traffic to ads-python; remainder goes to ads-java. Only needed if using AB testing
       - DD_AGENT_HOST=dd-agent
       - DD_SERVICE=service-proxy
-      - DD_VERSION=${DD_VERSION_NGINX:-1.0.0}
+      - DD_VERSION=${DD_VERSION_NGINX:-1.28.0}
     labels:
       com.datadoghq.ad.logs: '[{"source": "nginx"}]'
       com.datadoghq.ad.check_names: '["nginx"]'
