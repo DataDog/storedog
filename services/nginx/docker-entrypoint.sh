@@ -12,7 +12,11 @@ if [ -z "$ADS_B_PERCENT" ] || [ "$ADS_B_PERCENT" -eq 0 ]; then
     ADS_SERVICE_B_BLOCK=""
     UPSTREAM_CONFIG="server ${ADS_A_UPSTREAM};"
 else
-    ADS_SERVICE_B_BLOCK="upstream ads_service_b {\n    server ${ADS_B_UPSTREAM} max_fails=1 fail_timeout=1s;\n}"
+    read -r -d '' ADS_SERVICE_B_BLOCK <<EOF
+upstream ads_service_b {
+    server ${ADS_B_UPSTREAM} max_fails=1 fail_timeout=1s;
+}
+EOF
     ADS_A_WEIGHT=$((100 - ADS_B_PERCENT))
     ADS_B_WEIGHT=$ADS_B_PERCENT
     UPSTREAM_CONFIG="server ${ADS_A_UPSTREAM} weight=${ADS_A_WEIGHT}; server ${ADS_B_UPSTREAM} weight=${ADS_B_WEIGHT};"
