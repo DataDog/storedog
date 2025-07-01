@@ -165,6 +165,7 @@ services:
     build:
       context: ./services/ads/java
     depends_on:
+      - postgres
       - dd-agent
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
@@ -187,6 +188,7 @@ services:
   #   build:
   #     context: ./services/ads/python
   #   depends_on:
+  #     - postgres
   #     - dd-agent
   #   environment:
   #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}

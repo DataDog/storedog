@@ -110,6 +110,7 @@ services:
   ads:
     image: ghcr.io/datadog/storedog/ads-java:${STOREDOG_IMAGE_VERSION:-latest}
     depends_on:
+      - postgres
       - dd-agent
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
@@ -131,6 +132,7 @@ services:
   # ads-python:
   #   image: ghcr.io/datadog/storedog/ads:${STOREDOG_IMAGE_VERSION:-latest}
   #   depends_on:
+  #     - postgres
   #     - dd-agent
   #   environment:
   #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
