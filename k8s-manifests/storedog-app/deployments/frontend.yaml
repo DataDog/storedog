@@ -1,0 +1,121 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+spec:
+  ports:
+    - port: 3000
+      targetPort: 3000
+      name: http
+  selector:
+    app: frontend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+      annotations:
+        ad.datadoghq.com/frontend.logs: '[{"source": "nodejs", "auto_multi_line_detection":true}]'
+    spec:
+      volumes:
+        - name: apmsocketpath
+          hostPath:
+            path: /var/run/datadog/
+      initContainers:
+        - name: wait-for-backend
+          image: busybox
+          command: ['sh', '-c', 'until nc -z backend 4000; do echo waiting for backend; sleep 2; done;']
+      containers:
+        - name: frontend
+          image: ${REGISTRY_URL}/storedog-frontend:${SD_TAG}
+          ports:
+            - containerPort: 3000
+          command: ["npm", "run", "dev"]
+          env:
+            - name: NEXT_PUBLIC_ADS_ROUTE
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: NEXT_PUBLIC_ADS_ROUTE
+            - name: NEXT_PUBLIC_DISCOUNTS_ROUTE
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: NEXT_PUBLIC_DISCOUNTS_ROUTE
+            - name: NEXT_PUBLIC_DBM_ROUTE
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: NEXT_PUBLIC_DBM_ROUTE
+            - name: NEXT_PUBLIC_FRONTEND_API_ROUTE
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: NEXT_PUBLIC_FRONTEND_API_ROUTE
+            - name: NEXT_PUBLIC_SPREE_API_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: NEXT_PUBLIC_SPREE_API_HOST
+            - name: NEXT_PUBLIC_SPREE_CLIENT_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: NEXT_PUBLIC_SPREE_CLIENT_HOST
+            - name: NEXT_PUBLIC_SPREE_IMAGE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: NEXT_PUBLIC_SPREE_IMAGE_HOST
+            - name: NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN
+            - name: DD_ENV
+              value: ${DD_ENV}
+            - name: DD_SERVICE
+              value: ${NEXT_PUBLIC_DD_SERVICE_FRONTEND}
+            - name: DD_VERSION
+              value: ${NEXT_PUBLIC_DD_VERSION_FRONTEND}
+            - name: DD_LOGS_INJECTION
+              value: "true"
+            - name: DD_RUNTIME_METRICS_ENABLED
+              value: "true"
+            - name: DD_PROFILING_ENABLED
+              value: "true"
+            - name: DD_PROFILING_ALLOCATION_ENABLED
+              value: "true"
+            - name: DD_PROFILING_TIMELINE_ENABLED
+              value: "true"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "2Gi"
+          volumeMounts:
+            - name: apmsocketpath
+              mountPath: /var/run/datadog
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 180
+            periodSeconds: 20
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 120
+            periodSeconds: 20

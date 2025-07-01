@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-proxy
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 80
+      name: http
+  selector:
+    app: service-proxy
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-proxy
+  labels:
+    tags.datadoghq.com/service: service-proxy
+    tags.datadoghq.com/version: 1.28.0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: service-proxy
+  template:
+    metadata:
+      labels:
+        app: service-proxy
+        tags.datadoghq.com/service: service-proxy
+        tags.datadoghq.com/version: 1.28.0
+      annotations:
+        ad.datadoghq.com/nginx.logs: '[{"source": "nginx"}]'
+        ad.datadoghq.com/nginx.checks: |
+          {
+            "nginx": {
+            "init_config": {},
+            "instances": [{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]
+            }
+          }
+    spec:
+      volumes:
+        - name: apmsocketpath
+          hostPath:
+            path: /var/run/datadog/
+      containers:
+        - name: service-proxy
+          image: ${REGISTRY_URL}/storedog-nginx:${SD_TAG}
+          ports:
+            - containerPort: 80
+          env:
+            - name: NGINX_RESOLVER
+              value: "kube-dns.kube-system.svc.cluster.local"
+            - name: DD_ENV
+              value: ${DD_ENV}
+            - name: DD_SERVICE
+              value: service-proxy
+            - name: DD_VERSION
+              value: ${DD_VERSION_NGINX}
+            - name: DD_TRACE_AGENT_URL
+              value: 'unix:///var/run/datadog/apm.socket'
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          volumeMounts:
+            - name: apmsocketpath
+              mountPath: /var/run/datadog
