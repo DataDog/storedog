@@ -1,11 +1,15 @@
-split_clients "${msec}" $ads_ab_variant {
-    ${ADS_B_PERCENT}% B;
-    * A;
+upstream ads_service_a {
+    server ${ADS_A_UPSTREAM} max_fails=1 fail_timeout=1s;
 }
 
-map $ads_ab_variant $ads_upstream {
-    A ${ADS_A_UPSTREAM};
-    B ${ADS_B_UPSTREAM};
+upstream ads_service_b {
+    server ${ADS_B_UPSTREAM} max_fails=1 fail_timeout=1s;
+}
+
+# Conditional upstream based on what's enabled
+upstream ads_upstream {
+    # This will be populated based on environment variables
+    ${UPSTREAM_CONFIG}
 }
 
 server {
@@ -20,7 +24,7 @@ server {
 
         rewrite ^/services/ads(/.*)$ $1 break;
         # Proxy to ads service based on A/B split
-        proxy_pass http://$ads_upstream/;
+        proxy_pass http://ads_upstream/;
     }
 
     # Reverse proxy for discounts 
