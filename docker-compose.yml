@@ -117,7 +117,6 @@ services:
       - POSTGRES_HOST=postgres
       - DD_AGENT_HOST=dd-agent
       - DD_SERVICE=store-ads
-      - DD_ENV=${DD_ENV:-production}
       - DD_VERSION=${DD_VERSION_ADS:-1.0.0}
       - DD_LOGS_INJECTION=true
       - DD_PROFILING_ENABLED=true
@@ -128,7 +127,6 @@ services:
     labels:
       com.datadoghq.ad.logs: '[{"source": "java"}]'
       com.datadoghq.tags.service: 'store-ads'
-      com.datadoghq.tags.env: '${DD_ENV:-production}'
       com.datadoghq.tags.version: '${DD_VERSION_ADS:-1.0.0}'
   # ads-python:
   #   image: ghcr.io/datadog/storedog/ads:${STOREDOG_IMAGE_VERSION:-latest}
@@ -140,7 +138,6 @@ services:
   #     - POSTGRES_HOST=postgres
   #     - DD_AGENT_HOST=dd-agent
   #     - DD_SERVICE=store-ads-python
-  #     - DD_ENV=${DD_ENV:-production}
   #     - DD_VERSION=${DD_VERSION_ADS_PYTHON:-1.0.0}
   #   networks:
   #     - storedog-network

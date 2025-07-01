@@ -194,7 +194,6 @@ services:
   #     - POSTGRES_HOST=postgres
   #     - DD_AGENT_HOST=dd-agent
   #     - DD_SERVICE=store-ads-python
-  #     - DD_ENV=${DD_ENV:-production}
   #     - DD_VERSION=${DD_VERSION_ADS_PYTHON:-1.0.0}
   #   networks:
   #     - storedog-network
@@ -259,6 +258,7 @@ services:
       - storedog-network
     labels:
       com.datadoghq.tags.service: 'redis'
+      com.datadoghq.tags.env: '${DD_ENV:-development}'
       com.datadoghq.tags.version: '${DD_VERSION_REDIS:-6.2}'
       com.datadoghq.ad.check_names: '["redisdb"]'
       com.datadoghq.ad.init_configs: '[{}]'
