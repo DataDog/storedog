@@ -15,9 +15,13 @@ import java.util.HashMap;
 import org.springframework.web.bind.annotation.RequestParam;
 import java.util.concurrent.TimeoutException;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.beans.factory.annotation.Autowired;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Bean;
+import org.springframework.boot.CommandLineRunner;
 
 
 @SpringBootApplication
@@ -25,6 +29,9 @@ import org.slf4j.LoggerFactory;
 public class AdsJavaApplication {
 
     private static final Logger logger = LoggerFactory.getLogger(AdsJavaApplication.class);
+
+    @Autowired
+    private AdvertisementRepository advertisementRepository;
 
 	@RequestMapping("/")
 	public String home() {
@@ -51,7 +58,7 @@ public class AdsJavaApplication {
         value = "/ads",
         produces = MediaType.APPLICATION_JSON_VALUE
     )
-	public HashMap[] ads(@RequestHeader HashMap<String, String> headers) {
+    public List<Advertisement> ads(@RequestHeader HashMap<String, String> headers) {
         logger.info("/ads called");
 
         boolean errorFlag = false;
@@ -74,28 +81,25 @@ public class AdsJavaApplication {
                 throw new RuntimeException(e);
             }
         } else {
-            HashMap<String, String> map1 = new HashMap<>();
-            map1.put("id", "1");
-            map1.put("name", "Discount Clothing");
-            map1.put("path", "1.jpg");
-
-            HashMap<String, String> map2 = new HashMap<>();
-            map2.put("id", "2");
-            map2.put("name", "Cool Hats");
-            map2.put("path", "2.jpg");
-
-            HashMap<String, String> map3 = new HashMap<>();
-            map3.put("id", "3");
-            map3.put("name", "Nic Bags");
-            map3.put("path", "3.jpg");
-            HashMap[] myArr = { map1, map2, map3 };
-            logger.info("Total responses available: " + myArr.length);
-            return myArr;
+            List<Advertisement> ads = advertisementRepository.findAll();
+            logger.info("Total ads available: " + ads.size());
+            return ads;
         }
-	}
+    }
 
 	public static void main(String[] args) {
 		SpringApplication.run(AdsJavaApplication.class, args);
 	}
+
+    @Bean
+    public CommandLineRunner initDb(AdvertisementRepository repository) {
+        return args -> {
+            if (repository.count() == 0) {
+                repository.save(new Advertisement("Discount Clothing", "1.jpg"));
+                repository.save(new Advertisement("Cool Hats", "2.jpg"));
+                repository.save(new Advertisement("Nice Bags", "3.jpg"));
+            }
+        };
+    }
 
 }
