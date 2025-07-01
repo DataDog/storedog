@@ -167,6 +167,9 @@ services:
     depends_on:
       - dd-agent
     environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_HOST=postgres
       - DD_AGENT_HOST=dd-agent
       - DD_SERVICE=store-ads
       - DD_VERSION=${DD_VERSION_ADS:-1.0.0}

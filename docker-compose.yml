@@ -112,6 +112,9 @@ services:
     depends_on:
       - dd-agent
     environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_HOST=postgres
       - DD_AGENT_HOST=dd-agent
       - DD_SERVICE=store-ads
       - DD_ENV=${DD_ENV:-production}
