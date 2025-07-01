@@ -130,6 +130,19 @@ services:
       com.datadoghq.tags.service: 'store-ads'
       com.datadoghq.tags.env: '${DD_ENV:-production}'
       com.datadoghq.tags.version: '${DD_VERSION_ADS:-1.0.0}'
+  ads-python:
+    image: ghcr.io/datadog/storedog/ads-python:${STOREDOG_IMAGE_VERSION:-latest}
+    depends_on:
+      - dd-agent
+    environment:
+      - DD_AGENT_HOST=dd-agent
+      - DD_SERVICE=store-ads-python
+      - DD_ENV=${DD_ENV:-production}
+      - DD_VERSION=${DD_VERSION_ADS_PYTHON:-1.0.0}
+    networks:
+      - storedog-network
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "python"}]'
   service-proxy:
     image: ghcr.io/datadog/storedog/nginx:${STOREDOG_IMAGE_VERSION:-latest}
     restart: always
@@ -144,6 +157,9 @@ services:
       - DD_AGENT_HOST=dd-agent
       - DD_SERVICE=service-proxy
       - DD_VERSION=${DD_VERSION_NGINX:-1.0.0}
+      - ADS_A_UPSTREAM=${ADS_A_UPSTREAM:-ads:3030}
+      - ADS_B_UPSTREAM=${ADS_B_UPSTREAM:-ads-python:3030}
+      - ADS_B_PERCENT=${ADS_B_PERCENT:-0}
     labels:
       com.datadoghq.ad.logs: '[{"source": "nginx"}]'
       com.datadoghq.ad.check_names: '["nginx"]'

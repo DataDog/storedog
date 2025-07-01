@@ -1,6 +1,17 @@
 server {
     listen 80;
 
+    # A/B split: each request is randomly assigned based on $msec
+    split_clients "${msec}" $ads_ab_variant {
+        ${ADS_B_PERCENT}% B;
+        * A;
+    }
+
+    map $ads_ab_variant $ads_upstream {
+        A ${ADS_A_UPSTREAM};
+        B ${ADS_B_UPSTREAM};
+    }
+
     # Reverse proxy for ads
     location /services/ads {
         proxy_set_header Host $host;
@@ -9,8 +20,8 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
 
         rewrite ^/services/ads(/.*)$ $1 break;
-        # Proxy to ads-java, ensure trailing slash for proper URI handling
-        proxy_pass http://ads:3030/;
+        # Proxy to ads service based on A/B split
+        proxy_pass http://$ads_upstream/;
     }
 
     # Reverse proxy for discounts 
