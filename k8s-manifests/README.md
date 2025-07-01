@@ -46,30 +46,44 @@ For a standard Kubernetes cluster, you'll need to set up a local registry that y
 
 1. Start a local Docker registry:
 
-   ```bash
-   docker run -d -p 5000:5000 --restart=always --name registry registry:2
-   ```
+```bash
+docker run -d -p 5000:5000 --restart=always --name registry registry:2
+```
 
-1. Configure worker nodes to trust the insecure registry:
-   - On each WORKER node only (not needed on control plane), add the following to `/etc/docker/daemon.json`:
+2. Configure worker nodes to trust the insecure registry:
 
-   ```json
-   {
-     "insecure-registries": ["localhost:5000"]
-   }
-   ```
+- On each WORKER node only (not needed on control plane), add the following to `/etc/docker/daemon.json`:
 
-   - Restart Docker on each WORKER node:
+```json
+{
+   "insecure-registries": ["localhost:5000"]
+}
+```
 
-   ```bash
-   sudo systemctl restart docker
-   ```
+- Restart Docker on each WORKER node:
 
-1. Build and push **ALL** images to local registry:
+```bash
+sudo systemctl restart docker
+```
 
-   ```bash
-   REGISTRY_URL=localhost:5000; find ./services -name Dockerfile | while read dockerfile; do context_dir=$(dirname "$dockerfile"); image_name=$(echo "$context_dir" | sed 's|^\./services/||; s|/|-|g'); full_tag="$REGISTRY_URL/storedog-$image_name:latest"; echo "Building $full_tag from $context_dir"; docker build -t "$full_tag" "$context_dir" && docker push "$full_tag"; done
-   ```
+3. Build and push **ALL** images to local registry:
+
+```bash
+REGISTRY_URL=localhost:5000; find ./services -name Dockerfile | while read dockerfile; do context_dir=$(dirname "$dockerfile"); image_name=$(echo "$context_dir" | sed 's|^\./services/||; s|/|-|g'); full_tag="$REGISTRY_URL/storedog-$image_name:latest"; echo "Building $full_tag from $context_dir"; docker build -t "$full_tag" "$context_dir" && docker push "$full_tag"; done
+```
+
+4. You may want to rebuild one service while testing. It helps to export the `REGISTRY_URL` so you don't need to keep setting it.
+
+```bash
+export REGISTRY_URL=localhost:5000
+```
+
+> [!IMPORTANT]
+> Building and pushing containers to the local registry needs to be done on the worker node.
+
+```bash
+docker build -t $REGISTRY_URL/storedog-backend:latest ./services/backend && docker push $REGISTRY_URL/storedog-backend:latest
+```
 
 ## Prerequisites
 
@@ -136,90 +150,93 @@ export DD_ENV=development
 
 1. Install the Datadog Operator with Helm:
 
-   ```bash
-   helm repo add datadog https://helm.datadoghq.com
-   helm repo update
-   helm install my-datadog-operator datadog/datadog-operator
-   ```
+```bash
+helm repo add datadog https://helm.datadoghq.com
+helm repo update
+helm install my-datadog-operator datadog/datadog-operator
+```
 
-1. Create a Kubernetes secret with your Datadog API and app keys:
+2. Create a Kubernetes secret with your Datadog API and app keys:
 
-   ```bash
-   kubectl create secret generic datadog-secret --from-literal api-key=$DD_API_KEY --from-literal app-key=$DD_APP_KEY
-   ```
+```bash
+kubectl create secret generic datadog-secret --from-literal api-key=$DD_API_KEY --from-literal app-key=$DD_APP_KEY
+```
 
-1. Apply the Datadog Agent definition:
+2. Apply the Datadog Agent definition:
 
-   ```bash
-   kubectl apply -f k8s-manifests/datadog/datadog-agent.yaml
-   ```
+```bash
+kubectl apply -f k8s-manifests/datadog/datadog-agent.yaml
+```
 
 ### Deploy Cluster Setup and Storedog
 
 The storedog-app definition files contain variables which need to be set before applying them to the cluster. The command below uses `envsubst` to update the variable values in place before applying the definition file.
 
 1. **Deploy Cluster Components (one-time setup per cluster):**
-   This single command installs the storage provisioner and the ingress controller.
 
-   ```bash
-   kubectl apply -R -f k8s-manifests/cluster-setup/
-   ```
+This single command installs the storage provisioner and the ingress controller.
 
-1. **Deploy the Storedog Application:**
-   This command creates a `storedog` namespace and deploys all application components into it.
+```bash
+kubectl apply -R -f k8s-manifests/cluster-setup/
+```
 
-   ```bash
-   kubectl create namespace storedog
-   for file in k8s-manifests/storedog-app/**/*.yaml; do envsubst < "$file" | kubectl apply -n storedog -f -; done
-   ```
+2. **Deploy the Storedog Application:**
 
-1. **To reset the application:**
-   You only need to delete the application's namespace. The cluster components can remain installed.
+This command creates a `storedog` namespace and deploys all application components into it.
 
-   ```bash
-   kubectl delete namespace storedog
-   ```
+```bash
+kubectl create namespace storedog
+for file in k8s-manifests/storedog-app/**/*.yaml; do envsubst < "$file" | kubectl apply -n storedog -f -; done
+```
+
+3. **To reset the application:**
+
+You only need to delete the application's namespace. The cluster components can remain installed.
+
+```bash
+kubectl delete namespace storedog
+```
 
 ## Troubleshooting
 
-1. Check pod status in the namespace:
+- Check pod status in the namespace:
 
-   ```bash
-   kubectl get pods -n storedog
-   ```
+```bash
+kubectl get pods -n storedog
+```
 
-1. Check pod logs:
+- Check pod logs:
 
-   ```bash
-   kubectl logs <pod-name> -n storedog
-   ```
+```bash
+kubectl logs <pod-name> -n storedog
+```
 
-1. Check service status:
+- Check service status:
 
-   ```bash
-   kubectl get services -n storedog
-   ```
+```bash
+kubectl get services -n storedog
+```
 
-1. Check ingress status:
+- Check ingress status:
 
-   ```bash
-   kubectl get ingress -n storedog
-   ```
+```bash
+kubectl get ingress -n storedog
+```
 
-1. Check Persistent Volume Claims:
+- Check Persistent Volume Claims:
 
-   ```bash
-   kubectl get pvc -n storedog
-   ```
+```bash
+kubectl get pvc -n storedog
+```
 
 *The status should be `Bound`.*
 
-6. Check the logs for cluster components (if issues persist):
+Check the logs for cluster components (if issues persist):
 
-   ```bash
-   # Storage Provisioner Logs
-   kubectl logs -n local-path-storage -l app=local-path-provisioner
+```bash
+# Storage Provisioner Logs
+kubectl logs -n local-path-storage -l app=local-path-provisioner
 
-   # Ingress Controller Logs
-   kubectl logs -n ingress-nginx -l app.kubernetes.io/name=ingress-nginx
-   ```
+# Ingress Controller Logs
+kubectl logs -n ingress-nginx -l app.kubernetes.io/name=ingress-nginx
+```
