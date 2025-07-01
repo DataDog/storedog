@@ -131,7 +131,7 @@ Example values for hosted containers:
 
 ```bash
 export REGISTRY_URL="ghcr.io/datadog/storedog"
-export SD_TAG=1.3.0
+export SD_TAG=1.4.0
 ```
 
 ### Set default environment variables for Storedog
@@ -189,12 +189,28 @@ kubectl create namespace storedog
 for file in k8s-manifests/storedog-app/**/*.yaml; do envsubst < "$file" | kubectl apply -n storedog -f -; done
 ```
 
-3. **To reset the application:**
+3. **Apply manifest changes to one service:**
+
+While testing, you might change one manifest file. Rather than update all at once, you can apply the change like this.
+
+```bash
+envsubst < k8s-manifests/storedog-app/deployments/backend.yaml | kubectl apply -n storedog -f -
+```
+
+4. **To reset the all Storedog:**
 
 You only need to delete the application's namespace. The cluster components can remain installed.
 
 ```bash
 kubectl delete namespace storedog
+```
+
+5. **To restart one service:**
+
+After rebuilding a container image, it's faster to restart only the service you need.
+
+```bash
+kubectl rollout restart deployment backend -n storedog
 ```
 
 ## Troubleshooting
