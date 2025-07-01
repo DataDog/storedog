@@ -154,15 +154,15 @@ Common Datadog variables that can be set in application services:
 - `DD_LOGS_INJECTION`: Enable log injection into traces. Some languages' trace libraries turn this on by default, but we turn it on explicitly to prevent confusion.
 - `DD_PROFILING_ENABLED`: Enable the Continuous Profiler 
 - `DD_RUNTIME_METRICS_ENABLED`: Enable runtime metrics
-- 
 
 Service-specific versions:
 - `DD_VERSION_FRONTEND`: Frontend version (default: `1.0.0`)
 - `DD_VERSION_BACKEND`: Backend version (default: `1.0.0`)
 - `DD_VERSION_DISCOUNTS`: Discounts service version (default: `1.0.0`)
 - `DD_VERSION_ADS`: Ads service version (default: `1.0.0`)
-- `DD_VERSION_NGINX`: nginx service version (default: `1.0.0`)
-- `DD_VERSION_POSTGRES`: PostgreSQL service version (default: `1.0.0`)
+- `DD_VERSION_ADS_PYTHON`: Ads Python service version (default: `1.0.0`)
+- `DD_VERSION_NGINX`: nginx service version (default: `1.28.0`)
+- `DD_VERSION_POSTGRES`: PostgreSQL service version (default: `15.0`)
 - `DD_VERSION_REDIS`: Redis version (default: `6.2`)
 
 > [!NOTE]
@@ -185,6 +185,17 @@ Puppeteer service configuration:
 
 - `PUPPETEER_TIMEOUT`: Sets max timeout for Puppeteer, in case the session is unresponsive
 - `SKIP_SESSION_CLOSE`: Skip closing browser sessions
+
+### Nginx/Service Proxy Configuration Variables
+
+These variables control the upstream configuration for the ads services in the Nginx (service-proxy) container, enabling A/B testing and traffic splitting between the Java and Python ads services.
+
+> [!IMPORTANT]
+> When `ADS_B_PERCENT` is greater than zero, the `ADS_B_UPSTREAM` endpoint must be reachable. Otherwise, the service-proxy will crash and restart.
+
+- `ADS_A_UPSTREAM`: Host and port for the primary (A) ads service (default: `ads:3030`)
+- `ADS_B_UPSTREAM`: Host and port for the secondary (B) ads service (default: `ads-python:3030`)
+- `ADS_B_PERCENT`: Percentage of traffic to route to the B (Python) ads service (default: `0`). The remainder goes to the A (Java) ads service. Set to a value between `0` and `100` to control the split.
 
 ## Feature flags
 Some capabilities are hidden behind feature flags, which can be controlled via `services/frontend/site/featureFlags.config.json`. 
