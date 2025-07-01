@@ -1,16 +1,15 @@
+split_clients "${msec}" $ads_ab_variant {
+    ${ADS_B_PERCENT}% B;
+    * A;
+}
+
+map $ads_ab_variant $ads_upstream {
+    A ${ADS_A_UPSTREAM};
+    B ${ADS_B_UPSTREAM};
+}
+
 server {
     listen 80;
-
-    # A/B split: each request is randomly assigned based on $msec
-    split_clients "${msec}" $ads_ab_variant {
-        ${ADS_B_PERCENT}% B;
-        * A;
-    }
-
-    map $ads_ab_variant $ads_upstream {
-        A ${ADS_A_UPSTREAM};
-        B ${ADS_B_UPSTREAM};
-    }
 
     # Reverse proxy for ads
     location /services/ads {
