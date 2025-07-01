@@ -156,9 +156,9 @@ services:
       - frontend
       - dd-agent
     environment:
-      - ADS_A_UPSTREAM=${ADS_A_UPSTREAM:-ads:3030}
-      - ADS_B_UPSTREAM=${ADS_B_UPSTREAM:-ads-python:3030}
-      - ADS_B_PERCENT=${ADS_B_PERCENT:-0} # Percent of traffic to ads-python; remainder goes to ads-java
+      - ADS_A_UPSTREAM=${ADS_A_UPSTREAM:-ads:3030} # Only needed if using AB testing
+      - ADS_B_UPSTREAM=${ADS_B_UPSTREAM:-ads-python:3030} # Only needed if using AB testing
+      - ADS_B_PERCENT=${ADS_B_PERCENT:-0} # Percent of traffic to ads-python; remainder goes to ads-java. Only needed if using AB testing
       - DD_AGENT_HOST=dd-agent
       - DD_SERVICE=service-proxy
       - DD_VERSION=${DD_VERSION_NGINX:-1.0.0}
