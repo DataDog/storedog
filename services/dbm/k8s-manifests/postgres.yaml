@@ -1,0 +1,142 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  ports:
+    - port: 5432
+      name: postgres
+  clusterIP: None
+  selector:
+    app: postgres
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  labels:
+    tags.datadoghq.com/service: store-db
+    tags.datadoghq.com/version: "15.0"
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+        tags.datadoghq.com/service: store-db
+        tags.datadoghq.com/version: "15.0"
+      annotations:
+        ad.datadoghq.com/postgres.logs: |
+          [
+            {
+              "source": "postgresql",
+              "service": "postgres",
+              "auto_multi_line_detection": true,
+              "path": "/var/log/pg_log/postgresql*.json",
+              "type": "file"
+            }
+          ]
+        ad.datadoghq.com/postgres.checks: |
+          [
+            {
+              "dbm": true,
+              "host": "%%host%%",
+              "port": 5432,
+              "username": "datadog",
+              "password": "datadog",
+              "relations": [
+                {"relation_name": "advertisement"},
+                {"relation_name": "discount"},
+                {"relation_name": "items"},
+                {"relation_name": "preorder_items"},
+                {"relation_name": "influencer"}
+              ],
+              "query_samples": {
+                "enabled": true,
+                "explain_parameterized_queries": true
+              },
+              "max_relations": 400,
+              "collect_function_metrics": true,
+              "collection_interval": 1,
+              "collect_schemas": {"enabled": true}
+            },
+            {
+              "dbm": true,
+              "host": "%%host%%",
+              "port": 5432,
+              "username": "datadog",
+              "password": "datadog",
+              "dbname": "storedog_db",
+              "relations": [
+                {"relation_regex": "spree_.*"}
+              ],
+              "query_samples": {
+                "enabled": true,
+                "explain_parameterized_queries": true
+              },
+              "max_relations": 400,
+              "collect_function_metrics": true,
+              "collection_interval": 1,
+              "collect_schemas": {"enabled": true}
+            }
+          ]
+    spec:
+      containers:
+        - name: postgres
+          image: ${REGISTRY_URL}/postgres:${SD_TAG}
+          ports:
+            - containerPort: 5432
+              name: postgres
+          env:
+            - name: POSTGRES_HOST_AUTH_METHOD
+              value: trust
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: storedog-secrets
+                  key: POSTGRES_PASSWORD
+            - name: DD_ENV
+              value: ${DD_ENV-dev}
+            - name: DD_SERVICE
+              value: postgres
+            - name: DD_VERSION
+              value: ${DD_VERSION_POSTGRES-15}
+            - name: DD_AGENT_HOST
+              value: dd-agent
+            # - name: DD_DBM_PROPAGATION_MODE
+            #   value: full
+            - name: DD_LOGS_INJECTION
+              value: "true"
+            - name: DD_RUNTIME_METRICS_ENABLED
+              value: "true"
+            - name: DD_PROFILING_ENABLED
+              value: "true"
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+            - name: postgres-logs
+              mountPath: /var/log/pg_log
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+    - metadata:
+        name: postgres-logs
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi

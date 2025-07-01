@@ -35,6 +35,8 @@ The database schema can be found in the `models.py` file with these models:
 
 ## Adding DBM to your project
 
+### Docker Compose
+
 To add this service to your project, add this definition to your docker-compose file:
 
 ```yaml
@@ -147,4 +149,9 @@ Also update the Datadog agent service definition to include the following enviro
 ```yaml
 DD_DBM_PROPAGATION_MODE=full
 ```
+
+### Kubernetes
+
+To add this service to your project, use the following manifest files in the `dbm/k8s-manifest` directory.
+
 
