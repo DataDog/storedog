@@ -34,12 +34,13 @@ spec:
     #     enabled: true
   override:
     # Deploy the Datadog agent to the control plane nodes.
-    # Use this to monitor pods running on the control plane nodes.
-    # nodeAgent:
-    #   tolerations:
-    #     - key: node-role.kubernetes.io/control-plane
-    #       operator: Exists
-    #       effect: NoSchedule
+    # Used to monitor pods running on the control plane nodes.
+    # This is required for etcd integration.
+    nodeAgent:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         agent:
           volumeMounts:
