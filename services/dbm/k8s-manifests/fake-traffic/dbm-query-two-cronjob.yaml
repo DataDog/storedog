@@ -14,10 +14,12 @@ spec:
             image: ${REGISTRY_URL}/postgres:${SD_TAG}
             command: ["/bin/sh", "/scripts/dbm_query_two.sh"]
             envFrom:
-            - configMapRef:
-                name: storedog-config
-            - configMapRef:
-                name: dbm-env
+              - configMapRef:
+                  name: storedog-config
+              - configMapRef:
+                  name: dbm-env
+              - secretRef:
+                  name: storedog-secrets
             volumeMounts:
             - name: scripts
               mountPath: /scripts
