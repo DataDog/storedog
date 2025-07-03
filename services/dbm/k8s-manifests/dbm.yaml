@@ -41,7 +41,6 @@ spec:
           image: ${REGISTRY_URL}/dbm:${SD_TAG}
           ports:
             - containerPort: 7595
-          command: ["gunicorn", "--bind", "dbm:7595", "dbm:app"]
           env:
             - name: FLASK_APP
               value: "dbm.py"
@@ -61,8 +60,8 @@ spec:
               value: postgres
             - name: DD_SERVICE
               value: storedog-dbm
-            - name: DD_AGENT_HOST
-              value: dd-agent
+            - name: DD_DBM_PROPAGATION_MODE
+              value: full
             - name: DD_LOGS_INJECTION
               value: "true"
             - name: DD_PROFILING_ENABLED

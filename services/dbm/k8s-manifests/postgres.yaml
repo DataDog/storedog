@@ -35,6 +35,7 @@ spec:
             {
               "source": "postgresql",
               "service": "postgres",
+              "env": "{DD_ENV}",
               "auto_multi_line_detection": true,
               "path": "/var/log/pg_log/postgresql*.json",
               "type": "file"
@@ -48,6 +49,11 @@ spec:
               "port": 5432,
               "username": "datadog",
               "password": "datadog",
+              "tags": [
+                {"env": "{DD_ENV}"},
+                {"service": "postgres"},
+                {"vesion": "15.0"}
+              ],
               "relations": [
                 {"relation_name": "advertisement"},
                 {"relation_name": "discount"},
@@ -104,22 +110,6 @@ spec:
                 secretKeyRef:
                   name: storedog-secrets
                   key: POSTGRES_PASSWORD
-            - name: DD_ENV
-              value: ${DD_ENV-dev}
-            - name: DD_SERVICE
-              value: postgres
-            - name: DD_VERSION
-              value: ${DD_VERSION_POSTGRES-15}
-            - name: DD_AGENT_HOST
-              value: dd-agent
-            # - name: DD_DBM_PROPAGATION_MODE
-            #   value: full
-            - name: DD_LOGS_INJECTION
-              value: "true"
-            - name: DD_RUNTIME_METRICS_ENABLED
-              value: "true"
-            - name: DD_PROFILING_ENABLED
-              value: "true"
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
