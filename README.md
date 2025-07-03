@@ -195,9 +195,14 @@ These variables control the upstream configuration for the ads services in the N
 
 - `ADS_A_UPSTREAM`: Host and port for the primary (A) ads service (default: `ads:3030`)
 - `ADS_B_UPSTREAM`: Host and port for the secondary (B) ads service (default: `ads-python:3030`)
-- `ADS_B_PERCENT`: Percentage of traffic to route to the B (Python) ads service (default: `0`). The remainder goes to the A (Java) ads service. Set to a value between `0` and `100` to control the split.
+- `ADS_B_PERCENT`: Percentage of traffic to route to the B (Python) ads service (default: `0`). The remainder goes to the A (Java) ads service.
+  - Set to a value between `0` and `100` to control the split.
 
-## Feature flags
+## Optional features
+
+There are several features that can be enabled by setting environment variables and feature flags.
+
+### Feature flags
 Some capabilities are hidden behind feature flags, which can be controlled via `services/frontend/site/featureFlags.config.json`. 
 
 > [!NOTE]
@@ -208,7 +213,7 @@ Some capabilities are hidden behind feature flags, which can be controlled via `
 >   - ./services/frontend/site/featureFlags.config.json:/app/featureFlags.config.json
 > ```
 
-### dbm 
+#### dbm 
 Enables a product ticker on the homepage with a long-running query to demonstrate DBM. 
 
 **How to use**:
@@ -220,7 +225,7 @@ Enables a product ticker on the homepage with a long-running query to demonstrat
 
 You can modify the ticker functionality in `services/frontend/components/common/NavBar.tsx`.
 
-### error-tracking 
+#### error-tracking 
 Introduces an exception in the Ads services to demonstrate Error Tracking by setting a header in to a value that is not expected by the Ads service.
 
 **How to use**:
@@ -231,7 +236,7 @@ Introduces an exception in the Ads services to demonstrate Error Tracking by set
 
 Modify this functionality in `services/frontend/components/common/Ad/Ad.tsx` and respective Ads service being used.
 
-### api-errors
+#### api-errors
 This introduces random errors that occur in the frontend service's `/api` routes.
 
 **How to use**:
@@ -241,7 +246,7 @@ This introduces random errors that occur in the frontend service's `/api` routes
 
 Modify this functionality in `services/frontend/pages/api/*`.
 
-### product-card-frustration
+#### product-card-frustration
 This will swap out the product card component with a version that doesn't have the thumbnails linked to the product page. When paired with the Puppeteer service, this can be used to demonstrate Frustration Signals in RUM.
 
 **How to use**:
@@ -250,6 +255,19 @@ This will swap out the product card component with a version that doesn't have t
 1. Visit http://localhost/products and try clicking on the product thumbnails to see the frustration signal in action.
 
 Modify this functionality in `services/frontend/components/Product/ProductCard.tsx` and `services/frontend/components/Product/ProductCard-v2.tsx`.
+
+### A/B Testing Ads services
+
+Run two Ads services and split traffic between them. The amount of traffic sent to each service is set with a percent value.
+
+**How to use**
+1. Add a second Ads service to the `docker-compose.yml`
+1. Add and set these environment variables to the `service-proxy` service:
+  - `ADS_A_UPSTREAM`: Host and port for the primary (A) ads service (default: `ads:3030`)
+  - `ADS_B_UPSTREAM`: Host and port for the secondary (B) ads service (default: `ads-python:3030`)
+  - `ADS_B_PERCENT`: Percentage of traffic to route to the B (Python) ads service (default: `0`). The remainder goes to the A (Java) ads service.
+    - Set to a value between `0` and `100` to control the split.
+1. Start the app via `docker compose up`
 
 ## Image publication
 Images are stored in GHCR. On PR merges, only the affected services will be pushed to GHCR, using the `latest` tag. For example, if you only made changes to the `backend` service, then only the `backend` Github workflow will trigger and publish `ghcr.io/datadog/storedog/backend:latest`. 
@@ -263,7 +281,7 @@ All of the services in the Storedog application are Dockerized and run in contai
 Below is a breakdown of services and some instructions on how to use them.
 
 ### Ads
-There are two advertisement services, the default service is built in Java and there is another option available in Python. These services do the same thing, have the same endpoints, run on the same port (`3030`), and have the same failure modes. The biggest difference is the Python service uses a Postgres database to store the ads, while the Java service uses an in-memory list. These ads are served through the `Ads.tsx` component in the frontend service.
+There are two advertisement services, the default service is built in Java and there is another option available in Python. These services do the same thing, have the same endpoints, run on the same port (`3030`), and have the same failure modes. These ads are served through the `Ads.tsx` component in the frontend service.
 
 To switch between the Java and Python services, see the instructions in the [Ads service README](./services/ads/README.md).
 
