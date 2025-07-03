@@ -45,7 +45,7 @@ spec:
             path: /var/run/datadog/
       containers:
         - name: service-proxy
-          image: ${REGISTRY_URL}/storedog-nginx:${SD_TAG}
+          image: ${REGISTRY_URL}/nginx:${SD_TAG}
           ports:
             - containerPort: 80
           env:

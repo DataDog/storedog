@@ -32,7 +32,7 @@ spec:
             path: /var/run/datadog/
       containers:
         - name: ads
-          image: ${REGISTRY_URL}/storedog-ads-java:${SD_TAG}  # (add if needed)
+          image: ${REGISTRY_URL}/ads-java:${SD_TAG}
           ports:
             - containerPort: 3030
           env:
