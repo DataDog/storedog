@@ -9,20 +9,8 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
 
         rewrite ^/services/ads(/.*)$ $1 break;
-        # Proxy to ads, ensure trailing slash for proper URI handling
-        proxy_pass http://ads:3030/;
-    }
-
-    # Reverse proxy for ads-java
-    location /services/ads-java {
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-
-        rewrite ^/services/ads-java(/.*)$ $1 break;
         # Proxy to ads-java, ensure trailing slash for proper URI handling
-        proxy_pass http://ads-java:3030/;
+        proxy_pass http://ads:3030/;
     }
 
     # Reverse proxy for discounts 
