@@ -57,16 +57,6 @@ spec:
             #   readOnly: true
             #   mountPath: /var/log/kubernetes
           env:
-            - name: DD_POSTGRES_INTEGRATION_USER
-              valueFrom:
-                secretKeyRef:
-                  name: storedog-secrets
-                  key: POSTGRES_INTEGRATION_USER
-            - name: DD_POSTGRES_INTEGRATION_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: storedog-secrets
-                  key: POSTGRES_INTEGRATION_PASSWORD
       volumes:
         - name: etcd-certs # Used for etcd integration
           hostPath:
@@ -124,7 +114,7 @@ spec:
                 username: ENC[k8s_secret@default/storedog-secrets/POSTGRES_INTEGRATION_USER]
                 password: ENC[k8s_secret@default/storedog-secrets/POSTGRES_INTEGRATION_PASSWORD]
                 tags:
-                  - env:prod
+                  - env:development
                   - service:store-db
                 relations:
                   - relation_name: advertisement
