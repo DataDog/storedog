@@ -165,4 +165,42 @@ echo "* * * * * /root/dbm_query_one.sh > /dev/null 2>&1" |crontab -
 
 To add this service to your project, use the following manifest files in the `dbm/k8s-manifest` directory.
 
+Create namespaces:
+
+```bash
+kubectl create namespace storedog
+kubectl create namespace fake-traffic
+```
+
+Apply secrets for each namespace:
+
+> [!IMPORTANT]
+> This assumes you're running Storedog in the `storedog` namespace.
+
+```bash
+kubectl apply -n default -f k8s-manifests/storedog-app/secrets/shared-secrets.yaml
+kubectl apply -n storedog -f k8s-manifests/storedog-app/secrets/shared-secrets.yaml
+kubectl apply -n fake-traffic -f k8s-manifests/storedog-app/secrets/shared-secrets.yaml
+```
+
+Apply the Datadog Agent manifest:
+
+> [!IMPORTANT]
+> This assumes you've already installed the Datadog Operator and set the API key.
+
+```bash
+kubectl apply -f k8s-manifests/datadog/datadog-agent.yaml
+```
+
+Install the storage provisioner and the ingress controller.
+
+```bash
+kubectl apply -R -f k8s-manifests/cluster-setup/
+```
+
+Deploy all Storedog application components.
+
+```bash
+for file in k8s-manifests/storedog-app/**/*.yaml; do envsubst < "$file" | kubectl apply -n storedog -f -; done
+```
 
