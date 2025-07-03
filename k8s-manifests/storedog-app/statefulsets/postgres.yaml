@@ -33,6 +33,8 @@ spec:
         ad.datadoghq.com/postgres.logs: |
           {
             "source": "postgresql",
+            "service": "postgres",
+            "env": "{DD_ENV}",
             "auto_multi_line_detection":true,
             "path": "/var/log/pg_log/postgresql*.json",
             "type": "file"
