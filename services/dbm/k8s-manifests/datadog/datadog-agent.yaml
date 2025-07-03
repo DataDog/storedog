@@ -4,6 +4,9 @@ metadata:
   name: datadog
 spec:
   global:
+    secretBackend:
+      command: "/readsecret_multiple_providers.sh"
+      enableGlobalPermissions: true
     clusterName: storedog-k8s
     site: datadoghq.com
     kubelet:
@@ -118,8 +121,8 @@ spec:
               - dbm: true
                 host: postgres.storedog
                 port: 5432
-                username: ${DD_POSTGRES_INTEGRATION_USER}
-                password: ${DD_POSTGRES_INTEGRATION_PASSWORD}
+                username: ENC[k8s_secret@default/storedog-secrets/POSTGRES_INTEGRATION_USER]
+                password: ENC[k8s_secret@default/storedog-secrets/POSTGRES_INTEGRATION_PASSWORD]
                 tags:
                   - env:prod
                   - service:store-db
@@ -140,8 +143,8 @@ spec:
               - dbm: true
                 host: postgres.storedog
                 port: 5432
-                username: ${DD_POSTGRES_INTEGRATION_USER}
-                password: ${DD_POSTGRES_INTEGRATION_PASSWORD}
+                username: ENC[k8s_secret@default/storedog-secrets/POSTGRES_INTEGRATION_USER]
+                password: ENC[k8s_secret@default/storedog-secrets/POSTGRES_INTEGRATION_PASSWORD]
                 dbname: storedog_db
                 relations:
                   - relation_regex: spree_.*
