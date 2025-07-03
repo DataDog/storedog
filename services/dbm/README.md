@@ -58,6 +58,7 @@ dbm:
     - DD_LOGS_INJECTION=true
     - DD_PROFILING_ENABLED=true
     - DD_APPSEC_ENABLED=true
+    - DD_DBM_PROPAGATION_MODE=full
   volumes:
     - './services/dbm:/app'
   networks:
@@ -81,14 +82,6 @@ postgres:
     - POSTGRES_HOST_AUTH_METHOD=trust
     - POSTGRES_USER
     - POSTGRES_PASSWORD
-    - DD_ENV=${DD_ENV-dev}
-    - DD_SERVICE=postgres
-    - DD_VERSION=${DD_VERSION_POSTGRES-15}
-    - DD_AGENT_HOST=dd-agent
-    - DD_DBM_PROPAGATION_MODE=full
-    - DD_LOGS_INJECTION=true
-    - DD_RUNTIME_METRICS_ENABLED=true
-    - DD_PROFILING_ENABLED=true
   labels:
     com.datadoghq.tags.env: '${DD_ENV-dev}'
     com.datadoghq.tags.service: 'postgres'
@@ -148,6 +141,24 @@ Also update the Datadog agent service definition to include the following enviro
 
 ```yaml
 DD_DBM_PROPAGATION_MODE=full
+```
+
+#### Script files
+
+There are two shell script files in the `./scripts` directory. This need to be added to the lab files. Ensure they are executable (`chmod +x <filename>).
+
+These scripts use `psql` to query the database. They can be added as a cron job to continually run on the host. Use the following command to install the required programs.
+
+```bash
+apt update
+apt install -y postgresql-client cron
+```
+
+Add the script to cron:
+
+```bash
+echo "* * * * * /root/dbm_query_one.sh > /dev/null 2>&1" |crontab -
+(crontab -l;echo "*/2 * * * * /root/dmb_query_two.sh > /dev/null 2>&1") |crontab -
 ```
 
 ### Kubernetes
