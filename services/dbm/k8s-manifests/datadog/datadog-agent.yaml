@@ -53,6 +53,17 @@ spec:
             # - name: klogpath
             #   readOnly: true
             #   mountPath: /var/log/kubernetes
+          env:
+            - name: DD_POSTGRES_INTEGRATION_USER
+              valueFrom:
+                secretKeyRef:
+                  name: storedog-secrets
+                  key: POSTGRES_INTEGRATION_USER
+            - name: DD_POSTGRES_INTEGRATION_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: storedog-secrets
+                  key: POSTGRES_INTEGRATION_PASSWORD
       volumes:
         - name: etcd-certs # Used for etcd integration
           hostPath:
@@ -97,15 +108,48 @@ spec:
           #       path: /var/log/kubernetes/apiserver/audit.log
           #       service: kube-apiserver-audit
           #       source: kubernetes.audit
-    # clusterAgent:
-    #   extraConfd:
-    #     configDataMap:
-    #       postgres.yaml: |-
-    #         cluster_check: true
-    #         init_config:
-    #         instances:
-    #         - host: <HOST>
-    #           port: 5432
-    #           username: datadog
-    #           password: 'ENC[datadog_user_database_password]'
-    #           dbm: true
+    clusterAgent:
+      extraConfd:
+        configDataMap:
+          postgres.yaml: |-
+            cluster_check: true
+            init_config:
+            instances:
+              - dbm: true
+                host: postgres.storedog
+                port: 5432
+                username: ${DD_POSTGRES_INTEGRATION_USER}
+                password: ${DD_POSTGRES_INTEGRATION_PASSWORD}
+                tags:
+                  - env:prod
+                  - service:store-db
+                relations:
+                  - relation_name: advertisement
+                  - relation_name: discount
+                  - relation_name: items
+                  - relation_name: preorder_items
+                  - relation_name: influencer
+                query_samples:
+                  enabled: true
+                  explain_parameterized_queries: true
+                max_relations: 400
+                collect_function_metrics: true
+                collection_interval: 1
+                collect_schemas:
+                  enabled: true
+              - dbm: true
+                host: postgres.storedog
+                port: 5432
+                username: ${DD_POSTGRES_INTEGRATION_USER}
+                password: ${DD_POSTGRES_INTEGRATION_PASSWORD}
+                dbname: storedog_db
+                relations:
+                  - relation_regex: spree_.*
+                query_samples:
+                  enabled: true
+                  explain_parameterized_queries: true
+                max_relations: 400
+                collect_function_metrics: true
+                collection_interval: 1
+                collect_schemas:
+                  enabled: true

@@ -41,55 +41,6 @@ spec:
               "type": "file"
             }
           ]
-        ad.datadoghq.com/postgres.checks: |
-          [
-            {
-              "dbm": true,
-              "host": "%%host%%",
-              "port": 5432,
-              "username": "datadog",
-              "password": "datadog",
-              "tags": [
-                {"env": "{DD_ENV}"},
-                {"service": "postgres"},
-                {"vesion": "15.0"}
-              ],
-              "relations": [
-                {"relation_name": "advertisement"},
-                {"relation_name": "discount"},
-                {"relation_name": "items"},
-                {"relation_name": "preorder_items"},
-                {"relation_name": "influencer"}
-              ],
-              "query_samples": {
-                "enabled": true,
-                "explain_parameterized_queries": true
-              },
-              "max_relations": 400,
-              "collect_function_metrics": true,
-              "collection_interval": 1,
-              "collect_schemas": {"enabled": true}
-            },
-            {
-              "dbm": true,
-              "host": "%%host%%",
-              "port": 5432,
-              "username": "datadog",
-              "password": "datadog",
-              "dbname": "storedog_db",
-              "relations": [
-                {"relation_regex": "spree_.*"}
-              ],
-              "query_samples": {
-                "enabled": true,
-                "explain_parameterized_queries": true
-              },
-              "max_relations": 400,
-              "collect_function_metrics": true,
-              "collection_interval": 1,
-              "collect_schemas": {"enabled": true}
-            }
-          ]
     spec:
       containers:
         - name: postgres
