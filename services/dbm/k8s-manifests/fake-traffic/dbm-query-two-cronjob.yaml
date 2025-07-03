@@ -11,7 +11,7 @@ spec:
         spec:
           containers:
           - name: dbm-query-two
-            image: postgres:15-alpine
+            image: ${REGISTRY_URL}/postgres:${SD_TAG}
             command: ["/bin/sh", "/scripts/dbm_query_two.sh"]
             envFrom:
             - configMapRef:

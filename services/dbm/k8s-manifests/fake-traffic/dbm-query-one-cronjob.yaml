@@ -11,7 +11,7 @@ spec:
         spec:
           containers:
           - name: dbm-query-one
-            image: postgres:15-alpine
+            image: ${REGISTRY_URL}/postgres:${SD_TAG}
             command: ["/bin/sh", "/scripts/dbm_query_one.sh"]
             envFrom:
             - configMapRef:
