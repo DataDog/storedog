@@ -4,6 +4,10 @@
 
 This service is responsible for managing the banner advertisements served to the frontend service of the application. There are two variations of this service, one uses Python and the other uses Java.
 
+## Java service
+
+The Java service is the default used with Storedog. It uses the Spring framework. It uses the PostgreSQL JDBC driver to connect to a PostgreSQL database. It uses an H2 in-memory database when running build tests.
+
 ## Python service
 
 The Python service is a Flask application that uses SQLAlchemy to connect to a PostgreSQL database. The service is packaged as a Docker image and typically used in a Docker Compose file (see the root of this repo).
@@ -163,7 +167,4 @@ ads:
     volumes:
       - ./services/ads/python:/app
     labels:
-      com.datadoghq.ad.logs: '[{"source": "python", "service": "store-ads"}]'
-      com.datadoghq.tags.env: '${DD_ENV-dev}'
-      com.datadoghq.tags.service: 'store-ads'
-      com.datadoghq.tags.version: ${DD_VERSION_ADS-1.0.0}
+      com.datadoghq.ad.logs: '[{"source": "python"}]'

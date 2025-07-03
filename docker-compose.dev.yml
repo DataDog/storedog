@@ -183,6 +183,25 @@ services:
     labels:
       com.datadoghq.ad.logs: '[{"source": "java"}]'
 
+  # OPTIONAL: Advertisement service (Python)
+  # ads-python:
+  #   build:
+  #     context: ./services/ads/python
+  #   depends_on:
+  #     - postgres
+  #     - dd-agent
+  #   environment:
+  #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+  #     - POSTGRES_USER=${POSTGRES_USER:-postgres}
+  #     - POSTGRES_HOST=postgres
+  #     - DD_AGENT_HOST=dd-agent
+  #     - DD_SERVICE=store-ads-python
+  #     - DD_VERSION=${DD_VERSION_ADS_PYTHON:-1.0.0}
+  #   networks:
+  #     - storedog-network
+  #   labels:
+  #     com.datadoghq.ad.logs: '[{"source": "python"}]'
+
   # Web server and reverse proxy
   service-proxy:
     build:
@@ -196,9 +215,12 @@ services:
       - frontend
       - dd-agent
     environment:
+      - ADS_A_UPSTREAM=${ADS_A_UPSTREAM:-ads:3030} # Only needed if using AB testing
+      - ADS_B_UPSTREAM=${ADS_B_UPSTREAM:-ads-python:3030} # Only needed if using AB testing
+      - ADS_B_PERCENT=${ADS_B_PERCENT:-0} # Percent of traffic to ads-python; remainder goes to ads-java. Only needed if using AB testing
       - DD_AGENT_HOST=dd-agent
       - DD_SERVICE=service-proxy
-      - DD_VERSION=${DD_VERSION_NGINX:-1.0.0}
+      - DD_VERSION=${DD_VERSION_NGINX:-1.28.0}
     labels:
       com.datadoghq.ad.logs: '[{"source": "nginx"}]'
       com.datadoghq.ad.check_names: '["nginx"]'
@@ -221,7 +243,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
     labels:
       com.datadoghq.tags.service: 'store-db'
-      com.datadoghq.tags.version: '${DD_VERSION_POSTGRES:-1.0.0}'
+      com.datadoghq.tags.version: '${DD_VERSION_POSTGRES:-15.0}'
       com.datadoghq.ad.check_names: '["postgres"]'
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":5432, "username":"datadog", "password":"datadog"}]'
@@ -238,6 +260,7 @@ services:
       - storedog-network
     labels:
       com.datadoghq.tags.service: 'redis'
+      com.datadoghq.tags.env: '${DD_ENV:-development}'
       com.datadoghq.tags.version: '${DD_VERSION_REDIS:-6.2}'
       com.datadoghq.ad.check_names: '["redisdb"]'
       com.datadoghq.ad.init_configs: '[{}]'
