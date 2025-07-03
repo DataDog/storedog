@@ -4,15 +4,14 @@
 set -f
 QUERY="LOCK TABLE items IN EXCLUSIVE MODE;"
 UPDATE_QUERY=$(cat <<EOF
-  UPDATE items 
-  SET order_count = order_count::int + 1
-  WHERE id = (SELECT id FROM items WHERE order_count::int > random() * 7000 LIMIT 1);
-  SELECT pg_sleep(1);
+UPDATE items
+SET order_count = floor(random() * 7000), last_hour = CURRENT_TIMESTAMP
+WHERE id = (SELECT id FROM items WHERE order_count::int > random() * 7000 ORDER BY RANDOM() LIMIT 1);
 EOF
 )
 
 # Loop for running the query
-for i in {1..15
+for i in {1..15}
 do
   # Loop for building the query
   for j in {1..20}

@@ -19,5 +19,5 @@ do
   do
     QUERY+="${UPDATE_QUERY}"
   done
-  psql -U postgres -d postgres -h postgres -c "$QUERY"
+  psql -U postgres -d postgres -h localhost -c "$QUERY"
 done
