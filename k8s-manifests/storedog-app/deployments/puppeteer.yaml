@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: puppeteer
-          image: ${REGISTRY_URL}/storedog-puppeteer:${SD_TAG}
+          image: ${REGISTRY_URL}/puppeteer:${SD_TAG}
           env:
             - name: STOREDOG_URL
               value: "http://service-proxy"

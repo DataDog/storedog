@@ -30,7 +30,7 @@ spec:
           command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done;']
       containers:
         - name: backend
-          image: ${REGISTRY_URL}/storedog-backend:${SD_TAG}
+          image: ${REGISTRY_URL}/backend:${SD_TAG}
           ports:
             - containerPort: 4000
           command: ["bundle", "exec", "rails", "s", "-b", "0.0.0.0", "-p", "4000"]
