@@ -100,10 +100,10 @@ spec:
             init_config:
             instances:
               - nginx_status_url: http://%%host%%:18080/nginx_status
-          postgres.yaml: |-
+          postgres.yaml: |- # Postgres log collection
             logs:
               - type: file
-                path: /var/log/pg_log/postgresql*.json
+                path: /var/log/pg_log/postgresql-*.json
                 service: store-db
                 source: postgresql
           # Send audit logs to Datadog
