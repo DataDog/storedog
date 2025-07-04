@@ -5,7 +5,7 @@ metadata:
   namespace: fake-traffic
 data:
   dbm_query_one.sh: |
-    #!/bin/bash
+    #!/bin/sh
     set -f
     QUERY="BEGIN; LOCK TABLE items IN EXCLUSIVE MODE;"
     UPDATE_QUERY=$(cat <<EOF
@@ -19,14 +19,14 @@ data:
     do
       for j in {1..20}
       do
-        QUERY+="$UPDATE_QUERY"
+        QUERY="$QUERY$UPDATE_QUERY"
       done
-      QUERY+=" COMMIT;"
+      QUERY="$QUERY COMMIT;"
       PGPASSWORD="$POSTGRES_PASSWORD" psql -U "$POSTGRES_USER" -d postgres -h "$FAKETRAFFIC_POSTGRES_HOST" -c "$QUERY"
       QUERY="BEGIN; LOCK TABLE items IN EXCLUSIVE MODE;" # Reset for next iteration
     done
   dbm_query_two.sh: |
-    #!/bin/bash
+    #!/bin/sh
     set -f
     QUERY="BEGIN; LOCK TABLE items IN EXCLUSIVE MODE;"
     UPDATE_QUERY=$(cat <<EOF
@@ -39,9 +39,9 @@ data:
     do
       for j in {1..20}
       do
-        QUERY+="$UPDATE_QUERY"
+        QUERY="$QUERY$UPDATE_QUERY"
       done
-      QUERY+=" COMMIT;"
+      QUERY="$QUERY COMMIT;"
       PGPASSWORD="$POSTGRES_PASSWORD" psql -U "$POSTGRES_USER" -d postgres -h "$FAKETRAFFIC_POSTGRES_HOST" -c "$QUERY"
       QUERY="BEGIN; LOCK TABLE items IN EXCLUSIVE MODE;" # Reset for next iteration
     done
