@@ -163,6 +163,11 @@ echo "* * * * * /root/dbm_query_one.sh > /dev/null 2>&1" |crontab -
 
 ### Kubernetes
 
+#### Requirements
+```bash
+apt-get install -y nfs-common
+```
+
 To add this service to your project, use the following manifest files in the `dbm/k8s-manifest` directory.
 
 Change the `env` tag in `datadog-agent.yaml`
