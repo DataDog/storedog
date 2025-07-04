@@ -215,5 +215,5 @@ for file in k8s-manifests/storedog-app/**/*.yaml; do envsubst < "$file" | kubect
 Deploy services to generate fake traffic.
 
 ```bash
-for file in k8s-manifests/fake-traffic/*.yaml; do envsubst '${REGISTRY_URL} ${SD_TAG}' < "$file" | kubectl apply -f -; done
+for file in k8s-manifests/fake-traffic/*.yaml; do envsubst '${REGISTRY_URL} ${SD_TAG}' < "$file" | kubectl apply -n fake-traffic -f -; done
 ```
