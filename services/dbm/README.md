@@ -208,3 +208,8 @@ Deploy all Storedog application components.
 for file in k8s-manifests/storedog-app/**/*.yaml; do envsubst < "$file" | kubectl apply -n storedog -f -; done
 ```
 
+Deploy services to generate fake traffic.
+
+```bash
+for file in k8s-manifests/fake-traffic/*.yaml; do envsubst < "$file" | kubectl apply -f -; done
+```

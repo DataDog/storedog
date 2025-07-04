@@ -30,8 +30,8 @@ spec:
         tags.datadoghq.com/service: service-proxy
         tags.datadoghq.com/version: 1.28.0
       annotations:
-        ad.datadoghq.com/nginx.logs: '[{"source": "nginx"}]'
-        ad.datadoghq.com/nginx.checks: |
+        ad.datadoghq.com/service-proxy.logs: '[{"source": "nginx"}]'
+        ad.datadoghq.com/service-proxy.checks: |
           {
             "nginx": {
             "init_config": {},
