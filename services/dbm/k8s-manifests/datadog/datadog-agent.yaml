@@ -56,6 +56,9 @@ spec:
             # - name: klogpath
             #   readOnly: true
             #   mountPath: /var/log/kubernetes
+            - name: postgres-logs # For Postgres log collection
+              mountPath: /var/log/pg_log
+              readOnly: true
           env:
       volumes:
         - name: etcd-certs # Used for etcd integration
@@ -67,6 +70,9 @@ spec:
         # - name: klogpath
         #   hostPath:
         #     path: /var/log/kubernetes
+        - name: postgres-logs # For Postgres log collection
+          hostPath:
+            path: /var/log/pg_log
       extraConfd:
         configDataMap: # Integration configurations
           etcd.yaml: |- # etcd integration
@@ -94,6 +100,12 @@ spec:
             init_config:
             instances:
               - nginx_status_url: http://%%host%%:18080/nginx_status
+          postgres.yaml: |-
+            logs:
+              - type: file
+                path: /var/log/pg_log/postgresql*.json
+                service: store-db
+                source: postgresql
           # Send audit logs to Datadog
           # kube_audit.yaml: |-
           #   logs:

@@ -29,17 +29,6 @@ spec:
         app: postgres
         tags.datadoghq.com/service: store-db
         tags.datadoghq.com/version: "15.0"
-      annotations:
-        ad.datadoghq.com/postgres.logs: |
-          [
-            {
-              "source": "postgresql",
-              "env": "${DD_ENV}",
-              "auto_multi_line_detection": true,
-              "path": "/var/log/pg_log/postgresql*.json",
-              "type": "file"
-            }
-          ]
     spec:
       containers:
         - name: postgres
