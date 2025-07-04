@@ -202,6 +202,19 @@ These variables control the upstream configuration for the ads services in the N
 
 There are several features that can be enabled by setting environment variables and feature flags.
 
+### A/B Testing Ads services
+
+Run two Ads services and split traffic between them. The amount of traffic sent to each service is set with a percent value.
+
+**How to use**
+1. Add a second Ads service to the `docker-compose.yml`
+1. Add and set these environment variables to the `service-proxy` service:
+    - `ADS_A_UPSTREAM`: Host and port for the primary (A) ads service (default: `ads:3030`)
+    - `ADS_B_UPSTREAM`: Host and port for the secondary (B) ads service (default: `ads-python:3030`)
+    - `ADS_B_PERCENT`: Percentage of traffic to route to the B (Python) ads service (default: `0`). The remainder goes to the A (Java) ads service.
+      - Set to a value between `0` and `100` to control the split.
+1. Start the app via `docker compose up`
+
 ### Feature flags
 Some capabilities are hidden behind feature flags, which can be controlled via `services/frontend/site/featureFlags.config.json`. 
 
@@ -255,19 +268,6 @@ This will swap out the product card component with a version that doesn't have t
 1. Visit http://localhost/products and try clicking on the product thumbnails to see the frustration signal in action.
 
 Modify this functionality in `services/frontend/components/Product/ProductCard.tsx` and `services/frontend/components/Product/ProductCard-v2.tsx`.
-
-### A/B Testing Ads services
-
-Run two Ads services and split traffic between them. The amount of traffic sent to each service is set with a percent value.
-
-**How to use**
-1. Add a second Ads service to the `docker-compose.yml`
-1. Add and set these environment variables to the `service-proxy` service:
-    - `ADS_A_UPSTREAM`: Host and port for the primary (A) ads service (default: `ads:3030`)
-    - `ADS_B_UPSTREAM`: Host and port for the secondary (B) ads service (default: `ads-python:3030`)
-    - `ADS_B_PERCENT`: Percentage of traffic to route to the B (Python) ads service (default: `0`). The remainder goes to the A (Java) ads service.
-      - Set to a value between `0` and `100` to control the split.
-1. Start the app via `docker compose up`
 
 ## Image publication
 Images are stored in GHCR. On PR merges, only the affected services will be pushed to GHCR, using the `latest` tag. For example, if you only made changes to the `backend` service, then only the `backend` Github workflow will trigger and publish `ghcr.io/datadog/storedog/backend:latest`. 
