@@ -36,4 +36,4 @@ spec:
               mountPath: /exports
       volumes:
         - name: nfs-data
-          emptyDir: {} 
+          emptyDir: {}
