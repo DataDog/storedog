@@ -54,6 +54,10 @@ spec:
               mountPath: /var/lib/postgresql/data
             - name: shared-pg-logs
               mountPath: /var/log/pg_log
+      volumes:
+        - name: shared-pg-logs
+          persistentVolumeClaim:
+            claimName: shared-pg-logs
   volumeClaimTemplates:
     - metadata:
         name: postgres-data
@@ -62,7 +66,3 @@ spec:
         resources:
           requests:
             storage: 10Gi
-  volumes:
-    - name: shared-pg-logs
-      persistentVolumeClaim:
-        claimName: shared-pg-logs
