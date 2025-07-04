@@ -24,7 +24,7 @@ spec:
       labels:
         app: backend
       annotations:
-        ad.datadoghq.com/backend.logs: '[{"source": "ruby"}, "auto_multi_line_detection":true }]'
+        ad.datadoghq.com/backend.logs: '[{"source": "ruby", "auto_multi_line_detection":true}]'
     spec:
       volumes:
         - name: apmsocketpath
