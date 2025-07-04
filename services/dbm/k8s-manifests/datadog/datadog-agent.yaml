@@ -40,6 +40,7 @@ spec:
     # Used to monitor pods running on the control plane nodes.
     # This is required for etcd integration.
     nodeAgent:
+      # Control-plane override: tolerations only, no Postgres log mounts/config
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
@@ -52,16 +53,6 @@ spec:
               mountPath: /host/etc/kubernetes/pki/etcd
             - name: disable-etcd-autoconf # Used for etcd integration
               mountPath: /etc/datadog-agent/conf.d/etcd.d
-            # Used for audit logs
-            # - name: klogpath
-            #   readOnly: true
-            #   mountPath: /var/log/kubernetes
-            - name: postgres-logs # For Postgres log collection
-              mountPath: /var/log/pg_log
-              readOnly: true
-            - name: shared-pg-logs # For shared NFS log collection
-              mountPath: /var/log/pg_log_shared
-              readOnly: true
           env:
       volumes:
         - name: etcd-certs # Used for etcd integration
@@ -69,16 +60,6 @@ spec:
             path: /etc/kubernetes/pki/etcd
         - name: disable-etcd-autoconf
           emptyDir: {}
-        # Used for audit logs
-        # - name: klogpath
-        #   hostPath:
-        #     path: /var/log/kubernetes
-        - name: postgres-logs # For Postgres log collection
-          hostPath:
-            path: /var/log/pg_log
-        - name: shared-pg-logs # For shared NFS log collection
-          persistentVolumeClaim:
-            claimName: shared-pg-logs
       extraConfd:
         configDataMap: # Integration configurations
           etcd.yaml: |- # etcd integration
@@ -106,25 +87,40 @@ spec:
             init_config:
             instances:
               - nginx_status_url: http://%%host%%:18080/nginx_status
-          postgres.yaml: |- # Postgres log collection
+    # Add worker node override for Postgres log collection
+    nodeAgent-worker:
+      nodeSelector:
+        node-role: worker
+      containers:
+        agent:
+          volumeMounts:
+            - name: postgres-logs # For Postgres log collection
+              mountPath: /var/log/pg_log
+              readOnly: true
+            - name: shared-pg-logs # For shared NFS log collection
+              mountPath: /var/log/pg_log_shared
+              readOnly: true
+      volumes:
+        - name: postgres-logs # For Postgres log collection
+          hostPath:
+            path: /var/log/pg_log
+        - name: shared-pg-logs # For shared NFS log collection
+          persistentVolumeClaim:
+            claimName: shared-pg-logs
+      extraConfd:
+        configDataMap:
+          postgres.yaml: |-
             logs:
               - type: file
                 path: /var/log/pg_log/postgresql-*.json
                 service: store-db
                 source: postgresql
-          postgres-shared.yaml: |- # Postgres log collection from shared NFS
+          postgres-shared.yaml: |-
             logs:
               - type: file
                 path: /var/log/pg_log_shared/postgresql-*.json
                 service: store-db
                 source: postgresql
-          # Send audit logs to Datadog
-          # kube_audit.yaml: |-
-          #   logs:
-          #     - type: file
-          #       path: /var/log/kubernetes/apiserver/audit.log
-          #       service: kube-apiserver-audit
-          #       source: kubernetes.audit
     clusterAgent:
       extraConfd:
         configDataMap:

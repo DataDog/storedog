@@ -5,8 +5,8 @@ metadata:
   namespace: storedog
 spec:
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
   resources:
     requests:
-      storage: 1Gi
-  storageClassName: longhorn
+      storage: 10Gi
+  storageClassName: standard

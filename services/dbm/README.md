@@ -176,9 +176,14 @@ Change feature flag json in frontend (how can this file be mounted?)
 
 Set `DD_VERSION_DBM=1.0.0`
 
+Label worker node
+```bash
+kubectl label node worker node-role=worker
+```
+
 Start order is important. Postgres needs to be running for the agent to set up integration.
 ```bash
-kubectl apply -f k8s-manifests/nfs/
+kubectl apply -f storage manifests
 ```
 Create namespaces:
 
