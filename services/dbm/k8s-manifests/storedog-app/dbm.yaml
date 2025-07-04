@@ -58,8 +58,12 @@ spec:
                   key: POSTGRES_USER
             - name: POSTGRES_HOST
               value: postgres
+            - name: DD_ENV
+              value: ${DD_ENV}
             - name: DD_SERVICE
               value: storedog-dbm
+            - name: DD_VERSION
+              value: ${DD_VERSION_DBM}
             - name: DD_DBM_PROPAGATION_MODE
               value: full
             - name: DD_LOGS_INJECTION

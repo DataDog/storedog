@@ -169,6 +169,10 @@ Change the `env` tag in `datadog-agent.yaml`
 
 Change feature flag json in frontend (how can this file be mounted?)
 
+Set `DD_VERSION_DBM=1.0.0`
+
+Start order is important. Postgres needs to be running for the agent to set up integration.
+
 Create namespaces:
 
 ```bash
