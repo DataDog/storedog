@@ -12,7 +12,7 @@ spec:
       labels:
         app: worker
       annotations:
-        ad.datadoghq.com/worker.logs: '[{"source": "ruby"}, "auto_multi_line_detection":true }]'
+        ad.datadoghq.com/worker.logs: '[{"source": "ruby", "auto_multi_line_detection":true}]'
     spec:
       volumes:
         - name: apmsocketpath
