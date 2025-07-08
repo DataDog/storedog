@@ -30,6 +30,9 @@ spec:
         - name: apmsocketpath
           hostPath:
             path: /var/run/datadog/
+        - name: feature-flags-config
+          configMap:
+            name: feature-flags-config
       initContainers:
         - name: wait-for-backend
           image: busybox
@@ -106,6 +109,9 @@ spec:
           volumeMounts:
             - name: apmsocketpath
               mountPath: /var/run/datadog
+            - name: feature-flags-config
+              mountPath: /app/featureFlags.config.json
+              subPath: featureFlags.config.json
           livenessProbe:
             httpGet:
               path: /

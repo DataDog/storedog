@@ -82,7 +82,8 @@ export REGISTRY_URL=localhost:5000
 > Building and pushing containers to the local registry needs to be done on the worker node.
 
 ```bash
-docker build -t $REGISTRY_URL/backend:latest ./services/backend && docker push $REGISTRY_URL/backend:latest
+SERVICE_NAME=ads
+docker build -t $REGISTRY_URL/$SERVICE_NAME:latest ./services/$SERVICE_NAME && docker push $REGISTRY_URL/$SERVICE_NAME:latest
 ```
 
 ## Prerequisites
@@ -140,7 +141,7 @@ export SD_TAG=1.4.0
 export DD_VERSION_ADS=1.0.0
 export DD_VERSION_BACKEND=1.0.0
 export DD_VERSION_DISCOUNTS=1.0.0
-export DD_VERSION_NGINX=1.0.0
+export DD_VERSION_NGINX=1.28.0
 export NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend
 export NEXT_PUBLIC_DD_VERSION_FRONTEND=1.0.0
 export DD_ENV=development
@@ -174,7 +175,7 @@ The storedog-app definition files contain variables which need to be set before 
 
 1. **Deploy Cluster Components (one-time setup per cluster):**
 
-This single command installs the storage provisioner and the ingress controller.
+Install the storage provisioner and the ingress controller.
 
 ```bash
 kubectl apply -R -f k8s-manifests/cluster-setup/
