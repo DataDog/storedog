@@ -24,4 +24,4 @@ ENV FLASK_APP=dbm.py
 
 # Start the app using ddtrace so we have profiling and tracing
 ENTRYPOINT ["ddtrace-run"]
-CMD gunicorn --bind 0.0.0.0:7578 dbm:app
+CMD ["gunicorn", "--bind", "0.0.0.0:7595", "dbm:app"]

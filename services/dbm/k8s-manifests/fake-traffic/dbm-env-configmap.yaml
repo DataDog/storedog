@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dbm-env
+  namespace: fake-traffic
+data:
+  FAKETRAFFIC_POSTGRES_HOST: postgres.default.svc.cluster.local

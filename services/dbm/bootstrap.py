@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS
 from models import Items, Preorder_Items, db
 from faker import Faker
 import random
@@ -13,6 +14,7 @@ DB_HOST = os.environ['POSTGRES_HOST']
 def create_app():
     """Create a Flask application"""
     app = Flask(__name__)
+    CORS(app)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://' + \
         DB_USERNAME + ':' + DB_PASSWORD + '@' + DB_HOST + '/' + DB_USERNAME
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
