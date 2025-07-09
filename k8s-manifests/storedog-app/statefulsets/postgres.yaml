@@ -32,21 +32,14 @@ spec:
         tags.datadoghq.com/service: store-db
         tags.datadoghq.com/version: "15.0"
       annotations:
-        ad.datadoghq.com/postgres.logs: |
-          [{
-            "source": "postgresql",
-            "service": "postgres",
-            "auto_multi_line_detection": true,
-            "path": "/var/log/pg_log/postgresql*.json",
-            "type": "file"
-          }]
+        ad.datadoghq.com/postgres.logs: '[{"source": "postgresql", "auto_multi_line_detection":true}]'
         ad.datadoghq.com/postgres.checks: |
-          [{
+          {
             "postgres": {
             "init_config": {},
             "instances": [{"host":"%%host%%", "port":5432, "username":"datadog", "password":"datadog"}]
             }
-          }]
+          }
     spec:
       containers:
         - name: postgres
