@@ -173,42 +173,58 @@ The manifest YAML files use environment variables such as ${DD_ENV} and ${REGIST
 
 PostgreSQL default logging is to `stderr`, and logs do not include detailed information. Information on collecting more detailed logs are in the [DBM Postgres configuration](https://docs.datadoghq.com/database_monitoring/setup_postgres/selfhosted/?tab=postgres15#collecting-logs-optional) documentation. These more detailed logs are written to a file which is then collected by the Datadog Agent. Running the agent and Postgres in the same namespace allows for a volume to be shared between the two pods. Running Storedog in a different namespace would require a more complex configuration for shared volumes using NFS or cloud storage. This is beyond the scope of running the store-dbm service for our lab environments.
 
-#### Setup store-dbm
+#### Deploy the Datadog Operator
+
+1. Install the Datadog Operator with Helm:
+
+```bash
+helm repo add datadog https://helm.datadoghq.com
+helm repo update
+helm install my-datadog-operator datadog/datadog-operator
+```
+
+2. Create a Kubernetes secret with your Datadog API and app keys:
+
+```bash
+kubectl create secret generic datadog-secret --from-literal api-key=$DD_API_KEY --from-literal app-key=$DD_APP_KEY
+```
+
+#### Deploy Storedog with store-dbm
 
 These steps ensure that dependencies are applied first. For example the storage volumes are created before the pods that will use them.
 
-Begin by merging the files from `dbm/k8s-manifest` into the main manifests directory. Run the following command at the root of the registry:
+1. Begin by merging the files from `dbm/k8s-manifest` into the main manifests directory. Run the following command at the root of the registry:
 
 ```bash
 cp -a services/dbm/k8s-manifests/. k8s-manifests/
 ```
 
-In addition to the usual environment variables used with Storedog, set `DD_VERSION_DBM=1.0.0`:
+2. In addition to the usual environment variables used with Storedog, set `DD_VERSION_DBM=1.0.0`:
 
 ```bash
 export DD_VERSION_DBM=1.0.0
 ```
 
-Create the `fake-traffic` namespace:
+3. Create the `fake-traffic` namespace:
 
 ```bash
 kubectl create namespace fake-traffic
 ```
 
-Apply secrets for each namespace:
+4. Apply secrets for each namespace:
 
 ```bash
 kubectl apply -n default -f k8s-manifests/storedog-app/secrets/shared-secrets.yaml
 kubectl apply -n fake-traffic -f k8s-manifests/storedog-app/secrets/shared-secrets.yaml
 ```
 
-Apply the storage provisioner and the ingress controller.
+5. Apply the storage provisioner and the ingress controller.
 
 ```bash
 kubectl apply -R -f k8s-manifests/cluster-setup/
 ```
 
-Apply the Datadog Agent manifest:
+6. Apply the Datadog Agent manifest:
 
 > [!IMPORTANT]
 > This assumes you've already installed the Datadog Operator and set the API key.
@@ -220,7 +236,7 @@ envsubst '${DD_ENV}' < k8s-manifests/datadog/datadog-agent.yaml | kubectl apply 
 > [!NOTE]
 > Use `kubectl get pods` and wait till the agent is running before continuing. This will ensure that traces are collected from all services.
 
-Deploy Storedog application components based on dependency.
+7. Deploy Storedog application components based on dependency.
 
 > [!NOTE]
 > Applying all manifests at once can cause delays in service start. This command will apply all Storedog manifests in the default namespace.
@@ -229,31 +245,31 @@ Deploy Storedog application components based on dependency.
 > for file in k8s-manifests/storedog-app/**/*.yaml; do envsubst < "$file" | kubectl apply -f -; done
 > ```
 
-Apply ConfigMaps:
+8. Apply ConfigMaps:
 
 ```bash
 kubectl apply -R -f k8s-manifests/storedog-app/configmaps/
 ```
 
-Apply StatefulSets (Redis and Postgres):
+9. Apply StatefulSets (Redis and Postgres):
 
 ```bash
 for file in k8s-manifests/storedog-app/statefulsets/*.yaml; do envsubst < "$file" | kubectl apply -f -; done
 ```
 
-Apply Storedog services:
+10. Apply Storedog services:
 
 ```bash
 for file in k8s-manifests/storedog-app/deployments/*.yaml; do envsubst < "$file" | kubectl apply -f -; done
 ```
 
-Apply Ingress for external traffic:
+11. Apply Ingress for external traffic:
 
 ```bash
 for file in k8s-manifests/storedog-app/ingress/*.yaml; do envsubst < "$file" | kubectl apply -f -; done
 ```
 
-Apply the ConfigMap and services to generate fake traffic.
+12. Apply the ConfigMap and services to generate fake traffic.
 
 ```bash
 kubectl apply -f k8s-manifests/storedog-app/configmaps/shared-config.yaml -n fake-traffic
