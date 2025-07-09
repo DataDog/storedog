@@ -12,7 +12,7 @@ EOF
 )
 
 # Loop for running the query
-for i in {1..15
+for i in {1..15}
 do
   # Loop for building the query
   for j in {1..20}

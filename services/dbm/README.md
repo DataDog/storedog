@@ -145,7 +145,7 @@ DD_DBM_PROPAGATION_MODE=full
 
 #### Script files
 
-There are two shell script files in the `./scripts` directory. This need to be added to the lab files. Ensure they are executable (`chmod +x <filename>).
+There are two shell script files in the `./scripts` directory. This need to be added to the lab files. Ensure they are executable `chmod +x <filename>`.
 
 These scripts use `psql` to query the database. They can be added as a cron job to continually run on the host. Use the following command to install the required programs.
 
@@ -158,16 +158,16 @@ Add the script to cron:
 
 ```bash
 echo "* * * * * /root/dbm_query_one.sh > /dev/null 2>&1" |crontab -
-(crontab -l;echo "*/2 * * * * /root/dmb_query_two.sh > /dev/null 2>&1") |crontab -
+(crontab -l;echo "*/2 * * * * /root/dbm_query_two.sh > /dev/null 2>&1") |crontab -
 ```
 
 ### Kubernetes
 
-The `dbm/k8s-manifest` directory is additive to the version at the the root of the repo. These files will add the `store-dbm` service and the configurations needed to collect DBM data.
+The `dbm/k8s-manifest` directory is additive to the version at the root of the repo. These files will add the `store-dbm` service and the configurations needed to collect DBM data.
 
 In this scenario, Storedog and the Datadog Agent are expected to be in the same namespace. The steps below assume that Storedog will run in the `default` namespace. This simplifies Postgres log collection.
 
-The definition yaml files use environment variables to define the image URL and other settings. These values are set using `envsubst`. You can edit the files to hardcode these values if needed rather than using `envsubst`.
+The manifest YAML files use environment variables such as ${DD_ENV} and ${REGISTRY_URL}. These are substituted using envsubst during deployment. If you prefer, you can edit the YAMLs directly to hardcode these values.
 
 #### A note on log collection
 
