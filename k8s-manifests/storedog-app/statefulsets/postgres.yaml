@@ -15,6 +15,7 @@ kind: StatefulSet
 metadata:
   name: postgres
   labels:
+    tags.datadoghq.com/env: ${DD_ENV}
     tags.datadoghq.com/service: store-db
     tags.datadoghq.com/version: "15.0"
 spec:
@@ -27,16 +28,11 @@ spec:
     metadata:
       labels:
         app: postgres
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/service: store-db
         tags.datadoghq.com/version: "15.0"
       annotations:
-        ad.datadoghq.com/postgres.logs: |
-          {
-            "source": "postgresql",
-            "auto_multi_line_detection":true,
-            "path": "/var/log/pg_log/postgresql*.json",
-            "type": "file"
-          }
+        ad.datadoghq.com/postgres.logs: '[{"source": "postgresql", "auto_multi_line_detection":true}]'
         ad.datadoghq.com/postgres.checks: |
           {
             "postgres": {

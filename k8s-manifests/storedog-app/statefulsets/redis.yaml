@@ -15,6 +15,7 @@ kind: StatefulSet
 metadata:
   name: redis
   labels:
+    tags.datadoghq.com/env: ${DD_ENV}
     tags.datadoghq.com/service: redis
     tags.datadoghq.com/version: "6.2"
 spec:
@@ -27,6 +28,7 @@ spec:
     metadata:
       labels:
         app: redis
+        tags.datadoghq.com/env: ${DD_ENV}
         tags.datadoghq.com/service: redis
         tags.datadoghq.com/version: "6.2"
       annotations:

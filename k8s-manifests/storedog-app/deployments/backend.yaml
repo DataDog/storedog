@@ -24,7 +24,7 @@ spec:
       labels:
         app: backend
       annotations:
-        ad.datadoghq.com/backend.logs: '[{"source": "ruby"}, "auto_multi_line_detection":true }]'
+        ad.datadoghq.com/backend.logs: '[{"source": "ruby", "auto_multi_line_detection":true}]'
     spec:
       volumes:
         - name: apmsocketpath
@@ -39,7 +39,6 @@ spec:
           image: ${REGISTRY_URL}/backend:${SD_TAG}
           ports:
             - containerPort: 4000
-          command: ["bundle", "exec", "rails", "s", "-b", "0.0.0.0", "-p", "4000"]
           env:
             - name: REDIS_URL
               valueFrom:
