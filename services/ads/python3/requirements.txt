@@ -1,4 +1,4 @@
-Flask==1.1.2
+Flask==1.1.4
 Flask-Cors==3.0.10
 Flask-SQLAlchemy==2.4.4
 psycopg2==2.8.6
