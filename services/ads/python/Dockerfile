@@ -26,4 +26,4 @@ ENV POSTGRES_HOST=postgres
 
 # Start the app using ddtrace so we have profiling and tracing
 ENTRYPOINT ["ddtrace-run"]
-CMD ["flask", "run", "--port=3030", "--host=0.0.0.0"]
+CMD ["sh", "-c", "flask run --port=3030 --host=0.0.0.0"]

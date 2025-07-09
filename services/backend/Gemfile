@@ -94,7 +94,7 @@ gem 'oj'
 gem 'sassc', github: 'sass/sassc-ruby', group: :development
 
 # monitoring
-gem 'datadog', '~> 2.12.2', require: 'datadog/auto_instrument'
+gem 'datadog', '~> 2.18.0', require: 'datadog/auto_instrument'
 # needed for Datadog Continuous Profiler
 gem 'google-protobuf', '~> 4.30'
 # needed for runtime metrics

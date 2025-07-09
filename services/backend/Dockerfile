@@ -50,4 +50,4 @@ RUN npm run build
 
 EXPOSE 4000
 
-CMD ["/bin/bash", "-c", "rm -f /app/tmp/pids/server.pid && bundle exec ddtracerb exec rails s -b 0.0.0.0 -p 4000"]
+CMD ["/bin/bash", "-c", "rm -f /app/tmp/pids/server.pid && bundle exec ddprofrb exec rails s -b 0.0.0.0 -p 4000"]
