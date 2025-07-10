@@ -1,9 +1,18 @@
-FROM ruby:3.0.3
+FROM ruby:3.1.7
 
 RUN apt-get update -yq \
   && apt-get upgrade -yq \
-  #ESSENTIALS
-  && apt-get install -y -qq --no-install-recommends build-essential curl git-core vim passwd unzip cron gcc wget netcat imagemagick postgresql-client wait-for-it \
+  # ESSENTIALS
+  && apt-get install -y -qq --no-install-recommends \
+    build-essential \
+    gcc \
+    git \
+    curl \
+    wget \
+    netcat-traditional \
+    imagemagick \
+    postgresql-client \
+    wait-for-it \
   # INSTALL NODE
   && curl -sL https://deb.nodesource.com/setup_20.x | bash - \
   && apt-get install -y --no-install-recommends nodejs \
@@ -16,12 +25,8 @@ RUN apt-get clean -qy \
 
 WORKDIR /app
 
-# install specific version of bundler
-RUN gem install bundler -v 2.2.32
-
 ENV BUNDLE_GEMFILE=/app/Gemfile \
     BUNDLE_JOBS=20 \
-    BUNDLE_PATH=/bundle \
     BUNDLE_BIN=/bundle/bin \
     GEM_HOME=/bundle \
     # Default environment variables

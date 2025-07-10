@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-ruby '3.0.3'
+ruby '3.1.7'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '~> 6.1.4'
@@ -92,3 +92,7 @@ gem 'sassc', github: 'sass/sassc-ruby', group: :development
 
 # JSON log formatter
 gem 'lograge'
+
+gem 'net-smtp'
+gem 'net-pop'
+gem 'net-imap'
