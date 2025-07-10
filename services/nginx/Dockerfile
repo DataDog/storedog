@@ -1,6 +1,4 @@
-ARG NGINX_VERSION=1.28.0
-
-FROM nginx:$NGINX_VERSION
+FROM nginx:1.28.0
 
 RUN apt-get update \
   && apt-get install -y gettext-base \
