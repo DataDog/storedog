@@ -1,32 +1,32 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: ads
+  name: ads-java
 spec:
   ports:
     - port: 3030
       targetPort: 3030
       name: http
   selector:
-    app: ads
+    app: ads-java
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ads
+  name: ads-java
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ads
+      app: ads-java
   template:
     metadata:
       labels:
-        app: ads
+        app: ads-java
     spec:
       containers:
-        - name: ads
-          image: ${REGISTRY_URL}/ads-python3:${SD_TAG}
+        - name: ads-java
+          image: ${REGISTRY_URL}/ads-java:${SD_TAG}
           ports:
             - containerPort: 3030
           resources:

@@ -148,6 +148,10 @@ services:
       - storedog-network
     depends_on:
       - frontend
+    environment:
+      - ADS_A_UPSTREAM=${ADS_A_UPSTREAM:-ads:3030}
+      - ADS_B_UPSTREAM=${ADS_B_UPSTREAM:-ads-java:3030}
+      - ADS_B_PERCENT=${ADS_B_PERCENT:-0}
 
   # Primary database
   postgres:
