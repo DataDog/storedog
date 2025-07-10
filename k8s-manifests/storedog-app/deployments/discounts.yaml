@@ -33,7 +33,6 @@ spec:
           image: ${REGISTRY_URL}/discounts:${SD_TAG}
           ports:
             - containerPort: 2814
-          command: ["flask", "run", "--port=2814", "--host=0.0.0.0"]
           env:
             - name: FLASK_APP
               value: "discounts.py"

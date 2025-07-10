@@ -45,8 +45,6 @@ spec:
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
-            - name: postgres-logs
-              mountPath: /var/log/pg_log
   volumeClaimTemplates:
     - metadata:
         name: postgres-data
@@ -55,10 +53,3 @@ spec:
         resources:
           requests:
             storage: 10Gi
-    - metadata:
-        name: postgres-logs
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        resources:
-          requests:
-            storage: 1Gi
