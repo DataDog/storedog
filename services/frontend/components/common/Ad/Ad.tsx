@@ -10,11 +10,7 @@ export interface AdDataResults {
 function Ad() {
   const [data, setData] = useState<AdDataResults | null>(null)
   const [isLoading, setLoading] = useState(false)
-  const [adsPath, setAdsPath] = useState<string>('')
-  const adsRoutes = [
-    (typeof window !== 'undefined' && (window as any).process?.env?.NEXT_PUBLIC_ADS_ROUTE) || '/services/ads',
-    '/services/ads-java',
-  ]
+  const adsPath = process.env.NEXT_PUBLIC_ADS_ROUTE || `/services/ads`
 
   const getRandomArbitrary = useCallback((min: number, max: number) => {
     return Math.floor(Math.random() * (max - min) + min)
@@ -23,18 +19,15 @@ function Ad() {
   const fetchAd = useCallback(async () => {
     setLoading(true)
     const flag = (await codeStash('error-tracking', { file: config })) || false
-    // Randomly select adsPath for each fetch
-    const selectedAdsPath = adsRoutes[Math.random() < 0.5 ? 0 : 1]
-    setAdsPath(selectedAdsPath)
-    console.log(selectedAdsPath)
+    console.log(adsPath)
     const headers = {
       'X-Throw-Error': `${flag}`,
       'X-Error-Rate': process.env.NEXT_PUBLIC_ADS_ERROR_RATE || '0.25',
     }
 
     try {
-      console.log('ads path', selectedAdsPath)
-      const res = await fetch(`${selectedAdsPath}/ads`, { headers })
+      console.log('ads path', adsPath)
+      const res = await fetch(`${adsPath}/ads`, { headers })
       if (!res.ok) {
         throw new Error('Error fetching ad')
       }
@@ -47,7 +40,7 @@ function Ad() {
       console.error(e)
       setLoading(false)
     }
-  }, [adsRoutes, getRandomArbitrary, setData, setLoading])
+  }, [adsPath, getRandomArbitrary, setData, setLoading])
 
   useEffect(() => {
     if (!data) fetchAd()
@@ -69,20 +62,11 @@ function Ad() {
   return (
     <div className="flex flex-row justify-center py-4 advertisement-wrapper">
       <picture className="advertisement-banner">
-        <source srcSet={data?.path ? `${adsPath}/banners/${data.path}` : ''} type="image/webp" />
-        <img src={data?.path ? `${adsPath}/banners/${data.path}` : ''} alt="Landscape picture" />
+        <source srcSet={`${adsPath}/banners/${data.path}`} type="image/webp" />
+        <img src={`${adsPath}/banners/${data.path}`} alt="Landscape picture" />
       </picture>
     </div>
   )
 }
 
 export default Ad
-
-// Add this import for JSX types if missing
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      [elemName: string]: any;
-    }
-  }
-}
