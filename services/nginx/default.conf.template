@@ -1,3 +1,15 @@
+upstream ads_service_a {
+    server ${ADS_A_UPSTREAM} max_fails=1 fail_timeout=1s;
+}
+
+${ADS_SERVICE_B_BLOCK}
+
+# Conditional upstream based on what's enabled
+upstream ads_upstream {
+    # This will be populated based on environment variables
+    ${UPSTREAM_CONFIG}
+}
+
 server {
     listen 80;
 
@@ -9,8 +21,8 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
 
         rewrite ^/services/ads(/.*)$ $1 break;
-        # Proxy to ads-java, ensure trailing slash for proper URI handling
-        proxy_pass http://ads:3030/;
+        # Proxy to ads service based on A/B split
+        proxy_pass http://ads_upstream/;
     }
 
     # Reverse proxy for discounts 
@@ -43,6 +55,9 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Strip /services/dbm from the path before proxying
+        rewrite ^/services/dbm(/.*)$ $1 break;
 
         # Use a variable for the proxy_pass to force runtime resolution
         set $upstream_dbm "http://dbm:7595/";
