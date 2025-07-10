@@ -36,6 +36,8 @@ services:
     networks:
       - storedog-network
     environment:
+      - NEXT_PUBLIC_DD_APPLICATION_ID=${DD_APPLICATION_ID}
+      - NEXT_PUBLIC_DD_CLIENT_TOKEN=${DD_CLIENT_TOKEN}
       - NEXT_PUBLIC_ADS_ROUTE=${NEXT_PUBLIC_ADS_ROUTE:-/services/ads}
       - NEXT_PUBLIC_DISCOUNTS_ROUTE=${NEXT_PUBLIC_DISCOUNTS_ROUTE:-/services/discounts}
       - NEXT_PUBLIC_DBM_ROUTE=${NEXT_PUBLIC_DBM_ROUTE:-/services/dbm}
