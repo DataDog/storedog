@@ -185,7 +185,7 @@ kubectl apply -R -f k8s-manifests/cluster-setup/
 
 2. **Deploy the Storedog Application:**
 
-This command creates a `storedog` namespace.
+The following command creates a `storedog` namespace.
 
 ```bash
 kubectl create namespace storedog
@@ -193,7 +193,7 @@ kubectl create namespace storedog
 
 3. **Create Secrets for Datadog RUM:**
 
-This command creates a Kubernetes secret with your Datadog RUM app id and client token keys:
+The following command creates a Kubernetes secret with your Datadog RUM app id and client token keys:
 
 > [!IMPORTANT]
 > Change the namespace from `storedog` if needed.
@@ -207,7 +207,7 @@ kubectl create secret generic datadog-secret \
 
 3. **Deploy the Storedog Application:**
 
-This command deploys all application components into it.
+The following command deploys all application components into it.
 
 ```bash
 for file in k8s-manifests/storedog-app/**/*.yaml; do envsubst < "$file" | kubectl apply -n storedog -f -; done
