@@ -127,6 +127,15 @@ Deployment is a clean, two-stage process.
 
 The storedog-app definition files contain variables which need to be set before applying them to the cluster. The command below uses `envsubst` to update the variable values in place before applying the definition file.
 
+1. **Set secrets for Datadog RUM**
+   This will take the host environment variables needed for RUM.
+
+   ```bash
+   kubectl create secret generic datadog-secrets \
+     --from-literal=dd_application_id=${DD_APPLICATION_ID} \
+     --from-literal=dd_client_token=${DD_CLIENT_TOKEN}
+   ```
+
 1. **Deploy Cluster Components (one-time setup per cluster):**
    This single command installs the storage provisioner and the ingress controller.
 

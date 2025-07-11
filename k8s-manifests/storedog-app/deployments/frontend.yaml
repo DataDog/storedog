@@ -24,6 +24,10 @@ spec:
       labels:
         app: frontend
     spec:
+      volumes:
+        - name: feature-flags-config
+          configMap:
+            name: feature-flags-config
       initContainers:
         - name: wait-for-backend
           image: busybox
@@ -75,18 +79,26 @@ spec:
                 configMapKeyRef:
                   name: storedog-config
                   key: NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN
+            - name: NEXT_PUBLIC_DD_APPLICATION_ID
+              valueFrom:
+                secretKeyRef:
+                  name: datadog-secrets
+                  key: dd_application_id
+            - name: NEXT_PUBLIC_DD_CLIENT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: datadog-secrets
+                  key: dd_client_token
           resources:
             requests:
               memory: "256Mi"
               cpu: "100m"
             limits:
               memory: "2Gi"
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 3000
-            initialDelaySeconds: 120
-            periodSeconds: 20
+          volumeMounts:
+            - name: feature-flags-config
+              mountPath: /app/featureFlags.config.json
+              subPath: featureFlags.config.json
           livenessProbe:
             httpGet:
               path: /
@@ -94,3 +106,9 @@ spec:
             initialDelaySeconds: 180
             periodSeconds: 20
             failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 120
+            periodSeconds: 20
