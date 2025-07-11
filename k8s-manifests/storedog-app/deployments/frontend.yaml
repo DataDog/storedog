@@ -84,6 +84,16 @@ spec:
                 configMapKeyRef:
                   name: storedog-config
                   key: NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN
+            - name: NEXT_PUBLIC_DD_APPLICATION_ID
+              valueFrom:
+                secretKeyRef:
+                  name: datadog-secret
+                  key: dd_application_id
+            - name: NEXT_PUBLIC_DD_CLIENT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: datadog-secret
+                  key: dd_client_token
             - name: DD_ENV
               value: ${DD_ENV}
             - name: DD_SERVICE

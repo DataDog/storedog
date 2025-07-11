@@ -160,7 +160,9 @@ helm install my-datadog-operator datadog/datadog-operator
 2. Create a Kubernetes secret with your Datadog API and app keys:
 
 ```bash
-kubectl create secret generic datadog-secret --from-literal api-key=$DD_API_KEY --from-literal app-key=$DD_APP_KEY
+kubectl create secret generic datadog-secret \
+  --from-literal api-key=$DD_API_KEY \
+  --from-literal app-key=$DD_APP_KEY
 ```
 
 2. Apply the Datadog Agent definition:
@@ -183,14 +185,35 @@ kubectl apply -R -f k8s-manifests/cluster-setup/
 
 2. **Deploy the Storedog Application:**
 
-This command creates a `storedog` namespace and deploys all application components into it.
+The following command creates a `storedog` namespace.
 
 ```bash
 kubectl create namespace storedog
+```
+
+3. **Create Secrets for Datadog RUM:**
+
+The following command creates a Kubernetes secret with your Datadog RUM app id and client token keys:
+
+> [!IMPORTANT]
+> Change the namespace from `storedog` if needed.
+
+```bash
+kubectl create secret generic datadog-secret \
+  --from-literal=dd_application_id=${DD_APPLICATION_ID} \
+  --from-literal=dd_client_token=${DD_CLIENT_TOKEN} \
+  -n storedog
+```
+
+3. **Deploy the Storedog Application:**
+
+The following command deploys all application components into it.
+
+```bash
 for file in k8s-manifests/storedog-app/**/*.yaml; do envsubst < "$file" | kubectl apply -n storedog -f -; done
 ```
 
-3. **Apply manifest changes to one service:**
+4. **Apply manifest changes to one service:**
 
 While testing, you might change one manifest file. Rather than update all at once, you can apply the change like this.
 
@@ -198,7 +221,7 @@ While testing, you might change one manifest file. Rather than update all at onc
 envsubst < k8s-manifests/storedog-app/deployments/backend.yaml | kubectl apply -n storedog -f -
 ```
 
-4. **To reset the all Storedog:**
+5. **To reset the all Storedog:**
 
 You only need to delete the application's namespace. The cluster components can remain installed.
 
@@ -206,7 +229,7 @@ You only need to delete the application's namespace. The cluster components can 
 kubectl delete namespace storedog
 ```
 
-5. **To restart one service:**
+6. **To restart one service:**
 
 After rebuilding a container image, it's faster to restart only the service you need.
 
