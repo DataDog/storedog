@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-ruby '3.0.3'
+ruby '3.1.7'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '~> 6.1.4'
@@ -73,9 +73,6 @@ gem 'spree_auth_devise'
 gem 'spree_i18n', '>= 5.0'
 gem 'spree_dev_tools', require: false, group: %w[test development]
 
-# Sentry Client
-gem 'sentry-raven'
-
 # Rack CORS Middleware
 gem 'rack-cors'
 
@@ -93,12 +90,17 @@ gem 'oj'
 # Fix SCSS errors with Ruby 3 on MacOS
 gem 'sassc', github: 'sass/sassc-ruby', group: :development
 
+# Required for Ruby 3.1.7
+gem 'net-smtp'
+gem 'net-pop'
+gem 'net-imap'
+
+# JSON log formatter
+gem 'lograge'
+
 # monitoring
 gem 'datadog', '~> 2.18.0', require: 'datadog/auto_instrument'
 # needed for Datadog Continuous Profiler
 gem 'google-protobuf', '~> 4.30'
 # needed for runtime metrics
 gem 'dogstatsd-ruby', '~> 5.6', require: 'datadog/statsd'
-
-# JSON log formatter
-gem 'lograge'

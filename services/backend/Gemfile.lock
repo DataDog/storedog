@@ -133,7 +133,7 @@ GEM
       babel-source (>= 4.0, < 6)
       execjs (~> 2.0)
     bcrypt (3.1.16)
-    bigdecimal (3.1.9)
+    bigdecimal (3.2.2)
     bindex (0.8.1)
     bootsnap (1.10.2)
       msgpack (~> 1.2)
@@ -174,13 +174,14 @@ GEM
       activerecord (>= 5.a)
       database_cleaner-core (~> 2.0.0)
     database_cleaner-core (2.0.1)
-    datadog (2.12.2)
-      datadog-ruby_core_source (~> 3.4)
-      libdatadog (~> 16.0.1.1.0)
-      libddwaf (~> 1.18.0.0.1)
+    datadog (2.18.0)
+      datadog-ruby_core_source (~> 3.4, >= 3.4.1)
+      libdatadog (~> 18.1.0.1.0)
+      libddwaf (~> 1.24.1.0.0)
       logger
       msgpack
     datadog-ruby_core_source (3.4.1)
+    date (3.4.1)
     devise (4.8.1)
       bcrypt (~> 3.0)
       orm_adapter (~> 0.1)
@@ -248,7 +249,7 @@ GEM
     globalid (1.0.0)
       activesupport (>= 5.0)
     glyphicons (1.0.2)
-    google-protobuf (4.30.1-aarch64-linux)
+    google-protobuf (4.31.1-x86_64-linux-gnu)
       bigdecimal
       rake (>= 13)
     hashdiff (1.0.1)
@@ -300,8 +301,8 @@ GEM
       addressable (~> 2.7)
     letter_opener (1.7.0)
       launchy (~> 2.2)
-    libdatadog (16.0.1.1.0-aarch64-linux)
-    libddwaf (1.18.0.0.1-aarch64-linux)
+    libdatadog (18.1.0.1.0-x86_64-linux)
+    libddwaf (1.24.1.0.0-x86_64-linux)
       ffi (~> 1.0)
     listen (3.7.1)
       rb-fsevent (~> 0.10, >= 0.10.3)
@@ -322,7 +323,6 @@ GEM
     method_source (1.0.0)
     mini_magick (4.11.0)
     mini_mime (1.1.2)
-    mini_portile2 (2.8.0)
     minitest (5.15.0)
     monetize (1.12.0)
       money (~> 6.12)
@@ -331,9 +331,17 @@ GEM
     msgpack (1.4.4)
     multi_json (1.15.0)
     multipart-post (2.1.1)
+    net-imap (0.5.9)
+      date
+      net-protocol
+    net-pop (0.1.2)
+      net-protocol
+    net-protocol (0.2.2)
+      timeout
+    net-smtp (0.5.1)
+      net-protocol
     nio4r (2.5.8)
-    nokogiri (1.13.3)
-      mini_portile2 (~> 2.8.0)
+    nokogiri (1.13.3-x86_64-linux)
       racc (~> 1.4)
     octokit (4.22.0)
       faraday (>= 0.9)
@@ -639,6 +647,7 @@ GEM
     thor (1.2.1)
     tilt (2.0.10)
     timecop (0.9.4)
+    timeout (0.4.3)
     timers (4.3.3)
     tinymce-rails (5.10.2)
       railties (>= 3.1.1)
@@ -674,7 +683,7 @@ GEM
     zeitwerk (2.5.3)
 
 PLATFORMS
-  ruby
+  x86_64-linux
 
 DEPENDENCIES
   activerecord-nulldb-adapter
@@ -682,7 +691,7 @@ DEPENDENCIES
   aws-sdk-s3
   bootsnap
   dalli
-  datadog (~> 2.12.2)
+  datadog (~> 2.18.0)
   dogstatsd-ruby (~> 5.6)
   dotenv-rails (~> 2.1, >= 2.1.1)
   font_assets
@@ -690,6 +699,9 @@ DEPENDENCIES
   letter_opener
   listen
   lograge
+  net-imap
+  net-pop
+  net-smtp
   oj
   pg
   puma
@@ -719,7 +731,7 @@ DEPENDENCIES
   webmock
 
 RUBY VERSION
-   ruby 3.0.3p157
+   ruby 3.1.7
 
 BUNDLED WITH
-   2.2.32
+   2.3.27
