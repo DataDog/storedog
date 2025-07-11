@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: puppeteer
+  namespace: fake-traffic
 spec:
   replicas: 1
   selector:
@@ -17,7 +18,8 @@ spec:
           image: ${REGISTRY_URL}/puppeteer:${SD_TAG}
           env:
             - name: STOREDOG_URL
-              value: "http://service-proxy"
+              # Change namespace as needed
+              value: "http://service-proxy.storedog.svc.cluster.local"
             - name: PUPPETEER_TIMEOUT
               value: "30000"
             - name: SKIP_SESSION_CLOSE

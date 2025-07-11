@@ -165,7 +165,7 @@ kubectl create secret generic datadog-secret \
   --from-literal app-key=$DD_APP_KEY
 ```
 
-2. Apply the Datadog Agent definition:
+3. Apply the Datadog Agent definition:
 
 ```bash
 kubectl apply -f k8s-manifests/datadog/datadog-agent.yaml
@@ -205,7 +205,7 @@ kubectl create secret generic datadog-secret \
   -n storedog
 ```
 
-3. **Deploy the Storedog Application:**
+4. **Deploy the Storedog Application:**
 
 The following command deploys all application components into it.
 
@@ -213,31 +213,49 @@ The following command deploys all application components into it.
 for file in k8s-manifests/storedog-app/**/*.yaml; do envsubst < "$file" | kubectl apply -n storedog -f -; done
 ```
 
-4. **Apply manifest changes to one service:**
+   - **Apply manifest changes to one service:**
 
-While testing, you might change one manifest file. Rather than update all at once, you can apply the change like this.
+      While testing, you might change one manifest file. Rather than update all at once, you can apply the change like this.
+
+      ```bash
+      envsubst < k8s-manifests/storedog-app/deployments/backend.yaml | kubectl apply -n storedog -f -
+      ```
+
+5. **Deploy Puppeteer:**
+
+The following command creates a `fake-traffic` namespace.
 
 ```bash
-envsubst < k8s-manifests/storedog-app/deployments/backend.yaml | kubectl apply -n storedog -f -
+kubectl create namespace fake-traffic
 ```
 
-5. **To reset the all Storedog:**
+6. **Deploy Puppeteer:**
 
-You only need to delete the application's namespace. The cluster components can remain installed.
+> [!IMPORTANT]
+> If you're using a namespace other than `storedog`, you must edit the `STOREDOG_URL` in `puppeteer.yaml`.
+
+The following command sets variables and deploys Puppeteer.
+
+```bash
+envsubst < k8s-manifests/fake-traffic/puppeteer.yaml | kubectl apply -f -
+```
+
+## Troubleshooting
+
+- Reset the all Storedog:
+
+> [!NOTE]
+> You only need to delete the application's namespace. The cluster components can remain installed.
 
 ```bash
 kubectl delete namespace storedog
 ```
 
-6. **To restart one service:**
-
-After rebuilding a container image, it's faster to restart only the service you need.
+- Restart one service:
 
 ```bash
-kubectl rollout restart deployment backend -n storedog
+kubectl rollout restart deployment -n storedog ads
 ```
-
-## Troubleshooting
 
 - Check pod status in the namespace:
 
