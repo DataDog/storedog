@@ -165,7 +165,7 @@ kubectl create secret generic datadog-secret \
   --from-literal app-key=$DD_APP_KEY
 ```
 
-2. Apply the Datadog Agent definition:
+3. Apply the Datadog Agent definition:
 
 ```bash
 kubectl apply -f k8s-manifests/datadog/datadog-agent.yaml
@@ -205,7 +205,7 @@ kubectl create secret generic datadog-secret \
   -n storedog
 ```
 
-3. **Deploy the Storedog Application:**
+4. **Deploy the Storedog Application:**
 
 This command deploys all application components into it.
 
@@ -213,13 +213,13 @@ This command deploys all application components into it.
 for file in k8s-manifests/storedog-app/**/*.yaml; do envsubst < "$file" | kubectl apply -n storedog -f -; done
 ```
 
-4. **Apply manifest changes to one service:**
+   - **Apply manifest changes to one service:**
 
-While testing, you might change one manifest file. Rather than update all at once, you can apply the change like this.
+      While testing, you might change one manifest file. Rather than update all at once, you can apply the change like this.
 
-```bash
-envsubst < k8s-manifests/storedog-app/deployments/backend.yaml | kubectl apply -n storedog -f -
-```
+      ```bash
+      envsubst < k8s-manifests/storedog-app/deployments/backend.yaml | kubectl apply -n storedog -f -
+      ```
 
 5. **Deploy Puppeteer:**
 
