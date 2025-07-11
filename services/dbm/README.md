@@ -186,7 +186,11 @@ helm install my-datadog-operator datadog/datadog-operator
 2. Create a Kubernetes secret with your Datadog API and app keys:
 
 ```bash
-kubectl create secret generic datadog-secret --from-literal api-key=$DD_API_KEY --from-literal app-key=$DD_APP_KEY
+kubectl create secret generic datadog-secret \
+ --from-literal api-key=$DD_API_KEY \
+ --from-literal app-key=$DD_APP_KEY \
+ --from-literal=dd_application_id=${DD_APPLICATION_ID} \
+ --from-literal=dd_client_token=${DD_CLIENT_TOKEN}
 ```
 
 #### Deploy Storedog with store-dbm
