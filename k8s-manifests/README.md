@@ -221,23 +221,41 @@ While testing, you might change one manifest file. Rather than update all at onc
 envsubst < k8s-manifests/storedog-app/deployments/backend.yaml | kubectl apply -n storedog -f -
 ```
 
-5. **To reset the all Storedog:**
+5. **Deploy Puppeteer:**
 
-You only need to delete the application's namespace. The cluster components can remain installed.
+This command creates a `fake-traffic` namespace.
+
+```bash
+kubectl create namespace fake-traffic
+```
+
+6. **Deploy Puppeteer:**
+
+> [!IMPORTANT]
+> If you're using a namespace other than `storedog`, you must edit the `STOREDOG_URL` in `puppeteer.yaml`.
+
+This command sets variables and deploys Puppeteer.
+
+```bash
+envsubst < k8s-manifests/fake-traffic/puppeteer.yaml | kubectl apply -f -
+```
+
+## Troubleshooting
+
+- Reset the all Storedog:
+
+> [!NOTE]
+> You only need to delete the application's namespace. The cluster components can remain installed.
 
 ```bash
 kubectl delete namespace storedog
 ```
 
-6. **To restart one service:**
-
-After rebuilding a container image, it's faster to restart only the service you need.
+- Restart one service:
 
 ```bash
-kubectl rollout restart deployment backend -n storedog
+kubectl rollout restart deployment -n storedog ads
 ```
-
-## Troubleshooting
 
 - Check pod status in the namespace:
 
