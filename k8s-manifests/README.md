@@ -223,7 +223,7 @@ for file in k8s-manifests/storedog-app/**/*.yaml; do envsubst < "$file" | kubect
 
 5. **Deploy Puppeteer:**
 
-This command creates a `fake-traffic` namespace.
+The following command creates a `fake-traffic` namespace.
 
 ```bash
 kubectl create namespace fake-traffic
@@ -234,7 +234,7 @@ kubectl create namespace fake-traffic
 > [!IMPORTANT]
 > If you're using a namespace other than `storedog`, you must edit the `STOREDOG_URL` in `puppeteer.yaml`.
 
-This command sets variables and deploys Puppeteer.
+The following command sets variables and deploys Puppeteer.
 
 ```bash
 envsubst < k8s-manifests/fake-traffic/puppeteer.yaml | kubectl apply -f -
