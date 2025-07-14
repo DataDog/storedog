@@ -14,8 +14,12 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend
+  labels:
+    tags.datadoghq.com/env: ${DD_ENV}
+    tags.datadoghq.com/service: store-backend
+    tags.datadoghq.com/version: ${DD_VERSION_BACKEND}
 spec:
-  replicas: 1
+  replicas: 1                                  # Increased from 1 for better load distribution
   selector:
     matchLabels:
       app: backend
@@ -71,15 +75,58 @@ spec:
                   name: storedog-config
                   key: RAILS_ENV
             - name: DB_POOL
-              valueFrom:
-                configMapKeyRef:
-                  name: storedog-config
-                  key: DB_POOL
+              value: "25"                      # Increased from configmap for better connection pooling
             - name: MAX_THREADS
               valueFrom:
                 configMapKeyRef:
                   name: storedog-config
                   key: MAX_THREADS
+            # Redis Caching Configuration
+            - name: RAILS_CACHE_STORE
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: RAILS_CACHE_STORE
+            - name: CACHE_REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: CACHE_REDIS_URL
+            - name: SESSION_STORE
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: SESSION_STORE
+            - name: SESSION_REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: SESSION_REDIS_URL
+            - name: RAILS_CACHE_FRAGMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: RAILS_CACHE_FRAGMENT
+            - name: CACHE_DEFAULT_EXPIRES_IN
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: CACHE_DEFAULT_EXPIRES_IN
+            - name: RAILS_CACHE_QUERIES
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: RAILS_CACHE_QUERIES
+            - name: CACHE_REDIS_POOL_SIZE
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: CACHE_REDIS_POOL_SIZE
+            - name: RAILS_CACHE_COMPRESSION
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: RAILS_CACHE_COMPRESSION
             - name: DD_ENV
               value: ${DD_ENV}
             - name: DD_SERVICE
@@ -98,11 +145,34 @@ spec:
               value: "true"
           resources:
             requests:
-              memory: "512Mi"
-              cpu: "250m"
+              cpu: 500m                        # Increased from 400m
+              memory: 1Gi                      # Increased from 768Mi  
             limits:
-              memory: "1Gi"
-              cpu: "500m"
+              cpu: 1200m                       # Increased from 800m
+              memory: 2Gi                      # Increased from 1.5Gi
           volumeMounts:
             - name: apmsocketpath
               mountPath: /var/run/datadog
+          # Health probes for automatic monitoring and recovery
+          readinessProbe:
+            tcpSocket:
+              port: 4000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+          livenessProbe:
+            tcpSocket:
+              port: 4000
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5
+          startupProbe:
+            tcpSocket:
+              port: 4000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 12

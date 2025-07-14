@@ -3,7 +3,6 @@ kind: Deployment
 metadata:
   name: worker
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: worker
@@ -55,10 +54,7 @@ spec:
                   name: storedog-secrets
                   key: POSTGRES_PASSWORD
             - name: DB_POOL
-              valueFrom:
-                configMapKeyRef:
-                  name: storedog-config
-                  key: DB_POOL
+              value: "15"
             - name: MAX_THREADS
               valueFrom:
                 configMapKeyRef:
@@ -82,11 +78,43 @@ spec:
               value: "true"
           resources:
             requests:
-              memory: "512Mi"
-              cpu: "250m"
+              memory: "768Mi"                  # Increased from 512Mi
+              cpu: "300m"                      # Increased from 250m
             limits:
-              memory: "1Gi"
-              cpu: "500m"
+              memory: "1.5Gi"                  # Increased from 1Gi
+              cpu: "600m"                      # Increased from 500m
           volumeMounts:
             - name: apmsocketpath
               mountPath: /var/run/datadog
+          # Health probes for Sidekiq worker monitoring
+          readinessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - "ps aux | grep '[s]idekiq' | grep -v grep"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+          livenessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - "ps aux | grep '[s]idekiq' | grep -v grep"
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5
+          startupProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - "ps aux | grep '[s]idekiq' | grep -v grep"
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 10

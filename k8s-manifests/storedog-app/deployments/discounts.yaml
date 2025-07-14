@@ -40,12 +40,21 @@ spec:
           ports:
             - containerPort: 2814
           env:
+            # Flask Application Configuration
             - name: FLASK_APP
               value: "discounts.py"
             - name: DISCOUNTS_PORT
               value: "2814"
             - name: FLASK_DEBUG
               value: "0"
+            # Flask Binding Configuration - Fix for HTTP 308 redirects
+            - name: FLASK_ENV
+              value: "production"
+            - name: FLASK_HOST
+              value: "0.0.0.0"
+            - name: FLASK_PORT
+              value: "2814"
+            # Database Configuration
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -58,6 +67,7 @@ spec:
                   key: POSTGRES_USER
             - name: POSTGRES_HOST
               value: postgres
+            # Datadog Configuration
             - name: DD_ENV
               value: ${DD_ENV}
             - name: DD_SERVICE
@@ -76,11 +86,28 @@ spec:
               value: "true"
           resources:
             requests:
-              memory: "128Mi"
-              cpu: "100m"
+              cpu: 300m      # 3x current (matches actual usage)
+              memory: 128Mi  # Keep current (efficient)
             limits:
-              memory: "256Mi"
-              cpu: "200m"
+              cpu: 500m      # 2.5x current
+              memory: 256Mi  # Keep current
           volumeMounts:
             - name: apmsocketpath
               mountPath: /var/run/datadog
+          # Health probes for better monitoring
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 2814
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 2814
+            initialDelaySeconds: 40
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5

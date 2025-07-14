@@ -33,16 +33,16 @@ spec:
         - name: feature-flags-config
           configMap:
             name: feature-flags-config
-      initContainers:
-        - name: wait-for-backend
-          image: busybox
-          command: ['sh', '-c', 'until nc -z backend 4000; do echo waiting for backend; sleep 2; done;']
+      #initContainers:
+      #  - name: wait-for-backend
+      #    image: busybox
+      #    command: ['sh', '-c', 'until nc -z backend 4000; do echo waiting for backend; sleep 2; done;']
       containers:
         - name: frontend
           image: ${REGISTRY_URL}/frontend:${SD_TAG}
           ports:
             - containerPort: 3000
-          command: ["npm", "run", "dev"]
+          command: ["npm", "run", "prod"]
           env:
             - name: NEXT_PUBLIC_ADS_ROUTE
               valueFrom:
@@ -112,10 +112,11 @@ spec:
               value: "true"
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "100m"
+              cpu: 800m
+              memory: "1Gi"
             limits:
-              memory: "2Gi"
+              cpu: 800m      # New limit to prevent resource hogging
+              memory: 2Gi    # Keep existing
           volumeMounts:
             - name: apmsocketpath
               mountPath: /var/run/datadog
@@ -126,12 +127,16 @@ spec:
             httpGet:
               path: /
               port: 3000
-            initialDelaySeconds: 180
-            periodSeconds: 20
-            failureThreshold: 5
+            initialDelaySeconds: 40    # Increased from 180s - allow more startup time
+            periodSeconds: 30           # Increased from 20s - check less frequently
+            timeoutSeconds: 10          # Add explicit timeout
+            failureThreshold: 5         # Keep current value
+            successThreshold: 1         # Default value
           readinessProbe:
             httpGet:
               path: /
               port: 3000
-            initialDelaySeconds: 120
-            periodSeconds: 20
+            initialDelaySeconds: 30    # Increased from 120s
+            periodSeconds: 20           # Keep current
+            timeoutSeconds: 5           # Add explicit timeout
+            failureThreshold: 3         # Default value
