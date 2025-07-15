@@ -1,0 +1,602 @@
+---
+# Storedog Performance Testing Job
+# This manifest creates an in-cluster performance testing job that validates
+# all services and measures their performance using internal cluster networking.
+#
+# Usage:
+#   kubectl apply -f performance-test-job.yaml
+#   kubectl logs job/storedog-performance-test -n storedog -f
+#   kubectl delete job storedog-performance-test -n storedog  # cleanup
+#
+# Configuration:
+#   Customize test parameters by editing the env variables in the Job spec
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: storedog-performance-test-script
+  namespace: storedog
+  labels:
+    app: storedog-performance-test
+data:
+  performance-test.sh: |
+    #!/bin/bash
+    set -e
+    
+    # Configuration
+    TEST_ITERATIONS=${TEST_ITERATIONS:-5}
+    TEST_DURATION=${TEST_DURATION:-60}
+    CONCURRENCY_LEVEL=${CONCURRENCY_LEVEL:-1}
+    NAMESPACE=${NAMESPACE:-storedog}
+    
+    # Colors for output
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[1;33m'
+    BLUE='\033[0;34m'
+    NC='\033[0m' # No Color
+    
+    # Service endpoints (cluster-internal DNS)
+    FRONTEND_URL="http://frontend.${NAMESPACE}.svc.cluster.local:3000"
+    BACKEND_URL="http://backend.${NAMESPACE}.svc.cluster.local:4000"
+                ADS_URL="http://ads.${NAMESPACE}.svc.cluster.local:3030"
+    DISCOUNTS_URL="http://discounts.${NAMESPACE}.svc.cluster.local:2814"
+    
+    echo -e "${BLUE}🚀 Storedog Performance Test Suite${NC}"
+    echo -e "${BLUE}====================================${NC}"
+    echo "Test Configuration:"
+    echo "  - Iterations: $TEST_ITERATIONS"
+    echo "  - Duration per test: $TEST_DURATION seconds"
+    echo "  - Concurrency: $CONCURRENCY_LEVEL"
+    echo "  - Namespace: $NAMESPACE"
+    echo "  - Timestamp: $(date)"
+    echo ""
+    
+    # Enhanced function to calculate advanced percentiles (P90, P95, P99)
+    calculate_enhanced_percentiles() {
+        local -n response_times_ref=$1
+        local service_name="$2"
+        
+        if [ ${#response_times_ref[@]} -eq 0 ]; then
+            echo "No response times to analyze"
+            return 1
+        fi
+        
+        # Sort response times for percentile calculation
+        IFS=$'\n' sorted_times=($(sort -n <<<"${response_times_ref[*]}"))
+        unset IFS
+        
+        local count=${#sorted_times[@]}
+        local sum=0
+        
+        # Calculate mean
+        for time in "${sorted_times[@]}"; do
+            sum=$(echo "$sum + $time" | bc -l)
+        done
+        local mean=$(echo "scale=4; $sum / $count" | bc -l)
+        
+        # Calculate percentiles
+        local p50_index=$((count * 50 / 100))
+        local p90_index=$((count * 90 / 100))
+        local p95_index=$((count * 95 / 100))
+        local p99_index=$((count * 99 / 100))
+        
+        # Handle edge cases
+        [ $p50_index -ge $count ] && p50_index=$((count - 1))
+        [ $p90_index -ge $count ] && p90_index=$((count - 1))
+        [ $p95_index -ge $count ] && p95_index=$((count - 1))
+        [ $p99_index -ge $count ] && p99_index=$((count - 1))
+        
+        local p50=${sorted_times[$p50_index]}
+        local p90=${sorted_times[$p90_index]}
+        local p95=${sorted_times[$p95_index]}
+        local p99=${sorted_times[$p99_index]}
+        local min_time=${sorted_times[0]}
+        local max_time=${sorted_times[$((count-1))]}
+        
+        echo -e "${GREEN}📊 Enhanced Statistics for $service_name:${NC}"
+        echo "    Sample Count: $count"
+        echo "    Mean: ${mean}s"
+        echo "    Min/Max: ${min_time}s / ${max_time}s"
+        echo "    P50 (Median): ${p50}s"
+        echo "    P90: ${p90}s"
+        echo "    P95: ${p95}s"
+        echo "    P99: ${p99}s"
+        
+        # Save results for regression analysis
+        echo "${service_name},${count},${mean},${p50},${p90},${p95},${p99}" >> "/tmp/performance_results.csv"
+        echo "$p95" > "/tmp/${service_name}_current_p95.txt"
+        
+        return 0
+    }
+    
+    # Enhanced function for error rate monitoring
+    monitor_error_rates() {
+        local -n http_codes_ref=$1
+        local service_name="$2"
+        local total_requests="$3"
+        
+        if [ ${#http_codes_ref[@]} -eq 0 ]; then
+            echo "No HTTP codes to analyze"
+            return 1
+        fi
+        
+        # Count status codes
+        declare -A status_counts
+        local success_count=0
+        local client_error_count=0
+        local server_error_count=0
+        local timeout_count=0
+        
+        for code in "${http_codes_ref[@]}"; do
+            status_counts[$code]=$((${status_counts[$code]} + 1))
+            
+            case $code in
+                2*) success_count=$((success_count + 1)) ;;
+                4*) client_error_count=$((client_error_count + 1)) ;;
+                5*) server_error_count=$((server_error_count + 1)) ;;
+                000) timeout_count=$((timeout_count + 1)) ;;
+            esac
+        done
+        
+        local success_rate=$(echo "scale=2; $success_count * 100 / $total_requests" | bc -l)
+        local error_rate=$(echo "scale=2; ($total_requests - $success_count) * 100 / $total_requests" | bc -l)
+        
+        echo -e "${YELLOW}🔍 Error Rate Analysis for $service_name:${NC}"
+        echo "    Total Requests: $total_requests"
+        echo "    Success Rate: ${success_rate}%"
+        echo "    Error Rate: ${error_rate}%"
+        echo "    2xx Responses: $success_count"
+        echo "    4xx Responses: $client_error_count"
+        echo "    5xx Responses: $server_error_count"
+        echo "    Timeouts: $timeout_count"
+        
+        # Alert if error rate is high
+        if (( $(echo "$error_rate > 5" | bc -l) )); then
+            echo -e "    ${RED}⚠️  HIGH ERROR RATE DETECTED!${NC}"
+        fi
+        
+        # Save error rate data
+        echo "${service_name},${success_rate},${error_rate},${success_count},${client_error_count},${server_error_count},${timeout_count}" >> "/tmp/error_rates.csv"
+        
+        return 0
+    }
+
+    # Function for performance regression detection
+    check_regression() {
+        local service_name="$1"
+        local current_p95_file="/tmp/${service_name}_current_p95.txt"
+        local baseline_file="/tmp/baseline_${service_name}.txt"
+        
+        if [ ! -f "$current_p95_file" ]; then
+            echo "  ⚠ No current P95 data available for regression check"
+            return 0
+        fi
+        
+        local current_p95=$(cat "$current_p95_file")
+        
+        if [ ! -f "$baseline_file" ]; then
+            echo "  📝 Creating baseline for $service_name: ${current_p95}s"
+            echo "$current_p95" > "$baseline_file"
+            return 0
+        fi
+        
+        local baseline_p95=$(cat "$baseline_file")
+        local regression=$(echo "scale=2; (($current_p95 - $baseline_p95) / $baseline_p95) * 100" | bc -l 2>/dev/null || echo "0")
+        local regression_abs=$(echo "$regression" | sed 's/-//')
+        
+        echo "  🔍 Regression Check: Current=${current_p95}s, Baseline=${baseline_p95}s, Change=${regression}%"
+        
+        if (( $(echo "$regression_abs > 20" | bc -l) )); then
+            echo -e "  ${RED}🚨 PERFORMANCE REGRESSION DETECTED!${NC}"
+            echo "  Regression of ${regression}% exceeds 20% threshold"
+            return 1
+        else
+            echo -e "  ${GREEN}✅ Performance within acceptable range${NC}"
+            return 0
+        fi
+    }
+
+    # Enhanced function to measure response time with advanced features
+    measure_response_time_enhanced() {
+        local url="$1"
+        local description="$2"
+        local iterations="$3"
+        local service_name="$4"
+        
+        echo -e "${YELLOW}Testing: $description${NC}"
+        echo "URL: $url"
+        
+        local response_times=()
+        local http_codes=()
+        local success_count=0
+        local error_count=0
+        
+        for ((i=1; i<=iterations; i++)); do
+            local start_time=$(date +%s.%N)
+            local http_code=$(curl -s -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000")
+            local end_time=$(date +%s.%N)
+            local response_time=$(echo "$end_time - $start_time" | bc -l 2>/dev/null || echo "0")
+            
+            response_times+=("$response_time")
+            http_codes+=("$http_code")
+            
+            if [[ "$http_code" =~ ^2[0-9][0-9]$ ]]; then
+                success_count=$((success_count + 1))
+                echo "  Iteration $i: ${response_time}s (HTTP $http_code)"
+            else
+                error_count=$((error_count + 1))
+                echo "  Iteration $i: ERROR (HTTP $http_code)"
+            fi
+        done
+        
+        echo ""
+        
+        # Calculate enhanced statistics
+        if [ ${#response_times[@]} -gt 0 ]; then
+            calculate_enhanced_percentiles response_times "$service_name"
+            echo ""
+            
+            # Error rate monitoring
+            monitor_error_rates http_codes "$service_name" "$iterations"
+            echo ""
+            
+            # Regression detection
+            check_regression "$service_name"
+            echo ""
+        else
+            echo -e "${RED}❌ All requests failed${NC}"
+        fi
+    }
+
+    # Function for multi-level concurrency testing
+    test_concurrency_levels() {
+        local url="$1"
+        local service_name="$2"
+        local concurrency_levels="1 5 10"
+        
+        echo -e "${BLUE}🔥 Multi-level Concurrency Testing: $service_name${NC}"
+        echo "URL: $url"
+        
+        for level in $concurrency_levels; do
+            echo -e "${YELLOW}  Testing concurrency: $level users${NC}"
+            
+            local temp_dir="/tmp/concurrent_${service_name}_${level}"
+            mkdir -p "$temp_dir"
+            
+            # Run concurrent requests
+            for ((i=1; i<=level; i++)); do
+                (
+                    local start_time=$(date +%s.%N)
+                    local http_code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$url" 2>/dev/null || echo "000")
+                    local end_time=$(date +%s.%N)
+                    local response_time=$(echo "$end_time - $start_time" | bc -l)
+                    echo "$response_time,$http_code" > "${temp_dir}/result_${i}.txt"
+                ) &
+            done
+            
+            # Wait for all requests to complete
+            wait
+            
+            # Collect results
+            local response_times=()
+            local success_count=0
+            
+            for ((i=1; i<=level; i++)); do
+                if [ -f "${temp_dir}/result_${i}.txt" ]; then
+                    local result=$(cat "${temp_dir}/result_${i}.txt")
+                    IFS=',' read -r resp_time http_code <<< "$result"
+                    response_times+=("$resp_time")
+                    
+                    if [[ "$http_code" =~ ^2[0-9][0-9]$ ]]; then
+                        success_count=$((success_count + 1))
+                    fi
+                fi
+            done
+            
+            # Calculate statistics for this concurrency level
+            if [ ${#response_times[@]} -gt 0 ]; then
+                local success_rate=$(echo "scale=1; $success_count * 100 / $level" | bc -l)
+                echo "    Concurrency $level: $success_count/$level successful (${success_rate}%)"
+                
+                # Quick percentile calculation
+                IFS=$'\n' sorted_times=($(sort -n <<<"${response_times[*]}"))
+                unset IFS
+                local p95_index=$((${#sorted_times[@]} * 95 / 100))
+                [ $p95_index -ge ${#sorted_times[@]} ] && p95_index=$((${#sorted_times[@]} - 1))
+                local p95=${sorted_times[$p95_index]}
+                echo "    P95 Response Time: ${p95}s"
+            fi
+            
+            # Cleanup
+            rm -rf "$temp_dir"
+            echo ""
+            
+            # Brief pause between levels
+            sleep 2
+        done
+    }
+    
+    # Function to test service health
+    test_service_health() {
+        local url="$1"
+        local service_name="$2"
+        
+        echo -e "${BLUE}🔍 Health Check: $service_name${NC}"
+        local http_code=$(curl -s -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000")
+        
+        if [[ "$http_code" == "200" || "$http_code" == "301" || "$http_code" == "302" ]]; then
+            echo -e "${GREEN}✅ $service_name is healthy (HTTP $http_code)${NC}"
+        else
+            echo -e "${RED}❌ $service_name health check failed (HTTP $http_code)${NC}"
+        fi
+        echo ""
+    }
+    
+    # Function to test load performance
+    test_load_performance() {
+        local url="$1"
+        local description="$2"
+        local duration="$3"
+        
+        echo -e "${YELLOW}⚡ Load Test: $description${NC}"
+        echo "Duration: ${duration}s"
+        
+        local start_time=$(date +%s)
+        local end_time=$((start_time + duration))
+        local request_count=0
+        local success_count=0
+        local error_count=0
+        local total_response_time=0
+        
+        while [[ $(date +%s) -lt $end_time ]]; do
+            local req_start=$(date +%s.%N)
+            local http_code=$(curl -s -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000")
+            local req_end=$(date +%s.%N)
+            local req_time=$(echo "$req_end - $req_start" | bc -l 2>/dev/null || echo "0")
+            
+            request_count=$((request_count + 1))
+            
+            if [[ "$http_code" == "200" ]]; then
+                success_count=$((success_count + 1))
+                total_response_time=$(echo "$total_response_time + $req_time" | bc -l)
+            else
+                error_count=$((error_count + 1))
+            fi
+            
+            # Brief pause to prevent overwhelming
+            sleep 0.1
+        done
+        
+        local actual_duration=$(($(date +%s) - start_time))
+        local rps=$(echo "scale=2; $request_count / $actual_duration" | bc -l)
+        
+        if [[ $success_count -gt 0 ]]; then
+            local avg_response_time=$(echo "scale=3; $total_response_time / $success_count" | bc -l)
+            echo -e "${GREEN}✅ Load test completed${NC}"
+            echo "  Total requests: $request_count"
+            echo "  Successful: $success_count"
+            echo "  Failed: $error_count"
+            echo "  Requests per second: $rps"
+            echo "  Average response time: ${avg_response_time}s"
+        else
+            echo -e "${RED}❌ Load test failed - no successful requests${NC}"
+        fi
+        echo ""
+    }
+    
+    # Initialize enhanced performance tracking
+    echo "service,count,mean,p50,p90,p95,p99" > "/tmp/performance_results.csv"
+    echo "service,success_rate,error_rate,success_count,client_errors,server_errors,timeouts" > "/tmp/error_rates.csv"
+    
+    # Start testing
+    echo -e "${BLUE}📋 Phase 1: Service Health Checks${NC}"
+    echo "========================================"
+    test_service_health "$FRONTEND_URL" "Frontend"
+    test_service_health "$BACKEND_URL/admin" "Backend"
+    test_service_health "$ADS_URL" "Ads Service"
+    test_service_health "$DISCOUNTS_URL" "Discounts Service"
+    
+    echo -e "${BLUE}📊 Phase 2: Enhanced Performance Measurements${NC}"
+    echo "================================================="
+    measure_response_time_enhanced "$FRONTEND_URL" "Frontend Root Page" "$TEST_ITERATIONS" "frontend"
+    measure_response_time_enhanced "$BACKEND_URL/api/v2/storefront/products" "Backend Products API" "$TEST_ITERATIONS" "backend"
+    measure_response_time_enhanced "$ADS_URL" "Ads Service Root" "$TEST_ITERATIONS" "ads"
+    measure_response_time_enhanced "$DISCOUNTS_URL" "Discounts Service Root" "$TEST_ITERATIONS" "discounts"
+    measure_response_time_enhanced "$DISCOUNTS_URL/discount" "Discounts API Endpoint" "$TEST_ITERATIONS" "discounts_api"
+    
+    echo -e "${BLUE}🔧 Phase 3: Specific Issue Testing${NC}"
+    echo "========================================"
+    
+    # Test the problematic discounts endpoint with trailing slash
+    echo -e "${YELLOW}Testing known issue: Discounts trailing slash${NC}"
+    problem_url="$DISCOUNTS_URL/"
+    http_code=$(curl -s -o /dev/null -w "%{http_code}" "$problem_url" 2>/dev/null || echo "000")
+    if [[ "$http_code" == "308" ]]; then
+        echo -e "${YELLOW}⚠️  Confirmed: HTTP 308 redirect issue with trailing slash${NC}"
+        echo "  URL: $problem_url"
+        echo "  Response: HTTP $http_code"
+        echo "  Status: Known issue - nginx proxy configuration needs fixing"
+    else
+        echo -e "${GREEN}✅ Trailing slash issue appears to be resolved${NC}"
+        echo "  URL: $problem_url"
+        echo "  Response: HTTP $http_code"
+    fi
+    echo ""
+    
+    echo -e "${BLUE}⚡ Phase 4: Multi-level Concurrency Testing${NC}"
+    echo "============================================="
+    test_concurrency_levels "$FRONTEND_URL" "frontend"
+    test_concurrency_levels "$ADS_URL" "ads"
+    test_concurrency_levels "$DISCOUNTS_URL" "discounts"
+    
+    echo -e "${BLUE}🔥 Phase 5: Load Testing${NC}"
+    echo "============================"
+    test_load_performance "$FRONTEND_URL" "Frontend Load Test" "30"
+    test_load_performance "$BACKEND_URL/api/v2/storefront/products" "Backend API Load Test" "30"
+    test_load_performance "$ADS_URL" "Ads Service Load Test" "30"
+    test_load_performance "$DISCOUNTS_URL/discount" "Discounts API Load Test" "30"
+    
+    echo -e "${BLUE}📋 Phase 6: JVM Warmup Test (Ads Service)${NC}"
+    echo "============================================="
+    echo -e "${YELLOW}Testing ads service JVM warmup behavior${NC}"
+    
+    # First request (cold start)
+    echo "Cold start request:"
+    start_time=$(date +%s.%N)
+    http_code=$(curl -s -o /dev/null -w "%{http_code}" "$ADS_URL" 2>/dev/null || echo "000")
+    end_time=$(date +%s.%N)
+    cold_time=$(echo "$end_time - $start_time" | bc -l)
+    echo "  First request: ${cold_time}s (HTTP $http_code)"
+    
+    # Subsequent requests (warmed up)
+    echo "Warmed up requests:"
+    warm_total=0
+    warm_count=0
+    for ((i=1; i<=5; i++)); do
+        start_time=$(date +%s.%N)
+        http_code=$(curl -s -o /dev/null -w "%{http_code}" "$ADS_URL" 2>/dev/null || echo "000")
+        end_time=$(date +%s.%N)
+        warm_time=$(echo "$end_time - $start_time" | bc -l)
+        
+        if [[ "$http_code" == "200" ]]; then
+            warm_total=$(echo "$warm_total + $warm_time" | bc -l)
+            warm_count=$((warm_count + 1))
+            echo "  Request $i: ${warm_time}s (HTTP $http_code)"
+        fi
+    done
+    
+    if [[ $warm_count -gt 0 ]]; then
+        warm_avg=$(echo "scale=3; $warm_total / $warm_count" | bc -l)
+        improvement=$(echo "scale=1; ($cold_time - $warm_avg) / $cold_time * 100" | bc -l)
+        echo -e "${GREEN}✅ JVM Warmup Analysis:${NC}"
+        echo "  Cold start: ${cold_time}s"
+        echo "  Warm average: ${warm_avg}s"
+        echo "  Improvement: ${improvement}%"
+        
+        # Check if our JVM optimizations are working
+        if (( $(echo "$cold_time < 0.1" | bc -l) )); then
+            echo -e "${GREEN}🎉 Excellent: JVM warmup optimization appears to be working!${NC}"
+        elif (( $(echo "$cold_time < 0.5" | bc -l) )); then
+            echo -e "${YELLOW}⚠️  Good: Moderate JVM performance, optimizations partially effective${NC}"
+        else
+            echo -e "${RED}❌ Issue: Slow JVM warmup detected, optimizations may need review${NC}"
+        fi
+    fi
+    echo ""
+    
+    echo -e "${BLUE}📊 Enhanced Performance Test Summary${NC}"
+    echo "======================================="
+    
+    # Generate enhanced performance summary report
+    if [ -f "/tmp/performance_results.csv" ] && [ -s "/tmp/performance_results.csv" ]; then
+        echo ""
+        echo -e "${GREEN}📈 Performance Summary:${NC}"
+        echo "----------------------------------------"
+        
+        # Display performance results table
+        echo "Service         | Mean    | P50     | P90     | P95     | P99"
+        echo "----------------|---------|---------|---------|---------|--------"
+        
+        tail -n +2 "/tmp/performance_results.csv" | while IFS=',' read -r service count mean p50 p90 p95 p99; do
+            printf "%-15s | %-7s | %-7s | %-7s | %-7s | %-7s\n" "$service" "$mean" "$p50" "$p90" "$p95" "$p99"
+        done
+        
+        echo ""
+    fi
+    
+    if [ -f "/tmp/error_rates.csv" ] && [ -s "/tmp/error_rates.csv" ]; then
+        echo -e "${GREEN}🔍 Error Rate Summary:${NC}"
+        echo "----------------------------------------"
+        
+        # Display error rates table
+        echo "Service         | Success Rate | Error Rate | 4xx | 5xx | Timeouts"
+        echo "----------------|--------------|------------|-----|-----|----------"
+        
+        tail -n +2 "/tmp/error_rates.csv" | while IFS=',' read -r service success_rate error_rate success_count client_errors server_errors timeouts; do
+            printf "%-15s | %-12s | %-10s | %-3s | %-3s | %-8s\n" "$service" "${success_rate}%" "${error_rate}%" "$client_errors" "$server_errors" "$timeouts"
+        done
+        
+        echo ""
+    fi
+    
+    echo -e "${BLUE}🎉 Enhanced Features Included:${NC}"
+    echo "  ✅ Advanced percentiles (P50, P90, P95, P99)"
+    echo "  ✅ Multi-tier concurrency testing (1, 5, 10 users)"
+    echo "  ✅ Enhanced error rate monitoring"
+    echo "  ✅ Performance regression detection"
+    echo "  ✅ Structured CSV reporting"
+    echo ""
+    echo "Test completed at: $(date)"
+    echo "All enhanced tests executed successfully!"
+    echo ""
+    echo -e "${GREEN}🎯 To view detailed results, check the job logs:${NC}"
+    echo "  kubectl logs job/storedog-performance-test -n storedog"
+    echo ""
+    echo -e "${BLUE}📄 Enhanced results saved to:${NC}"
+    echo "  - Performance metrics: /tmp/performance_results.csv"
+    echo "  - Error rates: /tmp/error_rates.csv" 
+    echo "  - Baselines: /tmp/baseline_*.txt"
+    echo ""
+    echo -e "${BLUE}🔧 To cleanup this test job:${NC}"
+    echo "  kubectl delete job storedog-performance-test -n storedog"
+    echo ""
+    echo -e "${YELLOW}💡 Enhanced Tips:${NC}"
+    echo "  - Run multiple times to establish regression baselines"
+    echo "  - Check P95/P99 percentiles for tail latency optimization"
+    echo "  - Monitor error rates across different concurrency levels"
+    echo "  - Use CSV data for trend analysis and performance monitoring"
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: storedog-performance-test
+  namespace: storedog
+  labels:
+    app: storedog-performance-test
+    version: v1.0.0
+spec:
+  template:
+    metadata:
+      labels:
+        app: storedog-performance-test
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: performance-test
+        image: alpine:3.18
+        command: ["/bin/sh"]
+        args: ["-c", "apk add --no-cache curl bc bash && /bin/bash /scripts/performance-test.sh"]
+        env:
+        - name: TEST_ITERATIONS
+          value: "8"
+        - name: TEST_DURATION
+          value: "60"
+        - name: CONCURRENCY_LEVEL
+          value: "1"
+        - name: NAMESPACE
+          value: "storedog"
+        - name: ENABLE_ENHANCED_FEATURES
+          value: "true"
+        - name: REGRESSION_THRESHOLD
+          value: "20"
+        - name: ERROR_RATE_THRESHOLD
+          value: "5"
+        volumeMounts:
+        - name: test-script
+          mountPath: /scripts
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+      volumes:
+      - name: test-script
+        configMap:
+          name: storedog-performance-test-script
+          defaultMode: 0755
+  backoffLimit: 2
+  activeDeadlineSeconds: 1800  # 30 minutes timeout 

@@ -34,7 +34,11 @@ ENV FLASK_APP=discounts.py \
     POSTGRES_PASSWORD=postgres \
     POSTGRES_USER=postgres \
     DD_GIT_REPOSITORY_URL=${DD_GIT_REPOSITORY_URL} \
-    DD_GIT_COMMIT_SHA=${DD_GIT_COMMIT_SHA}
+    DD_GIT_COMMIT_SHA=${DD_GIT_COMMIT_SHA} \
+    OTEL_SERVICE_NAME=discounts \
+    OTEL_TRACES_EXPORTER=console,otlp \
+    OTEL_METRICS_EXPORTER=console \
+    OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=0.0.0.0:4317
 
 # Install dependencies via pip and avoid caching build artifacts
 RUN pip install --no-cache-dir -r requirements.txt
@@ -48,4 +52,4 @@ ENV DISCOUNTS_PORT ${DISCOUNTS_PORT}
 # required to get logs out of the container
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
-CMD ["sh", "-c", "ddtrace-run flask run --port=${DISCOUNTS_PORT} --host=0.0.0.0"]
+CMD ["sh", "-c", "opentelemetry-instrument flask run --port=${DISCOUNTS_PORT} --host=0.0.0.0"]
