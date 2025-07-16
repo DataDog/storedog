@@ -26,5 +26,7 @@ urllib3==1.26.5
 Werkzeug==1.0.1
 wrapt==1.12.1
 JSON-log-formatter==0.5.2
-opentelemetry-distro==0.39b0
-opentelemetry-exporter-otlp==1.20.0
+opentelemetry-distro[otlp]==0.39b0
+opentelemetry-instrumentation-flask==0.39b0
+opentelemetry-instrumentation-requests==0.39b0
+opentelemetry-instrumentation-sqlalchemy==0.39b0

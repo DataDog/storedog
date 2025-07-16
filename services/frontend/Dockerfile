@@ -13,8 +13,10 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
   NEXT_PUBLIC_SPREE_CLIENT_HOST=/services/backend \
   NEXT_PUBLIC_SPREE_IMAGE_HOST=/services/backend \
   NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN=service-proxy \
-  OTEL_TRACES_EXPORTER=otlp \
-  OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 \
+  OTEL_TRACES_EXPORTER=console,otlp \
+  OTEL_METRICS_EXPORTER=console,otlp \
+  OTEL_LOGS_EXPORTER=console,otlp \
+  OTEL_EXPORTER_OTLP_ENDPOINT=http://otelcol:4317 \
   OTEL_NODE_RESOURCE_DETECTORS=env,host,os \
   OTEL_SERVICE_NAME=frontend
 
@@ -25,4 +27,5 @@ COPY . .
 RUN npm run build
 EXPOSE 3000
 
-CMD ["sh", "-c", "--require @opentelemetry/auto-instrumentations-node/register", "npx next start"]
+ENV NODE_OPTIONS="--require @opentelemetry/auto-instrumentations-node/register"
+CMD ["sh", "-c", "npx next start"]

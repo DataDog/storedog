@@ -23,12 +23,19 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.boot.CommandLineRunner;
 
+// OpenTelemetry imports for manual tracing
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.api.GlobalOpenTelemetry;
+
 
 @SpringBootApplication
 @RestController
 public class AdsJavaApplication {
 
     private static final Logger logger = LoggerFactory.getLogger(AdsJavaApplication.class);
+    private static final Tracer tracer = GlobalOpenTelemetry.getTracer("ads-service");
 
     @Autowired
     private AdvertisementRepository advertisementRepository;
@@ -38,6 +45,25 @@ public class AdsJavaApplication {
         logger.info("home url for ads called");
         return "Welcome to Java - Ads Service";
 	}
+
+    // OpenTelemetry test endpoint
+    @RequestMapping("/otel-test")
+    public String otelTest() {
+        Span span = tracer.spanBuilder("otel-test-operation")
+                          .startSpan();
+        try {
+            span.addEvent("Starting OpenTelemetry test");
+            span.setAttribute("test.service", "ads-java");
+            span.setAttribute("test.endpoint", "/otel-test");
+            
+            logger.info("OpenTelemetry test endpoint called - Java Ads Service");
+            
+            span.addEvent("Test completed successfully");
+            return "OpenTelemetry is working in Java Ads Service!";
+        } finally {
+            span.end();
+        }
+    }
 
     @CrossOrigin(origins = {"*"})
     @RequestMapping(
