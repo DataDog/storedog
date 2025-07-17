@@ -244,7 +244,7 @@ Run two Ads services and split traffic between them. The amount of traffic sent 
     - `ADS_B_UPSTREAM`: Host and port for the secondary (B) ads service (default: `ads-python:3030`)
     - `ADS_B_PERCENT`: Percentage of traffic to route to the B (Python) ads service (default: `0`). The remainder goes to the A (Java) ads service.
       - Set to a value between `0` and `100` to control the split.
-1. Start the app via `docker compose up`
+1. Start the app via `docker compose up -d`
 
 ### Feature flags
 Some capabilities are hidden behind feature flags, which can be controlled via `services/frontend/site/featureFlags.config.json`. 
