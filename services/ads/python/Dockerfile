@@ -3,6 +3,12 @@
 # run with the DOCKER_BUILDKIT=1 environment variable in your
 # docker build command (see build.sh)
 FROM python:2.7-slim-buster
+
+# Change repository used by Apt
+RUN sed -i s/deb.debian.org/archive.debian.org/g /etc/apt/sources.list && \
+    sed -i 's|security.debian.org|archive.debian.org|g' /etc/apt/sources.list && \
+    sed -i '/buster-updates/d' /etc/apt/sources.list
+
 # Update, upgrade, and cleanup debian packages
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
