@@ -208,12 +208,43 @@ Run two Ads services and split traffic between them. The amount of traffic sent 
 
 **How to use**
 1. Add a second Ads service to the `docker-compose.yml`
+
+    ```yaml
+      # OPTIONAL: Advertisement service (Python)
+      ads-python:
+        image: ghcr.io/datadog/storedog/ads:${STOREDOG_IMAGE_VERSION:-latest}
+        build:
+          context: ./services/ads/python
+        depends_on:
+          - postgres
+          - dd-agent
+        environment:
+          - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+          - POSTGRES_USER=${POSTGRES_USER:-postgres}
+          - POSTGRES_HOST=postgres
+          - DD_AGENT_HOST=dd-agent
+          - DD_SERVICE=store-ads-python
+          - DD_VERSION=${DD_VERSION_ADS_PYTHON:-1.0.0}
+        networks:
+          - storedog-network
+        labels:
+          com.datadoghq.ad.logs: '[{"source": "python"}]'
+    ```
+
 1. Add and set these environment variables to the `service-proxy` service:
+
+    ```yaml
+    environment:
+      - ADS_A_UPSTREAM=${ADS_A_UPSTREAM:-ads:3030}
+      - ADS_B_UPSTREAM=${ADS_B_UPSTREAM:-ads-python:3030}
+      - ADS_B_PERCENT=${ADS_B_PERCENT:-0}
+    ```
+
     - `ADS_A_UPSTREAM`: Host and port for the primary (A) ads service (default: `ads:3030`)
     - `ADS_B_UPSTREAM`: Host and port for the secondary (B) ads service (default: `ads-python:3030`)
     - `ADS_B_PERCENT`: Percentage of traffic to route to the B (Python) ads service (default: `0`). The remainder goes to the A (Java) ads service.
       - Set to a value between `0` and `100` to control the split.
-1. Start the app via `docker compose up`
+1. Start the app via `docker compose up -d`
 
 ### Feature flags
 Some capabilities are hidden behind feature flags, which can be controlled via `services/frontend/site/featureFlags.config.json`. 
