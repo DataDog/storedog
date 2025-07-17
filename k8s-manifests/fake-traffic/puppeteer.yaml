@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: puppeteer
-  namespace: fake-traffic
+  namespace: storedog
 spec:
   replicas: 1
   selector:
@@ -26,11 +26,11 @@ spec:
               value: "false"
           resources:
             requests:
-              memory: "1Gi"
-              cpu: "250m"
+              memory: "1.2Gi"
+              cpu: "700m"
             limits:
               memory: "2Gi"
-              cpu: "500m"
+              cpu: "900m"
           securityContext:
             capabilities:
               add:

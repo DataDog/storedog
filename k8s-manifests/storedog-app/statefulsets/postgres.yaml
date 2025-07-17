@@ -58,6 +58,13 @@ spec:
                 secretKeyRef:
                   name: storedog-secrets
                   key: POSTGRES_PASSWORD
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
