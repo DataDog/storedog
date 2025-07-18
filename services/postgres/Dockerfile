@@ -1,3 +1,4 @@
+# syntax = docker/dockerfile:1
 FROM postgres:15-alpine
 
 # Install dcron and su-exec for user switching

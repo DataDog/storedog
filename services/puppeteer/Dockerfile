@@ -1,3 +1,4 @@
+# syntax = docker/dockerfile:1
 FROM ghcr.io/puppeteer/puppeteer:20.0.0
 
 # Set default environment variables

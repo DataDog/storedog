@@ -1,3 +1,4 @@
+# syntax = docker/dockerfile:1
 FROM ruby:3.1.7
 
 RUN apt-get update -yq \

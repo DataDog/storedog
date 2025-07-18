@@ -1,3 +1,4 @@
+# syntax = docker/dockerfile:1
 # compile via gradle
 FROM gradle:jdk11 AS temp_build_image
 ENV APP_HOME=/usr/app/

@@ -1,3 +1,4 @@
+# syntax = docker/dockerfile:1
 FROM node:20 AS builder
 
 # install wait-for-it

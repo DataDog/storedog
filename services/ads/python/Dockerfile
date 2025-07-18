@@ -1,7 +1,4 @@
-# syntax = docker/dockerfile:1.2
-# ^ This enables the new BuildKit stable syntax which can be
-# run with the DOCKER_BUILDKIT=1 environment variable in your
-# docker build command (see build.sh)
+# syntax = docker/dockerfile:1
 FROM python:2.7-slim-buster
 
 # Change repository used by Apt
