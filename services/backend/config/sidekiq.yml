@@ -1,5 +1,5 @@
 ---
-:concurrency: 5
+:concurrency: 2
 :max_memory: 512 # MB
 :gc_interval: 10 # GC every 10 jobs
 :queues:
