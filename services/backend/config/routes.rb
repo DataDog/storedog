@@ -9,4 +9,7 @@ Rails.application.routes.draw do
       password == Rails.application.secrets.sidekiq_password
   end
   mount Sidekiq::Web, at: '/sidekiq'
+
+  # OpenTelemetry test endpoint
+  get '/otel-test', to: 'application#otel_test'
 end

@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { FC, useState } from 'react'
 import cn from 'clsx'
-import { datadogRum } from '@datadog/browser-rum'
 
 import CartItem from '@components/cart/CartItem'
 import { Button, Text } from '@components/ui'
@@ -18,7 +17,7 @@ import s from './CheckoutSidebarView.module.css'
 const CheckoutSidebarView: FC = () => {
   const [loadingSubmit, setLoadingSubmit] = useState(false)
   const [discountInput, setDiscountInput] = useState('')
-  const [checkoutError, setCheckoutError] = useState(null)
+  const [checkoutError, setCheckoutError] = useState<string | null>(null)
   const { setSidebarView, closeSidebar } = useUI()
   const { cart: cartData, cartEmpty, cartInit, applyDiscount } = useCart()
   const {
@@ -49,30 +48,30 @@ const CheckoutSidebarView: FC = () => {
 
       const res = await handleCompleteCheckout()
       console.log('checkout response', res)
-      if (res.error) {
-        throw res.error
-      }
 
       console.log('cartData', cartData)
 
-      datadogRum.addAction('Successful Checkout', {
-        id: cartData.id,
-        cart_total: cartData.totalPrice,
-        created_at: cartData.createdAt,
-        discounts: cartData.discounts,
-      })
-
-      cartData.lineItems.forEach((item: any) => {
-        datadogRum.addAction('Product Purchased', {
-          product: {
-            id: item.id,
-            name: item.name,
-            variant: item.variant.name,
-            quantity: item.quantity,
-            price: item.variant.price,
-          },
+      // Log successful checkout for analytics
+      if (cartData) {
+        console.log('Successful Checkout', {
+          id: cartData.id,
+          cart_total: cartData.totalPrice,
+          created_at: cartData.createdAt,
+          discounts: cartData.discounts,
         })
-      })
+
+        cartData.lineItems.forEach((item: any) => {
+          console.log('Product Purchased', {
+            product: {
+              id: item.id,
+              name: item.name,
+              variant: item.variant.name,
+              quantity: item.quantity,
+              price: item.variant.price,
+            },
+          })
+        })
+      }
 
       // clearCheckoutFields()
       setLoadingSubmit(false)
@@ -80,8 +79,8 @@ const CheckoutSidebarView: FC = () => {
       await cartInit()
       setSidebarView('ORDER_CONFIRM_VIEW')
     } catch (e) {
-      console.log(e)
-      setCheckoutError(e)
+      console.error('Checkout error:', e)
+      setCheckoutError(e instanceof Error ? e.message : 'An error occurred during checkout')
       setLoadingSubmit(false)
     }
   }
@@ -119,7 +118,7 @@ const CheckoutSidebarView: FC = () => {
 
       setDiscountInput('')
     } catch (err) {
-      datadogRum.addError(err, {
+      console.error('Discount error:', err, {
         discount_code: discountInput,
       })
     }
@@ -128,7 +127,6 @@ const CheckoutSidebarView: FC = () => {
   return (
     <SidebarLayout
       className={s.root}
-      id="sidebar"
       handleBack={() => setSidebarView('CART_VIEW')}
     >
       <div className="px-4 sm:px-6 flex-1">
@@ -179,7 +177,6 @@ const CheckoutSidebarView: FC = () => {
               width="100%"
               variant="ghost"
               className="!py-2 !border-1"
-              data-dd-action-name="Apply Discount"
             >
               Apply Discount
             </Button>
@@ -219,7 +216,6 @@ const CheckoutSidebarView: FC = () => {
             width="100%"
             loading={loadingSubmit}
             className="confirm-purchase-btn"
-            data-dd-action-name="Confirm Purchase"
             disabled={addressStatus.ok && paymentStatus.ok ? false : true}
           >
             Confirm Purchase

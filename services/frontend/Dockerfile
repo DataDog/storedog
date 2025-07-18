@@ -3,12 +3,6 @@ FROM node:20 AS builder
 # install wait-for-it
 RUN apt-get update && apt-get install -y wait-for-it
 
-# install datadog-ci 
-RUN npm install -g @datadog/datadog-ci
-
-ARG DD_GIT_REPOSITORY_URL
-ARG DD_GIT_COMMIT_SHA
-
 # Set default environment variables
 ENV NEXT_TELEMETRY_DISABLED=1 \
   NEXT_PUBLIC_ADS_ROUTE=/services/ads \
@@ -19,11 +13,19 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
   NEXT_PUBLIC_SPREE_CLIENT_HOST=/services/backend \
   NEXT_PUBLIC_SPREE_IMAGE_HOST=/services/backend \
   NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN=service-proxy \
-  DD_GIT_REPOSITORY_URL=${DD_GIT_REPOSITORY_URL} \
-  DD_GIT_COMMIT_SHA=${DD_GIT_COMMIT_SHA}
+  OTEL_TRACES_EXPORTER=console,otlp \
+  OTEL_METRICS_EXPORTER=console,otlp \
+  OTEL_LOGS_EXPORTER=console,otlp \
+  OTEL_EXPORTER_OTLP_ENDPOINT=http://otelcol:4317 \
+  OTEL_NODE_RESOURCE_DETECTORS=env,host,os \
+  OTEL_SERVICE_NAME=frontend
 
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+RUN npm run build
 EXPOSE 3000
+
+ENV NODE_OPTIONS="--require @opentelemetry/auto-instrumentations-node/register"
+CMD ["sh", "-c", "npx next start"]

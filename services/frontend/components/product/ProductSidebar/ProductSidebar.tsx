@@ -1,5 +1,4 @@
 import s from './ProductSidebar.module.css'
-import { datadogRum } from '@datadog/browser-rum'
 import { FC, useEffect, useState } from 'react'
 import { useCart } from '@lib/CartContext'
 import type { Product } from '@customTypes/product'
@@ -33,17 +32,20 @@ const ProductSidebar: FC<ProductSidebarProps> = ({ product, className }) => {
         throw new Error(cartRes.error)
       }
 
-      datadogRum.addAction('Product Added to Cart', {
-        cartTotal: cart.totalPrice,
-        product: {
-          name: product.name,
-          sku: product.sku,
-          id: product.id,
-          price: product.price.value,
-          slug: product.slug,
-          variantName: variant.attributes.name || 'default',
-        },
-      })
+      // Log product addition for analytics
+      if (cart) {
+        console.log('Product Added to Cart', {
+          cartTotal: cart.totalPrice,
+          product: {
+            name: product.name,
+            sku: product.sku,
+            id: product.id,
+            price: product.price.value,
+            slug: product.slug,
+            variantName: variant.attributes.name || 'default',
+          },
+        })
+      }
 
       setSidebarView('CART_VIEW')
       openSidebar()
@@ -71,7 +73,6 @@ const ProductSidebar: FC<ProductSidebarProps> = ({ product, className }) => {
           <select
             value={variant?.id}
             id="variant-select"
-            data-dd-action-name="Variant select dropdown"
             className="my-2 block w-full rounded-md border-0 py-1.5 pl-3 pr-12 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
             onChange={(e) => {
               const selectedVariant = product.variants.find(
