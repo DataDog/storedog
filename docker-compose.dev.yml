@@ -246,23 +246,23 @@ services:
       com.datadoghq.ad.logs: '[{"source": "redis"}]'
 
   # Browser automation for testing
-  puppeteer:
-    build:
-      context: ./services/puppeteer
-    platform: linux/amd64
-    environment:
-      - STOREDOG_URL=${STOREDOG_URL:-http://service-proxy:80}
-      - PUPPETEER_TIMEOUT=${PUPPETEER_TIMEOUT:-30000}
-      - SKIP_SESSION_CLOSE=${SKIP_SESSION_CLOSE:-false}
-    networks:
-      - storedog-network
-    volumes:
-      - ./services/puppeteer/scripts/puppeteer.js:/home/pptruser/puppeteer.js
-    depends_on:
-      - frontend
-    shm_size: '4gb' # Increase shared memory size
-    cap_add:
-      - 'SYS_ADMIN' # Required for Puppeteer to run in Docker
+  #puppeteer:
+  #  build:
+  #    context: ./services/puppeteer
+  #  platform: linux/amd64
+  #  environment:
+  #    - STOREDOG_URL=${STOREDOG_URL:-http://service-proxy:80}
+  #    - PUPPETEER_TIMEOUT=${PUPPETEER_TIMEOUT:-30000}
+  #    - SKIP_SESSION_CLOSE=${SKIP_SESSION_CLOSE:-false}
+   # networks:
+  #    - storedog-network
+  #  volumes:
+  #    - ./services/puppeteer/scripts/puppeteer.js:/home/pptruser/puppeteer.js
+  #  depends_on:
+  #    - frontend
+  #  shm_size: '4gb' # Increase shared memory size
+  #  cap_add:
+  #    - 'SYS_ADMIN' # Required for Puppeteer to run in Docker
 
 volumes:
   redis: # Redis data persistence

@@ -5,13 +5,18 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.StreamUtils;
 import java.io.*;
+import java.net.URI;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.apache.commons.io.IOUtils;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.HashMap;
+import java.util.Optional;
 import org.springframework.web.bind.annotation.RequestParam;
 import java.util.concurrent.TimeoutException;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -51,6 +56,37 @@ public class AdsJavaApplication {
         InputStream in = getClass()
             .getResourceAsStream(imagePath);
         return IOUtils.toByteArray(in);
+    }
+
+    @CrossOrigin(origins = {"*"})
+    @RequestMapping("/click/{id}")
+    public ResponseEntity<Void> handleAdClick(@PathVariable Long id) {
+        logger.info("Ad click for id: " + id);
+        
+        Optional<Advertisement> adOptional = advertisementRepository.findById(id);
+        if (adOptional.isPresent()) {
+            Advertisement ad = adOptional.get();
+            String clickUrl = ad.getClickUrl();
+            
+            // Log the click for analytics
+            logger.info("Redirecting ad '{}' (id: {}) to: {}", ad.getName(), id, clickUrl);
+            
+            if (clickUrl != null && !clickUrl.isEmpty()) {
+                // Return a redirect response to the click URL
+                return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create(clickUrl))
+                    .build();
+            } else {
+                // Default redirect if no clickUrl is set
+                logger.warn("No clickUrl set for ad id: " + id + ", redirecting to homepage");
+                return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create("/"))
+                    .build();
+            }
+        } else {
+            logger.error("Ad not found for id: " + id);
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @CrossOrigin(origins = {"*"})
@@ -95,9 +131,51 @@ public class AdsJavaApplication {
     public CommandLineRunner initDb(AdvertisementRepository repository) {
         return args -> {
             if (repository.count() == 0) {
-                repository.save(new Advertisement("Discount Clothing", "1.jpg"));
-                repository.save(new Advertisement("Cool Hats", "2.jpg"));
-                repository.save(new Advertisement("Nice Bags", "3.jpg"));
+                // Create ads with meaningful click URLs that point to relevant frontend pages
+                repository.save(new Advertisement("Discount Clothing", "1.jpg", "/search?q=clothing"));
+                repository.save(new Advertisement("Cool Hats", "2.jpg", "/cool-hats"));
+                repository.save(new Advertisement("Nice Bags", "3.jpg", "/search?q=bags"));
+                logger.info("Initialized database with 3 advertisements with click URLs");
+            } else {
+                // Always update existing ads to ensure they have the correct click URLs
+                List<Advertisement> existingAds = repository.findAll();
+                boolean needsUpdate = false;
+                
+                for (Advertisement ad : existingAds) {
+                    String oldClickUrl = ad.getClickUrl();
+                    switch (ad.getName()) {
+                        case "Discount Clothing":
+                            if (!"/search?q=clothing".equals(oldClickUrl)) {
+                                ad.setClickUrl("/search?q=clothing");
+                                needsUpdate = true;
+                                logger.info("Updated '{}' clickUrl from '{}' to '/search?q=clothing'", ad.getName(), oldClickUrl);
+                            }
+                            break;
+                        case "Cool Hats":
+                            if (!"/cool-hats".equals(oldClickUrl)) {
+                                ad.setClickUrl("/cool-hats");
+                                needsUpdate = true;
+                                logger.info("Updated '{}' clickUrl from '{}' to '/cool-hats'", ad.getName(), oldClickUrl);
+                            }
+                            break;
+                        case "Nice Bags":
+                            if (!"/search?q=bags".equals(oldClickUrl)) {
+                                ad.setClickUrl("/search?q=bags");
+                                needsUpdate = true;
+                                logger.info("Updated '{}' clickUrl from '{}' to '/search?q=bags'", ad.getName(), oldClickUrl);
+                            }
+                            break;
+                        default:
+                            logger.info("Unknown ad name: '{}', leaving clickUrl unchanged", ad.getName());
+                    }
+                }
+                
+                if (needsUpdate) {
+                    repository.saveAll(existingAds);
+                    logger.info("Successfully updated existing ads with correct click URLs");
+                } else {
+                    logger.info("All ads already have correct click URLs, no update needed");
+                }
             }
         };
     }
