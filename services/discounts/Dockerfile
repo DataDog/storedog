@@ -8,7 +8,7 @@ FROM python:3.9.23-slim-bookworm
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     apt-get upgrade --yes && \
-    apt-get install --yes build-essential libpq-dev openssh-server sudo dumb-init rsyslog wait-for-it && \
+    apt-get install --yes build-essential libpq-dev dumb-init wait-for-it && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
