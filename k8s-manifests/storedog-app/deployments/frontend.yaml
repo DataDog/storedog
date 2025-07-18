@@ -37,7 +37,7 @@ spec:
           image: ${REGISTRY_URL}/frontend:${SD_TAG}
           ports:
             - containerPort: 3000
-          command: ["npm", "run", "dev"]
+          command: ["npm", "run", "prod"]
           env:
             - name: NEXT_PUBLIC_ADS_ROUTE
               valueFrom:
