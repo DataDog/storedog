@@ -2,13 +2,17 @@ import { useState, useEffect, useCallback } from 'react'
 import { codeStash } from 'code-stash'
 import config from '../../../featureFlags.config.json'
 
-export interface AdDataResults {
-  data: object | null
+// Proper TypeScript interface for Advertisement object from Java service
+export interface Advertisement {
+  id: number
+  name: string
   path: string
+  clickUrl: string
 }
+
 // Advertisement banner
 function Ad() {
-  const [data, setData] = useState<AdDataResults | null>(null)
+  const [data, setData] = useState<Advertisement | null>(null)
   const [isLoading, setLoading] = useState(false)
   const adsPath = process.env.NEXT_PUBLIC_ADS_ROUTE || `/services/ads`
 
@@ -31,7 +35,7 @@ function Ad() {
       if (!res.ok) {
         throw new Error('Error fetching ad')
       }
-      const data = await res.json()
+      const data: Advertisement[] = await res.json()
       console.log(data)
       const index = getRandomArbitrary(0, data.length)
       setData(data[index])
@@ -41,6 +45,14 @@ function Ad() {
       setLoading(false)
     }
   }, [adsPath, getRandomArbitrary, setData, setLoading])
+
+  const handleAdClick = useCallback(() => {
+    if (data?.id) {
+      // Direct browser navigation to the click endpoint
+      // The Java service will handle the redirect to the appropriate URL
+      window.location.href = `${adsPath}/click/${data.id}`
+    }
+  }, [data, adsPath])
 
   useEffect(() => {
     if (!data) fetchAd()
@@ -61,9 +73,17 @@ function Ad() {
 
   return (
     <div className="flex flex-row justify-center py-4 advertisement-wrapper">
-      <picture className="advertisement-banner">
+      <picture 
+        className="advertisement-banner cursor-pointer" 
+        onClick={handleAdClick}
+        title={`Click to see ${data.name}`}
+      >
         <source srcSet={`${adsPath}/banners/${data.path}`} type="image/webp" />
-        <img src={`${adsPath}/banners/${data.path}`} alt="Landscape picture" />
+        <img 
+          src={`${adsPath}/banners/${data.path}`} 
+          alt={data.name || "Advertisement"} 
+          className="cursor-pointer"
+        />
       </picture>
     </div>
   )
