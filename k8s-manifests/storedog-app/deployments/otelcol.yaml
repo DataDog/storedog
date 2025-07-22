@@ -46,6 +46,16 @@ spec:
           env:
             - name: OTEL_LOG_LEVEL
               value: "debug"
+            - name: DD_SITE
+              value: ${DD_SITE}
+            - name: DD_API_KEY
+              value: ${DD_API_KEY}
+            - name: DD_APP_KEY
+              value: ${DD_APP_KEY}
+            - name: DATADOG_API_KEY
+              value: ${DATADOG_API_KEY}
+            - name: DD_ENV
+              value: ${DD_ENV}
           resources:
             requests:
               memory: "128Mi"
@@ -54,10 +64,10 @@ spec:
               memory: "200Mi"
               cpu: "200m"
           volumeMounts:
-            - name: otelcol-config
+            - name: otelcol-config-ddog
               mountPath: /etc/otelcol-config.yaml
               subPath: otelcol-config.yaml
       volumes:
-        - name: otelcol-config
+        - name: otelcol-config-ddog
           configMap:
-            name: otelcol-config 
+            name: otelcol-config-ddog
