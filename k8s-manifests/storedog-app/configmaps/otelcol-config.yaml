@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otelcol-config-ddog
+data:
+  otelcol-config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    processors:
+      batch:
+      resource:
+        attributes:
+          - key: deployment.environment
+            value: "otel-course"
+            action: upsert
+    exporters:
+      debug:
+        verbosity: detailed
+      datadog:
+        hostname: "otelcol-datadog-exporter"
+        api:
+          site: ${DD_SITE}
+          key: ${DD_API_KEY}
+    connectors:
+      datadog/connector:
+    service:
+      telemetry:
+        logs:
+          level: debug
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [resource, batch]
+          exporters: [debug, datadog, datadog/connector]
+        metrics:
+          receivers: [otlp, datadog/connector]
+          processors: [resource, batch]
+          exporters: [debug, datadog]
+        logs:
+          receivers: [otlp]
+          processors: [resource, batch]
+          exporters: [debug, datadog]

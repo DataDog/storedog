@@ -1,0 +1,104 @@
+upstream ads_service_a {
+    server ${ADS_A_UPSTREAM} max_fails=1 fail_timeout=1s;
+}
+
+${ADS_SERVICE_B_BLOCK}
+
+# Conditional upstream based on what's enabled
+upstream ads_upstream {
+    # This will be populated based on environment variables
+    ${UPSTREAM_CONFIG}
+}
+
+server {
+    listen 80;
+
+    # Reverse proxy for ads
+    location /services/ads {
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        rewrite ^/services/ads(/.*)$ $1 break;
+        # Proxy to ads service based on A/B split
+        proxy_pass http://ads_upstream/;
+    }
+
+    # Reverse proxy for discounts 
+    location /services/discounts {
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Proxy to discounts service
+        proxy_pass http://discounts:2814/;
+    }
+
+    # Reverse proxy for backend
+    location /services/backend {
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_pass http://backend:4000/;
+    }
+
+    # The resolver is set in the docker-entrypoint.sh file
+    resolver ${NGINX_RESOLVER} valid=30s;
+
+    # Reverse proxy for dbm service (not used that often)
+    location /services/dbm {
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Strip /services/dbm from the path before proxying
+        rewrite ^/services/dbm(/.*)$ $1 break;
+
+        # Use a variable for the proxy_pass to force runtime resolution
+        set $upstream_dbm "http://dbm:7595/";
+        proxy_pass $upstream_dbm;
+
+        # Error handling as suggested before
+        proxy_intercept_errors on;
+        proxy_connect_timeout 5s;
+    }
+
+    # Reverse proxy for frontend (Next.js)
+    location / {
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Websocket support for Next.js (if applicable)
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_pass http://frontend:3000;
+
+        # Enable intercepting errors
+        proxy_intercept_errors on;
+
+        # Custom error page for 502 (Bad Gateway)
+        error_page 502 503 504 = @frontend_loading;
+    }
+
+    # Custom location block for the loading message
+    location @frontend_loading {
+        # By clearing the types and setting a default, we ensure the
+        # Content-Type header is correctly set to text/html.
+        types { }
+        default_type text/html;
+
+        # Serve the loading HTML file
+        root /usr/share/nginx/html;
+        try_files /loading.html =404;
+    }
+}

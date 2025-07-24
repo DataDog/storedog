@@ -1,0 +1,25 @@
+{
+  "title": "Storedog | Datadog Training",
+  "titleTemplate": "%s - Storedog",
+  "description": "Storedog, an ecommerce app used for training at https://learn.datadoghq.com",
+  "openGraph": {
+    "title": "Storedog | Datadog Training",
+    "description": "Storedog, an ecommerce app used for training at https://learn.datadoghq.com",
+    "type": "website",
+    "url": "https://learn.datadoghq.com",
+    "site_name": "Storedog",
+    "images": [
+      {
+        "url": "/card.png",
+        "width": "800",
+        "height": "600",
+        "alt": "Storedog"
+      }
+    ]
+  },
+  "twitter": {
+    "handle": "@datadoghq",
+    "site": "@datadoghq",
+    "cardType": "summary_large_image"
+  }
+}

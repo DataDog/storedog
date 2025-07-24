@@ -1,0 +1,117 @@
+apiVersion: datadoghq.com/v2alpha1
+kind: DatadogAgent
+metadata:
+  name: datadog
+spec:
+  global:
+    secretBackend:
+      command: "/readsecret_multiple_providers.sh"
+      enableGlobalPermissions: true
+    clusterName: storedog-k8s
+    site: datadoghq.com
+    kubelet:
+      tlsVerify: false
+    credentials:
+      apiSecret:
+        secretName: datadog-secret
+        keyName: api-key
+      appSecret:
+        secretName: datadog-secret
+        keyName: app-key
+  features:
+    logCollection: # Logs
+      enabled: true
+      containerCollectAll: true
+    clusterChecks: # Required for integrations
+      enabled: true
+    # Datadog security features
+    # cspm: # Cloud Security Posture Management
+    #   enabled: true
+    #   hostBenchmarks:
+    #     enabled: true
+    # cws: # Cloud Workload Security
+    #   enabled: true
+    # sbom: # Software Bill of Materials
+    #   enabled: true
+    #   containerImage:
+    #     enabled: true
+  override:
+    nodeAgent:
+      containers:
+        agent:
+          volumeMounts:
+            - name: shared-pg-logs # For Postgres log collection
+              mountPath: /var/log/pg_log_shared
+              readOnly: true
+          env:
+      volumes:
+        - name: shared-pg-logs # For Postgres log collection
+          persistentVolumeClaim:
+            claimName: shared-pg-logs
+      extraConfd:
+        configDataMap: # Integration configurations
+          nginx_ingress_controller.yaml: |- # nginx-ingress-controller integration
+            ad_identifiers:
+              - controller
+            init_config:
+            instances:
+              - prometheus_url: http://%%host%%:10254/metrics
+                collect_nginx_histograms: true
+            logs:
+              - service: controller
+                source: nginx-ingress-controller
+          nginx.yaml: |- # nginx integration on the nginx-ingress-controller
+            ad_identifiers:
+              - controller
+            init_config:
+            instances:
+              - nginx_status_url: http://%%host%%:18080/nginx_status
+    clusterAgent:
+      extraConfd:
+        configDataMap:
+          postgres.yaml: |- # Postgres cluster check for DBM
+            cluster_check: true
+            init_config:
+            instances:
+              - dbm: true
+                host: postgres
+                port: 5432
+                username: ENC[k8s_secret@default/storedog-secrets/POSTGRES_INTEGRATION_USER]
+                password: ENC[k8s_secret@default/storedog-secrets/POSTGRES_INTEGRATION_PASSWORD]
+                tags:
+                  - env:${DD_ENV}
+                  - service:store-db
+                relations:
+                  - relation_name: advertisement
+                  - relation_name: discount
+                  - relation_name: items
+                  - relation_name: preorder_items
+                  - relation_name: influencer
+                query_samples:
+                  enabled: true
+                  explain_parameterized_queries: true
+                max_relations: 400
+                collect_function_metrics: true
+                collection_interval: 1
+                collect_schemas:
+                  enabled: true
+                collect_settings:
+                  enabled: true
+              - dbm: true
+                host: postgres
+                port: 5432
+                username: ENC[k8s_secret@default/storedog-secrets/POSTGRES_INTEGRATION_USER]
+                password: ENC[k8s_secret@default/storedog-secrets/POSTGRES_INTEGRATION_PASSWORD]
+                dbname: storedog_db
+                relations:
+                  - relation_regex: spree_.*
+                query_samples:
+                  enabled: true
+                  explain_parameterized_queries: true
+                max_relations: 400
+                collect_function_metrics: true
+                collection_interval: 1
+                collect_schemas:
+                  enabled: true
+                collect_settings:
+                  enabled: true

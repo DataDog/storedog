@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  ports:
+    - port: 5432
+      name: postgres
+  clusterIP: None
+  selector:
+    app: postgres
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  labels:
+    tags.datadoghq.com/env: ${DD_ENV}
+    tags.datadoghq.com/service: store-db
+    tags.datadoghq.com/version: "15.0"
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+        tags.datadoghq.com/env: ${DD_ENV}
+        tags.datadoghq.com/service: store-db
+        tags.datadoghq.com/version: "15.0"
+      annotations:
+        ad.datadoghq.com/postgres.logs: |
+          [{
+            "source": "postgresql",
+            "service": "store-db",
+            "auto_multi_line_detection": true,
+            "path": "/var/log/pg_log_shared/postgresql-*.json",
+            "type": "file"
+          }]
+    spec:
+      containers:
+        - name: postgres
+          image: ${REGISTRY_URL}/postgres:${SD_TAG}
+          ports:
+            - containerPort: 5432
+              name: postgres
+          env:
+            - name: POSTGRES_HOST_AUTH_METHOD
+              value: trust
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: storedog-secrets
+                  key: POSTGRES_PASSWORD
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+            - name: shared-pg-logs
+              mountPath: /var/log/pg_log
+      volumes:
+        - name: shared-pg-logs
+          persistentVolumeClaim:
+            claimName: shared-pg-logs
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 10Gi

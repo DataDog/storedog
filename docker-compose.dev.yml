@@ -1,6 +1,29 @@
 # Storedog Development Environment
 # This docker-compose file sets up a complete development environment for the Storedog application.
 services:
+  # OpenTelemetry Collector for observability
+  otelcol:
+    container_name: otelcol
+    hostname: otelcol
+    image: otel/opentelemetry-collector-contrib:0.130.0
+    environment:
+      - OTEL_LOG_LEVEL=debug
+    deploy:
+      resources:
+        limits:
+          memory: 200M
+    networks:
+      - storedog-network
+    restart: unless-stopped
+    command:
+      - "--config=/etc/otelcol-config.yaml"
+    volumes:
+      - ./services/otel/otelcol-config.yaml:/etc/otelcol-config.yaml
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 4317:4317
+      - 4318:4318
+
   # Datadog Agent for monitoring and observability
   dd-agent:
     image: gcr.io/datadoghq/agent:latest
@@ -166,18 +189,21 @@ services:
       context: ./services/ads/java
     depends_on:
       - postgres
-      - dd-agent
+      - otelcol
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_HOST=postgres
-      - DD_AGENT_HOST=dd-agent
-      - DD_SERVICE=store-ads
-      - DD_VERSION=${DD_VERSION_ADS:-1.0.0}
-      - DD_LOGS_INJECTION=true
-      - DD_PROFILING_ENABLED=true
-      - DD_PROFILING_TIMELINE_ENABLED=true
-      - DD_PROFILING_ALLOCATION_ENABLED=true
+      # OpenTelemetry configuration
+      - OTEL_SERVICE_NAME=store-ads
+      - OTEL_SERVICE_VERSION=${DD_VERSION_ADS:-1.0.0}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otelcol:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=store-ads,service.version=${DD_VERSION_ADS:-1.0.0},deployment.environment=development
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER=otlp
+      - OTEL_LOG_LEVEL=debug
     networks:
       - storedog-network
     labels:

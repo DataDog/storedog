@@ -61,7 +61,7 @@ spec:
             - name: DD_ENV
               value: ${DD_ENV}
             - name: DD_SERVICE
-              value: store-discounts
+              value: discounts
             - name: DD_VERSION
               value: ${DD_VERSION_DISCOUNTS}
             - name: DD_LOGS_INJECTION
@@ -74,6 +74,23 @@ spec:
               value: "true"
             - name: DD_PROFILING_TIMELINE_ENABLED
               value: "true"
+            # OpenTelemetry configuration (override Dockerfile to use HTTP for consistency)
+            - name: OTEL_SERVICE_NAME
+              value: "discounts"
+            - name: OTEL_SERVICE_VERSION
+              value: ${DD_VERSION_DISCOUNTS}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otelcol:4317"
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: "grpc"
+            - name: OTEL_TRACES_EXPORTER
+              value: "console,otlp"
+            - name: OTEL_METRICS_EXPORTER
+              value: "console,otlp"
+            - name: OTEL_LOGS_EXPORTER
+              value: "console,otlp"
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "service.name=discounts,service.version=${DD_VERSION_DISCOUNTS},deployment.environment=${DD_ENV}"
           resources:
             requests:
               memory: "128Mi"

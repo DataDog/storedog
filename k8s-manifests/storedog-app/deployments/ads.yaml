@@ -39,7 +39,7 @@ spec:
             - name: DD_ENV
               value: ${DD_ENV}
             - name: DD_SERVICE
-              value: store-ads
+              value: ads
             - name: DD_VERSION
               value: ${DD_VERSION_ADS}
             - name: DD_LOGS_INJECTION
@@ -52,6 +52,23 @@ spec:
               value: "true"
             - name: DD_PROFILING_TIMELINE_ENABLED
               value: "true"
+            # OpenTelemetry configuration (complete the Dockerfile config)
+            - name: OTEL_SERVICE_NAME
+              value: "ads"
+            - name: OTEL_SERVICE_VERSION
+              value: ${DD_VERSION_ADS}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otelcol:4317"
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: "grpc"
+            - name: OTEL_TRACES_EXPORTER
+              value: "console,otlp"
+            - name: OTEL_METRICS_EXPORTER
+              value: "console,otlp"
+            - name: OTEL_LOGS_EXPORTER
+              value: "console,otlp"
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "service.name=ads,service.version=${DD_VERSION_ADS},deployment.environment=${DD_ENV}"
           resources:
             requests:
               memory: "256Mi"

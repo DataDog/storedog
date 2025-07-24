@@ -1,0 +1,91 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ads
+spec:
+  ports:
+    - port: 3030
+      targetPort: 3030
+      name: http
+  selector:
+    app: ads
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ads
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ads
+  template:
+    metadata:
+      labels:
+        app: ads
+      annotations:
+        ad.datadoghq.com/ads.logs: '[{"source": "java"}]'
+    spec:
+      volumes:
+        - name: apmsocketpath
+          hostPath:
+            path: /var/run/datadog/
+      containers:
+        - name: ads
+          image: ${REGISTRY_URL}/ads-java:${SD_TAG}
+          ports:
+            - containerPort: 3030
+          env:
+            # JVM Performance Tuning
+            - name: JAVA_OPTS
+              value: "-XX:+UseG1GC -XX:+UseStringDeduplication -XX:+OptimizeStringConcat"
+            - name: JVM_XMS
+              value: "128m"              # Initial heap size
+            - name: JVM_XMX
+              value: "384m"              # Max heap size (75% of memory limit)
+            # Datadog Configuration
+            - name: DD_ENV
+              value: ${DD_ENV}
+            - name: DD_SERVICE
+              value: store-ads
+            - name: DD_VERSION
+              value: ${DD_VERSION_ADS}
+            - name: DD_LOGS_INJECTION
+              value: "true"
+            - name: DD_RUNTIME_METRICS_ENABLED
+              value: "true"
+            - name: DD_PROFILING_ENABLED
+              value: "true"
+            - name: DD_PROFILING_ALLOCATION_ENABLED
+              value: "true"
+            - name: DD_PROFILING_TIMELINE_ENABLED
+              value: "true"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 384Mi
+            limits:
+              cpu: 300m
+              memory: 512Mi
+          volumeMounts:
+            - name: apmsocketpath
+              mountPath: /var/run/datadog
+          # Extended readiness probe for JVM warmup
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3030
+            initialDelaySeconds: 45    # Allow more time for JVM startup
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6         # Allow more failures during warmup
+            successThreshold: 3         # Require multiple successes before ready
+          # Liveness probe with generous settings
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3030
+            initialDelaySeconds: 55    # Give JVM plenty of time
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5

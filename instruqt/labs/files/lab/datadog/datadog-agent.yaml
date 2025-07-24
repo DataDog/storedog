@@ -1,0 +1,103 @@
+apiVersion: datadoghq.com/v2alpha1
+kind: DatadogAgent
+metadata:
+  name: datadog
+spec:
+  global:
+    clusterName: storedog-k8s
+    site: datadoghq.com
+    kubelet:
+      tlsVerify: false
+    credentials:
+      apiSecret:
+        secretName: datadog-secret
+        keyName: api-key
+      appSecret:
+        secretName: datadog-secret
+        keyName: app-key
+  features:
+    apm: # Application Performance Monitoring
+      enabled: true
+      hostPortEnabled: true
+      unixDomainSocketEnabled: true
+    logCollection: # Logs
+      enabled: true
+      containerCollectAll: true
+    clusterChecks: # Required for integrations
+      enabled: true
+    # Datadog security features
+    # cspm: # Cloud Security Posture Management
+    #   enabled: true
+    #   hostBenchmarks:
+    #     enabled: true
+    # cws: # Cloud Workload Security
+    #   enabled: true
+    # sbom: # Software Bill of Materials
+    #   enabled: true
+    #   containerImage:
+    #     enabled: true
+  override:
+    # Deploy the Datadog agent to the control plane nodes.
+    # Used to monitor pods running on the control plane nodes.
+    # This is required for etcd integration.
+    nodeAgent:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        agent:
+          volumeMounts:
+            - name: etcd-certs # Used for etcd integration
+              readOnly: true
+              mountPath: /host/etc/kubernetes/pki/etcd
+            - name: disable-etcd-autoconf # Used for etcd integration
+              mountPath: /etc/datadog-agent/conf.d/etcd.d
+            # Used for audit logs
+            # - name: klogpath
+            #   readOnly: true
+            #   mountPath: /var/log/kubernetes
+      volumes:
+        - name: etcd-certs # Used for etcd integration
+          hostPath:
+            path: /etc/kubernetes/pki/etcd
+        - name: disable-etcd-autoconf
+          emptyDir: {}
+        # Used for audit logs
+        # - name: klogpath
+        #   hostPath:
+        #     path: /var/log/kubernetes
+      extraConfd:
+        configDataMap: # Integration configurations
+          etcd.yaml: |- # etcd integration
+            ad_identifiers:
+              - etcd
+            init_config:
+            instances:
+              - prometheus_url: https://%%host%%:2379/metrics
+                tls_ca_cert: /host/etc/kubernetes/pki/etcd/ca.crt
+                tls_cert: /host/etc/kubernetes/pki/etcd/server.crt
+                tls_private_key: /host/etc/kubernetes/pki/etcd/server.key
+          nginx_ingress_controller.yaml: |- # nginx-ingress-controller integration
+            ad_identifiers:
+              - controller
+            init_config:
+            instances:
+              - prometheus_url: http://%%host%%:10254/metrics
+                collect_nginx_histograms: true
+            logs:
+              - service: controller
+                source: nginx-ingress-controller
+          nginx.yaml: |- # nginx integration on the nginx-ingress-controller
+            ad_identifiers:
+              - controller
+            init_config:
+            instances:
+              - nginx_status_url: http://%%host%%:18080/nginx_status
+          # Send audit logs to Datadog
+          # kube_audit.yaml: |-
+          #   logs:
+          #     - type: file
+          #       path: /var/log/kubernetes/apiserver/audit.log
+          #       service: kube-apiserver-audit
+          #       source: kubernetes.audit

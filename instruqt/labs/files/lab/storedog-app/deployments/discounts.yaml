@@ -1,0 +1,113 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: discounts
+spec:
+  ports:
+    - port: 2814
+      targetPort: 2814
+      name: http
+  selector:
+    app: discounts
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: discounts
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: discounts
+  template:
+    metadata:
+      labels:
+        app: discounts
+      annotations:
+        ad.datadoghq.com/discounts.logs: '[{"source": "python"}]'
+    spec:
+      volumes:
+        - name: apmsocketpath
+          hostPath:
+            path: /var/run/datadog/
+      initContainers:
+        - name: wait-for-db
+          image: busybox
+          command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done;']
+      containers:
+        - name: discounts
+          image: ${REGISTRY_URL}/discounts:${SD_TAG}
+          ports:
+            - containerPort: 2814
+          env:
+            # Flask Application Configuration
+            - name: FLASK_APP
+              value: "discounts.py"
+            - name: DISCOUNTS_PORT
+              value: "2814"
+            - name: FLASK_DEBUG
+              value: "0"
+            # Flask Binding Configuration - Fix for HTTP 308 redirects
+            - name: FLASK_ENV
+              value: "production"
+            - name: FLASK_HOST
+              value: "0.0.0.0"
+            - name: FLASK_PORT
+              value: "2814"
+            # Database Configuration
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: storedog-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: POSTGRES_USER
+            - name: POSTGRES_HOST
+              value: postgres
+            # Datadog Configuration
+            - name: DD_ENV
+              value: ${DD_ENV}
+            - name: DD_SERVICE
+              value: store-discounts
+            - name: DD_VERSION
+              value: ${DD_VERSION_DISCOUNTS}
+            - name: DD_LOGS_INJECTION
+              value: "true"
+            - name: DD_RUNTIME_METRICS_ENABLED
+              value: "true"
+            - name: DD_PROFILING_ENABLED
+              value: "true"
+            - name: DD_PROFILING_ALLOCATION_ENABLED
+              value: "true"
+            - name: DD_PROFILING_TIMELINE_ENABLED
+              value: "true"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
+          volumeMounts:
+            - name: apmsocketpath
+              mountPath: /var/run/datadog
+          # Health probes for better monitoring
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 2814
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 2814
+            initialDelaySeconds: 40
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5

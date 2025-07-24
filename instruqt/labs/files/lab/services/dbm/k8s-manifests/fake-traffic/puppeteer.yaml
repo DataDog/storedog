@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: puppeteer
+  namespace: fake-traffic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: puppeteer
+  template:
+    metadata:
+      labels:
+        app: puppeteer
+    spec:
+      containers:
+        - name: puppeteer
+          image: ${REGISTRY_URL}/puppeteer:${SD_TAG}
+          env:
+            - name: STOREDOG_URL
+              # Change namespace as needed
+              value: "http://service-proxy.default.svc.cluster.local"
+            - name: PUPPETEER_TIMEOUT
+              value: "30000"
+            - name: SKIP_SESSION_CLOSE
+              value: "false"
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "500m"
+          securityContext:
+            capabilities:
+              add:
+                - SYS_ADMIN  # Required for Puppeteer to run in Docker
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 4Gi  # Equivalent to shm_size: '4gb' in docker-compose

@@ -1,0 +1,161 @@
+#!/bin/bash
+set -x
+
+# For `instruqt track log` context
+echo "Setting up ${HOSTNAME} for ${INSTRUQT_TRACK_SLUG}"
+
+# Wait for the Instruqt host bootstrap to finish
+until [ -f /opt/instruqt/bootstrap/host-bootstrap-completed ]
+do
+    sleep 0.5
+done
+
+# Install the Instruqt lab tools
+curl -sk https://datadoghq.dev/instruqtlabtools/r?raw=true|bash
+
+# Download the track's files from GCP object storage and untar them into /root
+echo "Setting up assets"
+BUCKET="learning-center-files"
+if [[ ${INSTRUQT_TRACK_SLUG: -4} == '-dev' ]]
+then
+  BUCKET="learning-center-files-dev"
+fi
+wget https://storage.googleapis.com/${BUCKET}/${INSTRUQT_TRACK_SLUG}.tar -O - | \
+tar -x -C /root/
+
+source findorcreateuser
+
+## Set default environment variables for Storedog
+export REGISTRY_URL="localhost:5000"  # TODO: change to ghcr.io/datadog/storedog-otel
+export SD_TAG=latest
+export DD_VERSION_ADS=1.0.0
+export DD_VERSION_BACKEND=1.0.0
+export DD_VERSION_DISCOUNTS=1.0.0
+export DD_VERSION_NGINX=1.28.0
+export NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend
+export NEXT_PUBLIC_DD_VERSION_FRONTEND=1.0.0
+export DD_ENV=production
+export DD_SITE=datadoghq.com
+
+# Save commands and environment variables to .bashrc
+tee -a /root/.bashrc <<EOF
+export ACCOUNT_EXPIRATION=${ACCOUNT_EXPIRATION}
+export ACCOUNT_EXPIRATION_FORMATTED="${ACCOUNT_EXPIRATION_FORMATTED}"
+export DD_API_KEY=${DD_API_KEY}
+export DD_APP_KEY=${DD_APP_KEY}
+export DD_APPLICATION_ID=${DD_APPLICATION_ID}
+export DD_CLIENT_TOKEN=${DD_CLIENT_TOKEN}
+export DD_ORG_ID=${DD_ORG_ID}
+export DD_ORG_NAME=${DD_ORG_NAME}
+export DD_ENV=production
+export DD_TAGS=env:production
+export DD_HOSTNAME=getting-started-k8s-course-host
+export INSTRUQT_TRACK_SLUG=${INSTRUQT_TRACK_SLUG}
+export INSTRUQT_USER_ID=${INSTRUQT_USER_ID}
+export ISWORKSHOP=false
+export LABUSER=${LABUSER}
+export NEWPASSWORD=${NEWPASSWORD}
+export STOREDOG_URL=http://${HOSTNAME}.${_SANDBOX_ID}.instruqt.io:3000
+export USERID=${INSTRUQT_USER_ID}
+export DD_SITE=${DD_SITE}
+creds
+EOF
+
+source /root/.bashrc
+
+# Set working directory to /root/lab
+set-workdir /root/lab
+
+### Your global track customizations below this line ###
+
+# Generic wait function
+wait_for() {
+    local max_attempts=$1
+    local interval=$2
+    local check_cmd=$3
+    local success_msg=$4
+    local error_msg=$5
+    local component=${6:-"Component"}
+    local attempt=1
+
+    echo "Waiting for $success_msg..."
+    while [ $attempt -le $max_attempts ]; do
+        eval "$check_cmd" 2>/dev/null || echo "$error_msg"
+
+        if eval "$check_cmd" &>/dev/null; then
+            echo "$success_msg"
+            return 0
+        fi
+        echo "Attempt $attempt/$max_attempts: $error_msg"
+        sleep $interval
+        ((attempt++))
+    done
+    echo "Timeout waiting for $success_msg. Continuing anyway..."
+    echo "Warning: $component might not be fully functional"
+    return 1
+}
+
+# Wait for the control plane to be ready
+echo "Checking control plane status..."
+wait_for 60 2 \
+    "kubectl get nodes -l node-role.kubernetes.io/control-plane | grep -qe '\bReady\b'" \
+    "Control plane is ready!" \
+    "Control plane not ready yet" \
+    "Control plane"
+
+# Deploy the Ecommerce application
+wall -n "Deploying the ecommerce application: Storedog"
+
+## Deploy storage provisioner and ingress controller
+kubectl apply -R -f /root/lab/cluster-setup/
+
+## Create namespaces
+kubectl create ns storedog
+kubectl create ns fake-traffic
+
+## Create secrets for Datadog API key and app key
+kubectl create secret generic datadog-secret \
+  --from-literal api-key=$DD_API_KEY \
+  --from-literal app-key=$DD_APP_KEY
+
+## Create secrets for Datadog RUM application ID and client token
+kubectl create secret generic datadog-secret \
+  --from-literal=dd_application_id=${DD_APPLICATION_ID} \
+  --from-literal=dd_client_token=${DD_CLIENT_TOKEN} \
+  -n storedog
+
+# Create local Docker registry in the Instruqt environment
+docker run -d -p 5000:5000 --restart=always --name registry registry:2
+
+# Configure Docker daemon to trust insecure local registry
+echo '{ "insecure-registries": ["localhost:5000"] }' | tee /etc/docker/daemon.json
+
+# Restart Docker to apply registry configuration
+systemctl restart docker
+sleep 10
+
+# Verify Docker is running after restart
+systemctl is-active docker
+
+# Build and push the Storedog images to the local registry
+REGISTRY_URL=localhost:5000; find /root/lab/services -name Dockerfile | while read dockerfile; do context_dir=$(dirname "$dockerfile"); image_name=$(echo "$context_dir" | sed 's|^\/root/lab/services/||; s|/|-|g'); full_tag="$REGISTRY_URL/$image_name:latest"; echo "Building $full_tag from $context_dir"; docker build -t "$full_tag" "$context_dir" && docker push "$full_tag"; done
+
+## Deploy Storedog with local registry
+for file in /root/lab/storedog-app/**/*.yaml; do envsubst < "$file" | kubectl apply -n storedog -f -; done
+
+## Deploy fake-traffic
+#envsubst < /root/lab/fake-traffic/puppeteer.yaml | kubectl apply -f -
+
+# Wait for Storedog to be ready
+#echo "Checking application status..."
+#wait_for 30 1 \
+#    "[ \$(kubectl get pods -n storedog --field-selector=status.phase=Running | grep -v NAME | wc -l) -eq 3 ]" \
+#    "All Ecommerce pods are ready!" \
+#    "Ecommerce pods not all running ($(kubectl get pods -n perfapp --field-selector=status.phase=Running | grep -v NAME | wc -l)/3)" \
+#    "Ecommerce"
+
+### Runtime variables for lab instructions 
+agent variable set LABVAR_DD_USER $LABUSER
+agent variable set LABVAR_DD_PASSWORD $NEWPASSWORD
+agent variable set LABVAR_DD_API_KEY $DD_API_KEY
+agent variable set LABVAR_DD_APP_KEY $DD_APP_KEY

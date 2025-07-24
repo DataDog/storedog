@@ -1,128 +1,125 @@
 services:
-  dd-agent:
-    image: gcr.io/datadoghq/agent:${DD_AGENT_VERSION:-latest}
-    pid: host
-    environment:
-      - DD_API_KEY=${DD_API_KEY}
-      - DD_ENV=${DD_ENV:-production}
-      - DD_LOGS_ENABLED=true
-      - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
-      - DD_CONTAINER_EXCLUDE=image:agent name:puppeteer
-      - DD_HOSTNAME=${DD_HOSTNAME:-production-host}
-      - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
-    networks:
-      - storedog-network
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - /proc/:/host/proc/:ro
-      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
-      - postgres_logs:/var/log/pg_log:ro
+  otelcol:
+      container_name: otelcol
+      hostname: otelcol
+      image: otel/opentelemetry-collector-contrib:0.130.0
+      deploy:
+        resources:
+          limits:
+            memory: 200M
+      networks:
+        - storedog-network
+      restart: unless-stopped
+      command:
+        - "--config=/etc/otelcol-config.yaml"
+      volumes:
+        - ./services/otel/otelcol-config.yaml:/etc/otelcol-config.yaml
+        - /var/run/docker.sock:/var/run/docker.sock
+      ports:
+        - 4317:4317
+        - 4318:4318
   frontend:
-    image: ghcr.io/datadog/storedog/frontend:${STOREDOG_IMAGE_VERSION:-latest}
+    container_name: frontend
+    hostname: frontend
+    build: 
+      context: ./services/frontend
+    #image: ghcr.io/datadog/storedog/frontend:${STOREDOG_IMAGE_VERSION:-latest}
     command: bash -c "wait-for-it backend:4000 -- ${FRONTEND_COMMAND:-npm run prod}"
     depends_on:
       - worker
-      - dd-agent
       - backend
+      - otelcol
     networks:
       - storedog-network
-    environment:
-      - DD_AGENT_HOST=dd-agent
-      - DD_SERVICE=store-frontend-api # used for Next.js API routes
-      - DD_VERSION=${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}
-      - DD_LOGS_INJECTION=true
-      - DD_RUNTIME_METRICS_ENABLED=true
-      - DD_PROFILING_ENABLED=true
-      - DD_PROFILING_TIMELINE_ENABLED=true
-      - DD_PROFILING_ALLOCATION_ENABLED=true
-      - NEXT_PUBLIC_DD_APPLICATION_ID=${NEXT_PUBLIC_DD_APPLICATION_ID:-DD_APPLICATION_ID-not-set}
-      - NEXT_PUBLIC_DD_CLIENT_TOKEN=${NEXT_PUBLIC_DD_CLIENT_TOKEN:-DD_CLIENT_TOKEN-not-set}
-      - NEXT_PUBLIC_DD_SITE=${NEXT_PUBLIC_DD_SITE:-datadoghq.com}
-      - NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend # used for client-side Next.js RUM configuration
-      - NEXT_PUBLIC_DD_ENV=${DD_ENV:-production}
-      - NEXT_PUBLIC_DD_VERSION=${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}
     labels:
       com.datadoghq.ad.logs: '[{"source": "nodejs", "auto_multi_line_detection":true }]'
   backend:
-    image: ghcr.io/datadog/storedog/backend:${STOREDOG_IMAGE_VERSION:-latest}
+    container_name: backend
+    hostname: backend
+    build: 
+      context: ./services/backend  
+    #image: ghcr.io/datadog/storedog/backend:${STOREDOG_IMAGE_VERSION:-latest}
     command: wait-for-it postgres:5432 -- bundle exec rails s -b 0.0.0.0 -p 4000 --pid /app/tmp/pids/server.pid
     depends_on:
       - 'postgres'
       - 'redis'
-      - 'dd-agent'
+      - 'otelcol'
     networks:
       - storedog-network
     volumes:
       - './services/backend:/app'
     environment:
-      - DD_AGENT_HOST=dd-agent
-      - DD_SERVICE=store-backend
-      - DD_VERSION=${DD_VERSION_BACKEND:-1.0.0}
-      - DD_LOGS_INJECTION=true
-      - DD_RUNTIME_METRICS_ENABLED=true
-      - DD_PROFILING_ENABLED=true
-      - DD_PROFILING_TIMELINE_ENABLED=true
-      - DD_PROFILING_ALLOCATION_ENABLED=true
+      # OpenTelemetry configuration
+      - OTEL_SERVICE_NAME=backend
+      - OTEL_SERVICE_VERSION=${DD_VERSION_BACKEND:-1.0.0}
+      - OTEL_TRACES_EXPORTER=console,otlp
+      - OTEL_METRICS_EXPORTER=console,otlp
+      - OTEL_LOGS_EXPORTER=console,otlp
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otelcol:4318
+      - OTEL_PROPAGATORS=tracecontext,baggage
+      - OTEL_LOG_LEVEL=debug
     labels:
       com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection":true }]'
   worker:
+    container_name: worker
+    hostname: worker
     image: ghcr.io/datadog/storedog/backend:${STOREDOG_IMAGE_VERSION:-latest}
     command: wait-for-it postgres:5432 -- bundle exec sidekiq -C config/sidekiq.yml
     depends_on:
       - 'postgres'
       - 'redis'
       - 'backend'
-      - 'dd-agent'
+      - 'otelcol'
     networks:
       - storedog-network
     environment:
-      - WORKER=true
-      - DD_AGENT_HOST=dd-agent
-      - DD_SERVICE=store-worker
-      - DD_VERSION=${DD_VERSION_BACKEND:-1.0.0}
-      - DD_LOGS_INJECTION=true
-      - DD_RUNTIME_METRICS_ENABLED=true
-      - DD_PROFILING_ENABLED=true
-      - DD_PROFILING_TIMELINE_ENABLED=true
-      - DD_PROFILING_ALLOCATION_ENABLED=true
+       # OpenTelemetry configuration
+      - OTEL_SERVICE_NAME=worker
+      - OTEL_SERVICE_VERSION=${DD_VERSION_BACKEND:-1.0.0}
+      - OTEL_TRACES_EXPORTER=console,otlp
+      - OTEL_METRICS_EXPORTER=console,otlp
+      - OTEL_LOGS_EXPORTER=console,otlp
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otelcol:4318
+      - OTEL_PROPAGATORS=tracecontext,baggage
+      - OTEL_LOG_LEVEL=debug
     labels:
       com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection":true }]'
   discounts:
-    image: ghcr.io/datadog/storedog/discounts:${STOREDOG_IMAGE_VERSION:-latest}
-    command: wait-for-it postgres:5432 -- ddtrace-run flask run --port=2814 --host=0.0.0.0
+    container_name: discounts
+    hostname: discounts
+    build: 
+      context: ./services/discounts
+    #command: wait-for-it postgres:5432 -- ddtrace-run flask run --port=2814 --host=0.0.0.0
     depends_on:
       - postgres
-      - dd-agent
-    environment:
-      - DD_AGENT_HOST=dd-agent
-      - DD_SERVICE=store-discounts
-      - DD_VERSION=${DD_VERSION_DISCOUNTS:-1.0.0}
-      - DD_LOGS_INJECTION=true
-      - DD_RUNTIME_METRICS_ENABLED=true
-      - DD_PROFILING_ENABLED=true
-      - DD_PROFILING_TIMELINE_ENABLED=true
-      - DD_PROFILING_ALLOCATION_ENABLED=true
+      - otelcol
     networks:
       - storedog-network
     labels:
       com.datadoghq.ad.logs: '[{"source": "python"}]'
   ads:
-    image: ghcr.io/datadog/storedog/ads-java:${STOREDOG_IMAGE_VERSION:-latest}
+    container_name: ads
+    hostname: ads
+    build: 
+      context: ./services/ads/java
+    #image: ghcr.io/datadog/storedog/ads-java:${STOREDOG_IMAGE_VERSION:-latest}
     depends_on:
       - postgres
-      - dd-agent
+      - otelcol
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_HOST=postgres
-      - DD_AGENT_HOST=dd-agent
-      - DD_SERVICE=store-ads
-      - DD_VERSION=${DD_VERSION_ADS:-1.0.0}
-      - DD_LOGS_INJECTION=true
-      - DD_PROFILING_ENABLED=true
-      - DD_PROFILING_TIMELINE_ENABLED=true
-      - DD_PROFILING_ALLOCATION_ENABLED=true
+      # OpenTelemetry configuration for Java agent
+      - OTEL_SERVICE_NAME=store-ads
+      - OTEL_SERVICE_VERSION=${DD_VERSION_ADS:-1.0.0}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otelcol:4318
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=store-ads,service.version=${DD_VERSION_ADS:-1.0.0},deployment.environment=production
+      - OTEL_TRACES_EXPORTER=console,otlp
+      - OTEL_METRICS_EXPORTER=console,otlp
+      - OTEL_LOGS_EXPORTER=console,otlp
+      - OTEL_LOG_LEVEL=debug
     networks:
       - storedog-network
     labels:
@@ -130,6 +127,8 @@ services:
       com.datadoghq.tags.service: 'store-ads'
       com.datadoghq.tags.version: '${DD_VERSION_ADS:-1.0.0}'
   service-proxy:
+    container_name: service-proxy
+    hostname: service-proxy
     image: ghcr.io/datadog/storedog/nginx:${STOREDOG_IMAGE_VERSION:-latest}
     restart: always
     ports:
@@ -138,7 +137,6 @@ services:
       - storedog-network
     depends_on:
       - frontend
-      - dd-agent
     environment:
       - DD_AGENT_HOST=dd-agent
       - DD_SERVICE=service-proxy
@@ -149,10 +147,10 @@ services:
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]'
   postgres:
+    container_name: postgres
+    hostname: postgres
     image: ghcr.io/datadog/storedog/postgres:${STOREDOG_IMAGE_VERSION:-latest}
     restart: always
-    depends_on:
-      - dd-agent
     volumes:
       - postgres_logs:/var/log/pg_log:rw
     networks:
@@ -168,9 +166,9 @@ services:
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":5432, "username":"datadog", "password":"datadog"}]'
       com.datadoghq.ad.logs: '[{"source": "postgresql", "auto_multi_line_detection":true, "path": "/var/log/pg_log/postgresql*.json", "type": "file"}]'
   redis:
+    container_name: redis
+    hostname: redis
     image: redis:6.2-alpine
-    depends_on:
-      - dd-agent
     volumes:
       - 'redis:/data'
     networks:
@@ -184,6 +182,8 @@ services:
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":6379}]'
       com.datadoghq.ad.logs: '[{"source": "redis", "service": "redis"}]'
   puppeteer:
+    container_name: puppeteer
+    hostname: puppeteer
     image: ghcr.io/datadog/storedog/puppeteer:${STOREDOG_IMAGE_VERSION:-latest}
     platform: linux/amd64
     environment:

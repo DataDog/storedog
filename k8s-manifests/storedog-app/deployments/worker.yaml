@@ -67,7 +67,7 @@ spec:
             - name: DD_ENV
               value: ${DD_ENV}
             - name: DD_SERVICE
-              value: store-worker
+              value: worker
             - name: DD_VERSION
               value: ${DD_VERSION_BACKEND}
             - name: DD_LOGS_INJECTION
@@ -80,6 +80,23 @@ spec:
               value: "true"
             - name: DD_PROFILING_TIMELINE_ENABLED
               value: "true"
+            # OpenTelemetry configuration
+            - name: OTEL_SERVICE_NAME
+              value: "worker"
+            - name: OTEL_SERVICE_VERSION
+              value: ${DD_VERSION_BACKEND}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otelcol:4317"
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: "grpc"
+            - name: OTEL_TRACES_EXPORTER
+              value: "console,otlp"
+            - name: OTEL_METRICS_EXPORTER
+              value: "console,otlp"
+            - name: OTEL_LOGS_EXPORTER
+              value: "console,otlp"
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "service.name=worker,service.version=${DD_VERSION_BACKEND},deployment.environment=${DD_ENV}"
           resources:
             requests:
               memory: "512Mi"
