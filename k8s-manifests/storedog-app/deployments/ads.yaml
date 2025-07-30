@@ -62,3 +62,27 @@ spec:
           volumeMounts:
             - name: apmsocketpath
               mountPath: /var/run/datadog
+          # Health probes optimized for Java Spring Boot application
+          startupProbe:
+            tcpSocket:
+              port: 3030
+            initialDelaySeconds: 15      # Allow for JVM + Spring Boot startup
+            periodSeconds: 3
+            timeoutSeconds: 2
+            failureThreshold: 5          # 15s + (5 × 3s) = 30s max startup
+            successThreshold: 1
+          readinessProbe:
+            tcpSocket:
+              port: 3030
+            initialDelaySeconds: 0       # Startup probe handles delay
+            periodSeconds: 2
+            timeoutSeconds: 1
+            failureThreshold: 2
+            successThreshold: 1
+          livenessProbe:
+            tcpSocket:
+              port: 3030
+            initialDelaySeconds: 0       # Startup probe handles delay
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3

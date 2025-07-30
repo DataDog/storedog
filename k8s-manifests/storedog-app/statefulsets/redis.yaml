@@ -50,6 +50,36 @@ spec:
           volumeMounts:
             - name: redis-data
               mountPath: /data
+          # Health probes optimized for fast Redis startup
+          startupProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 2       # Redis starts in ~1-2s, minimal buffer for PV
+            periodSeconds: 2
+            timeoutSeconds: 1
+            failureThreshold: 8          # 2s + (8 × 2s) = 18s max startup
+            successThreshold: 1
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 0       # Startup handles delay
+            periodSeconds: 1             # Ultra-fast - Redis is critical dependency
+            timeoutSeconds: 1
+            failureThreshold: 2          # Fail fast if issues
+            successThreshold: 1
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 0       # Startup handles delay
+            periodSeconds: 20            # Moderate frequency for liveness
+            timeoutSeconds: 3
+            failureThreshold: 3
   volumeClaimTemplates:
     - metadata:
         name: redis-data

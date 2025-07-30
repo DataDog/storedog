@@ -63,6 +63,45 @@ spec:
               mountPath: /var/lib/postgresql/data
             - name: postgres-logs
               mountPath: /var/log/pg_log
+          startupProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - exec pg_isready -U "$POSTGRES_USER" -d postgres -h 127.0.0.1 -p 5432
+            initialDelaySeconds: 5       # Fast PostgreSQL startup
+            periodSeconds: 3
+            timeoutSeconds: 3
+            failureThreshold: 8          # 5s + (8 × 3s) = 29s max startup
+            successThreshold: 1
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - exec pg_isready -U "$POSTGRES_USER" -d postgres -h 127.0.0.1 -p 5432
+            initialDelaySeconds: 0       # Startup probe handles delay
+            periodSeconds: 3             # Faster checks for critical dependency
+            timeoutSeconds: 2
+            failureThreshold: 2          # Quick failure detection for load balancer
+            successThreshold: 1
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - exec pg_isready -U "$POSTGRES_USER" -d postgres -h 127.0.0.1 -p 5432
+            initialDelaySeconds: 0       # Startup probe handles delay
+            periodSeconds: 20            # Slightly more frequent for fast DB
+            timeoutSeconds: 5            # Faster timeout for responsive DB
+            failureThreshold: 3          # Less tolerant since DB is fast
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
   volumeClaimTemplates:
     - metadata:
         name: postgres-data

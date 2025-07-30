@@ -34,6 +34,9 @@ spec:
         - name: wait-for-db
           image: busybox
           command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done;']
+        - name: wait-for-redis
+          image: busybox
+          command: ['sh', '-c', 'until nc -z redis 6379; do echo waiting for redis; sleep 2; done;']
       containers:
         - name: backend
           image: ${REGISTRY_URL}/backend:${SD_TAG}
@@ -106,3 +109,27 @@ spec:
           volumeMounts:
             - name: apmsocketpath
               mountPath: /var/run/datadog
+          # Health probes optimized for Rails application
+          startupProbe:
+            tcpSocket:
+              port: 4000
+            initialDelaySeconds: 3       # Very fast with init containers
+            periodSeconds: 2
+            timeoutSeconds: 2
+            failureThreshold: 5          # 3s + (5 × 2s) = 13s max startup
+            successThreshold: 1
+          readinessProbe:
+            tcpSocket:
+              port: 4000
+            initialDelaySeconds: 0       # Startup probe handles delay
+            periodSeconds: 2             # Fast for API service
+            timeoutSeconds: 1
+            failureThreshold: 2
+            successThreshold: 1
+          livenessProbe:
+            tcpSocket:
+              port: 4000
+            initialDelaySeconds: 0       # Startup probe handles delay
+            periodSeconds: 10            # Frequent for critical service
+            timeoutSeconds: 5
+            failureThreshold: 3

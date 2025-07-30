@@ -90,3 +90,36 @@ spec:
           volumeMounts:
             - name: apmsocketpath
               mountPath: /var/run/datadog
+          # Health probes optimized for background worker
+          startupProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - "ps aux | grep '[s]idekiq' | grep -v grep"
+            initialDelaySeconds: 8       # Fast worker startup with deps ready
+            periodSeconds: 3             # Quick checks for background process
+            timeoutSeconds: 3
+            failureThreshold: 6          # 8s + (6 × 3s) = 26s max startup
+            successThreshold: 1
+          readinessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - "ps aux | grep '[s]idekiq' | grep -v grep"
+            initialDelaySeconds: 0       # Startup probe handles delay
+            periodSeconds: 5             # More frequent monitoring
+            timeoutSeconds: 3
+            failureThreshold: 2          # Quick failure detection
+            successThreshold: 1
+          livenessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - "ps aux | grep '[s]idekiq' | grep -v grep"
+            initialDelaySeconds: 0       # Startup probe handles delay
+            periodSeconds: 20            # More frequent for critical background worker
+            timeoutSeconds: 8
+            failureThreshold: 3          # Less tolerant for faster recovery

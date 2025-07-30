@@ -84,3 +84,27 @@ spec:
           volumeMounts:
             - name: apmsocketpath
               mountPath: /var/run/datadog
+          # Health probes optimized for Python Flask application
+          startupProbe:
+            tcpSocket:
+              port: 2814
+            initialDelaySeconds: 2       # Very fast Flask startup with DB ready
+            periodSeconds: 1
+            timeoutSeconds: 1
+            failureThreshold: 6          # 2s + (6 × 1s) = 8s max startup
+            successThreshold: 1
+          readinessProbe:
+            tcpSocket:
+              port: 2814
+            initialDelaySeconds: 0       # Startup probe handles delay
+            periodSeconds: 1             # Ultra-fast for microservice
+            timeoutSeconds: 1
+            failureThreshold: 2
+            successThreshold: 1
+          livenessProbe:
+            tcpSocket:
+              port: 2814
+            initialDelaySeconds: 0       # Startup probe handles delay
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3

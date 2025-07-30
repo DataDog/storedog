@@ -8,6 +8,9 @@ spec:
     - port: 80
       targetPort: 80
       name: http
+    - port: 81
+      targetPort: 81
+      name: status
   selector:
     app: service-proxy
 ---
@@ -48,6 +51,9 @@ spec:
           image: ${REGISTRY_URL}/nginx:${SD_TAG}
           ports:
             - containerPort: 80
+              name: http
+            - containerPort: 81
+              name: status
           env:
             - name: NGINX_RESOLVER
               value: "kube-dns.kube-system.svc.cluster.local"
@@ -69,3 +75,33 @@ spec:
           volumeMounts:
             - name: apmsocketpath
               mountPath: /var/run/datadog
+          # Health probes optimized for Nginx reverse proxy
+          startupProbe:
+            httpGet:
+              path: /nginx_status
+              port: status
+              scheme: HTTP
+            initialDelaySeconds: 2       # Nginx starts very fast
+            periodSeconds: 2
+            timeoutSeconds: 3            # Slightly more tolerant
+            failureThreshold: 5          # 2s + (5 × 2s) = 12s max startup
+            successThreshold: 1
+          readinessProbe:
+            httpGet:
+              path: /nginx_status
+              port: status
+              scheme: HTTP
+            initialDelaySeconds: 0       # Startup probe handles delay
+            periodSeconds: 3             # Very frequent for proxy service
+            timeoutSeconds: 2            # Fast for nginx status
+            failureThreshold: 2          # Quick failure detection for proxy
+            successThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: /nginx_status
+              port: status
+              scheme: HTTP
+            initialDelaySeconds: 0       # Startup probe handles delay
+            periodSeconds: 10            # Conservative for production
+            timeoutSeconds: 5            # Allow for potential upstream delays
+            failureThreshold: 3          # Standard tolerance
