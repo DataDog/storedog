@@ -48,6 +48,10 @@ ENV PATH="${BUNDLE_BIN}:${PATH}"
 
 COPY . .
 
+# Upgrade RubyGems and Bundler
+RUN gem update --system 3.5.23
+RUN gem install bundler -v 2.5.23
+
 RUN bundle install || exit 1
 RUN npm install
 RUN npm run build
