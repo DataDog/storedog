@@ -1,6 +1,4 @@
-from ddtrace import patch
 import json_log_formatter
-from ddtrace import tracer
 import traceback
 import logging
 from models import Discount, DiscountType, db
@@ -18,8 +16,6 @@ import os
 import re
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-patch(logging=True)
 
 formatter = json_log_formatter.VerboseJSONFormatter()
 json_handler = logging.StreamHandler(sys.stdout)

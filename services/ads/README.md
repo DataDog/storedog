@@ -8,6 +8,80 @@ This service is responsible for managing the banner advertisements served to the
 
 The Java service is the default used with Storedog. It uses the Spring framework. It uses the PostgreSQL JDBC driver to connect to a PostgreSQL database. It uses an H2 in-memory database when running build tests.
 
+### OpenTelemetry Configuration
+
+The Java service is instrumented with OpenTelemetry auto-instrumentation for comprehensive observability:
+
+#### Auto-Instrumentation
+
+The service uses the OpenTelemetry Java agent for automatic instrumentation, which provides:
+- **Traces**: Automatic tracing of HTTP requests, database queries, and method calls
+- **Metrics**: JVM metrics, HTTP server metrics, and custom application metrics  
+- **Logs**: Structured logging with trace correlation
+
+#### Configuration
+
+OpenTelemetry is configured through environment variables in the docker-compose files:
+
+```yaml
+environment:
+  - OTEL_SERVICE_NAME=store-ads
+  - OTEL_SERVICE_VERSION=1.0.0
+  - OTEL_EXPORTER_OTLP_ENDPOINT=http://otelcol:4317
+  - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+  - OTEL_RESOURCE_ATTRIBUTES=service.name=store-ads,service.version=1.0.0,deployment.environment=production
+  - OTEL_TRACES_EXPORTER=otlp
+  - OTEL_METRICS_EXPORTER=otlp
+  - OTEL_LOGS_EXPORTER=otlp
+  - OTEL_LOG_LEVEL=info
+```
+
+#### Log Correlation
+
+Logs include trace and span IDs for correlation with distributed traces:
+- Console logs: `[trace_id,span_id]` format
+- JSON logs: Structured with trace context in MDC
+
+#### Testing OpenTelemetry
+
+1. **Start the application**:
+   ```bash
+   docker-compose up -d
+   ```
+
+2. **Generate some traffic**:
+   ```bash
+   # Get advertisements
+   curl http://localhost/services/ads/ads
+   
+   # Get banner image
+   curl http://localhost/services/ads/banners/1
+   
+   # Trigger error (optional)
+   curl -H "x-throw-error: true" -H "x-error-rate: 0.5" http://localhost/services/ads/ads
+   ```
+
+3. **Check OpenTelemetry Collector logs**:
+   ```bash
+   docker-compose logs otelcol
+   ```
+
+4. **Verify telemetry data**:
+   Look for traces, metrics, and logs in the collector output showing:
+   - HTTP server spans with status codes and durations
+   - Database query spans to PostgreSQL
+   - JVM metrics (memory, CPU, GC)
+   - Structured log entries with trace correlation
+
+#### Instrumented Components
+
+The auto-instrumentation automatically captures:
+- **Spring Web**: HTTP requests/responses
+- **Spring Data JPA**: Database operations
+- **PostgreSQL JDBC**: Database queries
+- **Logback**: Log entries with trace context
+- **JVM**: Runtime metrics
+
 ## Python service
 
 The Python service is a Flask application that uses SQLAlchemy to connect to a PostgreSQL database. The service is packaged as a Docker image and typically used in a Docker Compose file (see the root of this repo).
@@ -168,3 +242,4 @@ ads:
       - ./services/ads/python:/app
     labels:
       com.datadoghq.ad.logs: '[{"source": "python"}]'
+```

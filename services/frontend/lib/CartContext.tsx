@@ -15,7 +15,6 @@ import {
   updateQuantity,
   applyCouponCode,
 } from '@lib/api/cart'
-import { datadogRum } from '@datadog/browser-rum'
 import userData from '@config/user_data.json'
 import type { Cart } from '@customTypes/cart'
 
@@ -25,10 +24,10 @@ type CartProviderProps = {
 
 type CartContextType = {
   cart: Cart | null
-  cartToken: string
+  cartToken: string | null
   cartError: any
   cartUser: any
-  setCart: (cart: Cart | {}) => void
+  setCart: (cart: Cart | null) => void
   cartInit: () => Promise<void>
   cartEmpty: () => Promise<void>
   cartDelete: () => Promise<void>
@@ -69,20 +68,20 @@ export const CartProvider = ({ children }: CartProviderProps) => {
 
   useEffect(() => {
     // if user exists in local storage, set user or create a new user
-    if (localStorage.getItem('rum_user')) {
-      const user = JSON.parse(localStorage.getItem('rum_user') || '')
-      datadogRum.setUser(user)
+    if (localStorage.getItem('user_profile')) {
+      const user = JSON.parse(localStorage.getItem('user_profile') || '')
+      console.log('Setting user from localStorage:', user)
       setCartUser(user)
     } else {
       const user = userData[Math.floor(Math.random() * userData.length)]
-      datadogRum.setUser(user)
-      localStorage.setItem('rum_user', JSON.stringify(user))
+      console.log('Creating new user:', user)
+      localStorage.setItem('user_profile', JSON.stringify(user))
       setCartUser(user)
     }
   }, [])
 
   // init cart
-  const cartInit = async () => {
+  const cartInit = async (): Promise<void> => {
     const cartToken = localStorage.getItem('cartToken')
 
     try {
@@ -114,7 +113,6 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         setCart(cart)
         setCartToken(cart.customerId)
         setCartError(null)
-        return cartToken
       }
     } catch (error) {
       console.log(error)
@@ -171,9 +169,10 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         setCartError(null)
         return cart
       } else {
-        const cartToken = await cartInit()
+        await cartInit()
+        const currentToken = localStorage.getItem('cartToken')
         const cart = await addToCart({
-          order_token: cartToken || '',
+          order_token: currentToken || '',
           variant_id: variantId,
           quantity,
         })

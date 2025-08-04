@@ -110,6 +110,23 @@ spec:
               value: "true"
             - name: DD_PROFILING_TIMELINE_ENABLED
               value: "true"
+            # OpenTelemetry configuration (override Dockerfile settings)
+            - name: OTEL_SERVICE_NAME
+              value: ${NEXT_PUBLIC_DD_SERVICE_FRONTEND}
+            - name: OTEL_SERVICE_VERSION
+              value: ${NEXT_PUBLIC_DD_VERSION_FRONTEND}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otelcol:4318"
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: "http/protobuf"
+            - name: OTEL_TRACES_EXPORTER
+              value: "console,otlp"
+            - name: OTEL_METRICS_EXPORTER
+              value: "console,otlp"
+            - name: OTEL_LOGS_EXPORTER
+              value: "console,otlp"
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "service.name=${NEXT_PUBLIC_DD_SERVICE_FRONTEND},service.version=${NEXT_PUBLIC_DD_VERSION_FRONTEND},deployment.environment=${DD_ENV}"
           resources:
             requests:
               memory: "256Mi"
