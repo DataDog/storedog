@@ -98,11 +98,11 @@ spec:
               value: "true"
           resources:
             requests:
-              memory: "512Mi"
-              cpu: "250m"
+              cpu: "100m"
+              memory: "384Mi"
             limits:
-              memory: "1Gi"
-              cpu: "500m"
+              cpu: "400m"
+              memory: 784Mi
           volumeMounts:
             - name: apmsocketpath
               mountPath: /var/run/datadog

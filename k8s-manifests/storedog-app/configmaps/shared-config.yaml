@@ -3,18 +3,59 @@ kind: ConfigMap
 metadata:
   name: storedog-config
 data:
+  # Database Configuration
   POSTGRES_USER: postgres
   DB_HOST: postgres
   DB_PORT: "5432"
-  REDIS_URL: redis://redis:6379/0
-  RAILS_ENV: production
   DB_POOL: "25"
   MAX_THREADS: "5"
-  NEXT_PUBLIC_ADS_ROUTE: /services/ads
-  NEXT_PUBLIC_DISCOUNTS_ROUTE: /services/discounts
-  NEXT_PUBLIC_DBM_ROUTE: /services/dbm
-  NEXT_PUBLIC_FRONTEND_API_ROUTE: http://service-proxy:80
-  NEXT_PUBLIC_SPREE_API_HOST: http://service-proxy/services/backend
-  NEXT_PUBLIC_SPREE_CLIENT_HOST: /services/backend
-  NEXT_PUBLIC_SPREE_IMAGE_HOST: /services/backend
-  NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN: service-proxy
+  
+  # Redis Configuration
+  REDIS_URL: redis://redis:6379/0
+  
+  # Rails Environment
+  RAILS_ENV: production # production mode with debug logging enabled
+  
+  # ======== REDIS CACHING CONFIGURATION ========
+  
+  # 1. Rails Cache Store - Use Redis for all Rails caching
+  RAILS_CACHE_STORE: "redis_cache_store"
+  CACHE_REDIS_URL: "redis://redis:6379/1"  # Use database 1 for caching
+  
+  # 2. Session Store - Store user sessions in Redis
+  SESSION_STORE: "redis_store"
+  SESSION_REDIS_URL: "redis://redis:6379/2"  # Use database 2 for sessions
+  SESSION_EXPIRE_AFTER: "7200"  # 2 hours
+  
+  # 3. Fragment Caching - Enable aggressive fragment caching
+  RAILS_CACHE_FRAGMENT: "true"
+  CACHE_DEFAULT_EXPIRES_IN: "3600"  # 1 hour default
+  CACHE_PRODUCT_EXPIRES_IN: "1800"  # 30 minutes for products
+  CACHE_CATEGORY_EXPIRES_IN: "7200"  # 2 hours for categories
+  
+  # 4. Query Result Caching
+  RAILS_CACHE_QUERIES: "true"
+  CACHE_QUERY_EXPIRES_IN: "900"  # 15 minutes for query results
+  
+  # 5. Action Caching
+  RAILS_CACHE_ACTIONS: "true"
+  CACHE_ACTION_EXPIRES_IN: "1800"  # 30 minutes for action caching
+  
+  # 6. Page Caching (for static-like content)
+  RAILS_CACHE_PAGES: "true"
+  CACHE_PAGE_EXPIRES_IN: "3600"  # 1 hour for page caching
+  
+  # 7. HTTP Caching Headers
+  RAILS_STATIC_CACHE_CONTROL: "public, max-age=31536000"  # 1 year for assets
+  RAILS_CACHE_CONTROL: "public, max-age=3600"  # 1 hour for dynamic content
+  
+  # 8. Redis Cache Optimization
+  CACHE_REDIS_POOL_SIZE: "25"
+  CACHE_REDIS_POOL_TIMEOUT: "5"
+  CACHE_REDIS_RECONNECT_ATTEMPTS: "3"
+  CACHE_REDIS_RECONNECT_DELAY: "1.5"
+  
+  # 9. Performance Caching Settings
+  RAILS_CACHE_VERSIONING: "true"  # Enable cache versioning
+  RAILS_CACHE_COMPRESSION: "true"  # Compress cached data
+  CACHE_COMPRESS_THRESHOLD: "1024"  # Compress if > 1KB

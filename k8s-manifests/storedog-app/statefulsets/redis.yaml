@@ -44,12 +44,31 @@ spec:
       containers:
         - name: redis
           image: redis:6.2-alpine
+          command: ["redis-server"]
+          args: ["/etc/redis/redis.conf"]
           ports:
             - containerPort: 6379
               name: redis
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "300m"
+              memory: "256Mi"
           volumeMounts:
             - name: redis-data
               mountPath: /data
+            - name: redis-config
+              mountPath: /etc/redis
+              readOnly: true
+      volumes:
+        - name: redis-config
+          configMap:
+            name: redis-config
+            items:
+              - key: redis.conf
+                path: redis.conf
   volumeClaimTemplates:
     - metadata:
         name: redis-data

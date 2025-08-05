@@ -16,7 +16,7 @@ metadata:
   name: postgres
   labels:
     tags.datadoghq.com/env: ${DD_ENV}
-    tags.datadoghq.com/service: store-db
+    tags.datadoghq.com/service: db
     tags.datadoghq.com/version: "15.0"
 spec:
   serviceName: postgres
@@ -29,7 +29,7 @@ spec:
       labels:
         app: postgres
         tags.datadoghq.com/env: ${DD_ENV}
-        tags.datadoghq.com/service: store-db
+        tags.datadoghq.com/service: db
         tags.datadoghq.com/version: "15.0"
       annotations:
         ad.datadoghq.com/postgres.logs: '[{"source": "postgresql", "auto_multi_line_detection":true}]'
@@ -58,6 +58,13 @@ spec:
                 secretKeyRef:
                   name: storedog-secrets
                   key: POSTGRES_PASSWORD
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "300m"
+              memory: "256Mi"
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
