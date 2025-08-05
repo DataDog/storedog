@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+data:
+  redis.conf: |
+    # Network Configuration
+    bind 0.0.0.0
+    port 6379
+    tcp-backlog 1024
+    timeout 300
+    tcp-keepalive 300
+    
+    # Database Configuration - Support multiple databases for different cache types
+    databases 16
+    
+    # Memory Management - Optimized for caching workloads
+    maxmemory 400mb
+    maxmemory-policy allkeys-lru
+    maxmemory-samples 10
+    
+    # Connection Settings - Increased for heavy caching
+    maxclients 2000
+    
+    # Persistence Configuration - Balanced for cache data
+    save 900 1
+    save 300 10
+    save 60 10000
+    
+    # AOF Configuration - Optimized for cache performance
+    appendonly yes
+    appendfilename "appendonly.aof"
+    appendfsync everysec
+    no-appendfsync-on-rewrite yes
+    auto-aof-rewrite-percentage 100
+    auto-aof-rewrite-min-size 32mb
+    aof-rewrite-incremental-fsync yes
+    
+    # Performance Tuning for Caching Workloads
+    # Optimized for storing larger cache objects
+    hash-max-ziplist-entries 1024
+    hash-max-ziplist-value 1024
+    list-max-ziplist-size -1
+    list-compress-depth 1
+    set-max-intset-entries 1024
+    zset-max-ziplist-entries 256
+    zset-max-ziplist-value 128
+    
+    # HyperLogLog sparse representation
+    hll-sparse-max-bytes 3000
+    
+    # Stream configuration for real-time features
+    stream-node-max-bytes 4096
+    stream-node-max-entries 100
+    
+    # Lazy Freeing - Important for cache eviction performance
+    lazyfree-lazy-eviction yes
+    lazyfree-lazy-expire yes
+    lazyfree-lazy-server-del yes
+    replica-lazy-flush yes
+    
+    # Client Output Buffer Limits - Increased for cache responses
+    client-output-buffer-limit normal 32mb 16mb 60
+    client-output-buffer-limit replica 256mb 64mb 60
+    client-output-buffer-limit pubsub 32mb 8mb 60
+    
+    # Cache-Specific Optimizations
+    # Faster key expiration for cache cleanup
+    hz 50
+    
+    # Memory usage optimization
+    activerehashing yes
+    
+    # Replication and clustering (for future scaling)
+    replica-serve-stale-data yes
+    replica-read-only yes
+    
+    # Security - Basic protection
+    protected-mode no
+    
+    # Threading - Utilize available CPU
+    io-threads 2
+    io-threads-do-reads yes
+    
+    # Logging - Detailed for cache monitoring
+    loglevel notice
+    logfile ""
+    
+    # Slow log for cache performance monitoring
+    slowlog-log-slower-than 10000
+    slowlog-max-len 1000
+    
+    # Latency monitoring
+    latency-monitor-threshold 100 

@@ -61,11 +61,11 @@ spec:
               value: 'unix:///var/run/datadog/apm.socket'
           resources:
             requests:
-              memory: "128Mi"
-              cpu: "100m"
+              cpu: "50m"
+              memory: "64Mi"
             limits:
-              memory: "256Mi"
-              cpu: "200m"
+              cpu: "100m"
+              memory: "128Mi"
           volumeMounts:
             - name: apmsocketpath
               mountPath: /var/run/datadog
