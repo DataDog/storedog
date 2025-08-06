@@ -64,68 +64,29 @@ export default function CoolHatsPage({ hatProducts }: CoolHatsPageProps) {
           </Text>
         </div>
 
-        {/* Success Message */}
-        <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-green-800">
-                🎉 Ad Click Success!
-              </h3>
-              <div className="mt-2 text-sm text-green-700">
-                <p>
-                  Great news! The ad click functionality is working perfectly. 
-                  You successfully clicked on the "Cool Hats" advertisement and were redirected here.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+
 
         {/* Hat Products Section */}
-        {hatProducts.length > 0 ? (
-          <>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Featured Hat Products</h2>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {hatProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  variant="simple"
-                  imgProps={{
-                    width: 300,
-                    height: 300,
-                  }}
-                />
-              ))}
-            </div>
-          </>
-        ) : (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">🎩</div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">No Hat Products Found</h2>
-            <Text className="text-gray-600">
-              We're still building our hat collection! Check back soon for awesome headwear.
-            </Text>
-          </div>
-        )}
-
-        {/* Call to Action */}
-        <div className="mt-16 text-center">
-          <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-8 text-white">
-            <h2 className="text-3xl font-bold mb-4">Love Hats? We've Got You Covered!</h2>
-            <Text className="text-xl mb-6 opacity-90">
-              Join our hat enthusiasts community and be the first to know about new arrivals.
-            </Text>
-            <button className="bg-white text-blue-600 font-bold py-3 px-8 rounded-lg hover:bg-gray-100 transition-colors">
-              Explore All Products
-            </button>
-          </div>
+        <div className="text-center py-12">
+          <div className="text-6xl mb-4">🧢</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">No Hat Products Found</h2>
+          <Text className="text-gray-600">
+            We're still building our hat collection! Check back soon for awesome headwear.
+          </Text>
         </div>
+
+                       {/* Call to Action */}
+               <div className="mt-16 text-center">
+                 <div className="bg-purple-900 rounded-lg p-8">
+                   <h2 className="text-3xl font-bold mb-4 text-white">Love Fashion? We've Got You Covered!</h2>
+                   <Text className="text-xl mb-6 text-white opacity-90">
+                     Join our hat enthusiasts community and be the first to know about new arrivals.
+                   </Text>
+                   <a href="/" className="inline-block bg-white text-purple-800 font-bold py-3 px-8 rounded-lg hover:bg-gray-100 transition-colors">
+                     Explore All Products
+                   </a>
+                 </div>
+               </div>
       </Container>
     </>
   )

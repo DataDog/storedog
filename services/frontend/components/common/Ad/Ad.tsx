@@ -31,14 +31,23 @@ function Ad() {
 
     try {
       console.log('ads path', adsPath)
-      const res = await fetch(`${adsPath}/ads`, { headers })
+      // Add cache-busting parameter to ensure fresh data
+      const timestamp = Date.now()
+      const res = await fetch(`${adsPath}/ads?t=${timestamp}`, { headers })
       if (!res.ok) {
         throw new Error('Error fetching ad')
       }
       const data: Advertisement[] = await res.json()
-      console.log(data)
-      const index = getRandomArbitrary(0, data.length)
-      setData(data[index])
+      console.log('Available ads:', data)
+      // Sort ads by ID to ensure consistent ordering
+      const sortedAds = data.sort((a, b) => a.id - b.id)
+      // Use a deterministic selection based on time to show different ads
+      // This ensures the visual ad matches the expected click behavior
+      const now = new Date()
+      const adIndex = Math.floor(now.getSeconds() / 5) % sortedAds.length // Change ad every 5 seconds
+      const selectedAd = sortedAds[adIndex]
+      console.log('Selected ad:', selectedAd)
+      setData(selectedAd)
       setLoading(false)
     } catch (e) {
       console.error(e)
@@ -48,6 +57,13 @@ function Ad() {
 
   const handleAdClick = useCallback(() => {
     if (data?.id) {
+      console.log('Ad clicked!', {
+        adId: data.id,
+        adName: data.name,
+        clickUrl: data.clickUrl,
+        imagePath: data.path,
+        redirectUrl: `${adsPath}/click/${data.id}`
+      })
       // Direct browser navigation to the click endpoint
       // The Java service will handle the redirect to the appropriate URL
       window.location.href = `${adsPath}/click/${data.id}`
