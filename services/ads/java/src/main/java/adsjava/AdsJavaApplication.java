@@ -49,12 +49,33 @@ public class AdsJavaApplication {
         value = "/banners/{id}",
         produces = MediaType.IMAGE_JPEG_VALUE
     )
-    public @ResponseBody byte[] getImageWithMediaType() throws IOException {
-        logger.info("/banners/{id} called");
-        int randomNum = ThreadLocalRandom.current().nextInt(1, 3 + 1);
-        String imagePath = "/static/ads/ad" + randomNum + ".jpg";
-        InputStream in = getClass()
-            .getResourceAsStream(imagePath);
+    public @ResponseBody byte[] getImageWithMediaType(@PathVariable String id) throws IOException {
+        logger.info("/banners/{} called", id);
+        
+        // Map the image path to the correct static file
+        String imagePath;
+        switch (id) {
+            case "1.jpg":
+                imagePath = "/static/ads/ad1.jpg";
+                break;
+            case "2.jpg":
+                imagePath = "/static/ads/ad2.jpg";
+                break;
+            case "3.jpg":
+                imagePath = "/static/ads/ad3.jpg";
+                break;
+            default:
+                // Fallback to random image if unknown
+                int randomNum = ThreadLocalRandom.current().nextInt(1, 3 + 1);
+                imagePath = "/static/ads/ad" + randomNum + ".jpg";
+                logger.warn("Unknown image id: {}, using random image", id);
+        }
+        
+        InputStream in = getClass().getResourceAsStream(imagePath);
+        if (in == null) {
+            logger.error("Image not found: {}", imagePath);
+            throw new IOException("Image not found: " + imagePath);
+        }
         return IOUtils.toByteArray(in);
     }
 
@@ -132,9 +153,11 @@ public class AdsJavaApplication {
         return args -> {
             if (repository.count() == 0) {
                 // Create ads with meaningful click URLs that point to relevant frontend pages
-                repository.save(new Advertisement("Discount Clothing", "1.jpg", "/search?q=clothing"));
+                // Based on actual image content, the files are mislabeled
+                // Image 1.jpg shows Discount Clothing content, 2.jpg shows Cool Hats content
+                repository.save(new Advertisement("Discount Clothing", "1.jpg", "/discount-clothing"));
                 repository.save(new Advertisement("Cool Hats", "2.jpg", "/cool-hats"));
-                repository.save(new Advertisement("Nice Bags", "3.jpg", "/search?q=bags"));
+                repository.save(new Advertisement("Nice Bags", "3.jpg", "/nice-bags"));
                 logger.info("Initialized database with 3 advertisements with click URLs");
             } else {
                 // Always update existing ads to ensure they have the correct click URLs
@@ -145,24 +168,27 @@ public class AdsJavaApplication {
                     String oldClickUrl = ad.getClickUrl();
                     switch (ad.getName()) {
                         case "Discount Clothing":
-                            if (!"/search?q=clothing".equals(oldClickUrl)) {
-                                ad.setClickUrl("/search?q=clothing");
+                            if (!"/discount-clothing".equals(oldClickUrl) || !"1.jpg".equals(ad.getPath())) {
+                                ad.setClickUrl("/discount-clothing");
+                                ad.setPath("1.jpg");
                                 needsUpdate = true;
-                                logger.info("Updated '{}' clickUrl from '{}' to '/search?q=clothing'", ad.getName(), oldClickUrl);
+                                logger.info("Updated '{}' clickUrl from '{}' to '/discount-clothing' and path to '1.jpg'", ad.getName(), oldClickUrl);
                             }
                             break;
                         case "Cool Hats":
-                            if (!"/cool-hats".equals(oldClickUrl)) {
+                            if (!"/cool-hats".equals(oldClickUrl) || !"2.jpg".equals(ad.getPath())) {
                                 ad.setClickUrl("/cool-hats");
+                                ad.setPath("2.jpg");
                                 needsUpdate = true;
-                                logger.info("Updated '{}' clickUrl from '{}' to '/cool-hats'", ad.getName(), oldClickUrl);
+                                logger.info("Updated '{}' clickUrl from '{}' to '/cool-hats' and path to '2.jpg'", ad.getName(), oldClickUrl);
                             }
                             break;
                         case "Nice Bags":
-                            if (!"/search?q=bags".equals(oldClickUrl)) {
-                                ad.setClickUrl("/search?q=bags");
+                            if (!"/nice-bags".equals(oldClickUrl) || !"3.jpg".equals(ad.getPath())) {
+                                ad.setClickUrl("/nice-bags");
+                                ad.setPath("3.jpg");
                                 needsUpdate = true;
-                                logger.info("Updated '{}' clickUrl from '{}' to '/search?q=bags'", ad.getName(), oldClickUrl);
+                                logger.info("Updated '{}' clickUrl from '{}' to '/nice-bags' and path to '3.jpg'", ad.getName(), oldClickUrl);
                             }
                             break;
                         default:
