@@ -4,15 +4,12 @@ services:
     pid: host
     environment:
       - DD_API_KEY=${DD_API_KEY}
-      - DD_APM_NON_LOCAL_TRAFFIC=true
+      - DD_ENV=${DD_ENV:-development}
       - DD_LOGS_ENABLED=true
       - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
       - DD_CONTAINER_EXCLUDE=image:agent name:puppeteer
-      - DD_HOSTNAME=${DD_HOSTNAME-storedog-host}
+      - DD_HOSTNAME=${DD_HOSTNAME}
       - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
-    ports:
-      - '8126:8126/tcp'
-      - '8125:8125/udp'
     networks:
       - storedog-network
     volumes:
@@ -22,8 +19,7 @@ services:
       - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
       - postgres_logs:/var/log/pg_log:ro
   frontend:
-    build:
-      context: ./services/frontend
+    image: ghcr.io/datadog/storedog/frontend:1.4.0
     command: bash -c "npm run build && wait-for-it backend:4000 -- npm run start"
     depends_on:
       - worker
@@ -45,46 +41,33 @@ services:
       - NEXT_PUBLIC_DD_VERSION_FRONTEND=${FRONTEND_VERSION-1.0.0}
       - DD_TRACE_REMOVE_INTEGRATION_SERVICE_NAMES_ENABLED=true
     env_file:
-      - .env
+      - ./services/frontend/.env
     labels:
       com.datadoghq.ad.logs: '[{"source": "nodejs", "service": "store-frontend", "auto_multi_line_detection":true }]'
-      com.datadoghq.tags.env: '${DD_ENV}'
-      com.datadoghq.tags.service: '${DD_SERVICE-store-frontend}'
-      com.datadoghq.tags.version: '${FRONTEND_VERSION-1.0.0}'
   backend:
-    build:
-      context: ./services/backend
+    image: ghcr.io/datadog/storedog/backend:1.4.0
     command: wait-for-it postgres:5432 -- bundle exec rails s -b 0.0.0.0 -p 4000 --pid /app/tmp/pids/server.pid
     depends_on:
       - 'postgres'
       - 'redis'
       - 'dd-agent'
-    ports:
-      - '4000:4000'
     networks:
       - storedog-network
     volumes:
       - './services/backend:/app'
-      - .env:/app/.env
     environment:
-      - REDIS_URL=redis://redis:6379/0
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - POSTGRES_USER
-      - POSTGRES_PASSWORD
-      - DISABLE_SPRING=1
+      - DB_HOST=postgres 
       - DD_AGENT_HOST=dd-agent
       - DD_VERSION=${DD_VERSION_BACKEND-1.0.0}
       - DD_SERVICE=store-backend
-      - DD_ENV=${DD_ENV-dev}
+      - DD_ENV=${DD_ENV}
       - DD_LOGS_INJECTION=true
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
       - DD_PROFILING_ALLOCATION_ENABLED=true
-      - RAILS_ENV=${RAILS_ENV-production}
     labels:
       com.datadoghq.ad.logs: '[{"source": "ruby", "service": "store-backend",  "auto_multi_line_detection":true }]'
-      com.datadoghq.tags.env: '${DD_ENV-dev}'
+      com.datadoghq.tags.env: '${DD_ENV}'
       com.datadoghq.tags.service: 'store-backend'
       com.datadoghq.tags.version: '${DD_VERSION_BACKEND-1.0.0}'
   worker:
@@ -97,32 +80,23 @@ services:
       - 'dd-agent'
     networks:
       - storedog-network
-    volumes:
-      - ./services/backend:/app
-      - .env:/app/.env
-      - ./services/worker/config/initializers/datadog-tracer.rb:/app/config/initializers/datadog-tracer.rb
     environment:
-      - REDIS_URL=redis://redis:6379/0
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - POSTGRES_USER
-      - POSTGRES_PASSWORD
-      - DISABLE_SPRING=1
+      - WORKER=true
       - DD_AGENT_HOST=dd-agent
-      - DD_ENV=${DD_ENV-dev}
       - DD_SERVICE=store-worker
-      - DD_VERSION=${DD_VERSION_BACKEND-1.0.0}
+      - DD_VERSION=${DD_VERSION_BACKEND:-1.0.0}
       - DD_LOGS_INJECTION=true
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
+      - DD_PROFILING_TIMELINE_ENABLED=true
+      - DD_PROFILING_ALLOCATION_ENABLED=true
     labels:
       com.datadoghq.ad.logs: '[{"source": "ruby", "service": "storedog-worker",  "auto_multi_line_detection":true }]'
       com.datadoghq.tags.env: '${DD_ENV-dev}'
       com.datadoghq.tags.service: 'store-worker'
       com.datadoghq.tags.version: '${DD_VERSION_BACKEND-1.0.0}'
   discounts:
-    build:
-      context: ./services/discounts
+    image: ghcr.io/datadog/storedog/discounts:1.4.0
     command: wait-for-it postgres:5432 -- ddtrace-run flask run --port=2814 --host=0.0.0.0
     depends_on:
       - postgres
@@ -149,17 +123,19 @@ services:
       com.datadoghq.tags.service: 'store-discounts'
       com.datadoghq.tags.version: '${DD_VERSION_DISCOUNTS-1.0.0}'
   ads:
-    build:
-      context: ./services/ads/java
+    image: ghcr.io/datadog/storedog/ads:1.4.0
     depends_on:
+      - postgres
       - dd-agent
     environment:
       - DD_AGENT_HOST=dd-agent
-      - DD_LOGS_INJECTION=true
-      - DD_PROFILING_ENABLED=true
       - DD_SERVICE=store-ads
       - DD_VERSION=${DD_VERSION_ADS-1.0.0}
-      - DD_ENV=${DD_ENV-dev}
+      - DD_ENV=${DD_ENV}
+      - DD_LOGS_INJECTION=true
+      - DD_PROFILING_ENABLED=true
+      - DD_PROFILING_TIMELINE_ENABLED=true
+      - DD_PROFILING_ALLOCATION_ENABLED=true
     networks:
       - storedog-network
     labels:
@@ -167,8 +143,8 @@ services:
       com.datadoghq.tags.env: '${DD_ENV-dev}'
       com.datadoghq.tags.service: 'store-ads'
       com.datadoghq.tags.version: '${DD_VERSION_ADS-1.0.0}'
-  nginx:
-    image: ghcr.io/datadog/storedog/nginx:1.4.0
+  service-proxy:
+    image: ghcr.io/datadog/storedog/nginx:${STOREDOG_IMAGE_VERSION:-latest}
     restart: always
     ports:
       - '80:80'
@@ -178,14 +154,11 @@ services:
       - frontend
       - dd-agent
     environment:
-      - DD_ENV=${DD_ENV-dev}
-      - DD_VERSION_NGINX=${DD_VERSION_NGINX-1.0.0}
-      - DD_SERVICE=nginx
+      - DD_AGENT_HOST=dd-agent
+      - DD_SERVICE=service-proxy
+      - DD_VERSION=${DD_VERSION_NGINX:-1.0.0}
     labels:
-      com.datadoghq.tags.env: '${DD_ENV-dev}'
-      com.datadoghq.tags.service: 'nginx'
-      com.datadoghq.tags.version: '${DD_VERSION_NGINX-1.0.0}'
-      com.datadoghq.ad.logs: '[{"source": "nginx", "service": "nginx"}]'
+      com.datadoghq.ad.logs: '[{"source": "nginx"}]'
       com.datadoghq.ad.check_names: '["nginx"]'
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]'
@@ -199,13 +172,12 @@ services:
     networks:
       - storedog-network
     environment:
-      - POSTGRES_USER
-      - POSTGRES_PASSWORD
-      - DD_ENV=${DD_ENV-dev}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - DD_SERVICE=postgres
       - DD_VERSION=${DD_VERSION_POSTGRES-15}
     labels:
-      com.datadoghq.tags.env: '${DD_ENV-dev}'
+      com.datadoghq.tags.env: '${DD_ENV}'
       com.datadoghq.tags.service: 'postgres'
       com.datadoghq.tags.version: '${DD_VERSION_POSTGRES-15}'
       com.datadoghq.ad.check_names: '["postgres"]'
@@ -216,16 +188,12 @@ services:
     image: redis:6.2-alpine
     depends_on:
       - dd-agent
-    environment:
-      - DD_ENV=${DD_ENV-dev}
-      - DD_VERSION_REDIS=${DD_VERSION_REDIS-6.2}
-      - DD_SERVICE=redis
     volumes:
       - 'redis:/data'
     networks:
       - storedog-network
     labels:
-      com.datadoghq.tags.env: '${DD_ENV-dev}'
+      com.datadoghq.tags.env: '${DD_ENV}'
       com.datadoghq.tags.service: 'redis'
       com.datadoghq.tags.version: '${DD_VERSION_REDIS-6.2}'
       com.datadoghq.ad.check_names: '["redisdb"]'
@@ -240,9 +208,8 @@ services:
     - ./services/puppeteer/scripts/puppeteer.sh:/home/pptruser/puppeteer.sh
     command: "bash puppeteer.sh"
     environment:
-      - STOREDOG_URL=${STOREDOG_URL-http://nginx:80}
-      - PUPPETEER_TIMEOUT
-      - SKIP_SESSION_CLOSE
+      - STOREDOG_URL=${STOREDOG_URL-http://service-proxy:80}
+      - PUPPETEER_TIMEOUT=${PUPPETEER_TIMEOUT:-30000}
     networks:
       - storedog-network
     depends_on:
@@ -257,5 +224,3 @@ volumes:
 
 networks:
   storedog-network:
-  redis:
-  postgres_logs:
