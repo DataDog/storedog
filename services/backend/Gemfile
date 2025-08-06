@@ -87,8 +87,8 @@ gem 'activerecord-nulldb-adapter'
 # improved JSON rendering performance
 gem 'oj'
 
-# Fix SCSS errors with Ruby 3 on MacOS
-gem 'sassc', github: 'sass/sassc-ruby', group: :development
+gem 'sassc-rails', '~> 2.1.2'
+gem 'sass', '~> 3.7.4'  # Dart Sass implementation
 
 # Required for Ruby 3.1.7
 gem 'net-smtp'
