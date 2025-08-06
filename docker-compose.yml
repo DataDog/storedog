@@ -22,7 +22,8 @@ services:
       - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
       - postgres_logs:/var/log/pg_log:ro
   frontend:
-    image: ghcr.io/datadog/storedog/frontend:1.3.0
+    build:
+      context: ./services/frontend
     command: bash -c "npm run build && wait-for-it backend:4000 -- npm run start"
     depends_on:
       - worker
@@ -51,7 +52,8 @@ services:
       com.datadoghq.tags.service: '${DD_SERVICE-store-frontend}'
       com.datadoghq.tags.version: '${FRONTEND_VERSION-1.0.0}'
   backend:
-    image: ghcr.io/datadog/storedog/backend:1.3.0
+    build:
+      context: ./services/backend
     command: wait-for-it postgres:5432 -- bundle exec rails s -b 0.0.0.0 -p 4000 --pid /app/tmp/pids/server.pid
     depends_on:
       - 'postgres'
@@ -86,7 +88,7 @@ services:
       com.datadoghq.tags.service: 'store-backend'
       com.datadoghq.tags.version: '${DD_VERSION_BACKEND-1.0.0}'
   worker:
-    image: ghcr.io/datadog/storedog/backend:1.3.0
+    image: ghcr.io/datadog/storedog/backend:1.4.0
     command: wait-for-it postgres:5432 -- bundle exec sidekiq -C config/sidekiq.yml
     depends_on:
       - 'postgres'
@@ -119,7 +121,8 @@ services:
       com.datadoghq.tags.service: 'store-worker'
       com.datadoghq.tags.version: '${DD_VERSION_BACKEND-1.0.0}'
   discounts:
-    image: ghcr.io/datadog/storedog/discounts:1.3.0
+    build:
+      context: ./services/discounts
     command: wait-for-it postgres:5432 -- ddtrace-run flask run --port=2814 --host=0.0.0.0
     depends_on:
       - postgres
@@ -165,7 +168,7 @@ services:
       com.datadoghq.tags.service: 'store-ads'
       com.datadoghq.tags.version: '${DD_VERSION_ADS-1.0.0}'
   nginx:
-    image: ghcr.io/datadog/storedog/nginx:1.3.0
+    image: ghcr.io/datadog/storedog/nginx:1.4.0
     restart: always
     ports:
       - '80:80'
@@ -187,7 +190,7 @@ services:
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]'
   postgres:
-    image: ghcr.io/datadog/storedog/postgres:1.3.0
+    image: ghcr.io/datadog/storedog/postgres:1.4.0
     restart: always
     depends_on:
       - dd-agent
