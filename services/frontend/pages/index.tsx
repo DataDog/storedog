@@ -9,7 +9,7 @@ import { Page } from '@customTypes/page'
 export async function getServerSideProps() {
   const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_API_ROUTE
     ? `${process.env.NEXT_PUBLIC_FRONTEND_API_ROUTE}/api`
-    : 'http://localhost:3000/api'
+    : 'http://localhost/api'
 
   let products: Product[] = await fetch(`${baseUrl}/products`)
     .then((res) => res.json())
@@ -56,6 +56,7 @@ export default function Home({
   console.log(pages)
   return (
     <>
+      <Ad id="first-ad" />
       <Grid variant="filled">
         {products.slice(0, 6).map((product: any, i: number) => (
           <ProductCard
@@ -69,7 +70,7 @@ export default function Home({
           />
         ))}
       </Grid>
-      <Ad />
+      <Ad id="second-ad" />
       <Hero
         headline="The best gear, at the best prices."
         description="Cupcake ipsum dolor sit amet lemon drops pastry cotton candy. Sweet carrot cake macaroon bonbon croissant fruitcake jujubes macaroon oat cake. Soufflé bonbon caramels jelly beans. Tiramisu sweet roll cheesecake pie carrot cake. "

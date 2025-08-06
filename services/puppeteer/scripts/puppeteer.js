@@ -1,4 +1,5 @@
 const puppeteer = require('puppeteer');
+const { KnownDevices } = require('puppeteer');
 
 const startUrl = process.env.STOREDOG_URL;
 console.log('starting...');
@@ -31,24 +32,7 @@ const getNewBrowser = async () => {
   }
 };
 
-const choosePhone = () => {
-  const deviceNames = [
-    'Pixel 2 XL',
-    'Pixel 2',
-    'Galaxy S5',
-    'iPhone 11 Pro Max',
-    'iPhone 11',
-    'iPhone XR',
-    'iPhone X',
-    'iPhone SE',
-    'iPad Pro',
-    'iPad Mini',
-  ];
 
-  const deviceIndex = Math.floor(Math.random() * deviceNames.length);
-  const device = deviceNames[deviceIndex];
-  return puppeteer.devices[device];
-};
 
 const setUtmParams = (url) => {
   // create array of utm campaign options
@@ -316,9 +300,16 @@ const selectProductsPageProduct = async (page) => {
 const goToFooterPage = async (page) => {
   console.log('In goToFooterPage on page', await page.title());
   const links = await page.$$('.footer-link');
-  let linkIndex = Math.floor(Math.random() * links.length);
-  console.log('link index', linkIndex);
-  let selector = `span:nth-of-type(${linkIndex}) .footer-link`;
+  // let linkIndex = Math.floor(Math.random() * links.length);
+  // console.log('link index', linkIndex);
+
+  // For RUM LCP faking: 
+  linkToClick = 'About Us';
+
+  // This uses the Puppeteer psuedo-element selector syntax. Selects an <a> element with class .footer-link with innerText matching linkToClick
+  let selector = `a.footer-link ::-p-text(${linkToClick})`;
+
+  // let selector = `span:nth-of-type(${linkIndex}) .footer-link`;
   let link = await page.$(selector, { visible: true });
 
   try {
@@ -328,8 +319,13 @@ const goToFooterPage = async (page) => {
       page.waitForNavigation(),
     ]);
 
-    // wait 2500ms and go back
-    await page.waitForTimeout(2500);
+    await page.waitForTimeout(5000);
+
+    // scroll to ad element again 
+    await adElement.evaluate((el) => {
+      el.parentNode.scrollTo(0, el.getBoundingClientRect().bottom);
+    });
+    
     await Promise.all([page.goBack(), page.waitForNavigation()]);
   } catch (e) {
     console.error(e);
@@ -506,13 +502,19 @@ const checkout = async (page) => {
   return;
 };
 
-const mainSession = async () => {
-  const browser = await getNewBrowser();
-  let selector;
 
-  try {
-    const page = await browser.newPage();
+const oneInThreeChance = () => Math.random() < 0.33;
 
+// randomly select a mobile device from puppeteer's KnownDevices record
+const getRandomDevice = () => {
+  const devices = Object.keys(KnownDevices);
+  const randomIndex = Math.floor(Math.random() * devices.length);
+  const randomDevice = devices[randomIndex];
+  return KnownDevices[randomDevice];
+};
+
+
+const setDeviceInfo = async (page) => {
     await page.setUserAgent(
       `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36`
     );
@@ -522,6 +524,34 @@ const mainSession = async () => {
       height: 768,
       deviceScaleFactor: 1,
     });
+}
+// const choosePhone = () => {
+//   const deviceNames = [
+//     'Pixel 5',
+//     'Pixel 2',
+//     'Galaxy S5',
+//     'iPhone 11 Pro Max',
+//     'iPhone 11',
+//     'iPhone XR',
+//     'iPhone X',
+//     'iPhone SE',
+//     'iPad Pro',
+//     'iPad Mini',
+//   ];
+
+//   const deviceIndex = Math.floor(Math.random() * deviceNames.length);
+//   const device = deviceNames[deviceIndex];
+//   return puppeteer.devices[device];
+// };          
+
+const mainSession = async () => {
+  const browser = await getNewBrowser();
+  let selector;
+
+  try {
+    const page = await browser.newPage();
+    
+    await setDeviceInfo(page);
 
     await page.setDefaultNavigationTimeout(
       process.env.PUPPETEER_TIMEOUT || 40000
@@ -606,15 +636,7 @@ const secondSession = async () => {
   try {
     const page = await browser.newPage();
 
-    await page.setUserAgent(
-      `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36`
-    );
-
-    await page.setViewport({
-      width: 1366,
-      height: 768,
-      deviceScaleFactor: 1,
-    });
+    await setDeviceInfo(page);
 
     await page.setDefaultNavigationTimeout(
       process.env.PUPPETEER_TIMEOUT || 40000
@@ -678,16 +700,8 @@ const secondSession = async () => {
 const thirdSession = async () => {
   const browser = await getNewBrowser();
   const page = await browser.newPage();
-
-  await page.setUserAgent(
-    `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36`
-  );
-
-  await page.setViewport({
-    width: 1366,
-    height: 768,
-    deviceScaleFactor: 1,
-  });
+  
+  await setDeviceInfo(page);
 
   await page.setDefaultNavigationTimeout(
     process.env.PUPPETEER_TIMEOUT || 40000
@@ -754,25 +768,36 @@ const fourthSession = async () => {
   try {
     const page = await browser.newPage();
 
-    await page.setUserAgent(
-      `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36`
-    );
-
-    await page.setViewport({
-      width: 1366,
-      height: 768,
-      deviceScaleFactor: 1,
-    });
+    await setDeviceInfo(page);
 
     await page.setDefaultNavigationTimeout(
       process.env.PUPPETEER_TIMEOUT || 40000
     );
 
-    const urlWithUtm = Math.random() > 0.5 ? setUtmParams(startUrl) : startUrl;
+    // const urlWithUtm = Math.random() > 0.5 ? setUtmParams(startUrl) : startUrl;
     // go to home page
-    await page.goto(urlWithUtm, { waitUntil: 'domcontentloaded' });
+    // await page.goto(urlWithUtm, { waitUntil: 'domcontentloaded' });
+
+    // To get LCP issues to appear in RUM
+
+    const aboutUsPageURL = `${startUrl}/about-us`;
+
+    await page.goto(aboutUsPageURL)
+
     let pageTitle = await page.title();
     console.log(`"${pageTitle}" loaded`);
+
+    await page.waitForTimeout(2000);
+
+    await page.click('picture');
+    
+    await page.click('#about-us-image');
+    
+    await page.click('h2');
+    
+    await page.waitForTimeout(3000);
+
+
 
     // select any link along the top nav
     const navLinks = await page.$$('#main-navbar a');

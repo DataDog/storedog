@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback } from 'react'
-import { codeStash } from 'code-stash'
-import config from '../../../featureFlags.config.json'
 
 export interface AdDataResults {
   data: object | null
-  path: string
+  path: string,
+  name: string
 }
 // Advertisement banner
-function Ad() {
+function Ad({id}: { id: string }) {
   const [data, setData] = useState<AdDataResults | null>(null)
   const [isLoading, setLoading] = useState(false)
+  const [adContainerId, setAdContainerId] = useState<string | null>(null)
   const adsPath = process.env.NEXT_PUBLIC_ADS_ROUTE || `/services/ads`
 
   const getRandomArbitrary = useCallback((min: number, max: number) => {
@@ -18,23 +18,27 @@ function Ad() {
 
   const fetchAd = useCallback(async () => {
     setLoading(true)
-    const flag = (await codeStash('error-tracking', { file: config })) || false
-    console.log(adsPath)
-    const headers = {
-      'X-Throw-Error': `${flag}`,
-      'X-Error-Rate': process.env.NEXT_PUBLIC_ADS_ERROR_RATE || '0.25',
+
+
+    switch (id) {
+      case 'first-ad':
+        setAdContainerId('first-ad-container')
+        break
+      case 'second-ad':
+        setAdContainerId('second-ad-container')
+        break
+      default: 
+        setAdContainerId('bottom-ad-container')
     }
 
     try {
-      console.log('ads path', adsPath)
-      const res = await fetch(`${adsPath}/ads`, { headers })
+      const res = await fetch(`${adsPath}/ads`)
       if (!res.ok) {
         throw new Error('Error fetching ad')
       }
-      const data = await res.json()
-      console.log(data)
-      const index = getRandomArbitrary(0, data.length)
-      setData(data[index])
+      const ads = await res.json()
+      const index = getRandomArbitrary(0, ads.length)
+      setData(ads[index])
       setLoading(false)
     } catch (e) {
       console.error(e)
@@ -46,25 +50,23 @@ function Ad() {
     if (!data) fetchAd()
   }, [data, fetchAd])
 
-  if (isLoading)
+  if (isLoading || !data)
     return (
-      <div className="flex flex-row justify-center h-10 advertisment-wrapper">
-        AD HERE
-      </div>
-    )
-  if (!data)
-    return (
-      <div className="flex flex-row justify-center h-10 advertisment-wrapper">
-        AD DIDN'T LOAD
-      </div>
+      <div className="banner-ad-row"></div>
     )
 
   return (
-    <div className="flex flex-row justify-center py-4 advertisement-wrapper">
-      <picture className="advertisement-banner">
-        <source srcSet={`${adsPath}/banners/${data.path}`} type="image/webp" />
-        <img src={`${adsPath}/banners/${data.path}`} alt="Landscape picture" />
-      </picture>
+    <div className="banner-ad-row flex flex-col justify-center py-2 ">
+      <div className="banner-ad-container mx-auto my-auto" id={adContainerId}>
+        <a href="#">
+          <div className="h-auto w-full mx-auto hover:ring banner-ad-image-wrapper">
+            <picture className="advertisement-banner">
+              <img src={`${adsPath}/banners/${data.path}`} alt={`${data.name} Advertisement`} />
+            </picture>
+          </div>
+        </a>
+        <p className="text-xs">Advertisement</p>
+      </div>
     </div>
   )
 }

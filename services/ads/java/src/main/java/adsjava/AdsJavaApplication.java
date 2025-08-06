@@ -15,13 +15,10 @@ import java.util.HashMap;
 import org.springframework.web.bind.annotation.RequestParam;
 import java.util.concurrent.TimeoutException;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.beans.factory.annotation.Autowired;
-import java.util.List;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Bean;
-import org.springframework.boot.CommandLineRunner;
 
 
 @SpringBootApplication
@@ -29,9 +26,6 @@ import org.springframework.boot.CommandLineRunner;
 public class AdsJavaApplication {
 
     private static final Logger logger = LoggerFactory.getLogger(AdsJavaApplication.class);
-
-    @Autowired
-    private AdvertisementRepository advertisementRepository;
 
 	@RequestMapping("/")
 	public String home() {
@@ -41,13 +35,12 @@ public class AdsJavaApplication {
 
     @CrossOrigin(origins = {"*"})
     @RequestMapping(
-        value = "/banners/{id}",
+        value = "/banners/{adImagePath}",
         produces = MediaType.IMAGE_JPEG_VALUE
     )
-    public @ResponseBody byte[] getImageWithMediaType() throws IOException {
-        logger.info("/banners/{id} called");
-        int randomNum = ThreadLocalRandom.current().nextInt(1, 3 + 1);
-        String imagePath = "/static/ads/ad" + randomNum + ".jpg";
+    public @ResponseBody byte[] getImageWithMediaType(@PathVariable("adImagePath") String adImagePath) throws IOException {
+        logger.info("/banners/{adImagePath} called");
+        String imagePath = "/static/ads/" + adImagePath;
         InputStream in = getClass()
             .getResourceAsStream(imagePath);
         return IOUtils.toByteArray(in);
@@ -58,7 +51,7 @@ public class AdsJavaApplication {
         value = "/ads",
         produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public List<Advertisement> ads(@RequestHeader HashMap<String, String> headers) {
+	public HashMap[] ads(@RequestHeader HashMap<String, String> headers) {
         logger.info("/ads called");
 
         boolean errorFlag = false;
@@ -81,25 +74,28 @@ public class AdsJavaApplication {
                 throw new RuntimeException(e);
             }
         } else {
-            List<Advertisement> ads = advertisementRepository.findAll();
-            logger.info("Total ads available: " + ads.size());
-            return ads;
+            HashMap<String, String> map1 = new HashMap<>();
+            map1.put("id", "1");
+            map1.put("name", "Discount Clothing");
+            map1.put("path", "discountClothingAd.jpg");
+
+            HashMap<String, String> map2 = new HashMap<>();
+            map2.put("id", "2");
+            map2.put("name", "Cool Hats");
+            map2.put("path", "coolHatsAd.jpg");
+
+            HashMap<String, String> map3 = new HashMap<>();
+            map3.put("id", "3");
+            map3.put("name", "Nice Bags");
+            map3.put("path", "niceBagsAd.jpg");
+            HashMap[] myArr = { map1, map2, map3 };
+            logger.info("Total responses available: " + myArr.length);
+            return myArr;
         }
-    }
+	}
 
 	public static void main(String[] args) {
 		SpringApplication.run(AdsJavaApplication.class, args);
 	}
-
-    @Bean
-    public CommandLineRunner initDb(AdvertisementRepository repository) {
-        return args -> {
-            if (repository.count() == 0) {
-                repository.save(new Advertisement("Discount Clothing", "1.jpg"));
-                repository.save(new Advertisement("Cool Hats", "2.jpg"));
-                repository.save(new Advertisement("Nice Bags", "3.jpg"));
-            }
-        };
-    }
 
 }
