@@ -4,7 +4,7 @@ services:
     pid: host
     environment:
       - DD_API_KEY=${DD_API_KEY}
-      - DD_ENV=${DD_ENV:-development}
+      - DD_ENV=${DD_ENV}
       - DD_LOGS_ENABLED=true
       - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
       - DD_CONTAINER_EXCLUDE=image:agent name:puppeteer
@@ -95,7 +95,7 @@ services:
       - DD_PROFILING_ALLOCATION_ENABLED=true
     labels:
       com.datadoghq.ad.logs: '[{"source": "ruby", "service": "storedog-worker",  "auto_multi_line_detection":true }]'
-      com.datadoghq.tags.env: '${DD_ENV-dev}'
+      com.datadoghq.tags.env: '${DD_ENV}'
       com.datadoghq.tags.service: 'store-worker'
       com.datadoghq.tags.version: '${DD_VERSION_BACKEND-1.0.0}'
   discounts:
@@ -116,14 +116,14 @@ services:
       - DD_PROFILING_ENABLED=true
       - DD_VERSION=${DD_VERSION_DISCOUNTS-1.0.0}
       - DD_SERVICE=store-discounts
-      - DD_ENV=${DD_ENV-dev}
+      - DD_ENV=${DD_ENV}
     volumes:
       - ./services/discounts:/app
     networks:
       - storedog-network
     labels:
       com.datadoghq.ad.logs: '[{"source": "python", "service": "store-discounts"}]'
-      com.datadoghq.tags.env: '${DD_ENV-dev}'
+      com.datadoghq.tags.env: '${DD_ENV}'
       com.datadoghq.tags.service: 'store-discounts'
       com.datadoghq.tags.version: '${DD_VERSION_DISCOUNTS-1.0.0}'
   ads:
@@ -145,11 +145,11 @@ services:
       - storedog-network
     labels:
       com.datadoghq.ad.logs: '[{"source": "java", "service": "store-ads"}]'
-      com.datadoghq.tags.env: '${DD_ENV-dev}'
+      com.datadoghq.tags.env: '${DD_ENV}'
       com.datadoghq.tags.service: 'store-ads'
       com.datadoghq.tags.version: '${DD_VERSION_ADS-1.0.0}'
   service-proxy:
-    image: ghcr.io/datadog/storedog/nginx:${STOREDOG_IMAGE_VERSION:-latest}
+    image: ghcr.io/datadog/storedog/nginx:1.4.0
     restart: always
     ports:
       - '80:80'
