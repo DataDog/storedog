@@ -117,30 +117,29 @@ const CartSidebarView: FC = () => {
                 Component="button"
                 width="100%"
                 onClick={() => {
-
                   // This is a contrived example of poor INP caused by layout thrashing.
 
-                  let allElements = document.querySelectorAll('img');
-                  const reversedElements = Array.from(allElements).reverse();
+                  let allElements = document.querySelectorAll('img')
+                  const reversedElements = Array.from(allElements).reverse()
 
-                  reversedElements.forEach(element => {
-                    element.setAttribute('tabindex', '-1');
-                    window.getComputedStyle(element);
+                  reversedElements.forEach((element) => {
+                    element.setAttribute('tabindex', '-1')
+                    window.getComputedStyle(element)
                   })
-    
+
                   console.log('start')
-    
+
                   for (let i = 0; i < 1e3; i++) {
                     for (let j = 0; j < reversedElements.length; j++) {
-                      (reversedElements[j] as HTMLElement).focus();
+                      ;(reversedElements[j] as HTMLElement).focus()
                     }
                   }
-    
+
                   console.log('end')
 
                   // End of example
-    
-                  goToCheckout();
+
+                  goToCheckout()
                 }}
                 className="checkout-btn"
                 id="proceed-to-checkout-button"

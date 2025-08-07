@@ -2,11 +2,11 @@ import { useState, useEffect, useCallback } from 'react'
 
 export interface AdDataResults {
   data: object | null
-  path: string,
+  path: string
   name: string
 }
 // Advertisement banner
-function Ad({id}: { id: string }) {
+function Ad({ id }: { id: string }) {
   const [data, setData] = useState<AdDataResults | null>(null)
   const [isLoading, setLoading] = useState(false)
   const [adContainerId, setAdContainerId] = useState<string | null>(null)
@@ -19,7 +19,6 @@ function Ad({id}: { id: string }) {
   const fetchAd = useCallback(async () => {
     setLoading(true)
 
-
     switch (id) {
       case 'first-ad':
         setAdContainerId('first-ad-container')
@@ -27,7 +26,7 @@ function Ad({id}: { id: string }) {
       case 'second-ad':
         setAdContainerId('second-ad-container')
         break
-      default: 
+      default:
         setAdContainerId('bottom-ad-container')
     }
 
@@ -50,10 +49,7 @@ function Ad({id}: { id: string }) {
     if (!data) fetchAd()
   }, [data, fetchAd])
 
-  if (isLoading || !data)
-    return (
-      <div className="banner-ad-row"></div>
-    )
+  if (isLoading || !data) return <div className="banner-ad-row"></div>
 
   return (
     <div className="banner-ad-row flex flex-col justify-center py-2 ">
@@ -61,7 +57,10 @@ function Ad({id}: { id: string }) {
         <a href="#">
           <div className="h-auto w-full mx-auto hover:ring banner-ad-image-wrapper">
             <picture className="advertisement-banner">
-              <img src={`${adsPath}/banners/${data.path}`} alt={`${data.name} Advertisement`} />
+              <img
+                src={`${adsPath}/banners/${data.path}`}
+                alt={`${data.name} Advertisement`}
+              />
             </picture>
           </div>
         </a>

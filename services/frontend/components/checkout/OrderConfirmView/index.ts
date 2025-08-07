@@ -1,1 +1,1 @@
-export { default } from './OrderConfirmView' 
+export { default } from './OrderConfirmView'

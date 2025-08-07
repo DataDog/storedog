@@ -20,12 +20,8 @@ const CheckoutSidebarView: FC = () => {
   const [checkoutError, setCheckoutError] = useState(null)
   const { setSidebarView, closeSidebar } = useUI()
   const { cart: cartData, cartEmpty, cartInit, applyDiscount } = useCart()
-  const {
-    shippingRate,
-    addressStatus,
-    paymentStatus,
-    handleCompleteCheckout,
-  } = useCheckoutContext()
+  const { shippingRate, addressStatus, paymentStatus, handleCompleteCheckout } =
+    useCheckoutContext()
 
   const { price: subTotal } = usePrice(
     cartData && {
