@@ -128,7 +128,7 @@ services:
       com.datadoghq.tags.version: '${DD_VERSION_DISCOUNTS-1.0.0}'
   ads:
     build:
-      context: ./services/ads
+      context: ./services/ads/java
     depends_on:
       - postgres
       - dd-agent
