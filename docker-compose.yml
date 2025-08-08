@@ -34,7 +34,7 @@ services:
       backend:
         condition: service_healthy
     volumes:
-      - ${STOREDOG_DIR:-./services/frontend}:/app
+      - ./services/frontend:/app
       - /app/node_modules
     networks:
       - storedog-network
