@@ -16,16 +16,11 @@ RUN gradle clean build
 FROM alpine:latest
 RUN apk --update add openjdk11-jre
 
-ARG DD_GIT_REPOSITORY_URL
-ARG DD_GIT_COMMIT_SHA
-
 ENV APP_HOME=/usr/app/ \
     ADS_SERVER_PORT=3030 \
     POSTGRES_PASSWORD=postgres \
     POSTGRES_USER=postgres \
-    POSTGRES_HOST=postgres \
-    DD_GIT_REPOSITORY_URL=${DD_GIT_REPOSITORY_URL} \
-    DD_GIT_COMMIT_SHA=${DD_GIT_COMMIT_SHA}
+    POSTGRES_HOST=postgres
 
 WORKDIR $APP_HOME
 COPY --from=temp_build_image $APP_HOME/build/libs/*.jar store-ads.jar

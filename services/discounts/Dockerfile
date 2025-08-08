@@ -23,18 +23,13 @@ COPY . .
 
 USER root
 
-ARG DD_GIT_REPOSITORY_URL
-ARG DD_GIT_COMMIT_SHA
-
 # Default environment variables
 ENV FLASK_APP=discounts.py \
     FLASK_DEBUG=0 \
     POSTGRES_HOST=postgres \
     POSTGRES_PORT=5432 \
     POSTGRES_PASSWORD=postgres \
-    POSTGRES_USER=postgres \
-    DD_GIT_REPOSITORY_URL=${DD_GIT_REPOSITORY_URL} \
-    DD_GIT_COMMIT_SHA=${DD_GIT_COMMIT_SHA}
+    POSTGRES_USER=postgres
 
 # Install dependencies via pip and avoid caching build artifacts
 RUN pip install --no-cache-dir -r requirements.txt
@@ -43,7 +38,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 ARG DISCOUNTS_PORT=2814
 # Because CMD is a runtime instruction, we have to create an additional ENV var that reads the ARG val
 # Only ENV vars are accessible via CMD
-ENV DISCOUNTS_PORT ${DISCOUNTS_PORT}
+ENV DISCOUNTS_PORT=${DISCOUNTS_PORT}
 
 # required to get logs out of the container
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
