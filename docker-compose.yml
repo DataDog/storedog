@@ -22,6 +22,10 @@ services:
     build:
       context: ./services/frontend
     command: bash -c "npm run prod"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "3000"]
+      interval: 3s
+      start_period: 50s
     depends_on:
       worker:
         condition: service_started
@@ -30,7 +34,7 @@ services:
       backend:
         condition: service_healthy
     volumes:
-      - ${STOREDOG_DIR:-/root/storedog}/services/frontend:/app
+      - ${STOREDOG_DIR:-./services/frontend}:/app
       - /app/node_modules
     networks:
       - storedog-network
@@ -186,6 +190,7 @@ services:
       com.datadoghq.ad.instances: '[{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]'
   postgres:
     image: ghcr.io/datadog/storedog/postgres:1.4.0
+    platform: linux/arm64/v8
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-storedog_db}"]
       interval: 3s

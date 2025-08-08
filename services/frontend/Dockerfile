@@ -1,7 +1,7 @@
 FROM node:20 AS builder
 
-# install wait-for-it
-RUN apt-get update && apt-get install -y wait-for-it
+# install wait-for-it and netcat
+RUN apt-get update && apt-get install -y netcat-openbsd
 
 # install datadog-ci 
 RUN npm install -g @datadog/datadog-ci
