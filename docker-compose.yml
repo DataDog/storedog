@@ -30,7 +30,6 @@ services:
       backend:
         condition: service_healthy
     volumes:
-      - /root/storedog/services/frontend/.env:/app/.env
       - /root/storedog/services/frontend:/app
       - /app/node_modules
     networks:
