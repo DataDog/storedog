@@ -119,6 +119,10 @@ services:
     build:
       context: ./services/discounts
     command: ddtrace-run flask run --port=2814 --host=0.0.0.0
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2814"]
+      interval: 3s
+      start_period: 30s
     depends_on:
       postgres:
         condition: service_healthy
@@ -179,6 +183,8 @@ services:
         condition: service_started
       dd-agent:
         condition: service_started
+      discounts:
+        condition: service_healthy
     environment:
       - DD_AGENT_HOST=dd-agent
       - DD_SERVICE=service-proxy
