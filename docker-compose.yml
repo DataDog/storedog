@@ -179,8 +179,6 @@ services:
     networks:
       - storedog-network
     depends_on:
-      frontend:
-        condition: service_started
       dd-agent:
         condition: service_started
       discounts:
