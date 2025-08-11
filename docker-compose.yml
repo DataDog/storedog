@@ -151,7 +151,6 @@ services:
     build:
       context: ./services/ads/java
     depends_on:
-      - postgres
       - dd-agent
     environment:
       - DD_AGENT_HOST=dd-agent
@@ -179,6 +178,10 @@ services:
     depends_on:
       dd-agent:
         condition: service_started
+      discounts:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
     environment:
       - DD_AGENT_HOST=dd-agent
       - DD_SERVICE=service-proxy
