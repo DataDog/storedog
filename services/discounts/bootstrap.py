@@ -19,7 +19,7 @@ def create_app():
     """Create a Flask application"""
     app = Flask(__name__)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://' + \
-        DB_USERNAME + ':' + DB_PASSWORD + '@' + DB_HOST + '/' + DB_USERNAME
+        DB_USERNAME + ':' + DB_PASSWORD + '@' + DB_HOST + '/storedog_db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)
