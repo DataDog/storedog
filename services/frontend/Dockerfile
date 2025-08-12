@@ -1,8 +1,11 @@
 FROM node:20 AS base
 
 # Install system dependencies (this layer rarely changes)
-RUN apt-get update && apt-get install -y netcat-openbsd && \
+RUN apt-get update --allow-releaseinfo-change || \
+    (apt-get clean && apt-get update --allow-unauthenticated) && \
+    apt-get install -y --no-install-recommends netcat-openbsd && \
     npm install -g @datadog/datadog-ci && \
+    apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # Set static environment variables (these don't change frequently)
