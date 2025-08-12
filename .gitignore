@@ -53,3 +53,9 @@ yarn-debug.log*
 .env.test.local
 .env.production.local
 .env.local
+
+# Gradle build artifacts  
+.gradle/
+build/
+*.tmp
+**/gradle-wrapper.jar
