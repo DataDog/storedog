@@ -59,7 +59,7 @@ services:
       start_period: 60s
     depends_on:
       postgres:
-        condition: service_started
+        condition: service_healthy
       redis:
         condition: service_started
       dd-agent:
@@ -192,7 +192,8 @@ services:
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]'
   postgres:
-    image: ghcr.io/datadog/storedog/postgres:1.4.0
+    build:
+      context: ./services/postgres
     healthcheck:
       test: ["CMD", "nc", "-z", "postgres", "5432"]
       interval: 3s
