@@ -194,7 +194,7 @@ services:
   postgres:
     image: ghcr.io/datadog/storedog/postgres:1.4.0
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-storedog_db}"]
+      test: ["CMD", "nc", "-z", "postgres", "5432"]
       interval: 3s
     restart: always
     depends_on:
