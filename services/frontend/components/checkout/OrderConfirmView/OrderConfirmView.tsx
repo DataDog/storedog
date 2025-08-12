@@ -4,11 +4,11 @@ import { useUI } from '@components/ui/context'
 import SidebarLayout from '@components/common/SidebarLayout'
 
 const OrderConfirmView: FC = () => {
-  const { setSidebarView } = useUI()
+  const { closeSidebar } = useUI()
 
   return (
     <div>
-      <SidebarLayout handleBack={() => setSidebarView('CHECKOUT_VIEW')}>
+      <SidebarLayout handleClose={() => closeSidebar()}>
         <div className="px-4 sm:px-6 flex-1 purchase-confirmed-msg">
           <Text variant="sectionHeading"> Thank you for your purchase!</Text>
         </div>

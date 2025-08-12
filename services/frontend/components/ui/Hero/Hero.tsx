@@ -24,7 +24,7 @@ const Hero: FC<HeroProps> = ({ headline, description, className }) => {
           <div className={s.description}>
             <p>{description}</p>
             <Link href="/">
-              <a className="flex items-center text-white pt-3 font-bold hover:underline cursor-pointer w-max-content">
+              <a className="flex items-center text-white pt-3 font-bold hover:underline cursor-pointer w-max-content focus-visible:shadow-outline-normal focus-visible:outline-none rounded px-1">
                 Read it here
                 <ArrowRight width="20" heigh="20" className="ml-1" />
               </a>

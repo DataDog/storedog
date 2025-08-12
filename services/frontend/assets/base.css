@@ -90,6 +90,60 @@ a {
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
 
+/* Respect user's focus preferences */
+@media (prefers-reduced-motion: no-preference) {
+  :focus-visible {
+    transition: box-shadow 0.15s ease-in-out;
+  }
+}
+
+/* Enhanced focus for high contrast mode */
+@media (prefers-contrast: high) {
+  .shadow-outline-normal {
+    box-shadow: 0 0 0 3px #000000 !important;
+  }
+}
+
+/* Ensure focus is always visible - fallback for when custom styles fail */
+:focus-visible {
+  outline: 2px solid #ff0080;
+  outline-offset: 2px;
+  border-radius: 4px;
+  position: relative;
+  z-index: 30;
+}
+
+/* Let our custom shadow take precedence when available */
+.shadow-outline-normal:focus-visible {
+  outline: none;
+  border-radius: 4px;
+}
+
+/* Force scrollbar visibility */
+.scrollbar-visible {
+  scrollbar-width: auto; /* Firefox */
+  scrollbar-color: #cbd5e0 #f7fafc; /* Firefox: thumb track */
+}
+
+.scrollbar-visible::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-visible::-webkit-scrollbar-track {
+  background: #f7fafc;
+  border-radius: 4px;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 4px;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}
+
 .animated {
   animation-duration: 1s;
   animation-fill-mode: both;

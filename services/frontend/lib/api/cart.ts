@@ -65,7 +65,9 @@ export const formatCart = (cartApi: any): Cart => {
               )
 
               return {
-                url: `/services/backend${imageData.attributes.original_url}`,
+                url: `${
+                  process.env.NEXT_PUBLIC_SPREE_API_HOST || 'http://backend:4000'
+                }${imageData.attributes.original_url}`,
                 alt: imageData.attributes.alt,
               }
             })[0],

@@ -54,8 +54,8 @@ function Ad({ id }: { id: string }) {
   return (
     <div className="banner-ad-row flex flex-col justify-center py-2 ">
       <div className="banner-ad-container mx-auto my-auto" id={adContainerId}>
-        <a href="#">
-          <div className="h-auto w-full mx-auto hover:ring banner-ad-image-wrapper">
+        <a href="#" className="focus-visible:shadow-outline-normal focus-visible:outline-none hover:ring-2 hover:ring-pink rounded block overflow-hidden">
+          <div className="h-auto w-full mx-auto banner-ad-image-wrapper">
             <picture className="advertisement-banner">
               <img
                 src={`${adsPath}/banners/${data.path}`}

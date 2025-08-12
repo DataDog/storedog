@@ -21,15 +21,21 @@
   @apply text-accent-9;
 }
 
-.link:focus {
-  @apply outline-none text-accent-8;
+.link:focus,
+.link:focus-visible {
+  @apply outline-none text-accent-8 shadow-outline-normal rounded;
 }
 
 .logo {
-  @apply cursor-pointer border transform duration-100 ease-in-out px-3 py-2 bg-primary-2 text-white text-2xl;
+  @apply cursor-pointer border transform duration-100 ease-in-out px-3 py-2 bg-primary-2 text-white text-2xl rounded;
 
   &:hover {
     @apply shadow-md;
     transform: scale(1.05);
+  }
+
+  &:focus,
+  &:focus-visible {
+    @apply outline-none shadow-outline-normal rounded;
   }
 }

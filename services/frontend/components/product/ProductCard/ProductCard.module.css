@@ -18,6 +18,20 @@
   }
 }
 
+.root:focus,
+.root:focus-visible {
+  @apply outline-none shadow-outline-normal rounded;
+}
+
+/* Inset focus ring for marquee context to prevent clipping */
+.root:global(.primary):focus,
+.root:global(.primary):focus-visible,
+.root:global(.secondary):focus,
+.root:global(.secondary):focus-visible {
+  @apply outline-none rounded;
+  box-shadow: inset 5px 5px 5px 5px #ff0080;
+}
+
 .header {
   @apply transition-colors ease-in-out duration-500
   absolute top-0 left-0 z-20 pr-16;

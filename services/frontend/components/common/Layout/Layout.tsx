@@ -116,7 +116,7 @@ const Layout: React.FC<Props> = ({ children, pageProps: { ...pageProps } }) => {
       <Navbar />
       <Discount />
       <main className="fit">{children}</main>
-      <Ad />
+      <Ad id="first-ad" />
       <Footer pages={pages} />
       <ModalUI />
       <CheckoutProvider>

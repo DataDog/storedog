@@ -11,3 +11,9 @@
     @apply scale-110;
   }
 }
+
+/* Fix footer link focus styles */
+.root a:focus,
+.root a:focus-visible {
+  @apply outline-none shadow-outline-normal rounded;
+}

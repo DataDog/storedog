@@ -18,6 +18,7 @@ const CheckoutSidebarView: FC = () => {
   const [loadingSubmit, setLoadingSubmit] = useState(false)
   const [discountInput, setDiscountInput] = useState('')
   const [checkoutError, setCheckoutError] = useState(null)
+  const [discountStatus, setDiscountStatus] = useState<string | null>(null)
   const { setSidebarView, closeSidebar } = useUI()
   const { cart: cartData, cartEmpty, cartInit, applyDiscount } = useCart()
   const { shippingRate, addressStatus, paymentStatus, handleCompleteCheckout } =
@@ -105,7 +106,13 @@ const CheckoutSidebarView: FC = () => {
       await applyDiscount('FREESHIP')
 
       setDiscountInput('')
+      setDiscountStatus('Discount applied successfully!')
+      // Clear success message after 3 seconds
+      setTimeout(() => setDiscountStatus(null), 3000)
     } catch (err) {
+      setDiscountStatus('Invalid discount code')
+      // Clear error message after 3 seconds
+      setTimeout(() => setDiscountStatus(null), 3000)
       datadogRum.addError(err, {
         discount_code: discountInput,
       })
@@ -118,7 +125,7 @@ const CheckoutSidebarView: FC = () => {
       id="sidebar"
       handleBack={() => setSidebarView('CART_VIEW')}
     >
-      <div className="px-4 sm:px-6 flex-1">
+      <div className="px-4 sm:px-6 flex-1 overflow-y-scroll scrollbar-visible min-h-0">
         <Text variant="sectionHeading">Checkout</Text>
         {checkoutError && (
           <div className="text-red border border-red p-3 mb-3">
@@ -129,6 +136,7 @@ const CheckoutSidebarView: FC = () => {
         <PaymentWidget
           isValid={paymentStatus.ok || false}
           onClick={() => setSidebarView('PAYMENT_VIEW')}
+          id="first-focus-target"
         />
         <ShippingWidget
           isValid={addressStatus.ok || false}
@@ -147,7 +155,7 @@ const CheckoutSidebarView: FC = () => {
         </ul>
 
         <form
-          className="h-full mt-auto"
+          className="mt-4"
           onSubmit={handleDiscount}
           id="discount-form"
         >
@@ -159,6 +167,19 @@ const CheckoutSidebarView: FC = () => {
               value={discountInput}
               onChange={(e) => setDiscountInput(e.target.value)}
             />
+            {discountStatus && (
+              <div 
+                className={`text-sm mt-2 px-2 py-1 rounded ${
+                  discountStatus.includes('successfully') 
+                    ? 'text-green-700 bg-green-50 border border-green-200' 
+                    : 'text-red-700 bg-red-50 border border-red-200'
+                }`}
+                role="status"
+                aria-live="polite"
+              >
+                {discountStatus}
+              </div>
+            )}
           </div>
           <div className="w-full">
             <Button
@@ -177,7 +198,8 @@ const CheckoutSidebarView: FC = () => {
       <form
         onSubmit={handleSubmit}
         id="checkout-form"
-        className="flex-shrink-0 px-6 py-6 sm:px-6 sticky z-20 bottom-0 w-full right-0 left-0 bg-accent-0 border-t text-sm"
+        className="flex-shrink-0 px-6 py-4 sm:px-6 sticky z-50 bottom-0 w-full right-0 left-0 bg-accent-0 border-t text-sm"
+        style={{ boxShadow: '0 -10px 25px -5px rgba(0, 0, 0, 0.1), 0 -4px 6px -2px rgba(0, 0, 0, 0.05)' }}
       >
         <ul className="pb-2">
           <li className="flex justify-between py-1">

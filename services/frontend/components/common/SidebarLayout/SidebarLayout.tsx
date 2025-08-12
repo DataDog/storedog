@@ -24,7 +24,7 @@ const SidebarLayout: FC<ComponentProps> = ({
             onClick={handleClose}
             aria-label="Close"
             id="close-sidebar"
-            className="hover:text-accent-5 transition ease-in-out duration-150 flex items-center focus:outline-none mr-6"
+            className="hover:text-accent-5 transition ease-in-out duration-150 flex items-center focus-visible:shadow-outline-normal focus-visible:outline-none rounded mr-6"
           >
             <Cross className="h-6 w-6 hover:text-accent-3" />
             <span className="ml-2 text-accent-7 text-sm ">Close</span>
@@ -34,7 +34,7 @@ const SidebarLayout: FC<ComponentProps> = ({
           <button
             onClick={handleBack}
             aria-label="Go back"
-            className="hover:text-accent-5 transition ease-in-out duration-150 flex items-center focus:outline-none"
+            className="hover:text-accent-5 transition ease-in-out duration-150 flex items-center focus-visible:shadow-outline-normal focus-visible:outline-none rounded"
           >
             <ChevronLeft className="h-6 w-6 hover:text-accent-3" />
             <span className="ml-2 text-accent-7 text-xs">Back</span>

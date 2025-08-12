@@ -5,11 +5,17 @@ import { ChevronRight, CreditCard, Check } from '@components/icons'
 interface ComponentProps {
   onClick?: () => any
   isValid?: boolean
+  id?: string
 }
 
-const PaymentWidget: FC<ComponentProps> = ({ onClick, isValid }) => {
+const PaymentWidget: FC<ComponentProps> = ({ onClick, isValid, id }) => {
   return (
-    <div onClick={onClick} className={s.root}>
+    <button 
+      onClick={onClick} 
+      className={s.root}
+      id={id}
+      type="button"
+    >
       <div className="flex flex-1 items-center">
         <CreditCard className="w-5 flex" />
         <span className="ml-5 text-sm text-center font-medium">
@@ -21,7 +27,7 @@ const PaymentWidget: FC<ComponentProps> = ({ onClick, isValid }) => {
       {/* <div>
         <ChevronRight />
       </div> */}
-    </div>
+    </button>
   )
 }
 
