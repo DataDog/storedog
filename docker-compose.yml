@@ -21,6 +21,9 @@ services:
   frontend:
     build:
       context: ./services/frontend
+      target: app
+      args:
+        NEXT_PUBLIC_DD_VERSION_FRONTEND: ${FRONTEND_VERSION:-1.0.0}
     command: bash -c "npm run prod"
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "3000"]
@@ -43,7 +46,6 @@ services:
       - DD_LOGS_INJECTION=true
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
-      - NEXT_PUBLIC_DD_VERSION_FRONTEND=${FRONTEND_VERSION-1.0.0}
       - DD_TRACE_REMOVE_INTEGRATION_SERVICE_NAMES_ENABLED=true
     env_file:
       - ./services/frontend/.env
