@@ -24,7 +24,7 @@ services:
       target: app
       args:
         NEXT_PUBLIC_DD_VERSION_FRONTEND: ${FRONTEND_VERSION:-1.0.0}
-    command: bash -c "npm run prod"
+    command: sh -c "npm run prod"
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "3000"]
       interval: 3s
