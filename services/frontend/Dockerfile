@@ -1,12 +1,8 @@
-FROM node:20 AS base
+FROM node:20-alpine AS base
 
 # Install system dependencies (this layer rarely changes)
-RUN apt-get update --allow-releaseinfo-change || \
-    (apt-get clean && apt-get update --allow-unauthenticated) && \
-    apt-get install -y --no-install-recommends netcat-openbsd && \
-    npm install -g @datadog/datadog-ci && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache netcat-openbsd && \
+    npm install -g @datadog/datadog-ci
 
 # Set static environment variables (these don't change frequently)
 ENV NEXT_TELEMETRY_DISABLED=1 \
@@ -23,11 +19,10 @@ WORKDIR /app
 
 # Copy package files and install dependencies (changes less frequently)
 COPY package*.json ./
-RUN npm ci --only=production=false
+RUN npm ci --include=dev
 
 # Application stage
 FROM base AS app
-# Accept build arg for version (this is where frequent changes happen)
 ARG NEXT_PUBLIC_DD_VERSION_FRONTEND=1.0.0
 ENV NEXT_PUBLIC_DD_VERSION_FRONTEND=${NEXT_PUBLIC_DD_VERSION_FRONTEND}
 
