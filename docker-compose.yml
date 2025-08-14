@@ -23,6 +23,10 @@ services:
       context: ./services/frontend
       args:
         NEXT_PUBLIC_DD_VERSION_FRONTEND: ${FRONTEND_VERSION:-1.0.0}
+        NEXT_PUBLIC_DD_SITE: ${DD_SITE}
+        NEXT_PUBLIC_DD_ENV: ${DD_ENV}
+        NEXT_PUBLIC_DD_APPLICATION_ID: ${RUM_APPLICATION_ID}
+        NEXT_PUBLIC_DD_CLIENT_TOKEN: ${RUM_CLIENT_TOKEN}
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "3000"]
       interval: 3s
@@ -42,11 +46,10 @@ services:
       - ./services/frontend/components/cart/CartSidebarView/CartSidebarView.tsx:/app/components/cart/CartSidebarView/CartSidebarView.tsx
       # Mount public assets that may be updated
       - ./services/frontend/public:/app/public
-      # Mount .env file for lab configuration
-      - ./services/frontend/.env:/app/.env
     networks:
       - storedog-network
     environment:
+      # Datadog Agent Configuration
       - DD_VERSION=${FRONTEND_VERSION-1.0.0}
       - DD_SERVICE=${DD_SERVICE-store-frontend}
       - DD_AGENT_HOST=dd-agent
@@ -54,8 +57,24 @@ services:
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
       - DD_TRACE_REMOVE_INTEGRATION_SERVICE_NAMES_ENABLED=true
-    env_file:
-      - ./services/frontend/.env
+      # Application Environment
+      - DD_API_KEY=${DD_API_KEY}
+      - DD_APP_KEY=${DD_APP_KEY}
+      - DATADOG_API_KEY=${DD_API_KEY}
+      - DD_ENV=${DD_ENV}
+      - DD_HOSTNAME=${DD_HOSTNAME}
+      # RUM Configuration (NEXT_PUBLIC_ variables)
+      - NEXT_PUBLIC_DD_SITE=${DD_SITE}
+      - NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend
+      - NEXT_PUBLIC_DD_ENV=${DD_ENV}
+      - NEXT_PUBLIC_DD_APPLICATION_ID=${RUM_APPLICATION_ID}
+      - NEXT_PUBLIC_DD_CLIENT_TOKEN=${RUM_CLIENT_TOKEN}
+      - NEXT_PUBLIC_DD_VERSION_FRONTEND=${FRONTEND_VERSION}
+      # Application URL
+      - STOREDOG_URL=https://${HOSTNAME}-80-${INSTRUQT_PARTICIPANT_ID}.env.play.instruqt.com
+      # Database Configuration
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
     labels:
       com.datadoghq.ad.logs: '[{"source": "nodejs", "service": "store-frontend", "auto_multi_line_detection":true }]'
   backend:
