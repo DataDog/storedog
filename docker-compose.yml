@@ -21,22 +21,29 @@ services:
   frontend:
     build:
       context: ./services/frontend
-      target: app
       args:
         NEXT_PUBLIC_DD_VERSION_FRONTEND: ${FRONTEND_VERSION:-1.0.0}
-    command: sh -c "npm run prod"
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "3000"]
       interval: 3s
       start_period: 60s
+    restart: always
+    ports:
+      - '3000:3000'
     depends_on:
       dd-agent:
         condition: service_started
       backend:
         condition: service_healthy
     volumes:
-      - ./services/frontend:/app
-      - /app/node_modules
+      # Mount only specific files that need to be edited during the lab
+      - ./services/frontend/pages/about-us.tsx:/app/pages/about-us.tsx
+      - ./services/frontend/components/common/Ad/Ad.tsx:/app/components/common/Ad/Ad.tsx
+      - ./services/frontend/components/cart/CartSidebarView/CartSidebarView.tsx:/app/components/cart/CartSidebarView/CartSidebarView.tsx
+      # Mount public assets that may be updated
+      - ./services/frontend/public:/app/public
+      # Mount .env file for lab configuration
+      - ./services/frontend/.env:/app/.env
     networks:
       - storedog-network
     environment:
