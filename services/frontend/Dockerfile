@@ -49,6 +49,9 @@ FROM base AS runner
 
 WORKDIR /app
 
+# Install sharp for image optimization in standalone mode
+RUN npm install sharp
+
 # Don't run production as root
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
