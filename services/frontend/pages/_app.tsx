@@ -26,7 +26,7 @@ datadogRum.init({
     | 'ap1.datadoghq.com',
   service: `${process.env.NEXT_PUBLIC_DD_SERVICE_FRONTEND || 'store-frontend'}`,
   version: `${process.env.NEXT_PUBLIC_DD_VERSION_FRONTEND || '1.0.0'}`,
-  env: `${process.env.NEXT_PUBLIC_DD_ENV || 'development'}`,
+  env: `${process.env.NEXT_PUBLIC_DD_ENV_FRONTEND || 'development'}`,
   trackUserInteractions: true,
   trackResources: true,
   trackLongTasks: true,

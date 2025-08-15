@@ -23,8 +23,9 @@ services:
       context: ./services/frontend
       args:
         NEXT_PUBLIC_DD_VERSION_FRONTEND: ${FRONTEND_VERSION:-1.0.0}
+        NEXT_PUBLIC_DD_SERVICE_FRONTEND: store-frontend
         NEXT_PUBLIC_DD_SITE: ${DD_SITE}
-        NEXT_PUBLIC_DD_ENV: ${DD_ENV}
+        NEXT_PUBLIC_DD_ENV_FRONTEND: ${DD_ENV_FRONTEND}
         NEXT_PUBLIC_DD_APPLICATION_ID: ${RUM_APPLICATION_ID}
         NEXT_PUBLIC_DD_CLIENT_TOKEN: ${RUM_CLIENT_TOKEN}
     healthcheck:
@@ -51,7 +52,7 @@ services:
     environment:
       # Datadog Agent Configuration
       - DD_VERSION=${FRONTEND_VERSION-1.0.0}
-      - DD_SERVICE=${DD_SERVICE-store-frontend}
+      - DD_SERVICE=store-frontend
       - DD_AGENT_HOST=dd-agent
       - DD_LOGS_INJECTION=true
       - DD_RUNTIME_METRICS_ENABLED=true
@@ -61,20 +62,15 @@ services:
       - DD_API_KEY=${DD_API_KEY}
       - DD_APP_KEY=${DD_APP_KEY}
       - DATADOG_API_KEY=${DD_API_KEY}
-      - DD_ENV=${DD_ENV}
+      - DD_ENV=${DD_ENV_FRONTEND}
       - DD_HOSTNAME=${DD_HOSTNAME}
       # RUM Configuration (NEXT_PUBLIC_ variables)
       - NEXT_PUBLIC_DD_SITE=${DD_SITE}
       - NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend
-      - NEXT_PUBLIC_DD_ENV=${DD_ENV}
+      - NEXT_PUBLIC_DD_ENV_FRONTEND=${DD_ENV_FRONTEND}
       - NEXT_PUBLIC_DD_APPLICATION_ID=${RUM_APPLICATION_ID}
       - NEXT_PUBLIC_DD_CLIENT_TOKEN=${RUM_CLIENT_TOKEN}
       - NEXT_PUBLIC_DD_VERSION_FRONTEND=${FRONTEND_VERSION}
-      # Application URL
-      - STOREDOG_URL=https://${HOSTNAME}-80-${INSTRUQT_PARTICIPANT_ID}.env.play.instruqt.com
-      # Database Configuration
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
     labels:
       com.datadoghq.ad.logs: '[{"source": "nodejs", "service": "store-frontend", "auto_multi_line_detection":true }]'
   backend:
@@ -99,7 +95,7 @@ services:
     environment:
       - DB_HOST=postgres 
       - DD_AGENT_HOST=dd-agent
-      - DD_VERSION=${DD_VERSION_BACKEND-1.0.0}
+      - DD_VERSION=1.0.0
       - DD_SERVICE=store-backend
       - DD_ENV=${DD_ENV}
       - DD_LOGS_INJECTION=true
@@ -110,7 +106,7 @@ services:
       com.datadoghq.ad.logs: '[{"source": "ruby", "service": "store-backend",  "auto_multi_line_detection":true }]'
       com.datadoghq.tags.env: '${DD_ENV}'
       com.datadoghq.tags.service: 'store-backend'
-      com.datadoghq.tags.version: '${DD_VERSION_BACKEND-1.0.0}'
+      com.datadoghq.tags.version: '1.0.0'
   worker:
     build:
       context: ./services/backend
@@ -130,7 +126,7 @@ services:
       - WORKER=true
       - DD_AGENT_HOST=dd-agent
       - DD_SERVICE=store-worker
-      - DD_VERSION=${DD_VERSION_BACKEND:-1.0.0}
+      - DD_VERSION=1.0.0
       - DD_LOGS_INJECTION=true
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
@@ -140,7 +136,7 @@ services:
       com.datadoghq.ad.logs: '[{"source": "ruby", "service": "storedog-worker",  "auto_multi_line_detection":true }]'
       com.datadoghq.tags.env: '${DD_ENV}'
       com.datadoghq.tags.service: 'store-worker'
-      com.datadoghq.tags.version: '${DD_VERSION_BACKEND-1.0.0}'
+      com.datadoghq.tags.version: '1.0.0'
   discounts:
     build:
       context: ./services/discounts
@@ -163,7 +159,7 @@ services:
       - DD_AGENT_HOST=dd-agent
       - DD_LOGS_INJECTION=true
       - DD_PROFILING_ENABLED=true
-      - DD_VERSION=${DD_VERSION_DISCOUNTS-1.0.0}
+      - DD_VERSION=1.0.0
       - DD_SERVICE=store-discounts
       - DD_ENV=${DD_ENV}
     volumes:
@@ -174,7 +170,7 @@ services:
       com.datadoghq.ad.logs: '[{"source": "python", "service": "store-discounts"}]'
       com.datadoghq.tags.env: '${DD_ENV}'
       com.datadoghq.tags.service: 'store-discounts'
-      com.datadoghq.tags.version: '${DD_VERSION_DISCOUNTS-1.0.0}'
+      com.datadoghq.tags.version: '1.0.0'
   ads:
     build:
       context: ./services/ads/java
@@ -183,7 +179,7 @@ services:
     environment:
       - DD_AGENT_HOST=dd-agent
       - DD_SERVICE=store-ads
-      - DD_VERSION=${DD_VERSION_ADS-1.0.0}
+      - DD_VERSION=1.0.0
       - DD_ENV=${DD_ENV}
       - DD_LOGS_INJECTION=true
       - DD_PROFILING_ENABLED=true
@@ -195,7 +191,7 @@ services:
       com.datadoghq.ad.logs: '[{"source": "java", "service": "store-ads"}]'
       com.datadoghq.tags.env: '${DD_ENV}'
       com.datadoghq.tags.service: 'store-ads'
-      com.datadoghq.tags.version: '${DD_VERSION_ADS-1.0.0}'
+      com.datadoghq.tags.version: '1.0.0'
   service-proxy:
     image: ghcr.io/datadog/storedog/nginx:1.4.0
     restart: always
@@ -213,7 +209,7 @@ services:
     environment:
       - DD_AGENT_HOST=dd-agent
       - DD_SERVICE=service-proxy
-      - DD_VERSION=${DD_VERSION_NGINX:-1.0.0}
+      - DD_VERSION=1.0.0
     labels:
       com.datadoghq.ad.logs: '[{"source": "nginx"}]'
       com.datadoghq.ad.check_names: '["nginx"]'
@@ -236,11 +232,11 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - DD_SERVICE=postgres
-      - DD_VERSION=${DD_VERSION_POSTGRES-15}
+      - DD_VERSION=15
     labels:
       com.datadoghq.tags.env: '${DD_ENV}'
       com.datadoghq.tags.service: 'postgres'
-      com.datadoghq.tags.version: '${DD_VERSION_POSTGRES-15}'
+      com.datadoghq.tags.version: '15'
       com.datadoghq.ad.check_names: '["postgres"]'
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":5432, "username":"datadog", "password":"datadog"}]'
@@ -260,7 +256,7 @@ services:
     labels:
       com.datadoghq.tags.env: '${DD_ENV}'
       com.datadoghq.tags.service: 'redis'
-      com.datadoghq.tags.version: '${DD_VERSION_REDIS-6.2}'
+      com.datadoghq.tags.version: '6.2'
       com.datadoghq.ad.check_names: '["redisdb"]'
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":6379}]'
