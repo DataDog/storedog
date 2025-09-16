@@ -18,6 +18,8 @@ spec:
       appSecret:
         secretName: datadog-secret
         keyName: app-key
+    tags:
+      - "env:storedog-k8s"
   features:
     logCollection: # Logs
       enabled: true
