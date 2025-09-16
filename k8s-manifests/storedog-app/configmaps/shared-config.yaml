@@ -18,3 +18,4 @@ data:
   NEXT_PUBLIC_SPREE_CLIENT_HOST: /services/backend
   NEXT_PUBLIC_SPREE_IMAGE_HOST: /services/backend
   NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN: service-proxy
+  NEXT_PUBLIC_DD_ENV: storedog-k8s
