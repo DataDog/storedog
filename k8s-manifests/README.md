@@ -154,7 +154,7 @@ export DD_ENV=development
 ```bash
 helm repo add datadog https://helm.datadoghq.com
 helm repo update
-helm install my-datadog-operator datadog/datadog-operator
+helm install datadog-operator datadog/datadog-operator
 ```
 
 2. Create a Kubernetes secret with your Datadog API and app keys:
