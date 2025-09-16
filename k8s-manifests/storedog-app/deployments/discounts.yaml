@@ -14,15 +14,19 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: discounts
+  labels:
+    app: store-discounts
+    team: discounts
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: discounts
+      app: store-discounts
   template:
     metadata:
       labels:
-        app: discounts
+        app: store-discounts
+        team: discounts
       annotations:
         ad.datadoghq.com/discounts.logs: '[{"source": "python"}]'
     spec:
@@ -32,7 +36,7 @@ spec:
             path: /var/run/datadog/
       initContainers:
         - name: wait-for-db
-          image: busybox
+          image: busybox:1.37.0
           command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done;']
       containers:
         - name: discounts
@@ -58,8 +62,6 @@ spec:
                   key: POSTGRES_USER
             - name: POSTGRES_HOST
               value: postgres
-            - name: DD_ENV
-              value: ${DD_ENV}
             - name: DD_SERVICE
               value: store-discounts
             - name: DD_VERSION
