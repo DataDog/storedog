@@ -42,6 +42,7 @@ services:
         condition: service_healthy
     volumes:
       # Mount only specific files that need to be edited during the lab
+      - ./services/frontend/pages/_app.tsx:/app/pages/_app.tsx
       - ./services/frontend/pages/about-us.tsx:/app/pages/about-us.tsx
       - ./services/frontend/components/common/Ad/Ad.tsx:/app/components/common/Ad/Ad.tsx
       - ./services/frontend/components/cart/CartSidebarView/CartSidebarView.tsx:/app/components/cart/CartSidebarView/CartSidebarView.tsx

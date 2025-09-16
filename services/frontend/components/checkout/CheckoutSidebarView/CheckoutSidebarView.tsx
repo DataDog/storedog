@@ -91,15 +91,11 @@ const CheckoutSidebarView: FC = () => {
       // call discounts service
       const res = await fetch(discountCodeUrl)
 
-      if (!res.ok) {
-        const error = await res.json()
-        throw error
-      }
-
       const discount = await res.json()
 
-      if (discount?.error) {
-        throw discount.error
+      if (discount.status === 0) {
+        console.log('Discount not found')
+        return
       }
 
       await applyDiscount('FREESHIP')
