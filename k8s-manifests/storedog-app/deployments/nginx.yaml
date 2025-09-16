@@ -34,8 +34,8 @@ spec:
         ad.datadoghq.com/service-proxy.checks: |
           {
             "nginx": {
-            "init_config": {},
-            "instances": [{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]
+              "init_config": {},
+              "instances": [{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]
             }
           }
     spec:
