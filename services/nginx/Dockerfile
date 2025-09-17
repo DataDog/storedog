@@ -4,7 +4,7 @@ FROM nginx:$NGINX_VERSION
 
 # Accept the architecture from Buildx
 ARG TARGETARCH
-ARG DATADOG_VERSION=v1.6.2
+ARG DATADOG_VERSION=v1.8.0
 
 RUN apt-get update \
   && apt-get install -y gettext-base curl \
