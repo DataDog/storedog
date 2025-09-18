@@ -152,7 +152,6 @@ ads:
       - dd-agent
     environment:
       - FLASK_APP=ads.py
-      - FLASK_DEBUG=0
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_HOST=postgres

@@ -48,8 +48,6 @@ spec:
               value: "discounts.py"
             - name: DISCOUNTS_PORT
               value: "2814"
-            - name: FLASK_DEBUG
-              value: "0"
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
