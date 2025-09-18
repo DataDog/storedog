@@ -142,7 +142,6 @@ services:
       - dd-agent
     environment:
       - FLASK_APP=discounts.py
-      - FLASK_DEBUG=0
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_HOST=postgres
