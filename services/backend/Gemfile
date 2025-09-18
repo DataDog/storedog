@@ -99,6 +99,6 @@ gem 'net-imap'
 gem 'lograge'
 
 # monitoring
-gem 'datadog', '~> 2.20.0', require: 'datadog/auto_instrument'
+gem 'datadog', '~> 2.21.0', require: 'datadog/auto_instrument'
 # needed for runtime metrics
 gem 'dogstatsd-ruby', '~> 5.7.1', require: 'datadog/statsd'
