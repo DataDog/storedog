@@ -28,7 +28,7 @@ spec:
   template:
     metadata:
       labels:
-        app: postgres
+        app: store-db
         team: database
         tags.datadoghq.com/service: store-db
         tags.datadoghq.com/version: "15.0"
