@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: ads
+  name: ads-java
 spec:
   ports:
     - port: 3030
@@ -13,7 +13,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ads
+  name: ads-java
   labels:
     app: store-ads-java
     team: advertisements
@@ -35,11 +35,26 @@ spec:
           hostPath:
             path: /var/run/datadog/
       containers:
-        - name: ads
+        - name: ads-java
           image: ${REGISTRY_URL}/ads-java:${SD_TAG}
           ports:
             - containerPort: 3030
           env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: storedog-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: POSTGRES_USER
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: DB_HOST
             - name: DD_SERVICE
               value: store-ads
             - name: DD_VERSION
