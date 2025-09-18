@@ -14,7 +14,7 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@datadog/browser-rum": "^6.18.0",
+    "@datadog/browser-rum": "^6.19.0",
     "@radix-ui/react-dropdown-menu": "^0.1.6",
     "@react-spring/web": "^9.4.1",
     "autoprefixer": "^10.4.2",
