@@ -8,7 +8,7 @@ spec:
       targetPort: 2814
       name: http
   selector:
-    app: discounts
+    app: store-discounts
 ---
 apiVersion: apps/v1
 kind: Deployment

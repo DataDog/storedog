@@ -8,7 +8,7 @@ spec:
       targetPort: 4000
       name: http
   selector:
-    app: backend
+    app: store-backend
 ---
 apiVersion: apps/v1
 kind: Deployment
