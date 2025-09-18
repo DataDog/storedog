@@ -1,55 +1,45 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: discounts
+  name: ads
 spec:
   ports:
-    - port: 2814
-      targetPort: 2814
+    - port: 3030
+      targetPort: 3030
       name: http
   selector:
-    app: store-discounts
+    app: store-ads-python
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: discounts
+  name: ads-python
   labels:
-    app: store-discounts
-    team: discounts
+    app: store-ads-python
+    team: advertisements
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: store-discounts
+      app: store-ads-python
   template:
     metadata:
       labels:
-        app: store-discounts
-        team: discounts
+        app: store-ads-python
+        team: advertisements
       annotations:
-        ad.datadoghq.com/discounts.logs: '[{"source": "python"}]'
+        ad.datadoghq.com/ads-python.logs: '[{"source": "python"}]'
     spec:
       volumes:
         - name: apmsocketpath
           hostPath:
             path: /var/run/datadog/
-      initContainers:
-        - name: wait-for-db
-          image: busybox:1.37.0
-          command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done;']
       containers:
-        - name: discounts
-          image: ${REGISTRY_URL}/discounts:${SD_TAG}
+        - name: ads-python
+          image: ${REGISTRY_URL}/ads:${SD_TAG}
           ports:
-            - containerPort: 2814
+            - containerPort: 3030
           env:
-            - name: FLASK_APP
-              value: "discounts.py"
-            - name: DISCOUNTS_PORT
-              value: "2814"
-            - name: FLASK_DEBUG
-              value: "0"
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -66,9 +56,9 @@ spec:
                   name: storedog-config
                   key: DB_HOST
             - name: DD_SERVICE
-              value: store-discounts
+              value: store-ads-python
             - name: DD_VERSION
-              value: ${DD_VERSION_DISCOUNTS}
+              value: ${DD_VERSION_ADS}
             - name: DD_LOGS_INJECTION
               value: "true"
             - name: DD_RUNTIME_METRICS_ENABLED
@@ -81,11 +71,11 @@ spec:
               value: "true"
           resources:
             requests:
-              memory: "128Mi"
-              cpu: "100m"
-            limits:
               memory: "256Mi"
               cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "400m"
           volumeMounts:
             - name: apmsocketpath
               mountPath: /var/run/datadog
