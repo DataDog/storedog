@@ -8,7 +8,7 @@ spec:
       targetPort: 3030
       name: http
   selector:
-    app: ads
+    app: store-ads-java
 ---
 apiVersion: apps/v1
 kind: Deployment
