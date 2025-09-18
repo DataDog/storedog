@@ -46,10 +46,6 @@ spec:
           ports:
             - containerPort: 7595
           env:
-            - name: FLASK_APP
-              value: "dbm.py"
-            - name: FLASK_DEBUG
-              value: "0"
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -61,7 +57,10 @@ spec:
                   name: storedog-config
                   key: POSTGRES_USER
             - name: POSTGRES_HOST
-              value: postgres
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: DB_HOST
             - name: DD_SERVICE
               value: storedog-dbm
             - name: DD_VERSION
