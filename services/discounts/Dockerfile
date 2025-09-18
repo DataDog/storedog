@@ -42,4 +42,4 @@ ENV DISCOUNTS_PORT=${DISCOUNTS_PORT}
 # required to get logs out of the container
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
-CMD ["sh", "-c", "ddtrace-run flask run --port=${DISCOUNTS_PORT} --host=0.0.0.0"]
+CMD ["sh", "-c", "ddtrace-run flask run --port=2814 --host=0.0.0.0"]
