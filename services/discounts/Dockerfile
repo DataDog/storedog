@@ -25,7 +25,6 @@ USER root
 
 # Default environment variables
 ENV FLASK_APP=discounts.py \
-    FLASK_DEBUG=0 \
     POSTGRES_HOST=postgres \
     POSTGRES_PORT=5432 \
     POSTGRES_PASSWORD=postgres \
