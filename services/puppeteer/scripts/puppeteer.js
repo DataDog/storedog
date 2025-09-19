@@ -1,4 +1,5 @@
 const puppeteer = require('puppeteer');
+const { setTimeout: sleep } = require('node:timers/promises');
 
 const startUrl = process.env.STOREDOG_URL;
 console.log('starting...');
@@ -7,6 +8,25 @@ if (!startUrl) {
   console.log('No start URL provided');
   process.exit(1);
 }
+
+// Memory monitoring function
+const logMemoryUsage = (sessionName) => {
+  const used = process.memoryUsage();
+  console.log(`${sessionName} Memory Usage:`, {
+    rss: `${Math.round(used.rss / 1024 / 1024 * 100) / 100} MB`,
+    heapTotal: `${Math.round(used.heapTotal / 1024 / 1024 * 100) / 100} MB`,
+    heapUsed: `${Math.round(used.heapUsed / 1024 / 1024 * 100) / 100} MB`,
+    external: `${Math.round(used.external / 1024 / 1024 * 100) / 100} MB`,
+  });
+};
+
+// Force garbage collection if available
+const forceGC = () => {
+  if (global.gc) {
+    global.gc();
+    console.log('Garbage collection triggered');
+  }
+};
 
 const getNewBrowser = async () => {
   try {
@@ -20,6 +40,24 @@ const getNewBrowser = async () => {
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
+        // Memory optimization flags
+        '--memory-pressure-off',
+        '--max_old_space_size=512',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-features=TranslateUI',
+        '--disable-ipc-flooding-protection',
+        '--disable-background-networking',
+        '--disable-sync',
+        '--disable-default-apps',
+        '--disable-extensions',
+        '--disable-plugins',
+        '--disable-images', // Disable image loading to save memory
+        '--no-first-run',
+        '--no-default-browser-check',
+        '--disable-gpu',
+        '--disable-software-rasterizer',
       ],
     });
     const browserVersion = await browser.version();
@@ -123,12 +161,14 @@ const randomlyCloseSession = async (browser, page, skipSessionClose) => {
 // select cool bits product on products page
 const selectSunsetBits = async (page) => {
   console.log('In selectSunsetBits on page', await page.title());
-  await page.waitForTimeout(8000);
+  // Wait for page to be fully loaded instead of fixed timeout
+  await page.waitForFunction(() => document.readyState === 'complete');
   let productAriaLabel = 'Sunset Bits';
   const selector = `[aria-label="${productAriaLabel}"]`;
 
   await Promise.all([page.waitForNavigation(), page.click(selector)]);
-  await page.waitForTimeout(2000);
+  // Short delay for UI to settle
+  await sleep(1000);
   const pageTitle = await page.title();
   console.log(`"${pageTitle}" loaded`);
   return;
@@ -137,7 +177,8 @@ const selectSunsetBits = async (page) => {
 // select a random product on the home page
 const selectHomePageProduct = async (page) => {
   console.log('In selectHomePageProduct on page', await page.title());
-  await page.waitForTimeout(2000);
+  // Wait for products to load instead of fixed timeout
+  await page.waitForSelector('.product-item', { visible: true });
   const allProducts = await page.$$('.product-item');
   const randomProductIndex = Math.floor(Math.random() * allProducts.length);
   const randomProduct = allProducts[randomProductIndex];
@@ -149,7 +190,8 @@ const selectHomePageProduct = async (page) => {
   const selector = `[aria-label="${productAriaLabel}"]`;
 
   await Promise.all([page.waitForNavigation(), page.click(selector)]);
-  await page.waitForTimeout(2000);
+  // Short delay for UI to settle
+  await sleep(1000);
   const pageTitle = await page.title();
   console.log(`"${pageTitle}" loaded`);
   return;
@@ -183,7 +225,8 @@ const addToCart = async (page) => {
     await page.select(variantSelector, randomVariantValue);
 
     console.log('selected variant', randomVariantValue);
-    await page.waitForTimeout(2000);
+    // Wait for variant selection to take effect
+    await sleep(1000);
   }
 
   await page.click('#add-to-cart-button');
@@ -210,9 +253,9 @@ const selectRelatedProduct = async (page) => {
 
 const selectProduct = async (page) => {
   const pageUrl = await page.url();
-  await page.waitForTimeout(2500);
+  // Wait for product grid to be visible instead of fixed timeout
   let selector = '.product-grid';
-  await page.waitForSelector(selector);
+  await page.waitForSelector(selector, { visible: true });
   // does selector exist
   const productGrid = await page.$(selector);
   if (!productGrid) {
@@ -248,7 +291,8 @@ const selectProduct = async (page) => {
     console.log('navigation failed...');
   }
 
-  await page.waitForTimeout(2500);
+  // Short delay for UI to settle
+  await sleep(1000);
 
   // if it didn't go anywhere, try again
   const newPageUrl = await page.url();
@@ -269,7 +313,7 @@ const selectProduct = async (page) => {
       throw new Error('Frustrated and closing browser');
     }
 
-    await page.waitForTimeout(500);
+    await sleep(500);
     console.log('clicking on the product title this time');
     // check if element is visible
     const productTitle = await page.$(
@@ -291,7 +335,7 @@ const selectProduct = async (page) => {
     return;
   } else {
     console.log('navigation fulfilled, continuing');
-    await page.waitForTimeout(2500);
+    await sleep(1000);
     const pageTitle = await page.title();
     console.log(`"${pageTitle}" loaded`);
     return;
@@ -328,8 +372,8 @@ const goToFooterPage = async (page) => {
       page.waitForNavigation(),
     ]);
 
-    // wait 2500ms and go back
-    await page.waitForTimeout(2500);
+    // Short delay before going back
+    await sleep(1000);
     await Promise.all([page.goBack(), page.waitForNavigation()]);
   } catch (e) {
     console.error(e);
@@ -359,7 +403,7 @@ const applyDiscountCode = async (discountCode, page) => {
     console.error(e);
   }
 
-  await page.waitForTimeout(2500);
+  await sleep(1000);
 };
 
 const useDiscountCode = async (page) => {
@@ -370,7 +414,8 @@ const useDiscountCode = async (page) => {
       visible: true,
     });
 
-    await page.waitForTimeout(2500);
+    // Short delay before entering discount code
+    await sleep(1000);
 
     // enter discount code out of random array
     const discountCodes = [
@@ -389,7 +434,7 @@ const useDiscountCode = async (page) => {
 
     await applyDiscountCode(discountCode, page);
 
-    await page.waitForTimeout(2000);
+    await sleep(1000);
 
     if (Math.floor(Math.random * 10) + 1 < 7) {
       console.log(`trying discount code ${discountCode} again...`);
@@ -400,7 +445,7 @@ const useDiscountCode = async (page) => {
     console.error(e);
   }
 
-  await page.waitForTimeout(1000);
+  await sleep(500);
 
   return;
 };
@@ -413,13 +458,12 @@ const checkout = async (page) => {
   });
 
   await Promise.all([
-    page.waitForTimeout(1000),
+    sleep(500),
 
     page.click('button[data-dd-action-name="Toggle Cart"]'),
   ]);
 
-  await page.waitForTimeout(8000);
-
+  // Wait for cart to open instead of fixed timeout
   await page.waitForSelector(
     'button[data-dd-action-name="Proceed to Checkout"]',
     {
@@ -430,18 +474,18 @@ const checkout = async (page) => {
   console.log('opened cart...');
 
   await Promise.all([
-    page.waitForTimeout(5000),
+    sleep(2000),
 
     page.click('button[data-dd-action-name="Proceed to Checkout"]'),
   ]);
 
-  await page.waitForTimeout(8000);
-
-  page.waitForSelector('button[data-dd-action-name="Confirm Purchase"]', {
+  // Wait for checkout page to load
+  await page.waitForSelector('button[data-dd-action-name="Confirm Purchase"]', {
     visible: true,
   });
 
-  await page.waitForTimeout(8000);
+  // Wait for checkout form to be ready
+  await sleep(2000);
   console.log('getting sidebar...');
   const sidebarSelector = '#sidebar';
   const sidebarElement = await page.$(sidebarSelector);
@@ -464,12 +508,13 @@ const checkout = async (page) => {
       );
 
       await Promise.all([
-        page.waitForTimeout(2000),
+        sleep(1000),
 
         page.click('button[data-dd-action-name="Confirm Purchase"]'),
       ]);
 
-      await page.waitForTimeout(10000);
+      // Wait for purchase confirmation
+      await page.waitForSelector('.purchase-confirmed-msg', { visible: true });
 
       const selector = '.purchase-confirmed-msg';
 
@@ -479,18 +524,19 @@ const checkout = async (page) => {
 
       console.log('Checkout complete');
 
-      await page.waitForTimeout(6000);
+      await sleep(3000);
     }
   } else {
     console.log('proceeded to checkout...');
 
     await Promise.all([
-      page.waitForTimeout(5000),
+      sleep(2000),
 
       page.click('button[data-dd-action-name="Confirm Purchase"]'),
     ]);
 
-    await page.waitForTimeout(10000);
+    // Wait for purchase confirmation
+    await page.waitForSelector('.purchase-confirmed-msg', { visible: true });
 
     const selector = '.purchase-confirmed-msg';
 
@@ -500,7 +546,7 @@ const checkout = async (page) => {
 
     console.log('Checkout complete');
 
-    await page.waitForTimeout(6000);
+    await sleep(3000);
   }
 
   return;
@@ -509,9 +555,14 @@ const checkout = async (page) => {
 const mainSession = async () => {
   const browser = await getNewBrowser();
   let selector;
+  let page = null;
 
   try {
-    const page = await browser.newPage();
+    page = await browser.newPage();
+    
+    // Set memory-efficient page settings
+    await page.setCacheEnabled(false);
+    await page.setJavaScriptEnabled(true);
 
     await page.setUserAgent(
       `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36`
@@ -537,7 +588,7 @@ const mainSession = async () => {
     console.log(`"${pageTitle}" loaded`);
 
     await selectHomePageProduct(page);
-    await page.waitForTimeout(2000);
+    await sleep(1000);
     await addToCart(page);
 
     // maybe purchase that extra product
@@ -555,7 +606,7 @@ const mainSession = async () => {
       await logo.evaluate((el) => el.click());
       await page.waitForNavigation();
       await selectHomePageProduct(page);
-      await page.waitForTimeout(2000);
+      await sleep(1000);
       await addToCart(page);
     }
 
@@ -566,7 +617,7 @@ const mainSession = async () => {
       await logo.evaluate((el) => el.click());
       await page.waitForNavigation();
       await selectHomePageProduct(page);
-      await page.waitForTimeout(4000);
+      await sleep(2000);
       await addToCart(page);
     }
 
@@ -577,14 +628,14 @@ const mainSession = async () => {
       await logo.evaluate((el) => el.click());
       await page.waitForNavigation();
       await selectHomePageProduct(page);
-      await page.waitForTimeout(4000);
+      await sleep(2000);
       await addToCart(page);
     }
 
     await goToFooterPage(page);
 
     await checkout(page);
-    await page.waitForTimeout(2500);
+    await sleep(1000);
     const url = await page.url();
     await page.goto(`${url}?end_session=true`, {
       waitUntil: 'domcontentloaded',
@@ -594,8 +645,15 @@ const mainSession = async () => {
     console.log(`First session failed: ${err}`);
   } finally {
     console.log('closing browser');
-    await browser.close();
-    if (browser && browser.process() != null) browser.process().kill('SIGINT');
+    try {
+      if (page) {
+        await page.close();
+      }
+      await browser.close();
+      if (browser && browser.process() != null) browser.process().kill('SIGINT');
+    } catch (cleanupError) {
+      console.error('Error during cleanup:', cleanupError);
+    }
   }
 };
 
@@ -656,9 +714,9 @@ const secondSession = async () => {
 
     await goToFooterPage(page);
 
-    await page.waitForTimeout(3000);
+    await sleep(1500);
     await checkout(page);
-    await page.waitForTimeout(3000);
+    await sleep(1500);
     const url = await page.url();
     await page.goto(`${url}?end_session=true`, {
       waitUntil: 'domcontentloaded',
@@ -713,7 +771,7 @@ const thirdSession = async () => {
     const pageUrl = await page.url();
     console.log(`"${pageUrl}" loaded`);
 
-    await page.waitForTimeout(2500);
+    await sleep(1000);
 
     // select a product
     await selectProduct(page);
@@ -724,9 +782,9 @@ const thirdSession = async () => {
     await addToCart(page);
 
     console.log('moving on to checkout');
-    await page.waitForTimeout(3000);
+    await sleep(1500);
     await checkout(page);
-    await page.waitForTimeout(3000);
+    await sleep(1500);
     // go to home page with end session param
     const url = await page.url();
     const endUrl = `${url.split('?')[0]}?end_session=true`;
@@ -792,9 +850,9 @@ const fourthSession = async () => {
     await addToCart(page);
 
     console.log('moving on to checkout');
-    await page.waitForTimeout(3000);
+    await sleep(1500);
     await checkout(page);
-    await page.waitForTimeout(3000);
+    await sleep(1500);
     const url = await page.url();
     await page.goto(`${url}?end_session=true`, {
       waitUntil: 'domcontentloaded',
@@ -809,30 +867,39 @@ const fourthSession = async () => {
   }
 };
 
-for (let i = 0; i < 8; i++) {
-  setTimeout(() => {
-    // randomly select a session to run
-    const session = Math.floor(Math.random() * 4);
-    console.log('running session', session + 1);
-    switch (session) {
-      case 0:
-        (() => mainSession())();
-        break;
-      case 1:
-        (() => secondSession())();
-        break;
-      case 2:
-        (() => thirdSession())();
-        break;
-      case 3:
-        (() => fourthSession())();
-        break;
-      default:
-        (() => mainSession())();
-        break;
+// Optimized concurrent session management with memory monitoring
+const runSessions = async () => {
+  const sessions = [mainSession, secondSession, thirdSession, fourthSession];
+  const maxConcurrent = 4; // Limit concurrent sessions to reduce memory pressure
+  const sessionPromises = [];
+  
+  for (let i = 0; i < 8; i++) {
+    // Wait if we have too many concurrent sessions
+    if (sessionPromises.length >= maxConcurrent) {
+      await Promise.race(sessionPromises);
+      // Remove completed sessions
+      sessionPromises.splice(0, sessionPromises.length);
     }
-  }, 1000 * i);
-}
+    
+    setTimeout(async () => {
+      const session = Math.floor(Math.random() * 4);
+      console.log('running session', session + 1);
+      logMemoryUsage(`Before Session ${session + 1}`);
+      
+      try {
+        await sessions[session]();
+        logMemoryUsage(`After Session ${session + 1}`);
+        forceGC(); // Trigger garbage collection after each session
+      } catch (error) {
+        console.error(`Session ${session + 1} failed:`, error);
+        logMemoryUsage(`Failed Session ${session + 1}`);
+      }
+    }, 1000 * i);
+  }
+};
+
+// Start the optimized session runner
+runSessions();
 
 // (() => mainSession())();
 // (() => secondSession())();

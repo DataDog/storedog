@@ -1,4 +1,4 @@
-FROM ghcr.io/puppeteer/puppeteer:20.0.0
+FROM ghcr.io/puppeteer/puppeteer:24.22.0
 
 # Set default environment variables
 ENV STOREDOG_URL=http://service-proxy:80 \
