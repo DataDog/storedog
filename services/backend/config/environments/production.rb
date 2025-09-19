@@ -144,14 +144,6 @@ Rails.application.configure do
     config.logger    = ActiveSupport::TaggedLogging.new(logger)
   end
 
-  # papertrail config
-  if ENV['PAPERTRAIL_HOSTNAME'].present? && ENV['PAPERTRAIL_REMOTE_PORT'].present?
-    remote_syslog_logger = RemoteSyslogLogger.new(ENV['PAPERTRAIL_HOSTNAME'],
-                                                  ENV['PAPERTRAIL_REMOTE_PORT'],
-                                                  program: "spree-#{ENV['RAILS_ENV']}")
-    config.logger = ActiveSupport::TaggedLogging.new remote_syslog_logger
-  end
-
   # sendgrid mail
   if ENV['SENDGRID_API_KEY'].present?
     config.action_mailer.delivery_method = :sendgrid_actionmailer
