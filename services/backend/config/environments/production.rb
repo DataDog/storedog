@@ -77,6 +77,13 @@ Rails.application.configure do
   # Log to a dedicated file
   config.lograge.logger = ActiveSupport::Logger.new(STDOUT)
 
+  # Log configuration for Datadog
+  # disable ActiveSupport::TaggedLogging to prevent plain-text TaggedLogging tags from polluting the log lines.
+  config.logger = ActiveSupport::Logger.new(STDOUT)
+  config.active_job.logger = ActiveSupport::Logger.new(STDOUT)
+  config.active_job.lograge = ActiveSupport::Logger.new(STDOUT)
+
+
   # Use a different cache store in production.
   if ENV['MEMCACHEDCLOUD_SERVERS'].present?
     memcached_config = {
