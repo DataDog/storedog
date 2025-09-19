@@ -8,9 +8,6 @@ spec:
     - port: 80
       targetPort: 80
       name: http
-    - port: 443
-      targetPort: 443
-      name: https
   selector:
     app: service-proxy
 ---
@@ -45,8 +42,6 @@ spec:
             }
           }
     spec:
-      hostNetwork: true
-      dnsPolicy: ClusterFirstWithHostNet
       volumes:
         - name: apmsocketpath
           hostPath:
@@ -56,23 +51,22 @@ spec:
           image: ${REGISTRY_URL}/nginx:${SD_TAG}
           ports:
             - containerPort: 80
-            - containerPort: 443
           env:
             - name: NGINX_RESOLVER
               value: "kube-dns.kube-system.svc.cluster.local"
-            - name: ENABLE_SSL
-              value: "true"
-            - name: DD_ENV
-              valueFrom:
-                configMapKeyRef:
-                  name: storedog-config
-                  key: DD_ENV
             - name: DD_SERVICE
               value: service-proxy
             - name: DD_VERSION
               value: ${DD_VERSION_NGINX}
             - name: DD_TRACE_AGENT_URL
               value: 'unix:///var/run/datadog/apm.socket'
+            # A/B testing ads services (optional)
+            - name: ADS_A_UPSTREAM
+              value: "ads-java:3030"
+            - name: ADS_B_UPSTREAM
+              value: "ads-python:3030"
+            - name: ADS_B_PERCENT
+              value: "50"
           resources:
             requests:
               memory: "128Mi"
