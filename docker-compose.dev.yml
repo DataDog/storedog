@@ -59,7 +59,7 @@ services:
       - NEXT_PUBLIC_SPREE_IMAGE_HOST=${NEXT_PUBLIC_SPREE_IMAGE_HOST:-/services/backend}
       - NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN=${NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN:-service-proxy}
     labels:
-      com.datadoghq.ad.logs: '[{"source": "nodejs", "auto_multi_line_detection":true }]'
+      com.datadoghq.ad.logs: '[{"source": "nodejs", "auto_multi_line_detection": true }]'
 
   # Backend service (Ruby on Rails/Spree)
   backend:
@@ -92,7 +92,7 @@ services:
       - DD_PROFILING_ALLOCATION_ENABLED=true
       - DD_PROFILING_TIMELINE_ENABLED=true
     labels:
-      com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection":true }]'
+      com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection": true }]'
 
   # Background job processor (Sidekiq)
   worker:
@@ -127,7 +127,7 @@ services:
       - DD_PROFILING_TIMELINE_ENABLED=true
       - DD_PROFILING_ALLOCATION_ENABLED=true
     labels:
-      com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection":true }]'
+      com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection": true }]'
 
   # Discounts service (Python/Flask)
   discounts:
@@ -219,7 +219,7 @@ services:
       com.datadoghq.ad.check_names: '["postgres"]'
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":5432, "username":"datadog", "password":"datadog"}]'
-      com.datadoghq.ad.logs: '[{"source": "postgresql", "auto_multi_line_detection":true, "path": "/var/log/pg_log/postgresql*.json", "type": "file"}]'
+      com.datadoghq.ad.logs: '[{"source": "postgresql", "auto_multi_line_detection": true, "path": "/var/log/pg_log/postgresql*.json", "type": "file"}]'
 
   # Cache and job queue
   redis:
