@@ -132,7 +132,7 @@ postgres:
       "enabled": true
       }
       }]'
-    com.datadoghq.ad.logs: '[{"source": "postgresql", "service": "postgres", "auto_multi_line_detection":true, "path": "/var/log/pg_log/postgresql*.json", "type": "file"}]'
+    com.datadoghq.ad.logs: '[{"source": "postgresql", "service": "postgres", "auto_multi_line_detection": true, "path": "/var/log/pg_log/postgresql*.json", "type": "file"}]'
 ```
 
 Also update the Datadog agent service definition to include the following environment variable:

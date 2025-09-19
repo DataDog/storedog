@@ -43,7 +43,7 @@ services:
       - NEXT_PUBLIC_DD_ENV=${DD_ENV:-production}
       - NEXT_PUBLIC_DD_VERSION=${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}
     labels:
-      com.datadoghq.ad.logs: '[{"source": "nodejs", "auto_multi_line_detection":true }]'
+      com.datadoghq.ad.logs: '[{"source": "nodejs", "auto_multi_line_detection": true }]'
   backend:
     image: ghcr.io/datadog/storedog/backend:${STOREDOG_IMAGE_VERSION:-latest}
     command: wait-for-it postgres:5432 -- bundle exec ddprofrb exec rails s -b 0.0.0.0 -p 4000 --pid /app/tmp/pids/server.pid
@@ -64,7 +64,7 @@ services:
       - DD_PROFILING_TIMELINE_ENABLED=true
       - DD_PROFILING_ALLOCATION_ENABLED=true
     labels:
-      com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection":true }]'
+      com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection": true }]'
   worker:
     image: ghcr.io/datadog/storedog/backend:${STOREDOG_IMAGE_VERSION:-latest}
     command: wait-for-it postgres:5432 -- bundle exec ddprofrb exec sidekiq -C config/sidekiq.yml
@@ -85,7 +85,7 @@ services:
       - DD_PROFILING_TIMELINE_ENABLED=true
       - DD_PROFILING_ALLOCATION_ENABLED=true
     labels:
-      com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection":true }]'
+      com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection": true }]'
   discounts:
     image: ghcr.io/datadog/storedog/discounts:${STOREDOG_IMAGE_VERSION:-latest}
     command: wait-for-it postgres:5432 -- ddtrace-run flask run --port=2814 --host=0.0.0.0
@@ -162,7 +162,7 @@ services:
       com.datadoghq.ad.check_names: '["postgres"]'
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":5432, "username":"datadog", "password":"datadog"}]'
-      com.datadoghq.ad.logs: '[{"source": "postgresql", "auto_multi_line_detection":true, "path": "/var/log/pg_log/postgresql*.json", "type": "file"}]'
+      com.datadoghq.ad.logs: '[{"source": "postgresql", "auto_multi_line_detection": true, "path": "/var/log/pg_log/postgresql*.json", "type": "file"}]'
   redis:
     image: redis:6.2-alpine
     depends_on:
