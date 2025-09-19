@@ -60,6 +60,13 @@ spec:
               value: ${DD_VERSION_NGINX}
             - name: DD_TRACE_AGENT_URL
               value: 'unix:///var/run/datadog/apm.socket'
+            # A/B testing ads services (optional)
+            - name: ADS_A_UPSTREAM
+              value: "ads-java:3030"
+            - name: ADS_B_UPSTREAM
+              value: "ads-python:3030"
+            - name: ADS_B_PERCENT
+              value: "50"
           resources:
             requests:
               memory: "128Mi"
