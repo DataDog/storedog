@@ -173,7 +173,6 @@ services:
       - storedog-network
     labels:
       com.datadoghq.tags.service: 'redis'
-      com.datadoghq.tags.env: '${DD_ENV:-production}'
       com.datadoghq.tags.version: '${DD_VERSION_REDIS:-6.2}'
       com.datadoghq.ad.check_names: '["redisdb"]'
       com.datadoghq.ad.init_configs: '[{}]'
