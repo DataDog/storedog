@@ -63,8 +63,6 @@ spec:
               value: store-discounts
             - name: DD_VERSION
               value: ${DD_VERSION_DISCOUNTS}
-            - name: DD_LOGS_INJECTION
-              value: "true"
             - name: DD_RUNTIME_METRICS_ENABLED
               value: "true"
             - name: DD_PROFILING_ENABLED

@@ -59,8 +59,6 @@ spec:
               value: store-ads
             - name: DD_VERSION
               value: ${DD_VERSION_ADS}
-            - name: DD_LOGS_INJECTION
-              value: "true"
             - name: DD_RUNTIME_METRICS_ENABLED
               value: "true"
             - name: DD_PROFILING_ENABLED

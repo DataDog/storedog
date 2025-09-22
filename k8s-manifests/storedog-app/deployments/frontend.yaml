@@ -107,8 +107,6 @@ spec:
               value: ${NEXT_PUBLIC_DD_SERVICE_FRONTEND}
             - name: DD_VERSION
               value: ${NEXT_PUBLIC_DD_VERSION_FRONTEND}
-            - name: DD_LOGS_INJECTION
-              value: "true"
             - name: DD_RUNTIME_METRICS_ENABLED
               value: "true"
             - name: DD_PROFILING_ENABLED

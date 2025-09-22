@@ -88,8 +88,6 @@ spec:
               value: store-backend
             - name: DD_VERSION
               value: ${DD_VERSION_BACKEND}
-            - name: DD_LOGS_INJECTION
-              value: "true"
             - name: DD_RUNTIME_METRICS_ENABLED
               value: "true"
             - name: DD_PROFILING_ENABLED
