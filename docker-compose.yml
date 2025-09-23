@@ -30,6 +30,7 @@ services:
       - storedog-network
     environment:
       - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-production}
       - DD_SERVICE=store-frontend-api # used for Next.js API routes
       - DD_VERSION=${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}
       - DD_RUNTIME_METRICS_ENABLED=true
@@ -57,6 +58,7 @@ services:
       - './services/backend:/app'
     environment:
       - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-production}
       - DD_SERVICE=store-backend
       - DD_VERSION=${DD_VERSION_BACKEND:-1.0.0}
       - DD_RUNTIME_METRICS_ENABLED=true
@@ -78,6 +80,7 @@ services:
     environment:
       - WORKER=true
       - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-production}
       - DD_SERVICE=store-worker
       - DD_VERSION=${DD_VERSION_BACKEND:-1.0.0}
       - DD_RUNTIME_METRICS_ENABLED=true
@@ -94,6 +97,7 @@ services:
       - dd-agent
     environment:
       - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-production}
       - DD_SERVICE=store-discounts
       - DD_VERSION=${DD_VERSION_DISCOUNTS:-1.0.0}
       - DD_RUNTIME_METRICS_ENABLED=true
@@ -114,6 +118,7 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_HOST=postgres
       - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-production}
       - DD_SERVICE=store-ads
       - DD_VERSION=${DD_VERSION_ADS:-1.0.0}
       - DD_PROFILING_ENABLED=true
@@ -137,6 +142,7 @@ services:
       - dd-agent
     environment:
       - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-production}
       - DD_SERVICE=service-proxy
       - DD_VERSION=${DD_VERSION_NGINX:-1.28.0}
     labels:

@@ -223,6 +223,7 @@ Run two Ads services and split traffic between them. The amount of traffic sent 
           - POSTGRES_USER=${POSTGRES_USER:-postgres}
           - POSTGRES_HOST=postgres
           - DD_AGENT_HOST=dd-agent
+          - DD_ENV=${DD_ENV:-production}
           - DD_SERVICE=store-ads-python
           - DD_VERSION=${DD_VERSION_ADS_PYTHON:-1.0.0}
         networks:
