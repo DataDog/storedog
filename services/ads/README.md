@@ -171,9 +171,21 @@ ads:
 
 #### Kubernetes
 
-To use the Python ads service, replace the deployment section for `ads` with the following in your `k8s-manifests/storedog-app/deployments/ads.yaml` file:
+To use the Python ads service, replace your entire `k8s-manifests/storedog-app/deployments/ads.yaml` file with the following:
 
 ```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ads
+spec:
+  ports:
+    - port: 3030
+      targetPort: 3030
+      name: http
+  selector:
+    app: store-ads
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -246,5 +258,4 @@ spec:
           volumeMounts:
             - name: apmsocketpath
               mountPath: /var/run/datadog
-
 ```
