@@ -59,6 +59,11 @@ spec:
                 configMapKeyRef:
                   name: storedog-config
                   key: DB_HOST
+            - name: DD_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: DD_ENV
             - name: DD_SERVICE
               value: store-discounts
             - name: DD_VERSION
