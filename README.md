@@ -226,13 +226,16 @@ Run two Ads services and split traffic between them. The amount of traffic sent 
           - DD_ENV=${DD_ENV:-production}
           - DD_SERVICE=store-ads-python
           - DD_VERSION=${DD_VERSION_ADS_PYTHON:-1.0.0}
+          - DD_PROFILING_ENABLED=true
+          - DD_PROFILING_TIMELINE_ENABLED=true
+          - DD_PROFILING_ALLOCATION_ENABLED=true
         networks:
           - storedog-network
         labels:
           com.datadoghq.ad.logs: '[{"source": "python"}]'
     ```
 
-1. Add and set these environment variables to the `service-proxy` service:
+1. Add these environment variables to the `service-proxy` service in the `docker-compose.yml` file:
 
     ```yaml
     environment:
@@ -241,13 +244,17 @@ Run two Ads services and split traffic between them. The amount of traffic sent 
       - ADS_B_PERCENT=${ADS_B_PERCENT:-0}
     ```
 
+    Set the following environment variables:
+
     - `ADS_A_UPSTREAM`: Host and port for the primary (A) ads service (default: `ads:3030`)
     - `ADS_B_UPSTREAM`: Host and port for the secondary (B) ads service (default: `ads-python:3030`)
-    - `ADS_B_PERCENT`: Percentage of traffic to route to the B (Python) ads service (default: `0`). The remainder goes to the A (Java) ads service.
-      - Set to a value between `0` and `100` to control the split.
+    - `ADS_B_PERCENT`: Percentage of traffic to route to the B (Python) ads service (default: `0`). The remainder goes to the A ads (Java) service.
+      - Set a value between `0` and `100` to control the split.
+
 1. Start the app via `docker compose up -d`
 
 ### Feature flags
+
 Some capabilities are hidden behind feature flags, which can be controlled via `services/frontend/site/featureFlags.config.json`. 
 
 > [!NOTE]
@@ -259,6 +266,7 @@ Some capabilities are hidden behind feature flags, which can be controlled via `
 > ```
 
 #### dbm 
+
 Enables a product ticker on the homepage with a long-running query to demonstrate DBM. 
 
 **How to use**:
@@ -271,6 +279,7 @@ Enables a product ticker on the homepage with a long-running query to demonstrat
 You can modify the ticker functionality in `services/frontend/components/common/NavBar.tsx`.
 
 #### error-tracking 
+
 Introduces an exception in the Ads services to demonstrate Error Tracking by setting a header in to a value that is not expected by the Ads service.
 
 **How to use**:
@@ -282,6 +291,7 @@ Introduces an exception in the Ads services to demonstrate Error Tracking by set
 Modify this functionality in `services/frontend/components/common/Ad/Ad.tsx` and respective Ads service being used.
 
 #### api-errors
+
 This introduces random errors that occur in the frontend service's `/api` routes.
 
 **How to use**:
@@ -292,6 +302,7 @@ This introduces random errors that occur in the frontend service's `/api` routes
 Modify this functionality in `services/frontend/pages/api/*`.
 
 #### product-card-frustration
+
 This will swap out the product card component with a version that doesn't have the thumbnails linked to the product page. When paired with the Puppeteer service, this can be used to demonstrate Frustration Signals in RUM.
 
 **How to use**:
@@ -302,6 +313,7 @@ This will swap out the product card component with a version that doesn't have t
 Modify this functionality in `services/frontend/components/Product/ProductCard.tsx` and `services/frontend/components/Product/ProductCard-v2.tsx`.
 
 ## Image publication
+
 Images are stored in GHCR. On PR merges, only the affected services will be pushed to GHCR, using the `latest` tag. For example, if you only made changes to the `backend` service, then only the `backend` Github workflow will trigger and publish `ghcr.io/datadog/storedog/backend:latest`. 
 
 Separately, we tag and publish *all* images when a new release is created with the corresponding release tag e.g. `ghcr.io/datadog/storedog/backend:1.0.1`. New releases are made on an ad-hoc basis, depending on the recent features that are added.
@@ -313,6 +325,7 @@ All of the services in the Storedog application are Dockerized and run in contai
 Below is a breakdown of services and some instructions on how to use them.
 
 ### Ads
+
 There are two advertisement services, the default service is built in Java and there is another option available in Python. These services do the same thing, have the same endpoints, run on the same port (`3030`), and have the same failure modes. These ads are served through the `Ads.tsx` component in the frontend service.
 
 To switch between the Java and Python services, see the instructions in the [Ads service README](./services/ads/README.md).
@@ -341,6 +354,7 @@ sh ./scripts/backup-db.sh
 This will create a new `restore.sql` file in the `services/postgres/db/` directory and get it set up with all of necessary SQL statements to prepare the database for Datadog monitoring. When done running, you'll want to rebuild the Postgres database image with the new restore point. 
 
 #### Worker
+
 The Spree application has a worker process that runs in the background. There is a specific Datadog tracer configuration for it in the `services/worker/` directory and is mounted into the worker container.
 
 ### Discounts
