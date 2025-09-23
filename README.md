@@ -211,7 +211,18 @@ There are several features that can be enabled by setting environment variables 
 
 Run two Ads services and split traffic between them. The amount of traffic sent to each service is set with a percent value.
 
+This requires running a second Ads service in addition to the default Java Ads service and setting environment variables in the `service-proxy` service. The Python Ads service is typically used as the secondary service.
+
+These environment variables need to be set for the `service-proxy` service.
+
+- `ADS_A_UPSTREAM`: Host and port for the primary (A) ads service (default: `ads:3030`)
+- `ADS_B_UPSTREAM`: Host and port for the secondary (B) ads service (default: `ads-python:3030`)
+- `ADS_B_PERCENT`: Percentage of traffic to route to the B (Python) ads service (default: `0`). The remainder goes to the A ads (Java) service.
+  - Set a value between `0` and `100` to control the split.
+
 **How to use**
+
+#### Docker Compose
 1. Add a second Ads service to the `docker-compose.yml`
 
     ```yaml
@@ -249,15 +260,9 @@ Run two Ads services and split traffic between them. The amount of traffic sent 
       - ADS_B_PERCENT=${ADS_B_PERCENT:-0}
     ```
 
-    Set the following environment variables:
-
-    - `ADS_A_UPSTREAM`: Host and port for the primary (A) ads service (default: `ads:3030`)
-    - `ADS_B_UPSTREAM`: Host and port for the secondary (B) ads service (default: `ads-python:3030`)
-    - `ADS_B_PERCENT`: Percentage of traffic to route to the B (Python) ads service (default: `0`). The remainder goes to the A ads (Java) service.
-      - Set a value between `0` and `100` to control the split.
-
 1. Start the app via `docker compose up -d`
 
+<<<<<<< HEAD
 ### Enable SSL/TLS on the service proxy
 
 By default, the service-proxy serves plain HTTP on port `80`. This is fine when a lab is reached through Instruqt's learner proxy (`*.env.play.instruqt.com`), since Instruqt terminates HTTPS for you there. Some labs instead expose Storedog through Instruqt's external ingress (`*.instruqt.io`), which is unauthenticated and does not terminate HTTPS on Storedog's behalf. In that case, the service-proxy needs to terminate its own TLS, which is what `ENABLE_SSL` is for.
@@ -293,6 +298,34 @@ No cert volume is needed: the `service-proxy` container fetches its own certific
 
 > [!NOTE]
 > This only works if the `service-proxy` pod is scheduled onto a VM with `provision_ssl_certificate: true` in its `config.yml` (or a single-node cluster, where that's the only VM). In a split control-plane/worker topology, that usually means the worker node exposed via external ingress.
+=======
+#### Kubernetes
+
+A Kubernetes manifest for the Python Ads service is available in the `services/ads/k8s-manifests/` directory.
+
+1. Add the `ads-python.yaml` file to the `k8s-manifests/storedog-app/deployments/` directory.
+
+1. Add the following environment variables to the `nginx.yaml` file and adjust as needed:
+
+    ```yaml
+    # A/B testing ads services
+    - name: ADS_A_UPSTREAM
+      value: "ads:3030"
+    - name: ADS_B_UPSTREAM
+      value: "ads-python:3030"
+    - name: ADS_B_PERCENT
+      value: "50"
+    ```
+
+1. Follow the instructions in the [Kubernetes README](./k8s-manifests/README.md) to run Storedog in Kubernetes.
+
+1. If the Storedog is already running, apply the manifests to the cluster:
+
+    ```bash
+    envsubst < k8s-manifests/storedog-app/deployments/ads-python.yaml | kubectl apply -n storedog -f -
+    envsubst < k8s-manifests/storedog-app/deployments/nginx.yaml | kubectl apply -n storedog -f -
+    ```
+>>>>>>> 293d6250 (added k8s steps to AB testing in readme)
 
 ### Feature flags
 
