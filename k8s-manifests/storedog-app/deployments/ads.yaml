@@ -15,7 +15,7 @@ kind: Deployment
 metadata:
   name: ads
   labels:
-    app: store-ads-java
+    app: store-ads
     team: advertisements
 spec:
   replicas: 1
@@ -35,7 +35,7 @@ spec:
           hostPath:
             path: /var/run/datadog/
       containers:
-        - name: ads-java
+        - name: ads
           image: ${REGISTRY_URL}/ads-java:${SD_TAG}
           ports:
             - containerPort: 3030
