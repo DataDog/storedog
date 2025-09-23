@@ -72,14 +72,14 @@ sudo systemctl restart docker
 REGISTRY_URL=localhost:5000; find ./services -name Dockerfile | while read dockerfile; do context_dir=$(dirname "$dockerfile"); image_name=$(echo "$context_dir" | sed 's|^\./services/||; s|/|-|g'); full_tag="$REGISTRY_URL/$image_name:latest"; echo "Building $full_tag from $context_dir"; docker build -t "$full_tag" "$context_dir" && docker push "$full_tag"; done
 ```
 
+> [!IMPORTANT]
+> Building and pushing containers to the local registry needs to be done on the worker node.
+
 4. You may want to rebuild one service while testing. It helps to export the `REGISTRY_URL` so you don't need to keep setting it.
 
 ```bash
 export REGISTRY_URL=localhost:5000
 ```
-
-> [!IMPORTANT]
-> Building and pushing containers to the local registry needs to be done on the worker node.
 
 ```bash
 SERVICE_NAME=ads
@@ -106,6 +106,7 @@ The deployment process uses several environment variables to template image loca
 | `REGISTRY_URL`                | Container registry base URL                 | `localhost:5000`               |
 | `SD_TAG`                      | Storedog image tag/version                  | `latest`                       |
 | `DD_VERSION_ADS`              | Version tag for ads service                 | `1.0.0`                        |
+| `DD_VERSION_ADS_PYTHON`       | Version tag for ads Python service (optional) | `1.0.0`                        |
 | `DD_VERSION_BACKEND`          | Version tag for backend & worker services   | `1.0.0`                        |
 | `DD_VERSION_DISCOUNTS`        | Version tag for discounts service           | `1.0.0`                        |
 | `DD_VERSION_NGINX`            | Version tag for nginx                       | `1.0.0`                        |
@@ -113,6 +114,8 @@ The deployment process uses several environment variables to template image loca
 | `NEXT_PUBLIC_DD_VERSION_FRONTEND` | Version tag for frontend service        | `1.0.0`                        |
 | `DD_API_KEY`                  | Datadog API key (for secret creation)       | `<your-datadog-api-key>`        |
 | `DD_APP_KEY`                  | Datadog App key (for secret creation)       | `<your-datadog-app-key>`        |
+| `DD_APPLICATION_ID`           | Datadog RUM application ID (for secret creation) | `<your-datadog-rum-application-id>` |
+| `DD_CLIENT_TOKEN`             | Datadog RUM client token (for secret creation) | `<your-datadog-rum-client-token>` |
 
 Set these variables in your shell before running the deployment commands. See the deployment steps below for usage examples.
 
