@@ -43,6 +43,9 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
+      env:
+        - name: DD_CLOUD_PROVIDER_METADATA
+          value: "[]"
       containers:
         agent:
           volumeMounts:
