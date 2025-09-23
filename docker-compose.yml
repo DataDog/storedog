@@ -57,7 +57,13 @@ services:
       - DD_VERSION=${FRONTEND_VERSION-1.0.0}
       - DD_SERVICE=store-frontend
       - DD_AGENT_HOST=dd-agent
+<<<<<<< HEAD
       - DD_LOGS_INJECTION=true
+=======
+      - DD_ENV=${DD_ENV:-production}
+      - DD_SERVICE=store-frontend-api # used for Next.js API routes
+      - DD_VERSION=${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}
+>>>>>>> 1875d967 (added DD_ENV)
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
       # Application Environment
@@ -97,7 +103,11 @@ services:
     environment:
       - DB_HOST=postgres 
       - DD_AGENT_HOST=dd-agent
+<<<<<<< HEAD
       - DD_VERSION=1.0.0
+=======
+      - DD_ENV=${DD_ENV:-production}
+>>>>>>> 1875d967 (added DD_ENV)
       - DD_SERVICE=store-backend
       - DD_ENV=${DD_ENV}
       - DD_LOGS_INJECTION=true
@@ -127,6 +137,7 @@ services:
     environment:
       - WORKER=true
       - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-production}
       - DD_SERVICE=store-worker
       - DD_VERSION=1.0.0
       - DD_LOGS_INJECTION=true
@@ -153,6 +164,7 @@ services:
       dd-agent:
         condition: service_started
     environment:
+<<<<<<< HEAD
       - FLASK_APP=discounts.py
       - FLASK_DEBUG=0
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -183,6 +195,31 @@ services:
         condition: service_started
     environment:
       - DD_AGENT_HOST=dd-agent
+=======
+      - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-production}
+      - DD_SERVICE=store-discounts
+      - DD_VERSION=${DD_VERSION_DISCOUNTS:-1.0.0}
+      - DD_RUNTIME_METRICS_ENABLED=true
+      - DD_PROFILING_ENABLED=true
+      - DD_PROFILING_TIMELINE_ENABLED=true
+      - DD_PROFILING_ALLOCATION_ENABLED=true
+    networks:
+      - storedog-network
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "python"}]'
+  ads:
+    image: ghcr.io/datadog/storedog/ads-java:${STOREDOG_IMAGE_VERSION:-latest}
+    depends_on:
+      - postgres
+      - dd-agent
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_HOST=postgres
+      - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-production}
+>>>>>>> 1875d967 (added DD_ENV)
       - DD_SERVICE=store-ads
       - DD_VERSION=1.0.0
       - DD_ENV=${DD_ENV}
@@ -213,6 +250,7 @@ services:
         condition: service_started
     environment:
       - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-production}
       - DD_SERVICE=service-proxy
       - DD_VERSION=1.0.0
       - ENABLE_SSL=${ENABLE_SSL}
