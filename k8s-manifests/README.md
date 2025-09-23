@@ -134,7 +134,7 @@ export SD_TAG=latest
 
 ```bash
 export REGISTRY_URL="ghcr.io/datadog/storedog"
-export SD_TAG=1.4.0
+export SD_TAG=1.5.0
 ```
 
 ### Set environment variables for Storedog
@@ -149,10 +149,13 @@ export NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend
 export NEXT_PUBLIC_DD_VERSION_FRONTEND=1.0.0
 ```
 
-The Datadog environment variable `DD_ENV` is set in two places. Update both values as needed. Keep in mind that these values should match.
+The Datadog environment variable `DD_ENV` is set in two places. Update both values as needed.
 
 * The `datadog/datadog-agent.yaml` file on line 19.
 * The `storedog-app/configmaps/storedog-config.yaml` file on line 22.
+
+> [!IMPORTANT]
+> These values should match.
 
 ### Deploy the Datadog Operator
 
@@ -198,12 +201,12 @@ The following command creates a `storedog` namespace.
 kubectl create namespace storedog
 ```
 
+> [!IMPORTANT]
+> If you use a different namespace, be sure to change the namespace name in all commands.
+
 3. **Create Secrets for Datadog RUM:**
 
 The following command creates a Kubernetes secret with your Datadog RUM app id and client token keys:
-
-> [!IMPORTANT]
-> Change the namespace from `storedog` if needed.
 
 ```bash
 kubectl create secret generic datadog-secret \
@@ -214,7 +217,7 @@ kubectl create secret generic datadog-secret \
 
 4. **Deploy the Storedog Application:**
 
-The following command deploys all application components into it.
+The following command deploys all application components.
 
 ```bash
 for file in k8s-manifests/storedog-app/**/*.yaml; do envsubst < "$file" | kubectl apply -n storedog -f -; done
