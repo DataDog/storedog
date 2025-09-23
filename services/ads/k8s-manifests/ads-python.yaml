@@ -63,7 +63,7 @@ spec:
             - name: DD_SERVICE
               value: store-ads-python
             - name: DD_VERSION
-              value: ${DD_VERSION_ADS}
+              value: ${DD_VERSION_ADS_PYTHON}
             - name: DD_RUNTIME_METRICS_ENABLED
               value: "true"
             - name: DD_PROFILING_ENABLED
