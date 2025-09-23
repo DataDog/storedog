@@ -140,6 +140,8 @@ The `ads` table has the following schema:
 
 ### Using the Python ads service
 
+#### Docker Compose
+
 To use the Python ads service, replace the `ads` definition with the following in your `docker-compose.yml` file:
 
 ```yaml
@@ -166,3 +168,83 @@ ads:
       - ./services/ads/python:/app
     labels:
       com.datadoghq.ad.logs: '[{"source": "python"}]'
+
+#### Kubernetes
+
+To use the Python ads service, replace the deployment section for `ads` with the following in your `k8s-manifests/storedog-app/deployments/ads.yaml` file:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ads
+  labels:
+    app: store-ads
+    team: advertisements
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: store-ads
+  template:
+    metadata:
+      labels:
+        app: store-ads
+        team: advertisements
+      annotations:
+        ad.datadoghq.com/ads.logs: '[{"source": "python"}]'
+    spec:
+      volumes:
+        - name: apmsocketpath
+          hostPath:
+            path: /var/run/datadog/
+      containers:
+        - name: ads
+          image: ${REGISTRY_URL}/ads:${SD_TAG}
+          ports:
+            - containerPort: 3030
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: storedog-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: POSTGRES_USER
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: DB_HOST
+            - name: DD_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: DD_ENV
+            - name: DD_SERVICE
+              value: store-ads
+            - name: DD_VERSION
+              value: ${DD_VERSION_ADS}
+            - name: DD_RUNTIME_METRICS_ENABLED
+              value: "true"
+            - name: DD_PROFILING_ENABLED
+              value: "true"
+            - name: DD_PROFILING_ALLOCATION_ENABLED
+              value: "true"
+            - name: DD_PROFILING_TIMELINE_ENABLED
+              value: "true"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "400m"
+          volumeMounts:
+            - name: apmsocketpath
+              mountPath: /var/run/datadog
+
+```
