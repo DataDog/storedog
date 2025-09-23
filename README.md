@@ -208,12 +208,18 @@ Run two Ads services and split traffic between them. The amount of traffic sent 
 
 This requires running a second Ads service in addition to the default Java Ads service and setting environment variables in the `service-proxy` service. The Python Ads service is typically used as the secondary service.
 
-These environment variables need to be set for the `service-proxy` service.
+1. Set an environment variable for the Python Ads service version.
 
-- `ADS_A_UPSTREAM`: Host and port for the primary (A) ads service (default: `ads:3030`)
-- `ADS_B_UPSTREAM`: Host and port for the secondary (B) ads service (default: `ads-python:3030`)
-- `ADS_B_PERCENT`: Percentage of traffic to route to the B (Python) ads service (default: `0`). The remainder goes to the A ads (Java) service.
-  - Set a value between `0` and `100` to control the split.
+    ```bash
+    export DD_VERSION_ADS_PYTHON=1.0.0
+    ```
+
+1. These environment variables need to be set for the `service-proxy` service.
+
+    - `ADS_A_UPSTREAM`: Host and port for the primary (A) ads service (default: `ads:3030`)
+    - `ADS_B_UPSTREAM`: Host and port for the secondary (B) ads service (default: `ads-python:3030`)
+    - `ADS_B_PERCENT`: Percentage of traffic to route to the B (Python) ads service (default: `0`). The remainder goes to the A ads (Java) service.
+      - Set a value between `0` and `100` to control the split.
 
 **How to use**
 
@@ -283,6 +289,9 @@ A Kubernetes manifest for the Python Ads service is available in the `services/a
     envsubst < k8s-manifests/storedog-app/deployments/ads-python.yaml | kubectl apply -n storedog -f -
     envsubst < k8s-manifests/storedog-app/deployments/nginx.yaml | kubectl apply -n storedog -f -
     ```
+
+> [!IMPORTANT]
+> Be sure to set the `DD_VERSION_ADS_PYTHON` environment variable so that it will be applied to the file by `envsubst`.
 
 ### Feature flags
 
