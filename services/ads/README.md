@@ -22,7 +22,7 @@ Logging is configured in the `docker-compose.yml` file along with the Datadog Ag
 
 The `ddtrace` library is used to instrument the Python service. The `ddtrace` library is installed in the `requirements.txt` file. The `ddtrace-run` command is used to run the service in the `Dockerfile`.
 
-Log injection is enabled in the `docker-compose.yml` file, but the logs are formatted in the `ads.py` file.
+Log injection is enabled by default in the trace library, but the logs are formatted in the `ads.py` file.
 
 ### Endpoints (Python)
 
@@ -155,13 +155,13 @@ ads:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_HOST=postgres
       - DD_AGENT_HOST=dd-agent
-      - DD_LOGS_INJECTION=true
-      - DD_TRACE_ANALYTICS_ENABLED=true
-      - DD_PROFILING_ENABLED=true
-      - DD_APPSEC_ENABLED=true
-      - DD_VERSION=${DD_VERSION_ADS-1.0.0}
+      - DD_ENV=${DD_ENV}
       - DD_SERVICE=store-ads
-      - DD_ENV=${DD_ENV-dev}
+      - DD_VERSION=${DD_VERSION_ADS-1.0.0}
+      - DD_RUNTIME_METRICS_ENABLED=true
+      - DD_PROFILING_ENABLED=true
+      - DD_PROFILING_TIMELINE_ENABLED=true
+      - DD_PROFILING_ALLOCATION_ENABLED=true
     volumes:
       - ./services/ads/python:/app
     labels:
