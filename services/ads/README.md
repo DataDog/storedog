@@ -12,6 +12,10 @@ The Java service is the default used with Storedog. It uses the Spring framework
 
 The Python service is a Flask application that uses SQLAlchemy to connect to a PostgreSQL database. The service is packaged as a Docker image and typically used in a Docker Compose file (see the root of this repo).
 
+## A/B Testing Ads services (Optional)
+
+The Python service can be used to run two ads services and split traffic between them. The amount of traffic sent to each service is set with a percent value. For more information, see the [README.md](../README.md#a/b-testing-ads-services-optional) file in the root of this repo.
+
 ### Datadog configuration
 
 #### Logs
