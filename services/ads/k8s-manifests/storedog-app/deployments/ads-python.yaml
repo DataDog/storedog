@@ -55,12 +55,15 @@ spec:
                 configMapKeyRef:
                   name: storedog-config
                   key: DB_HOST
+            - name: DD_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: DD_ENV
             - name: DD_SERVICE
               value: store-ads-python
             - name: DD_VERSION
               value: ${DD_VERSION_ADS}
-            - name: DD_LOGS_INJECTION
-              value: "true"
             - name: DD_RUNTIME_METRICS_ENABLED
               value: "true"
             - name: DD_PROFILING_ENABLED
