@@ -68,6 +68,11 @@ spec:
                 configMapKeyRef:
                   name: storedog-config
                   key: MAX_THREADS
+            - name: DD_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: DD_ENV
             - name: DD_SERVICE
               value: store-worker
             - name: DD_VERSION
