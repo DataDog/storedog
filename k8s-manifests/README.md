@@ -123,31 +123,36 @@ Set these variables in your shell before running the deployment commands. See th
 
 The Storedog manifest files use two variables to set the container registry URL and the version tag. The default is to use the localhost registry and `latest`. Set these environment variables accordingly when using a different registry location and tag version.
 
-Default values (development):
+**Local registry**:
 
 ```bash
 export REGISTRY_URL=localhost:5000
 export SD_TAG=latest
 ```
 
-Example values for hosted containers:
+**Hosted containers**:
 
 ```bash
 export REGISTRY_URL="ghcr.io/datadog/storedog"
 export SD_TAG=1.4.0
 ```
 
-### Set default environment variables for Storedog
+### Set environment variables for Storedog
 
 ```bash
 export DD_VERSION_ADS=1.0.0
+export DD_VERSION_ADS_PYTHON=1.0.0
 export DD_VERSION_BACKEND=1.0.0
 export DD_VERSION_DISCOUNTS=1.0.0
 export DD_VERSION_NGINX=1.28.0
 export NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend
 export NEXT_PUBLIC_DD_VERSION_FRONTEND=1.0.0
-export DD_ENV=development
 ```
+
+The Datadog environment variable `DD_ENV` is set in two places. Update both values as needed. Keep in mind that these values should match.
+
+* The `datadog/datadog-agent.yaml` file on line 19.
+* The `storedog-app/configmaps/storedog-config.yaml` file on line 22.
 
 ### Deploy the Datadog Operator
 
