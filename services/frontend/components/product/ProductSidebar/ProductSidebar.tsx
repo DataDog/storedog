@@ -71,7 +71,7 @@ const ProductSidebar: FC<ProductSidebarProps> = ({ product, className }) => {
           <select
             value={variant?.id}
             id="variant-select"
-            data-dd-action-name="Variant select dropdown"
+            data-dd-action-name="VariantSelectDropdown"
             className="my-2 block w-full rounded-md border-0 py-1.5 pl-3 pr-12 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
             onChange={(e) => {
               const selectedVariant = product.variants.find(

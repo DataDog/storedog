@@ -344,11 +344,11 @@ const applyDiscountCode = async (discountCode, page) => {
 
     console.log('entered code', discountCode);
 
-    await page.waitForSelector('button[data-dd-action-name="Apply Discount"]', {
+    await page.waitForSelector('button[data-dd-action-name="ApplyDiscount"]', {
       visible: true,
     });
 
-    await page.click('button[data-dd-action-name="Apply Discount"]');
+    await page.click('button[data-dd-action-name="ApplyDiscount"]');
 
     console.log('Clicked discount code button');
   } catch (e) {
@@ -404,20 +404,20 @@ const useDiscountCode = async (page) => {
 const checkout = async (page) => {
   console.log('In checkout on page', await page.title());
 
-  await page.waitForSelector('button[data-dd-action-name="Toggle Cart"]', {
+  await page.waitForSelector('button[data-dd-action-name="ToggleCart"]', {
     visible: true,
   });
 
   await Promise.all([
     page.waitForTimeout(1000),
 
-    page.click('button[data-dd-action-name="Toggle Cart"]'),
+    page.click('button[data-dd-action-name="ToggleCart"]'),
   ]);
 
   await page.waitForTimeout(8000);
 
   await page.waitForSelector(
-    'button[data-dd-action-name="Proceed to Checkout"]',
+    'button[data-dd-action-name="ProceedToCheckout"]',
     {
       visible: true,
     }
@@ -428,12 +428,12 @@ const checkout = async (page) => {
   await Promise.all([
     page.waitForTimeout(5000),
 
-    page.click('button[data-dd-action-name="Proceed to Checkout"]'),
+    page.click('button[data-dd-action-name="ProceedToCheckout"]'),
   ]);
 
   await page.waitForTimeout(8000);
 
-  page.waitForSelector('button[data-dd-action-name="Confirm Purchase"]', {
+  page.waitForSelector('button[data-dd-action-name="ConfirmPurchase"]', {
     visible: true,
   });
 
@@ -462,7 +462,7 @@ const checkout = async (page) => {
       await Promise.all([
         page.waitForTimeout(2000),
 
-        page.click('button[data-dd-action-name="Confirm Purchase"]'),
+        page.click('button[data-dd-action-name="ConfirmPurchase"]'),
       ]);
 
       await page.waitForTimeout(10000);
@@ -483,7 +483,7 @@ const checkout = async (page) => {
     await Promise.all([
       page.waitForTimeout(5000),
 
-      page.click('button[data-dd-action-name="Confirm Purchase"]'),
+      page.click('button[data-dd-action-name="ConfirmPurchase"]'),
     ]);
 
     await page.waitForTimeout(10000);

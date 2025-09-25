@@ -143,7 +143,7 @@ const CartSidebarView: FC = () => {
                 }}
                 className="checkout-btn"
                 id="proceed-to-checkout-button"
-                data-dd-action-name="Proceed to Checkout"
+                data-dd-action-name="ProceedToCheckout"
               >
                 Proceed to Checkout ({total})
               </Button>
