@@ -82,7 +82,7 @@ export REGISTRY_URL=localhost:5000
 ```
 
 ```bash
-SERVICE_NAME=ads
+SERVICE_NAME=discounts
 docker build -t $REGISTRY_URL/$SERVICE_NAME:latest ./services/$SERVICE_NAME && docker push $REGISTRY_URL/$SERVICE_NAME:latest
 ```
 

@@ -229,8 +229,8 @@ This requires running a second Ads service in addition to the default Java Ads s
     ```yaml
       # OPTIONAL: Advertisement service (Python)
       ads-python:
-        image: ghcr.io/datadog/storedog/ads:${STOREDOG_IMAGE_VERSION:-latest}
-        build:
+        image: ghcr.io/datadog/storedog/ads-python:${STOREDOG_IMAGE_VERSION:-latest}
+        build: # Only used if building from source in development
           context: ./services/ads/python
         depends_on:
           - postgres
@@ -246,6 +246,8 @@ This requires running a second Ads service in addition to the default Java Ads s
           - DD_PROFILING_ENABLED=true
           - DD_PROFILING_TIMELINE_ENABLED=true
           - DD_PROFILING_ALLOCATION_ENABLED=true
+        volumes: # Only used in development
+          - ./services/ads/python:/app
         networks:
           - storedog-network
         labels:
