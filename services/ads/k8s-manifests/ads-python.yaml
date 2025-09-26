@@ -36,7 +36,7 @@ spec:
             path: /var/run/datadog/
       containers:
         - name: ads-python
-          image: ${REGISTRY_URL}/ads:${SD_TAG}
+          image: ${REGISTRY_URL}/ads-python:${SD_TAG}
           ports:
             - containerPort: 3030
           env:
