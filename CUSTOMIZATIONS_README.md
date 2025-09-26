@@ -1,7 +1,16 @@
 
 # rum-optimize-frontend-performance branch README
 
-This doc explains the techniques used to elicit Core Web Vitals problems that are surfaced in Datadog RUM, as well as other modifications for the RUM Optimize Frontend Performance course.
+This doc explains the the customizations made in this branch for the Optimizing Frontend Performance course, as well as how to develop from this branch in the future.
+
+## Development
+
+The `provision.sh` script currently clones the branch when creating the course image, but will soon use a tagged `storedog` release specific to this course.
+
+For future development that requires Storedog changes:
+
+1. Use this `rum-optimize-frontend-performance` branch to develop and change the `provision.sh` file to use the branch instead of the tag when creating development images.
+1. Once development is complete, create a new tag and update the `provision.sh` file. **DO NOT DELETE THE BRANCH**
 
 ## High Cumulative Layout Shift on homepage
 
@@ -35,7 +44,7 @@ How to verify in Datadog:
 - In Datadog, go to Digital Experience > Real User Monitoring > Optimization.
 - In the list of Views, find the homepage `/` view (at the top of the list). The **CLS** column on the far right should be marked with an orange or red color.
 
-### High Largest Contentful Paint on About Us page
+## High Largest Contentful Paint on About Us page
 
 Customized files:
 
@@ -63,7 +72,7 @@ How to verify in Datadog:
 - In Datadog, go to Digital Experience > Real User Monitoring > Optimization.
 - In the list of Views, find the About Us `/about-us` view. The **LCP** column should show an orange or red color, indicating poor LCP.
 
-### High Interaction to Next Paint
+## High Interaction to Next Paint
 
 Storedog's `CartSidebarView.tsx` component has been modified to introduce a delay after clicking the **PROCEED TO CHECKOUT** button.
 
@@ -78,7 +87,7 @@ How to verify in Datadog:
 - In Datadog, go to Digital Experience > Real User Monitoring > Optimization.
 - In the list of Views, several views should have a RED INP value.
 
-### Other customizations
+## Other customizations
 
 - Some Puppeteer sessions enter invalid discount codes. The discounts service returns a 400-level response, which shows up in Datadog RUM as a "Resource with errors". That error is silenced in this branch to allow the learner to focus only on Core Web Vitals issues. 
 
