@@ -43,7 +43,7 @@ jobs:
           IMAGES=(
             ghcr.io/datadog/storedog/backend
             ghcr.io/datadog/storedog/discounts
-            ghcr.io/datadog/storedog/ads
+            ghcr.io/datadog/storedog/ads-python
             ghcr.io/datadog/storedog/ads-java
             ghcr.io/datadog/storedog/nginx
             ghcr.io/datadog/storedog/frontend
