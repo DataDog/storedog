@@ -149,29 +149,32 @@ The `ads` table has the following schema:
 To use the Python ads service, replace the `ads` definition with the following in your `docker-compose.yml` file:
 
 ```yaml
-ads:
-    build:
+  # OPTIONAL: Advertisement service (Python)
+  ads-python:
+    image: ghcr.io/datadog/storedog/ads-python:${STOREDOG_IMAGE_VERSION:-latest}
+    build: # Only used if building from source in development
       context: ./services/ads/python
-    command: wait-for-it postgres:5432 -- flask run --port=3030 --host=0.0.0.0 # If using any other port besides the default 9292, overriding the CMD is required
     depends_on:
       - postgres
       - dd-agent
     environment:
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_HOST=postgres
       - DD_AGENT_HOST=dd-agent
-      - DD_ENV=${DD_ENV}
-      - DD_SERVICE=store-ads
-      - DD_VERSION=${DD_VERSION_ADS-1.0.0}
-      - DD_RUNTIME_METRICS_ENABLED=true
+      - DD_ENV=${DD_ENV:-production}
+      - DD_SERVICE=store-ads-python
+      - DD_VERSION=${DD_VERSION_ADS_PYTHON:-1.0.0}
       - DD_PROFILING_ENABLED=true
       - DD_PROFILING_TIMELINE_ENABLED=true
       - DD_PROFILING_ALLOCATION_ENABLED=true
-    volumes:
+    volumes: # Only used in development
       - ./services/ads/python:/app
+    networks:
+      - storedog-network
     labels:
       com.datadoghq.ad.logs: '[{"source": "python"}]'
+```
 
 #### Kubernetes
 
@@ -216,7 +219,7 @@ spec:
             path: /var/run/datadog/
       containers:
         - name: ads
-          image: ${REGISTRY_URL}/ads:${SD_TAG}
+          image: ${REGISTRY_URL}/ads-python:${SD_TAG}
           ports:
             - containerPort: 3030
           env:
