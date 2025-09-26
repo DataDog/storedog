@@ -155,5 +155,5 @@ data:
           effect: NoSchedule
       containers:
       - name: helper-pod
-        image: busybox
+        image: busybox:1.37.0
         imagePullPolicy: IfNotPresent

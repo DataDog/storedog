@@ -72,14 +72,14 @@ sudo systemctl restart docker
 REGISTRY_URL=localhost:5000; find ./services -name Dockerfile | while read dockerfile; do context_dir=$(dirname "$dockerfile"); image_name=$(echo "$context_dir" | sed 's|^\./services/||; s|/|-|g'); full_tag="$REGISTRY_URL/$image_name:latest"; echo "Building $full_tag from $context_dir"; docker build -t "$full_tag" "$context_dir" && docker push "$full_tag"; done
 ```
 
+> [!IMPORTANT]
+> Building and pushing containers to the local registry needs to be done on the worker node.
+
 4. You may want to rebuild one service while testing. It helps to export the `REGISTRY_URL` so you don't need to keep setting it.
 
 ```bash
 export REGISTRY_URL=localhost:5000
 ```
-
-> [!IMPORTANT]
-> Building and pushing containers to the local registry needs to be done on the worker node.
 
 ```bash
 SERVICE_NAME=ads
@@ -106,14 +106,16 @@ The deployment process uses several environment variables to template image loca
 | `REGISTRY_URL`                | Container registry base URL                 | `localhost:5000`               |
 | `SD_TAG`                      | Storedog image tag/version                  | `latest`                       |
 | `DD_VERSION_ADS`              | Version tag for ads service                 | `1.0.0`                        |
+| `DD_VERSION_ADS_PYTHON`       | Version tag for ads Python service (optional) | `1.0.0`                        |
 | `DD_VERSION_BACKEND`          | Version tag for backend & worker services   | `1.0.0`                        |
 | `DD_VERSION_DISCOUNTS`        | Version tag for discounts service           | `1.0.0`                        |
 | `DD_VERSION_NGINX`            | Version tag for nginx                       | `1.0.0`                        |
 | `NEXT_PUBLIC_DD_SERVICE_FRONTEND` | RUM service name for frontend           | `store-frontend`               |
 | `NEXT_PUBLIC_DD_VERSION_FRONTEND` | Version tag for frontend service        | `1.0.0`                        |
-| `DD_ENV`                      | Environment name (e.g., development, prod)  | `development`                   |
 | `DD_API_KEY`                  | Datadog API key (for secret creation)       | `<your-datadog-api-key>`        |
 | `DD_APP_KEY`                  | Datadog App key (for secret creation)       | `<your-datadog-app-key>`        |
+| `DD_APPLICATION_ID`           | Datadog RUM application ID (for secret creation) | `<your-datadog-rum-application-id>` |
+| `DD_CLIENT_TOKEN`             | Datadog RUM client token (for secret creation) | `<your-datadog-rum-client-token>` |
 
 Set these variables in your shell before running the deployment commands. See the deployment steps below for usage examples.
 
@@ -121,31 +123,39 @@ Set these variables in your shell before running the deployment commands. See th
 
 The Storedog manifest files use two variables to set the container registry URL and the version tag. The default is to use the localhost registry and `latest`. Set these environment variables accordingly when using a different registry location and tag version.
 
-Default values (development):
+**Local registry**:
 
 ```bash
 export REGISTRY_URL=localhost:5000
 export SD_TAG=latest
 ```
 
-Example values for hosted containers:
+**Hosted containers**:
 
 ```bash
 export REGISTRY_URL="ghcr.io/datadog/storedog"
-export SD_TAG=1.4.0
+export SD_TAG=1.5.0
 ```
 
-### Set default environment variables for Storedog
+### Set environment variables for Storedog
 
 ```bash
 export DD_VERSION_ADS=1.0.0
+export DD_VERSION_ADS_PYTHON=1.0.0
 export DD_VERSION_BACKEND=1.0.0
 export DD_VERSION_DISCOUNTS=1.0.0
 export DD_VERSION_NGINX=1.28.0
 export NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend
 export NEXT_PUBLIC_DD_VERSION_FRONTEND=1.0.0
-export DD_ENV=development
 ```
+
+The Datadog environment variable `DD_ENV` is set in two places. Update both values as needed.
+
+* The `datadog/datadog-agent.yaml` file on line 19.
+* The `storedog-app/configmaps/storedog-config.yaml` file on line 22.
+
+> [!IMPORTANT]
+> These values should match.
 
 ### Deploy the Datadog Operator
 
@@ -154,7 +164,7 @@ export DD_ENV=development
 ```bash
 helm repo add datadog https://helm.datadoghq.com
 helm repo update
-helm install my-datadog-operator datadog/datadog-operator
+helm install datadog-operator datadog/datadog-operator
 ```
 
 2. Create a Kubernetes secret with your Datadog API and app keys:
@@ -191,12 +201,12 @@ The following command creates a `storedog` namespace.
 kubectl create namespace storedog
 ```
 
+> [!IMPORTANT]
+> If you use a different namespace, be sure to change the namespace name in all commands.
+
 3. **Create Secrets for Datadog RUM:**
 
 The following command creates a Kubernetes secret with your Datadog RUM app id and client token keys:
-
-> [!IMPORTANT]
-> Change the namespace from `storedog` if needed.
 
 ```bash
 kubectl create secret generic datadog-secret \
@@ -207,7 +217,7 @@ kubectl create secret generic datadog-secret \
 
 4. **Deploy the Storedog Application:**
 
-The following command deploys all application components into it.
+The following command deploys all application components.
 
 ```bash
 for file in k8s-manifests/storedog-app/**/*.yaml; do envsubst < "$file" | kubectl apply -n storedog -f -; done

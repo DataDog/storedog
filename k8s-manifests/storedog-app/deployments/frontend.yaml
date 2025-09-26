@@ -8,23 +8,27 @@ spec:
       targetPort: 3000
       name: http
   selector:
-    app: frontend
+    app: store-frontend-api
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
+  labels:
+    app: store-frontend-api
+    team: frontend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: frontend
+      app: store-frontend-api
   template:
     metadata:
       labels:
-        app: frontend
+        app: store-frontend-api
+        team: frontend
       annotations:
-        ad.datadoghq.com/frontend.logs: '[{"source": "nodejs", "auto_multi_line_detection":true}]'
+        ad.datadoghq.com/frontend.logs: '[{"source": "nodejs", "auto_multi_line_detection": true}]'
     spec:
       volumes:
         - name: apmsocketpath
@@ -35,7 +39,7 @@ spec:
             name: feature-flags-config
       initContainers:
         - name: wait-for-backend
-          image: busybox
+          image: busybox:1.37.0
           command: ['sh', '-c', 'until nc -z backend 4000; do echo waiting for backend; sleep 2; done;']
       containers:
         - name: frontend
@@ -84,6 +88,11 @@ spec:
                 configMapKeyRef:
                   name: storedog-config
                   key: NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN
+            - name: NEXT_PUBLIC_DD_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: DD_ENV
             - name: NEXT_PUBLIC_DD_APPLICATION_ID
               valueFrom:
                 secretKeyRef:
@@ -95,13 +104,14 @@ spec:
                   name: datadog-secret
                   key: dd_client_token
             - name: DD_ENV
-              value: ${DD_ENV}
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: DD_ENV
             - name: DD_SERVICE
-              value: ${NEXT_PUBLIC_DD_SERVICE_FRONTEND}
+              value: store-frontend-api
             - name: DD_VERSION
               value: ${NEXT_PUBLIC_DD_VERSION_FRONTEND}
-            - name: DD_LOGS_INJECTION
-              value: "true"
             - name: DD_RUNTIME_METRICS_ENABLED
               value: "true"
             - name: DD_PROFILING_ENABLED

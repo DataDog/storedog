@@ -8,23 +8,27 @@ spec:
       targetPort: 4000
       name: http
   selector:
-    app: backend
+    app: store-backend
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend
+  labels:
+    app: store-backend
+    team: backend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: backend
+      app: store-backend
   template:
     metadata:
       labels:
-        app: backend
+        app: store-backend
+        team: backend
       annotations:
-        ad.datadoghq.com/backend.logs: '[{"source": "ruby", "auto_multi_line_detection":true}]'
+        ad.datadoghq.com/backend.logs: '[{"source": "ruby", "auto_multi_line_detection": true}]'
     spec:
       volumes:
         - name: apmsocketpath
@@ -32,7 +36,7 @@ spec:
             path: /var/run/datadog/
       initContainers:
         - name: wait-for-db
-          image: busybox
+          image: busybox:1.37.0
           command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done;']
       containers:
         - name: backend
@@ -81,13 +85,14 @@ spec:
                   name: storedog-config
                   key: MAX_THREADS
             - name: DD_ENV
-              value: ${DD_ENV}
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: DD_ENV
             - name: DD_SERVICE
               value: store-backend
             - name: DD_VERSION
               value: ${DD_VERSION_BACKEND}
-            - name: DD_LOGS_INJECTION
-              value: "true"
             - name: DD_RUNTIME_METRICS_ENABLED
               value: "true"
             - name: DD_PROFILING_ENABLED

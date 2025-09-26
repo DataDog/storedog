@@ -48,11 +48,10 @@ dbm:
     - postgres
     - dd-agent
   environment:
-    - FLASK_APP=dbm.py
-    - FLASK_DEBUG=0
     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     - POSTGRES_USER=${POSTGRES_USER}
     - POSTGRES_HOST=postgres
+    - DD_ENV=${DD_ENV}
     - DD_SERVICE=storedog-dbm
     - DD_AGENT_HOST=dd-agent
     - DD_LOGS_INJECTION=true
@@ -134,7 +133,7 @@ postgres:
       "enabled": true
       }
       }]'
-    com.datadoghq.ad.logs: '[{"source": "postgresql", "service": "postgres", "auto_multi_line_detection":true, "path": "/var/log/pg_log/postgresql*.json", "type": "file"}]'
+    com.datadoghq.ad.logs: '[{"source": "postgresql", "service": "postgres", "auto_multi_line_detection": true, "path": "/var/log/pg_log/postgresql*.json", "type": "file"}]'
 ```
 
 Also update the Datadog agent service definition to include the following environment variable:
@@ -180,7 +179,7 @@ PostgreSQL default logging is to `stderr`, and logs do not include detailed info
 ```bash
 helm repo add datadog https://helm.datadoghq.com
 helm repo update
-helm install my-datadog-operator datadog/datadog-operator
+helm install datadog-operator datadog/datadog-operator
 ```
 
 2. Create a Kubernetes secret with your Datadog API and app keys:

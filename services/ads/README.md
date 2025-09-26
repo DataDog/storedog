@@ -12,6 +12,10 @@ The Java service is the default used with Storedog. It uses the Spring framework
 
 The Python service is a Flask application that uses SQLAlchemy to connect to a PostgreSQL database. The service is packaged as a Docker image and typically used in a Docker Compose file (see the root of this repo).
 
+## A/B Testing Ads services (Optional)
+
+The Python service can be used to run two ads services and split traffic between them. The amount of traffic sent to each service is set with a percent value. For more information, see the [README.md](../README.md#a/b-testing-ads-services-optional) file in the root of this repo.
+
 ### Datadog configuration
 
 #### Logs
@@ -22,7 +26,7 @@ Logging is configured in the `docker-compose.yml` file along with the Datadog Ag
 
 The `ddtrace` library is used to instrument the Python service. The `ddtrace` library is installed in the `requirements.txt` file. The `ddtrace-run` command is used to run the service in the `Dockerfile`.
 
-Log injection is enabled in the `docker-compose.yml` file, but the logs are formatted in the `ads.py` file.
+Log injection is enabled by default in the trace library, but the logs are formatted in the `ads.py` file.
 
 ### Endpoints (Python)
 
@@ -140,6 +144,8 @@ The `ads` table has the following schema:
 
 ### Using the Python ads service
 
+#### Docker Compose
+
 To use the Python ads service, replace the `ads` definition with the following in your `docker-compose.yml` file:
 
 ```yaml
@@ -151,20 +157,109 @@ ads:
       - postgres
       - dd-agent
     environment:
-      - FLASK_APP=ads.py
-      - FLASK_DEBUG=0
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_HOST=postgres
       - DD_AGENT_HOST=dd-agent
-      - DD_LOGS_INJECTION=true
-      - DD_TRACE_ANALYTICS_ENABLED=true
-      - DD_PROFILING_ENABLED=true
-      - DD_APPSEC_ENABLED=true
-      - DD_VERSION=${DD_VERSION_ADS-1.0.0}
+      - DD_ENV=${DD_ENV}
       - DD_SERVICE=store-ads
-      - DD_ENV=${DD_ENV-dev}
+      - DD_VERSION=${DD_VERSION_ADS-1.0.0}
+      - DD_RUNTIME_METRICS_ENABLED=true
+      - DD_PROFILING_ENABLED=true
+      - DD_PROFILING_TIMELINE_ENABLED=true
+      - DD_PROFILING_ALLOCATION_ENABLED=true
     volumes:
       - ./services/ads/python:/app
     labels:
       com.datadoghq.ad.logs: '[{"source": "python"}]'
+
+#### Kubernetes
+
+To use the Python ads service, replace your entire `k8s-manifests/storedog-app/deployments/ads.yaml` file with the following:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ads
+spec:
+  ports:
+    - port: 3030
+      targetPort: 3030
+      name: http
+  selector:
+    app: store-ads
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ads
+  labels:
+    app: store-ads
+    team: advertisements
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: store-ads
+  template:
+    metadata:
+      labels:
+        app: store-ads
+        team: advertisements
+      annotations:
+        ad.datadoghq.com/ads.logs: '[{"source": "python"}]'
+    spec:
+      volumes:
+        - name: apmsocketpath
+          hostPath:
+            path: /var/run/datadog/
+      containers:
+        - name: ads
+          image: ${REGISTRY_URL}/ads:${SD_TAG}
+          ports:
+            - containerPort: 3030
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: storedog-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: POSTGRES_USER
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: DB_HOST
+            - name: DD_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: DD_ENV
+            - name: DD_SERVICE
+              value: store-ads
+            - name: DD_VERSION
+              value: ${DD_VERSION_ADS}
+            - name: DD_RUNTIME_METRICS_ENABLED
+              value: "true"
+            - name: DD_PROFILING_ENABLED
+              value: "true"
+            - name: DD_PROFILING_ALLOCATION_ENABLED
+              value: "true"
+            - name: DD_PROFILING_TIMELINE_ENABLED
+              value: "true"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "400m"
+          volumeMounts:
+            - name: apmsocketpath
+              mountPath: /var/run/datadog
+```
