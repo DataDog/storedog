@@ -1,7 +1,9 @@
 
-This section outlines the techniques used to elicit Core Web Vitals problems that are surfaced in Datadog RUM.
+# rum-optimize-frontend-performance branch README
 
-### High Cumulative Layout Shift on homepage
+This doc explains the techniques used to elicit Core Web Vitals problems that are surfaced in Datadog RUM, as well as other modifications for the RUM Optimize Frontend Performance course.
+
+## High Cumulative Layout Shift on homepage
 
 Customized files:
 
@@ -76,3 +78,8 @@ How to verify in Datadog:
 - In Datadog, go to Digital Experience > Real User Monitoring > Optimization.
 - In the list of Views, several views should have a RED INP value.
 
+### Other customizations
+
+- Some Puppeteer sessions enter invalid discount codes. The discounts service returns a 400-level response, which shows up in Datadog RUM as a "Resource with errors". That error is silenced in this branch to allow the learner to focus only on Core Web Vitals issues. 
+
+- In the RUM Optimization pages, the SDK finds the CSS selector of the element causing the poor vital score. In Datadog, the selectors use `\`s to escape spaces. The element causing the INP problem is a button that originally had `data-dd-action-name="Proceed\ To\ Checkout\"` but since the learner needs to find this element in the IDE (without familiarity with the Storedog code base), this could lead to unnecessary confusion. Instead, I modified all of the `data-dd-action-name` attribute values to be PascalCase rather than use spaces.
