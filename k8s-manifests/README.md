@@ -110,7 +110,6 @@ The deployment process uses several environment variables to template image loca
 | `DD_VERSION_BACKEND`          | Version tag for backend & worker services   | `1.0.0`                        |
 | `DD_VERSION_DISCOUNTS`        | Version tag for discounts service           | `1.0.0`                        |
 | `DD_VERSION_NGINX`            | Version tag for nginx                       | `1.0.0`                        |
-| `NEXT_PUBLIC_DD_SERVICE_FRONTEND` | RUM service name for frontend           | `store-frontend`               |
 | `NEXT_PUBLIC_DD_VERSION_FRONTEND` | Version tag for frontend service        | `1.0.0`                        |
 | `DD_API_KEY`                  | Datadog API key (for secret creation)       | `<your-datadog-api-key>`        |
 | `DD_APP_KEY`                  | Datadog App key (for secret creation)       | `<your-datadog-app-key>`        |
@@ -145,7 +144,6 @@ export DD_VERSION_ADS_PYTHON=1.0.0
 export DD_VERSION_BACKEND=1.0.0
 export DD_VERSION_DISCOUNTS=1.0.0
 export DD_VERSION_NGINX=1.28.0
-export NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend
 export NEXT_PUBLIC_DD_VERSION_FRONTEND=1.0.0
 ```
 
