@@ -54,8 +54,6 @@ services:
       - 'dd-agent'
     networks:
       - storedog-network
-    volumes:
-      - './services/backend:/app'
     environment:
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV:-production}
