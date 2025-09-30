@@ -98,8 +98,6 @@ services:
         condition: service_started
     networks:
       - storedog-network
-    volumes:
-      - './services/backend:/app'
     environment:
       - DB_HOST=postgres 
       - DD_AGENT_HOST=dd-agent
