@@ -293,7 +293,7 @@ const selectProductsPageProduct = async (page) => {
     if (button) {
       await Promise.all([
         button.evaluate((b) => b.click()),
-        page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+        page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
       ]);
 
       await selectProduct(page);
@@ -303,7 +303,7 @@ const selectProductsPageProduct = async (page) => {
       // Fallback: try to navigate directly to products page
       const currentUrl = page.url();
       const productsUrl = currentUrl.endsWith('/') ? `${currentUrl}products` : `${currentUrl}/products`;
-      await page.goto(productsUrl, { waitUntil: 'domcontentloaded' });
+      await page.goto(productsUrl, { waitUntil: 'domcontentloaded', timeout: 10000 });
       await selectProduct(page);
       return true;
     }
