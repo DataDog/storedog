@@ -16,131 +16,34 @@ class TaxonomySession extends BaseSession {
       
       console.log(`Attempting to navigate to: ${urlWithUtm}`);
       
-      try {
-        await page.goto(urlWithUtm, { 
-          waitUntil: 'domcontentloaded',
-          timeout: 15000 
-        });
-        let pageTitle = await page.title();
-        console.log(`"${pageTitle}" loaded successfully`);
-      } catch (navError) {
-        console.log('Initial navigation failed, trying with networkidle:', navError.message);
-        // Fallback: try with networkidle wait condition
-        try {
-          await page.goto(urlWithUtm, { 
-            waitUntil: 'networkidle2',
-            timeout: 20000 
-          });
-          let pageTitle = await page.title();
-          console.log(`"${pageTitle}" loaded successfully with networkidle`);
-        } catch (fallbackError) {
-          console.log('Fallback navigation also failed:', fallbackError.message);
-          // Last resort: try without waiting for specific conditions
-          await page.goto(urlWithUtm, { timeout: 10000 });
-          let pageTitle = await page.title();
-          console.log(`"${pageTitle}" loaded with basic navigation`);
-        }
-      }
+      // go to home page (simple approach like other sessions)
+      await page.goto(urlWithUtm, { waitUntil: 'domcontentloaded' });
+      let pageTitle = await page.title();
+      console.log(`"${pageTitle}" loaded`);
 
-      // Try to navigate to best sellers page using multiple approaches
-      let bestSellersFound = false;
-      
-      // Approach 1: Look for "Best Sellers" link in navigation using correct selectors
+      // Try to navigate to best sellers page (simple approach like browsing session)
       try {
-        const bestSellersSelectors = [
-          '#bestsellers-link',                    // Direct ID selector
-          'a[href="/taxonomies/categories/bestsellers"]', // Exact href match
-          'a[href*="bestsellers"]',               // Partial href match
-          'nav#main-navbar a[href*="bestsellers"]', // Navbar with href
-          'nav#main-navbar a[id="bestsellers-link"]' // Navbar with ID
-        ];
-        
-        for (const selector of bestSellersSelectors) {
-          try {
-            console.log(`Trying selector: ${selector}`);
-            const link = await page.$(selector);
-            if (link) {
-              console.log(`Found best sellers link using selector: ${selector}`);
-              
-              // Check if element is clickable
-              const isClickable = await link.evaluate(el => {
-                const rect = el.getBoundingClientRect();
-                const style = window.getComputedStyle(el);
-                return rect.width > 0 && rect.height > 0 && 
-                       style.display !== 'none' && 
-                       style.visibility !== 'hidden' &&
-                       !el.disabled;
-              });
-              
-              if (isClickable) {
-                // Try clicking the element directly
-                await Promise.all([
-                  page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
-                  link.click()
-                ]);
-                bestSellersFound = true;
-                console.log('Successfully navigated to Best Sellers page');
-                break;
-              } else {
-                console.log(`Element found but not clickable: ${selector}`);
-                // Try clicking the parent Link component
-                try {
-                  const parentLink = await page.$(`${selector}`).then(async (el) => {
-                    if (el) {
-                      const parent = await el.evaluateHandle(el => el.closest('a'));
-                      return parent.asElement();
-                    }
-                    return null;
-                  });
-                  
-                  if (parentLink) {
-                    await Promise.all([
-                      page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
-                      parentLink.click()
-                    ]);
-                    bestSellersFound = true;
-                    console.log('Successfully navigated to Best Sellers page via parent link');
-                    break;
-                  }
-                } catch (parentError) {
-                  console.log(`Parent link click failed: ${parentError.message}`);
-                }
-              }
-            }
-          } catch (e) {
-            console.log(`Selector ${selector} failed:`, e.message);
-            // Continue to next selector
-          }
-        }
-      } catch (e) {
-        console.log('Could not find best sellers navigation link:', e.message);
-      }
-      
-      // Approach 2: Try direct URL if navigation failed
-      if (!bestSellersFound) {
-        try {
+        const bestSellersLink = await page.$('#bestsellers-link');
+        if (bestSellersLink) {
+          console.log('Found best sellers link, navigating...');
+          await Promise.all([
+            page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
+            bestSellersLink.click()
+          ]);
+          console.log('Successfully navigated to Best Sellers page');
+        } else {
+          console.log('Best sellers link not found, trying direct URL...');
           const bestSellersUrl = config.storedogUrl.endsWith('/')
             ? `${config.storedogUrl}taxonomies/categories/bestsellers`
             : `${config.storedogUrl}/taxonomies/categories/bestsellers`;
-          
-          console.log(`Trying direct best sellers URL: ${bestSellersUrl}`);
-          await page.goto(bestSellersUrl, { 
-            waitUntil: 'domcontentloaded',
-            timeout: 10000 
-          });
-          bestSellersFound = true;
+          await page.goto(bestSellersUrl, { waitUntil: 'domcontentloaded' });
           console.log('Successfully navigated to Best Sellers page via direct URL');
-        } catch (e) {
-          console.log('Direct best sellers URL failed:', e.message);
         }
-      }
-      
-      // If still no best sellers page, just work with current page
-      if (!bestSellersFound) {
-        console.log('Working with current page for taxonomy session');
+      } catch (e) {
+        console.log('Best sellers navigation failed, continuing with current page:', e.message);
       }
 
-      // get page url
+      // get page url (simple like other sessions)
       const pageUrl = await page.url();
       console.log(`"${pageUrl}" loaded`);
 
