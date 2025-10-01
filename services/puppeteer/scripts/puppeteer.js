@@ -134,26 +134,27 @@ const clearBrowserContext = async (page) => {
   }
 };
 
-// Ensure RUM SDK session is properly ended
+// Ensure RUM SDK session is properly ended (optional - can be disabled)
 const ensureSessionEnd = async (page) => {
+  // Skip RUM session ending if it's causing timeouts
+  // The context clearing will handle session separation
+  console.log('RUM session ending skipped - using context clearing for session separation');
+  return;
+  
+  // Original implementation (commented out due to timeout issues):
+  /*
   try {
-    // Check if page is still connected before navigating
     if (!page.isClosed()) {
-      // Navigate to a page with end_session=true to trigger datadogRum.stopSession()
       await page.goto(`${startUrl}?end_session=true`, { 
         waitUntil: 'domcontentloaded',
-        timeout: 5000 // Reduced timeout
+        timeout: 3000
       });
-      
-      // Wait a moment for the session to be properly ended
-      await sleep(1000);
-      
       console.log('RUM session ended');
     }
   } catch (error) {
-    console.log('Error ending RUM session:', error.message);
-    // Don't fail the session if RUM session end fails
+    console.log('RUM session end skipped (non-critical)');
   }
+  */
 };
 
 // Optimize page resource loading for memory efficiency
