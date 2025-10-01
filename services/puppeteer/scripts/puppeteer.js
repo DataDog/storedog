@@ -304,27 +304,57 @@ const getNewBrowser = async () => {
 };
 
 const choosePhone = () => {
-  const deviceNames = [
-    'iPhone 13 Pro Max',
-    'iPhone 13 Pro',
-    'iPhone 13',
-    'iPhone 12 Pro Max',
-    'iPhone 12 Pro',
-    'iPhone 12',
-    'iPhone SE',
-    'Pixel 5',
-    'Pixel 4',
-    'Galaxy S III',
-    'Galaxy S5',
-    'Galaxy Note II',
-    'iPad Pro',
-    'iPad',
-    'iPad Mini',
+  // Custom device configurations that will always work
+  const devices = [
+    {
+      name: 'iPhone 15 Pro Max',
+      userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+      viewport: { width: 430, height: 932, deviceScaleFactor: 3, isMobile: true, hasTouch: true }
+    },
+    {
+      name: 'iPhone 14',
+      userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
+      viewport: { width: 390, height: 844, deviceScaleFactor: 3, isMobile: true, hasTouch: true }
+    },
+    {
+      name: 'iPhone 13',
+      userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1',
+      viewport: { width: 390, height: 844, deviceScaleFactor: 3, isMobile: true, hasTouch: true }
+    },
+    {
+      name: 'iPhone SE',
+      userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.4 Mobile/15E148 Safari/604.1',
+      viewport: { width: 375, height: 667, deviceScaleFactor: 2, isMobile: true, hasTouch: true }
+    },
+    {
+      name: 'Pixel 8 Pro',
+      userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+      viewport: { width: 412, height: 892, deviceScaleFactor: 2.625, isMobile: true, hasTouch: true }
+    },
+    {
+      name: 'Pixel 7',
+      userAgent: 'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Mobile Safari/537.36',
+      viewport: { width: 412, height: 915, deviceScaleFactor: 2.625, isMobile: true, hasTouch: true }
+    },
+    {
+      name: 'Galaxy S24',
+      userAgent: 'Mozilla/5.0 (Linux; Android 14; SM-S921B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+      viewport: { width: 412, height: 915, deviceScaleFactor: 3, isMobile: true, hasTouch: true }
+    },
+    {
+      name: 'iPad Pro',
+      userAgent: 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+      viewport: { width: 1024, height: 1366, deviceScaleFactor: 2, isMobile: true, hasTouch: true }
+    },
+    {
+      name: 'iPad Mini',
+      userAgent: 'Mozilla/5.0 (iPad; CPU OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
+      viewport: { width: 768, height: 1024, deviceScaleFactor: 2, isMobile: true, hasTouch: true }
+    }
   ];
 
-  const deviceIndex = Math.floor(Math.random() * deviceNames.length);
-  const device = deviceNames[deviceIndex];
-  return puppeteer.devices[device];
+  const deviceIndex = Math.floor(Math.random() * devices.length);
+  return devices[deviceIndex];
 };
 
 const setUtmParams = (url) => {
@@ -801,7 +831,8 @@ const mainSession = async () => {
     
     // Emulate a random mobile device
     const device = choosePhone();
-    await page.emulate(device);
+    await page.setViewport(device.viewport);
+    await page.setUserAgent(device.userAgent);
     console.log(`Emulating device: ${device.name}`);
     
     // Ensure previous RUM session is ended
@@ -920,7 +951,8 @@ const secondSession = async () => {
     
     // Emulate a random mobile device
     const device = choosePhone();
-    await page.emulate(device);
+    await page.setViewport(device.viewport);
+    await page.setUserAgent(device.userAgent);
     console.log(`Emulating device: ${device.name}`);
     
     // Ensure previous RUM session is ended
@@ -1100,7 +1132,8 @@ const fourthSession = async () => {
     
     // Emulate a random mobile device
     const device = choosePhone();
-    await page.emulate(device);
+    await page.setViewport(device.viewport);
+    await page.setUserAgent(device.userAgent);
     console.log(`Emulating device: ${device.name}`);
     
     // Ensure previous RUM session is ended
