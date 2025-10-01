@@ -185,11 +185,16 @@ const selectHomePageProduct = async (page) => {
         console.log('Parent Link click failed, using direct URL:', parentError.message);
         // Fallback to direct URL navigation
         const href = await randomProduct.evaluate(el => el.getAttribute('href'));
-        if (href) {
-          await page.goto(href, { waitUntil: 'domcontentloaded' });
-          console.log('Successfully navigated to product page via direct URL');
+        if (href && href.trim() !== '' && href !== '#') {
+          try {
+            await page.goto(href, { waitUntil: 'domcontentloaded' });
+            console.log('Successfully navigated to product page via direct URL');
+          } catch (gotoError) {
+            console.log('Direct URL navigation failed:', gotoError.message);
+            throw new Error(`Invalid URL for navigation: ${href}`);
+          }
         } else {
-          throw new Error('No href available for direct navigation');
+          throw new Error('No valid href available for direct navigation');
         }
       }
     }
@@ -204,12 +209,25 @@ const selectHomePageProduct = async (page) => {
         const elements = await page.$$(selector);
         if (elements.length > 0) {
           const randomElement = elements[Math.floor(Math.random() * elements.length)];
-          await Promise.all([
-            page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
-            randomElement.click()
-          ]);
-          console.log('Fallback navigation successful');
-          break;
+          
+          // Validate href before clicking
+          const href = await randomElement.evaluate(el => el.getAttribute('href'));
+          if (href && href.trim() !== '' && href !== '#' && !href.startsWith('javascript:')) {
+            try {
+              await Promise.all([
+                page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
+                randomElement.click()
+              ]);
+              console.log('Fallback navigation successful');
+              break;
+            } catch (clickError) {
+              console.log('Fallback click failed, trying next element:', clickError.message);
+              continue;
+            }
+          } else {
+            console.log('Skipping element with invalid href:', href);
+            continue;
+          }
         }
       }
     } catch (fallbackError) {
