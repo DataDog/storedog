@@ -7,7 +7,6 @@ ENV STOREDOG_URL=http://service-proxy:80 \
 USER pptruser
 WORKDIR /home/pptruser
 
-COPY ./scripts/puppeteer.sh .
-COPY ./scripts/puppeteer.js .
+COPY ./scripts/ ./
 
 CMD ["bash", "puppeteer.sh"]
