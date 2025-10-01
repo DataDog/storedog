@@ -155,13 +155,44 @@ const selectHomePageProduct = async (page) => {
     
     console.log(`Selected product: ${productAriaLabel}`);
     
-    // Click the product
-    await Promise.all([
-      page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
-      randomProduct.click()
-    ]);
-    
-    console.log('Successfully navigated to product page');
+    // Click the product (robust approach for Next.js Link components)
+    try {
+      await Promise.all([
+        page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
+        randomProduct.click()
+      ]);
+      console.log('Successfully navigated to product page');
+    } catch (clickError) {
+      console.log('Direct product click failed, trying parent Link element:', clickError.message);
+      // Try clicking the parent Link element (Next.js wrapper)
+      try {
+        const href = await randomProduct.evaluate(el => el.getAttribute('href'));
+        if (href) {
+          const parentLink = await page.$(`a[href="${href}"]`);
+          if (parentLink) {
+            await Promise.all([
+              page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
+              parentLink.click()
+            ]);
+            console.log('Successfully navigated to product page via parent Link');
+          } else {
+            throw new Error('Parent Link not found');
+          }
+        } else {
+          throw new Error('No href found on product element');
+        }
+      } catch (parentError) {
+        console.log('Parent Link click failed, using direct URL:', parentError.message);
+        // Fallback to direct URL navigation
+        const href = await randomProduct.evaluate(el => el.getAttribute('href'));
+        if (href) {
+          await page.goto(href, { waitUntil: 'domcontentloaded' });
+          console.log('Successfully navigated to product page via direct URL');
+        } else {
+          throw new Error('No href available for direct navigation');
+        }
+      }
+    }
     
   } catch (error) {
     console.error('Error selecting home page product:', error.message);
