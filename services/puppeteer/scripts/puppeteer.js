@@ -90,7 +90,7 @@ class BrowserPool {
 // Global browser pool instance
 const browserPool = new BrowserPool(6); // Increased pool size
 
-// Clear browser context to ensure fresh sessions
+// Clear browser context to ensure fresh sessions (Chrome optimized)
 const clearBrowserContext = async (page) => {
   try {
     // Check if page is still connected
@@ -99,16 +99,34 @@ const clearBrowserContext = async (page) => {
       return;
     }
     
-    // Clear all cookies
-    const client = await page.target().createCDPSession();
-    await client.send('Network.clearBrowserCookies');
-    await client.send('Network.clearBrowserCache');
-    
-    // Clear localStorage and sessionStorage
-    await page.evaluate(() => {
-      localStorage.clear();
-      sessionStorage.clear();
-    });
+    // Chrome CDP commands for comprehensive cleanup
+    try {
+      const client = await page.target().createCDPSession();
+      await client.send('Network.clearBrowserCookies');
+      await client.send('Network.clearBrowserCache');
+      await client.send('Runtime.evaluate', {
+        expression: `
+          localStorage.clear();
+          sessionStorage.clear();
+          // Clear IndexedDB if possible
+          if (window.indexedDB) {
+            indexedDB.databases().then(databases => {
+              databases.forEach(db => {
+                indexedDB.deleteDatabase(db.name);
+              });
+            }).catch(() => {});
+          }
+        `
+      });
+      console.log('Chrome context cleared (CDP + storage)');
+    } catch (cdpError) {
+      console.log('CDP context clearing failed, using fallback:', cdpError.message);
+      // Fallback to page.evaluate if CDP fails
+      await page.evaluate(() => {
+        localStorage.clear();
+        sessionStorage.clear();
+      });
+    }
     
     console.log('Browser context cleared for new session');
   } catch (error) {
@@ -124,7 +142,7 @@ const ensureSessionEnd = async (page) => {
       // Navigate to a page with end_session=true to trigger datadogRum.stopSession()
       await page.goto(`${startUrl}?end_session=true`, { 
         waitUntil: 'domcontentloaded',
-        timeout: 10000 
+        timeout: 5000 // Reduced timeout
       });
       
       // Wait a moment for the session to be properly ended
@@ -134,6 +152,7 @@ const ensureSessionEnd = async (page) => {
     }
   } catch (error) {
     console.log('Error ending RUM session:', error.message);
+    // Don't fail the session if RUM session end fails
   }
 };
 
