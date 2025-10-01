@@ -24,11 +24,11 @@ const config = {
   // File paths
   devicesPath: path.join(__dirname, 'devices.json'),
   
-  // Browser pool settings
-  browserPoolSize: 6,
+  // Browser pool settings (scale with max concurrency, but cap at reasonable limit)
+  browserPoolSize: Math.min(Math.max(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 8, 6), 20),
   
-  // Session settings
-  totalSessions: 16,
+  // Session settings (scale with max concurrency)
+  totalSessions: Math.max(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 8, 16),
   sessionDelay: 2000 // Random delay up to 2 seconds
 };
 

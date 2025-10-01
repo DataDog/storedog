@@ -124,7 +124,7 @@ class SessionManager {
     };
 
     console.log(`🖥️  System Configuration:`);
-    console.log(`   Max Concurrency: ${config.safetyLimits.maxConcurrency}`);
+    console.log(`   Max Concurrency: ${config.maxConcurrency}`);
     console.log(`   Memory Limit: ${config.safetyLimits.maxMemoryMB}MB`);
     console.log(`   Memory Threshold: ${Math.round(config.safetyLimits.memoryThreshold * 100)}%`);
 
