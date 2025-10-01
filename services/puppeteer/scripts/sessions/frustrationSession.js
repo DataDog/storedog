@@ -26,9 +26,21 @@ class FrustrationSession extends BaseSession {
       const urlWithUtm = `${config.storedogUrl}?utm_campaign=blog_post&utm_medium=social&utm_source=facebook`;
 
       // go to home page
-      await page.goto(urlWithUtm, { waitUntil: 'domcontentloaded' });
-      let pageTitle = await page.title();
-      console.log(`"${pageTitle}" loaded`);
+      try {
+        await page.goto(urlWithUtm, { waitUntil: 'domcontentloaded', timeout: 15000 });
+        let pageTitle = await page.title();
+        console.log(`"${pageTitle}" loaded`);
+      } catch (gotoError) {
+        console.log('Initial page load failed:', gotoError.message);
+        console.log('Attempting to continue with current page...');
+        // Try to get current page title even if goto failed
+        try {
+          const pageTitle = await page.title();
+          console.log(`Current page: "${pageTitle}"`);
+        } catch (titleError) {
+          console.log('Could not get page title, page may not be loaded');
+        }
+      }
 
       // Generate frustration signals throughout the session
       console.log('🎯 Starting frustration signal generation...');
@@ -113,6 +125,7 @@ class FrustrationSession extends BaseSession {
       const url = await page.url();
       await page.goto(`${url}?end_session=true`, {
         waitUntil: 'domcontentloaded',
+        timeout: 10000
       });
       
       console.log('Frustration session completed with frustration signals');

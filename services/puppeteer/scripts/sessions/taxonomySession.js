@@ -17,9 +17,21 @@ class TaxonomySession extends BaseSession {
       console.log(`Attempting to navigate to: ${urlWithUtm}`);
       
       // go to home page (simple approach like other sessions)
-      await page.goto(urlWithUtm, { waitUntil: 'domcontentloaded' });
-      let pageTitle = await page.title();
-      console.log(`"${pageTitle}" loaded`);
+      try {
+        await page.goto(urlWithUtm, { waitUntil: 'domcontentloaded', timeout: 15000 });
+        let pageTitle = await page.title();
+        console.log(`"${pageTitle}" loaded`);
+      } catch (gotoError) {
+        console.log('Initial page load failed:', gotoError.message);
+        console.log('Attempting to continue with current page...');
+        // Try to get current page title even if goto failed
+        try {
+          let pageTitle = await page.title();
+          console.log(`Current page: "${pageTitle}"`);
+        } catch (titleError) {
+          console.log('Could not get page title, page may not be loaded');
+        }
+      }
 
       // Try to navigate to best sellers page (robust approach for Next.js Link components)
       try {
@@ -52,7 +64,7 @@ class TaxonomySession extends BaseSession {
               const bestSellersUrl = config.storedogUrl.endsWith('/')
                 ? `${config.storedogUrl}taxonomies/categories/bestsellers`
                 : `${config.storedogUrl}/taxonomies/categories/bestsellers`;
-              await page.goto(bestSellersUrl, { waitUntil: 'domcontentloaded' });
+              await page.goto(bestSellersUrl, { waitUntil: 'domcontentloaded', timeout: 10000 });
               console.log('Successfully navigated to Best Sellers page via direct URL');
             }
           }
@@ -61,7 +73,7 @@ class TaxonomySession extends BaseSession {
           const bestSellersUrl = config.storedogUrl.endsWith('/')
             ? `${config.storedogUrl}taxonomies/categories/bestsellers`
             : `${config.storedogUrl}/taxonomies/categories/bestsellers`;
-          await page.goto(bestSellersUrl, { waitUntil: 'domcontentloaded' });
+          await page.goto(bestSellersUrl, { waitUntil: 'domcontentloaded', timeout: 10000 });
           console.log('Successfully navigated to Best Sellers page via direct URL');
         }
       } catch (e) {
@@ -103,6 +115,7 @@ class TaxonomySession extends BaseSession {
 
       await page.goto(endUrl, {
         waitUntil: 'domcontentloaded',
+        timeout: 10000
       });
       
       console.log('Taxonomy session completed with taxonomy browsing and purchases');
