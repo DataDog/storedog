@@ -160,6 +160,91 @@ const getNewBrowser = async () => {
     // Use Firefox if PUPPETEER_BROWSER=firefox, otherwise use Chrome
     const product = process.env.PUPPETEER_BROWSER || 'chrome';
     
+    // Browser-specific flags
+    const chromeArgs = [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      // Memory optimization flags
+      '--memory-pressure-off',
+      '--max_old_space_size=256', // Reduced from 512
+      '--disable-background-timer-throttling',
+      '--disable-features=TranslateUI,VizDisplayCompositor',
+      '--disable-ipc-flooding-protection',
+      '--disable-background-networking',
+      '--disable-sync',
+      '--disable-default-apps',
+      '--disable-extensions',
+      '--disable-plugins',
+      '--no-first-run',
+      '--no-default-browser-check',
+      '--disable-gpu',
+      '--disable-software-rasterizer',
+      // Additional memory optimization flags
+      '--disable-web-security',
+      '--disable-background-media-suspend',
+      '--disable-client-side-phishing-detection',
+      '--disable-component-extensions-with-background-pages',
+      '--disable-domain-reliability',
+      '--disable-features=AudioServiceOutOfProcess',
+      '--disable-hang-monitor',
+      '--disable-prompt-on-repost',
+      '--disable-speech-api',
+      '--disable-webgl',
+      '--disable-webgl2',
+      '--enable-features=NetworkService,NetworkServiceLogging',
+      '--force-color-profile=srgb',
+      '--hide-scrollbars',
+      '--mute-audio',
+      '--no-zygote',
+    ];
+    
+    const firefoxArgs = [
+      '--headless',
+      '--no-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--no-first-run',
+      '--disable-extensions',
+      '--disable-plugins',
+      '--disable-web-security',
+      '--mute-audio',
+      '--hide-scrollbars',
+    ];
+    
+    // Firefox-specific performance preferences
+    const firefoxPrefs = {
+      // Disable extensions completely
+      'extensions.enabledScopes': '',
+      'extensions.autoDisableScopes': 15,
+      
+      // Memory and performance optimizations
+      'browser.cache.disk.enable': false,
+      'browser.cache.memory.enable': true,
+      'browser.cache.offline.enable': false,
+      
+      // Disable unnecessary features
+      'media.peerconnection.enabled': false,
+      'media.navigator.enabled': false,
+      'dom.webnotifications.enabled': false,
+      'dom.push.enabled': false,
+      
+      // Reduce memory usage
+      'browser.sessionstore.max_tabs_undo': 0,
+      'browser.sessionstore.max_windows_undo': 0,
+      'browser.sessionstore.interval': 60000,
+      
+      // Disable telemetry and reporting
+      'toolkit.telemetry.enabled': false,
+      'toolkit.telemetry.unified': false,
+      'datareporting.healthreport.uploadEnabled': false,
+      
+      // Performance tweaks
+      'layout.frame_rate': 30,
+      'gfx.webrender.all': false,
+      'layers.acceleration.force-enabled': false,
+    };
+    
     const browser = await puppeteer.launch({
       product: product, // 'chrome' or 'firefox'
       headless: 'new',
@@ -167,50 +252,8 @@ const getNewBrowser = async () => {
       timeout: 30000,
       slowMo: 200, // Reduced for faster execution
       protocolTimeout: 45000,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        // Memory optimization flags
-        '--memory-pressure-off',
-        '--max_old_space_size=256', // Reduced from 512
-        '--disable-background-timer-throttling',
-        '--disable-features=TranslateUI,VizDisplayCompositor',
-        '--disable-ipc-flooding-protection',
-        '--disable-background-networking',
-        '--disable-sync',
-        '--disable-default-apps',
-        '--disable-extensions',
-        '--disable-plugins',
-        '--no-first-run',
-        '--no-default-browser-check',
-        '--disable-gpu',
-        '--disable-software-rasterizer',
-        // Additional memory optimization flags
-        '--disable-web-security',
-        '--disable-background-media-suspend',
-        '--disable-client-side-phishing-detection',
-        '--disable-component-extensions-with-background-pages',
-        '--disable-domain-reliability',
-        '--disable-features=AudioServiceOutOfProcess',
-        '--disable-hang-monitor',
-        '--disable-prompt-on-repost',
-        '--disable-speech-api',
-        '--disable-webgl',
-        '--disable-webgl2',
-        '--enable-features=NetworkService,NetworkServiceLogging',
-        '--force-color-profile=srgb',
-        '--hide-scrollbars',
-        '--mute-audio',
-        '--no-zygote',
-        // Removed deprecated flags:
-        // --single-process (deprecated, can cause stability issues)
-        // --disable-threaded-compositing (deprecated in modern Chrome)
-        // --disable-threaded-scrolling (deprecated in modern Chrome)
-        // --disable-renderer-backgrounding (deprecated in modern Chrome)
-        // --disable-backgrounding-occluded-windows (deprecated in modern Chrome)
-        // --disable-features=VizDisplayCompositor (duplicate, already in line above)
-      ],
+      args: product === 'firefox' ? firefoxArgs : chromeArgs,
+      extraPrefsFirefox: product === 'firefox' ? firefoxPrefs : undefined,
     });
     const browserVersion = await browser.version();
     console.log(`Started ${browserVersion}`);
