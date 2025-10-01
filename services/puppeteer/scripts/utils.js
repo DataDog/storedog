@@ -536,7 +536,8 @@ const goToFooterPage = async (page) => {
       
       // Check if this is a navigation link or just a scroll/anchor link
       const href = await footerLinks[randomIndex].evaluate(el => el.getAttribute('href'));
-      const isNavigationLink = href && !href.startsWith('#') && href !== window.location.pathname;
+      const currentPath = await page.evaluate(() => window.location.pathname);
+      const isNavigationLink = href && !href.startsWith('#') && href !== currentPath;
       
       if (isNavigationLink) {
         try {
