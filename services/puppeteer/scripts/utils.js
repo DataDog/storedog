@@ -750,36 +750,36 @@ const checkout = async (page) => {
       page.click('button[data-dd-action-name="Toggle Cart"]'),
     ]);
 
-    // Wait for cart sidebar to open
-    await page.waitForSelector('#sidebar', {
-      visible: true,
-      timeout: 10000,
-    });
-    console.log('Cart sidebar opened');
+    // Wait for proceed to checkout button to appear (indicates cart sidebar opened)
+    try {
+      await page.waitForSelector(
+        'button[data-dd-action-name="Proceed to Checkout"]',
+        {
+          visible: true,
+          timeout: 10000,
+        }
+      );
+      console.log('Found proceed to checkout button, cart sidebar opened');
 
-    // Check if cart has items before proceeding to checkout
-    const cartItems = await page.$$('li[class*="root"], .cart-item, [class*="cart-item"], .line-item, [class*="line-item"]');
-    console.log(`Found ${cartItems.length} items in cart`);
+      // Check if cart has items before proceeding to checkout
+      const cartItems = await page.$$('li[class*="root"], .cart-item, [class*="cart-item"], .line-item, [class*="line-item"]');
+      console.log(`Found ${cartItems.length} items in cart`);
 
-    if (cartItems.length === 0) {
-      console.log('Cart is empty, cannot proceed to checkout');
+      if (cartItems.length === 0) {
+        console.log('Cart is empty, cannot proceed to checkout');
+        return;
+      }
+
+      console.log('Clicking proceed to checkout button...');
+      await Promise.all([
+        sleep(2000),
+        page.click('button[data-dd-action-name="Proceed to Checkout"]'),
+      ]);
+    } catch (checkoutError) {
+      console.log('Proceed to checkout button not found:', checkoutError.message);
+      console.log('Cart might be empty or sidebar failed to open');
       return;
     }
-
-    // Wait for proceed to checkout button
-    await page.waitForSelector(
-      'button[data-dd-action-name="Proceed to Checkout"]',
-      {
-        visible: true,
-        timeout: 10000,
-      }
-    );
-
-    console.log('Found proceed to checkout button, clicking...');
-    await Promise.all([
-      sleep(2000),
-      page.click('button[data-dd-action-name="Proceed to Checkout"]'),
-    ]);
 
     // Wait for checkout page to load
     await page.waitForSelector('button[data-dd-action-name="Confirm Purchase"]', {
