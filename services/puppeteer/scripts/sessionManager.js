@@ -49,13 +49,13 @@ class SessionManager {
     // Progressive concurrency levels
     const concurrencyLevels = [
       { time: 0, maxConcurrent: 2 },
-      { time: config.rampUpInterval, maxConcurrent: Math.min(4, config.safetyLimits.maxConcurrency) },
-      { time: config.rampUpInterval * 2, maxConcurrent: Math.min(8, config.safetyLimits.maxConcurrency) },
-      { time: config.rampUpInterval * 3, maxConcurrent: Math.min(16, config.safetyLimits.maxConcurrency) },
-      { time: config.rampUpInterval * 4, maxConcurrent: Math.min(24, config.safetyLimits.maxConcurrency) },
-      { time: config.rampUpInterval * 5, maxConcurrent: Math.min(32, config.safetyLimits.maxConcurrency) },
-      { time: config.rampUpInterval * 6, maxConcurrent: Math.min(40, config.safetyLimits.maxConcurrency) },
-      { time: config.rampUpInterval * 7, maxConcurrent: config.safetyLimits.maxConcurrency }
+      { time: config.rampUpInterval, maxConcurrent: Math.min(4, config.maxConcurrency) },
+      { time: config.rampUpInterval * 2, maxConcurrent: Math.min(8, config.maxConcurrency) },
+      { time: config.rampUpInterval * 3, maxConcurrent: Math.min(16, config.maxConcurrency) },
+      { time: config.rampUpInterval * 4, maxConcurrent: Math.min(24, config.maxConcurrency) },
+      { time: config.rampUpInterval * 5, maxConcurrent: Math.min(32, config.maxConcurrency) },
+      { time: config.rampUpInterval * 6, maxConcurrent: Math.min(40, config.maxConcurrency) },
+      { time: config.rampUpInterval * 7, maxConcurrent: config.maxConcurrency }
     ];
 
     let currentMaxConcurrent = concurrencyLevels[0].maxConcurrent;
