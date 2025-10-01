@@ -16,12 +16,31 @@ class TaxonomySession extends BaseSession {
       
       console.log(`Attempting to navigate to: ${urlWithUtm}`);
       
-      await page.goto(urlWithUtm, { 
-        waitUntil: 'domcontentloaded',
-        timeout: 15000 
-      });
-      let pageTitle = await page.title();
-      console.log(`"${pageTitle}" loaded successfully`);
+      try {
+        await page.goto(urlWithUtm, { 
+          waitUntil: 'domcontentloaded',
+          timeout: 15000 
+        });
+        let pageTitle = await page.title();
+        console.log(`"${pageTitle}" loaded successfully`);
+      } catch (navError) {
+        console.log('Initial navigation failed, trying with networkidle:', navError.message);
+        // Fallback: try with networkidle wait condition
+        try {
+          await page.goto(urlWithUtm, { 
+            waitUntil: 'networkidle2',
+            timeout: 20000 
+          });
+          let pageTitle = await page.title();
+          console.log(`"${pageTitle}" loaded successfully with networkidle`);
+        } catch (fallbackError) {
+          console.log('Fallback navigation also failed:', fallbackError.message);
+          // Last resort: try without waiting for specific conditions
+          await page.goto(urlWithUtm, { timeout: 10000 });
+          let pageTitle = await page.title();
+          console.log(`"${pageTitle}" loaded with basic navigation`);
+        }
+      }
 
       // Try to navigate to best sellers page using multiple approaches
       let bestSellersFound = false;
@@ -42,13 +61,51 @@ class TaxonomySession extends BaseSession {
             const link = await page.$(selector);
             if (link) {
               console.log(`Found best sellers link using selector: ${selector}`);
-              await Promise.all([
-                page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
-                link.click()
-              ]);
-              bestSellersFound = true;
-              console.log('Successfully navigated to Best Sellers page');
-              break;
+              
+              // Check if element is clickable
+              const isClickable = await link.evaluate(el => {
+                const rect = el.getBoundingClientRect();
+                const style = window.getComputedStyle(el);
+                return rect.width > 0 && rect.height > 0 && 
+                       style.display !== 'none' && 
+                       style.visibility !== 'hidden' &&
+                       !el.disabled;
+              });
+              
+              if (isClickable) {
+                // Try clicking the element directly
+                await Promise.all([
+                  page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
+                  link.click()
+                ]);
+                bestSellersFound = true;
+                console.log('Successfully navigated to Best Sellers page');
+                break;
+              } else {
+                console.log(`Element found but not clickable: ${selector}`);
+                // Try clicking the parent Link component
+                try {
+                  const parentLink = await page.$(`${selector}`).then(async (el) => {
+                    if (el) {
+                      const parent = await el.evaluateHandle(el => el.closest('a'));
+                      return parent.asElement();
+                    }
+                    return null;
+                  });
+                  
+                  if (parentLink) {
+                    await Promise.all([
+                      page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
+                      parentLink.click()
+                    ]);
+                    bestSellersFound = true;
+                    console.log('Successfully navigated to Best Sellers page via parent link');
+                    break;
+                  }
+                } catch (parentError) {
+                  console.log(`Parent link click failed: ${parentError.message}`);
+                }
+              }
             }
           } catch (e) {
             console.log(`Selector ${selector} failed:`, e.message);
@@ -90,16 +147,25 @@ class TaxonomySession extends BaseSession {
       await sleep(1000);
 
       // select a product
-      await selectProduct(page);
+      try {
+        await selectProduct(page);
+        console.log('on page', await page.title());
 
-      console.log('on page', await page.title());
-
-      // add to cart
-      await addToCart(page);
+        // add to cart
+        await addToCart(page);
+      } catch (productError) {
+        console.log('Product selection/add to cart failed:', productError.message);
+        // Continue with checkout even if product selection failed
+      }
 
       console.log('moving on to checkout');
       await sleep(1500);
-      await checkout(page);
+      try {
+        await checkout(page);
+      } catch (checkoutError) {
+        console.log('Checkout failed:', checkoutError.message);
+        // Continue to end session
+      }
       await sleep(1500);
       
       // go to home page with end session param
