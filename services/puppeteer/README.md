@@ -4,6 +4,8 @@ A modular Puppeteer script for generating realistic traffic to the Storedog appl
 
 ## 📁 Project Structure
 
+The script uses a modular architecture for maintainability and extensibility:
+
 ```
 scripts/
 ├── puppeteer-modular.js     # Main entry point
@@ -22,13 +24,21 @@ scripts/
     └── searchSession.js   # Search functionality
 ```
 
+### Modular Architecture Benefits
+
+- **Separation of Concerns**: Each module has a specific responsibility
+- **Easy Maintenance**: Changes to one module don't affect others
+- **Extensibility**: Add new sessions without modifying core code
+- **Testability**: Individual modules can be tested in isolation
+- **Reusability**: Utility functions shared across all sessions
+
 ## 🎯 Session Types
 
-- **HomePageSession**: Basic home page browsing
-- **FrustrationSession**: Intentional frustration signals
-- **TaxonomySession**: Category browsing + purchases
-- **BrowsingSession**: General browsing patterns
-- **SearchSession**: Search functionality
+- **HomePageSession**: Basic home page browsing and product selection
+- **FrustrationSession**: Generates all three types of frustration signals (rage clicks, dead clicks, error clicks)
+- **TaxonomySession**: Category browsing with Best Sellers navigation and purchases
+- **BrowsingSession**: General browsing patterns with navbar navigation
+- **SearchSession**: Search functionality (example session)
 
 ## ⚙️ Configuration
 
@@ -37,6 +47,8 @@ scripts/
 - `PUPPETEER_MAX_CONCURRENT`: Max concurrent sessions (default: 8)
 - `PUPPETEER_STARTUP_DELAY`: Startup delay in ms (default: 10000)
 - `PUPPETEER_RAMP_INTERVAL`: Ramp-up interval in ms (default: 30000)
+- `PUPPETEER_TIMEOUT`: Page navigation timeout in ms (default: 40000)
+- `PUPPETEER_BROWSER`: Browser engine - 'chrome' or 'firefox' (default: chrome)
 - `PUPPETEER_ENABLE_CACHE`: Enable cache (default: false)
 
 ### Concurrency Configuration
@@ -107,6 +119,35 @@ The script includes automatic safety limits to prevent system overload:
 3. Implement `run()` method
 4. That's it! No configuration needed
 
+**Dynamic Discovery:**
+The script automatically discovers all session files in the `sessions/` directory at runtime. No manual registration required.
+
+**Session File Requirements:**
+- Must be in `sessions/` directory
+- Must export a class extending `BaseSession`
+- Must implement `run()` method
+- File name becomes the session type name
+
+**Example Session:**
+```javascript
+const BaseSession = require('./baseSession');
+
+class CustomSession extends BaseSession {
+  async run() {
+    const { page, browser } = await this.setupPage();
+    try {
+      // Your session logic here
+      await page.goto(this.sessionManager.config.storedogUrl);
+      // ... more interactions
+    } finally {
+      await this.cleanup(browser, page);
+    }
+  }
+}
+
+module.exports = CustomSession;
+```
+
 ## 🚀 Usage
 
 ### Basic Usage
@@ -168,14 +209,136 @@ spec:
 - **Memory management**: Automatic garbage collection
 - **Error handling**: Graceful failure recovery
 - **Resource monitoring**: Memory and CPU limits
+- **Browser pooling**: Efficient browser reuse with context clearing
+- **Session orchestration**: Balanced session distribution
+- **Context isolation**: Unique RUM sessions via browser context clearing
 
 ## 📊 Device Support
 
-- **Mobile**: iPhone, Android devices
-- **Tablet**: iPad Pro
-- **Desktop**: MacBook, Windows PC
-- **Browsers**: Safari, Chrome, Firefox, Edge
+The script includes comprehensive device emulation with realistic user agents, viewports, and browser configurations.
+
+### Device Categories
+- **Mobile**: iPhone, Android devices with touch support
+- **Tablet**: iPad Pro with tablet-optimized viewports
+- **Desktop**: MacBook, Windows PC with desktop browsers
+- **Browsers**: Safari, Chrome, Firefox, Edge across platforms
 - **OS**: iOS, Android, macOS, Windows
+
+### Device Configuration (`devices.json`)
+
+Devices are configured in `scripts/devices.json` with the following structure:
+
+```json
+{
+  "name": "iPhone 15 Pro Max",
+  "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+  "viewport": { 
+    "width": 430, 
+    "height": 932, 
+    "deviceScaleFactor": 3, 
+    "isMobile": true, 
+    "hasTouch": true 
+  },
+  "category": "mobile",
+  "os": "iOS",
+  "browser": "Safari"
+}
+```
+
+### Available Devices
+
+**iOS Devices:**
+- iPhone 15 Pro Max (Safari)
+- iPhone 14 (Safari)
+- iPhone SE (Safari)
+- iPhone 15 Pro Max (Chrome)
+- iPhone 14 (Chrome)
+- iPad Pro (Safari)
+
+**Android Devices:**
+- Samsung Galaxy S24 Ultra (Chrome)
+- Samsung Galaxy S23 (Chrome)
+- Google Pixel 8 Pro (Chrome)
+- Samsung Galaxy S24 Ultra (Firefox)
+- Samsung Galaxy S23 (Firefox)
+
+**Desktop Devices:**
+- MacBook Pro 16" (Safari)
+- MacBook Pro 16" (Chrome)
+- MacBook Pro 16" (Firefox)
+- Windows PC (Edge)
+- Windows PC (Chrome)
+- Windows PC (Firefox)
+
+### Adding Custom Devices
+
+1. Edit `scripts/devices.json`
+2. Add new device object with required fields:
+   - `name`: Display name
+   - `userAgent`: Browser user agent string
+   - `viewport`: Viewport configuration
+   - `category`: mobile/tablet/desktop
+   - `os`: iOS/Android/macOS/Windows
+   - `browser`: Safari/Chrome/Firefox/Edge
+3. Restart the script to load new devices
+
+### Device Selection
+
+- **Random Selection**: Each session gets a random device
+- **Balanced Distribution**: All device types are represented
+- **Realistic Emulation**: Full viewport, user agent, and touch support
+
+## 🔄 Browser Pool & Session Management
+
+### Browser Pool (`browserPool.js`)
+
+The browser pool manages browser instances efficiently to reduce memory usage and improve performance.
+
+**Features:**
+- **Pool Size**: Scales with `PUPPETEER_MAX_CONCURRENT` (6-20 browsers)
+- **Browser Reuse**: Sessions share browser instances
+- **Context Clearing**: Each session gets a clean browser context
+- **Memory Optimization**: Automatic browser cleanup and garbage collection
+
+**Pool Configuration:**
+```javascript
+// Pool size scales with concurrency
+browserPoolSize: Math.min(Math.max(PUPPETEER_MAX_CONCURRENT, 6), 20)
+```
+
+### Session Manager (`sessionManager.js`)
+
+Orchestrates session execution with progressive concurrency and balanced distribution.
+
+**Features:**
+- **Progressive Ramp-Up**: Gradually increases concurrent sessions
+- **Balanced Distribution**: Ensures all session types run at least once
+- **Resource Monitoring**: Tracks memory and CPU usage
+- **Session Statistics**: Logs completion rates and session types
+- **Graceful Shutdown**: Handles SIGINT/SIGTERM signals
+
+**Session Distribution:**
+```javascript
+// Guaranteed: One of each session type
+// Random: Remaining sessions distributed randomly
+// Shuffled: Execution order randomized
+```
+
+### Context Isolation
+
+Each session gets a unique browser context to ensure proper RUM session tracking:
+
+**Context Clearing Process:**
+1. **Cookies**: Clear all cookies
+2. **Cache**: Clear browser cache
+3. **Storage**: Clear localStorage and sessionStorage
+4. **IndexedDB**: Clear IndexedDB databases
+5. **CDP Commands**: Execute Chrome DevTools Protocol commands
+
+**RUM Session Benefits:**
+- **Unique Sessions**: Each session appears as separate user
+- **Proper Tracking**: Datadog RUM tracks individual sessions
+- **Session Analytics**: Accurate session metrics and frustration signals
 
 ## 🛠️ Utility Functions (`utils.js`)
 
@@ -330,6 +493,76 @@ await goToFooterPage(page);
 2. Finds footer links (`footer a`)
 3. Clicks random footer link
 4. Navigates to footer page
+
+### Frustration Signal Generators
+
+These functions generate realistic frustration signals for Datadog RUM monitoring, based on the [official Datadog frustration signals documentation](https://docs.datadoghq.com/real_user_monitoring/browser/frustration_signals/).
+
+#### `generateRageClicks(page)`
+**Purpose**: Generate rage clicks (3+ clicks in 1 second)
+```javascript
+await generateRageClicks(page);
+```
+**Process**:
+1. Finds clickable elements (`button`, `a`, `[role="button"]`, `.btn`)
+2. Performs 4 rapid clicks with 100ms delays
+3. Triggers Datadog rage click detection
+**RUM Signal**: `action.frustration.type:rage_click`
+
+#### `generateDeadClicks(page)`
+**Purpose**: Generate dead clicks (clicks on non-interactive elements)
+```javascript
+await generateDeadClicks(page);
+```
+**Process**:
+1. Finds non-interactive elements (`div`, `span`, `p`, `h1-h6`, `img`)
+2. Clicks on static element that produces no action
+3. Triggers Datadog dead click detection
+**RUM Signal**: `action.frustration.type:dead_click`
+
+#### `generateErrorClicks(page)`
+**Purpose**: Generate error clicks (clicks before JavaScript errors)
+```javascript
+await generateErrorClicks(page);
+```
+**Process**:
+1. Injects temporary error handler
+2. Clicks on error-prone elements
+3. Triggers intentional JavaScript errors (`nonexistentFunction()`)
+4. Cleans up error handler
+**RUM Signal**: `action.frustration.type:error_click`
+
+#### `generateRandomFrustrationSignal(page)`
+**Purpose**: Generate random frustration signal
+```javascript
+const signalType = await generateRandomFrustrationSignal(page);
+console.log(`Generated ${signalType} frustration signal`);
+```
+**Process**:
+1. Randomly selects one of: `rage`, `dead`, or `error`
+2. Calls appropriate generator function
+3. Returns the signal type generated
+**Return Value**: `'rage'`, `'dead'`, or `'error'`
+
+#### Frustration Signal Integration
+**Available in all sessions**:
+```javascript
+const { 
+  generateRageClicks,
+  generateDeadClicks, 
+  generateErrorClicks,
+  generateRandomFrustrationSignal
+} = require('../utils');
+
+// Use in any session
+await generateRandomFrustrationSignal(page);
+```
+
+**Expected RUM Data**:
+- **Frustration Count**: `session.frustration.count:>1`
+- **Signal Types**: `action.frustration.type:rage_click|dead_click|error_click`
+- **Session Tags**: `frustration detected`
+- **Performance Waterfall**: Actions containing frustration signals
 
 ### Usage Examples
 
