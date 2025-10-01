@@ -1,6 +1,6 @@
 // Home page session - visits home page and browses products
 const config = require('../config');
-const { setUtmParams, selectHomePageProduct, selectRelatedProduct, goToFooterPage, addToCart, checkout } = require('../utils');
+const { setUtmParams, selectHomePageProduct, selectRelatedProduct, goToFooterPage, addToCart, checkout, sleep } = require('../utils');
 const BaseSession = require('./baseSession');
 
 class HomePageSession extends BaseSession {
@@ -21,7 +21,7 @@ class HomePageSession extends BaseSession {
       console.log(`"${pageTitle}" loaded`);
 
       await selectHomePageProduct(page);
-      await page.waitForTimeout(1000);
+      await sleep(1000);
       await addToCart(page);
 
       // maybe purchase that extra product
@@ -38,7 +38,7 @@ class HomePageSession extends BaseSession {
         await logo.evaluate((el) => el.click());
         await page.waitForNavigation();
         await selectHomePageProduct(page);
-        await page.waitForTimeout(1000);
+        await sleep(1000);
         await addToCart(page);
       }
 
@@ -48,14 +48,14 @@ class HomePageSession extends BaseSession {
         await logo.evaluate((el) => el.click());
         await page.waitForNavigation();
         await selectHomePageProduct(page);
-        await page.waitForTimeout(2000);
+        await sleep(2000);
         await addToCart(page);
       }
 
       await goToFooterPage(page);
 
       await checkout(page);
-      await page.waitForTimeout(1000);
+      await sleep(1000);
       const url = await page.url();
       await page.goto(`${url}?end_session=true`, {
         waitUntil: 'domcontentloaded',

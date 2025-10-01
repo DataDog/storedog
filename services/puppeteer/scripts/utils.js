@@ -1,8 +1,6 @@
 // Utility functions for Puppeteer script
 const config = require('./config');
-
-// Sleep function
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const { setTimeout: sleep } = require('node:timers/promises');
 
 // Memory usage logging
 const logMemoryUsage = (context) => {

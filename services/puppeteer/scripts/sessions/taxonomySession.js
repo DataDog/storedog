@@ -1,6 +1,6 @@
 // Taxonomy session - visits taxonomy pages and purchases products
 const config = require('../config');
-const { setUtmParams, selectProduct, addToCart, checkout } = require('../utils');
+const { setUtmParams, selectProduct, addToCart, checkout, sleep } = require('../utils');
 const BaseSession = require('./baseSession');
 
 class TaxonomySession extends BaseSession {
@@ -25,7 +25,7 @@ class TaxonomySession extends BaseSession {
       const pageUrl = await page.url();
       console.log(`"${pageUrl}" loaded`);
 
-      await page.waitForTimeout(1000);
+      await sleep(1000);
 
       // select a product
       await selectProduct(page);
@@ -36,9 +36,9 @@ class TaxonomySession extends BaseSession {
       await addToCart(page);
 
       console.log('moving on to checkout');
-      await page.waitForTimeout(1500);
+      await sleep(1500);
       await checkout(page);
-      await page.waitForTimeout(1500);
+      await sleep(1500);
       
       // go to home page with end session param
       const url = await page.url();

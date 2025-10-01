@@ -1,6 +1,6 @@
 // Browsing session - additional browsing and interaction patterns
 const config = require('../config');
-const { setUtmParams, selectProduct, addToCart, checkout } = require('../utils');
+const { setUtmParams, selectProduct, addToCart, checkout, sleep } = require('../utils');
 const BaseSession = require('./baseSession');
 
 class BrowsingSession extends BaseSession {
@@ -37,9 +37,9 @@ class BrowsingSession extends BaseSession {
       await addToCart(page);
 
       console.log('moving on to checkout');
-      await page.waitForTimeout(1500);
+      await sleep(1500);
       await checkout(page);
-      await page.waitForTimeout(1500);
+      await sleep(1500);
       const url = await page.url();
       await page.goto(`${url}?end_session=true`, {
         waitUntil: 'domcontentloaded',

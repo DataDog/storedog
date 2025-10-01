@@ -1,6 +1,6 @@
 // Frustration session - has frustration signals due to incorrect product item UI component
 const config = require('../config');
-const { setUtmParams, selectProductsPageProduct, selectRelatedProduct, goToFooterPage, addToCart, checkout } = require('../utils');
+const { setUtmParams, selectProductsPageProduct, selectRelatedProduct, goToFooterPage, addToCart, checkout, sleep } = require('../utils');
 const BaseSession = require('./baseSession');
 
 class FrustrationSession extends BaseSession {
@@ -47,9 +47,9 @@ class FrustrationSession extends BaseSession {
 
       await goToFooterPage(page);
 
-      await page.waitForTimeout(1500);
+      await sleep(1500);
       await checkout(page);
-      await page.waitForTimeout(1500);
+      await sleep(1500);
       const url = await page.url();
       await page.goto(`${url}?end_session=true`, {
         waitUntil: 'domcontentloaded',
