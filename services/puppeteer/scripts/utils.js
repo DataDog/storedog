@@ -122,62 +122,182 @@ const selectHomePageProduct = async (page) => {
 const selectProduct = async (page) => {
   console.log('Selecting product on page', await page.title());
   
-  await page.waitForSelector('a[href*="/products/"]', { timeout: 10000 });
-  const productLinks = await page.$$('a[href*="/products/"]');
-  
-  if (productLinks.length > 0) {
-    const randomIndex = Math.floor(Math.random() * productLinks.length);
-    await productLinks[randomIndex].click();
-    await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
-    console.log('Selected product:', await page.title());
+  try {
+    await page.waitForSelector('a[href*="/products/"]', { 
+      timeout: 5000,
+      visible: true 
+    });
+    
+    const productLinks = await page.$$('a[href*="/products/"]');
+    
+    if (productLinks.length > 0) {
+      const randomIndex = Math.floor(Math.random() * productLinks.length);
+      await productLinks[randomIndex].click();
+      await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
+      console.log('Selected product:', await page.title());
+    } else {
+      console.log('No product links found on this page');
+    }
+  } catch (error) {
+    console.log('No product links available on this page:', error.message);
   }
 };
 
 const selectProductsPageProduct = async (page) => {
-  // go to all products page
-  let selector = 'nav#main-navbar a:first-child';
-  const button = await page.$(selector);
-  await Promise.all([
-    button.evaluate((b) => b.click()),
-    page.waitForNavigation(),
-  ]);
+  try {
+    // Try multiple navigation selectors for products page
+    const navSelectors = [
+      'nav#main-navbar a[href*="/products"]',  // Direct products link
+      'nav#main-navbar a:first-child',         // First nav item
+      'a[href*="/products"]',                  // Any products link
+      'nav a[href="/products"]',               // Products in nav
+      'a[href="/products"]'                    // Direct products link
+    ];
+    
+    let button = null;
+    for (const selector of navSelectors) {
+      button = await page.$(selector);
+      if (button) {
+        console.log(`Found products navigation using selector: ${selector}`);
+        break;
+      }
+    }
+    
+    if (button) {
+      await Promise.all([
+        button.evaluate((b) => b.click()),
+        page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+      ]);
 
-  await selectProduct(page);
-
-  return true;
+      await selectProduct(page);
+      return true;
+    } else {
+      console.log('Products page navigation button not found, trying direct navigation');
+      // Fallback: try to navigate directly to products page
+      const currentUrl = page.url();
+      const productsUrl = currentUrl.endsWith('/') ? `${currentUrl}products` : `${currentUrl}/products`;
+      await page.goto(productsUrl, { waitUntil: 'domcontentloaded' });
+      await selectProduct(page);
+      return true;
+    }
+  } catch (error) {
+    console.log('Failed to navigate to products page:', error.message);
+    return false;
+  }
 };
 
 const selectRelatedProduct = async (page) => {
   console.log('In selectRelatedProduct on page', await page.title());
   
-  await page.waitForSelector('.related-products a', { timeout: 10000 });
-  const relatedLinks = await page.$$('.related-products a');
-  
-  if (relatedLinks.length > 0) {
-    const randomIndex = Math.floor(Math.random() * relatedLinks.length);
-    await relatedLinks[randomIndex].click();
-    await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
-    console.log('Selected related product:', await page.title());
+  try {
+    // Try multiple selectors for related/similar products
+    const relatedSelectors = [
+      '.related-products a',           // Standard related products
+      '.similar-products a',          // Similar products
+      '.recommended-products a',      // Recommended products
+      '.product-recommendations a',   // Product recommendations
+      '.you-might-also-like a',       // You might also like
+      '.suggested-products a',        // Suggested products
+      '.product-grid a[href*="/products/"]', // Any product links in grid
+      '.product-list a[href*="/products/"]', // Any product links in list
+      'a[href*="/products/"]'         // Any product links on page
+    ];
+    
+    let relatedLinks = [];
+    let usedSelector = '';
+    
+    for (const selector of relatedSelectors) {
+      try {
+        await page.waitForSelector(selector, { 
+          timeout: 2000,
+          visible: true 
+        });
+        
+        relatedLinks = await page.$$(selector);
+        if (relatedLinks.length > 0) {
+          usedSelector = selector;
+          console.log(`Found ${relatedLinks.length} related products using selector: ${selector}`);
+          break;
+        }
+      } catch (e) {
+        // Continue to next selector
+      }
+    }
+    
+    if (relatedLinks.length > 0) {
+      // Filter out the current product if possible
+      const currentUrl = page.url();
+      const filteredLinks = relatedLinks.filter(async (link) => {
+        try {
+          const href = await link.evaluate(el => el.href);
+          return href !== currentUrl;
+        } catch (e) {
+          return true; // Keep link if we can't check href
+        }
+      });
+      
+      const linksToUse = filteredLinks.length > 0 ? filteredLinks : relatedLinks;
+      const randomIndex = Math.floor(Math.random() * linksToUse.length);
+      
+      await linksToUse[randomIndex].click();
+      await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
+      console.log('Selected related product:', await page.title());
+    } else {
+      console.log('No related products found, skipping related product selection');
+    }
+  } catch (error) {
+    console.log('Related products not available on this page, skipping:', error.message);
   }
 };
 
 const goToFooterPage = async (page) => {
   console.log('In goToFooterPage on page', await page.title());
   
-  // Scroll to footer
-  await page.evaluate(() => {
-    window.scrollTo(0, document.body.scrollHeight);
-  });
-  
-  await sleep(1000);
-  
-  // Click on a footer link
-  const footerLinks = await page.$$('footer a');
-  if (footerLinks.length > 0) {
-    const randomIndex = Math.floor(Math.random() * footerLinks.length);
-    await footerLinks[randomIndex].click();
-    await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
-    console.log('Navigated to footer page:', await page.title());
+  try {
+    // Scroll to footer
+    await page.evaluate(() => {
+      window.scrollTo(0, document.body.scrollHeight);
+    });
+    
+    await sleep(1000);
+    
+    // Try multiple footer link selectors
+    const footerSelectors = [
+      'footer a',                    // Standard footer links
+      '.footer a',                   // Footer with class
+      '#footer a',                   // Footer with ID
+      'footer nav a',               // Footer navigation
+      '.footer-nav a',              // Footer navigation class
+      'footer ul a',                // Footer list links
+      'footer li a'                 // Footer list item links
+    ];
+    
+    let footerLinks = [];
+    for (const selector of footerSelectors) {
+      try {
+        footerLinks = await page.$$(selector);
+        if (footerLinks.length > 0) {
+          console.log(`Found ${footerLinks.length} footer links using selector: ${selector}`);
+          break;
+        }
+      } catch (e) {
+        // Continue to next selector
+      }
+    }
+    
+    if (footerLinks.length > 0) {
+      const randomIndex = Math.floor(Math.random() * footerLinks.length);
+      const linkText = await footerLinks[randomIndex].evaluate(el => el.textContent?.trim());
+      console.log(`Clicking footer link: "${linkText}"`);
+      
+      await footerLinks[randomIndex].click();
+      await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
+      console.log('Navigated to footer page:', await page.title());
+    } else {
+      console.log('No footer links found, staying on current page');
+    }
+  } catch (error) {
+    console.log('Footer navigation failed:', error.message);
   }
 };
 

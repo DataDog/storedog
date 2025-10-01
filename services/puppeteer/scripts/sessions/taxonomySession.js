@@ -11,15 +11,73 @@ class TaxonomySession extends BaseSession {
     const { browser, page } = setup;
     
     try {
-      const bestsellersUrl = config.storedogUrl.endsWith('/')
-        ? `${config.storedogUrl}taxonomies/categories/bestsellers`
-        : `${config.storedogUrl}/taxonomies/categories/bestsellers`;
-
-      const urlWithUtm = Math.random() > 0.5 ? setUtmParams(bestsellersUrl) : bestsellersUrl;
+      // Start from home page and navigate to best sellers
+      const urlWithUtm = Math.random() > 0.5 ? setUtmParams(config.storedogUrl) : config.storedogUrl;
       
-      await page.goto(urlWithUtm, { waitUntil: 'networkidle0' });
+      await page.goto(urlWithUtm, { 
+        waitUntil: 'domcontentloaded',
+        timeout: 15000 
+      });
       let pageTitle = await page.title();
       console.log(`"${pageTitle}" loaded`);
+
+      // Try to navigate to best sellers page using multiple approaches
+      let bestSellersFound = false;
+      
+      // Approach 1: Look for "Best Sellers" link in navigation
+      try {
+        const bestSellersSelectors = [
+          'a[href*="bestsellers"]',
+          'a[href*="best-sellers"]', 
+          'a[href*="best_sellers"]',
+          'nav a:contains("Best Sellers")',
+          'nav a:contains("Best")',
+          'a:contains("Best Sellers")',
+          'a:contains("Best")'
+        ];
+        
+        for (const selector of bestSellersSelectors) {
+          try {
+            const link = await page.$(selector);
+            if (link) {
+              console.log(`Found best sellers link using selector: ${selector}`);
+              await Promise.all([
+                page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
+                link.click()
+              ]);
+              bestSellersFound = true;
+              break;
+            }
+          } catch (e) {
+            // Continue to next selector
+          }
+        }
+      } catch (e) {
+        console.log('Could not find best sellers navigation link');
+      }
+      
+      // Approach 2: Try direct URL if navigation failed
+      if (!bestSellersFound) {
+        try {
+          const bestSellersUrl = config.storedogUrl.endsWith('/')
+            ? `${config.storedogUrl}bestsellers`
+            : `${config.storedogUrl}/bestsellers`;
+          
+          console.log(`Trying direct best sellers URL: ${bestSellersUrl}`);
+          await page.goto(bestSellersUrl, { 
+            waitUntil: 'domcontentloaded',
+            timeout: 10000 
+          });
+          bestSellersFound = true;
+        } catch (e) {
+          console.log('Direct best sellers URL failed, staying on home page');
+        }
+      }
+      
+      // If still no best sellers page, just work with current page
+      if (!bestSellersFound) {
+        console.log('Working with current page for taxonomy session');
+      }
 
       // get page url
       const pageUrl = await page.url();
