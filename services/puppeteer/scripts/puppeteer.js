@@ -28,36 +28,184 @@ const forceGC = () => {
   }
 };
 
+// Browser pool management for better resource utilization
+class BrowserPool {
+  constructor(maxBrowsers = 4) {
+    this.maxBrowsers = maxBrowsers;
+    this.browsers = [];
+    this.availableBrowsers = [];
+  }
+
+  async getBrowser() {
+    if (this.availableBrowsers.length > 0) {
+      return this.availableBrowsers.pop();
+    }
+    
+    if (this.browsers.length < this.maxBrowsers) {
+      const browser = await getNewBrowser();
+      this.browsers.push(browser);
+      return browser;
+    }
+    
+    // Wait for a browser to become available
+    return new Promise((resolve) => {
+      const checkForAvailable = () => {
+        if (this.availableBrowsers.length > 0) {
+          resolve(this.availableBrowsers.pop());
+        } else {
+          setTimeout(checkForAvailable, 100);
+        }
+      };
+      checkForAvailable();
+    });
+  }
+
+  releaseBrowser(browser) {
+    this.availableBrowsers.push(browser);
+  }
+
+  async closeAll() {
+    for (const browser of this.browsers) {
+      try {
+        await browser.close();
+      } catch (error) {
+        console.error('Error closing browser:', error);
+      }
+    }
+    this.browsers = [];
+    this.availableBrowsers = [];
+  }
+}
+
+// Global browser pool instance
+const browserPool = new BrowserPool(6); // Increased pool size
+
+// Clear browser context to ensure fresh sessions
+const clearBrowserContext = async (page) => {
+  try {
+    // Clear all cookies
+    const client = await page.target().createCDPSession();
+    await client.send('Network.clearBrowserCookies');
+    await client.send('Network.clearBrowserCache');
+    
+    // Clear localStorage and sessionStorage
+    await page.evaluate(() => {
+      localStorage.clear();
+      sessionStorage.clear();
+    });
+    
+    console.log('Browser context cleared for new session');
+  } catch (error) {
+    console.log('Error clearing browser context:', error);
+  }
+};
+
+// Ensure RUM SDK session is properly ended
+const ensureSessionEnd = async (page) => {
+  try {
+    // Navigate to a page with end_session=true to trigger datadogRum.stopSession()
+    await page.goto(`${startUrl}?end_session=true`, { 
+      waitUntil: 'domcontentloaded',
+      timeout: 10000 
+    });
+    
+    // Wait a moment for the session to be properly ended
+    await sleep(1000);
+    
+    console.log('RUM session ended');
+  } catch (error) {
+    console.log('Error ending RUM session:', error);
+  }
+};
+
+// Optimize page resource loading for memory efficiency
+const optimizePageResources = async (page) => {
+  // Enable request interception to control resource loading
+  await page.setRequestInterception(true);
+  
+  page.on('request', (request) => {
+    const resourceType = request.resourceType();
+    
+    // Allow all resources to load (fonts, media, images, etc.)
+    // Comment out the blocking logic below if you want unrestricted resource loading
+    /*
+    if (['font', 'media'].includes(resourceType)) {
+      request.abort();
+    } else if (resourceType === 'stylesheet') {
+      // Allow CSS but with lower priority
+      request.continue();
+    } else {
+      // Allow images, scripts, and other essential resources
+      request.continue();
+    }
+    */
+    
+    // Allow all resources to continue loading
+    request.continue();
+  });
+  
+  // Set cache to false to prevent memory buildup
+  await page.setCacheEnabled(false);
+  
+  // Disable unnecessary features
+  await page.evaluateOnNewDocument(() => {
+    // Disable animations to reduce CPU/memory usage
+    Object.defineProperty(document, 'hidden', { value: false });
+    Object.defineProperty(document, 'visibilityState', { value: 'visible' });
+  });
+};
+
 const getNewBrowser = async () => {
   try {
     const browser = await puppeteer.launch({
       headless: 'new',
       defaultViewport: null,
-      timeout: 40000,
-      slowMo: 400,
-      protocolTimeout: 60000,
+      timeout: 30000,
+      slowMo: 200, // Reduced for faster execution
+      protocolTimeout: 45000,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         // Memory optimization flags
         '--memory-pressure-off',
-        '--max_old_space_size=512',
+        '--max_old_space_size=256', // Reduced from 512
         '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding',
-        '--disable-features=TranslateUI',
+        '--disable-features=TranslateUI,VizDisplayCompositor',
         '--disable-ipc-flooding-protection',
         '--disable-background-networking',
         '--disable-sync',
         '--disable-default-apps',
         '--disable-extensions',
         '--disable-plugins',
-        '--disable-images', // Disable image loading to save memory
         '--no-first-run',
         '--no-default-browser-check',
         '--disable-gpu',
         '--disable-software-rasterizer',
+        // Additional memory optimization flags
+        '--disable-web-security',
+        '--disable-background-media-suspend',
+        '--disable-client-side-phishing-detection',
+        '--disable-component-extensions-with-background-pages',
+        '--disable-domain-reliability',
+        '--disable-features=AudioServiceOutOfProcess',
+        '--disable-hang-monitor',
+        '--disable-prompt-on-repost',
+        '--disable-speech-api',
+        '--disable-webgl',
+        '--disable-webgl2',
+        '--enable-features=NetworkService,NetworkServiceLogging',
+        '--force-color-profile=srgb',
+        '--hide-scrollbars',
+        '--mute-audio',
+        '--no-zygote',
+        // Removed deprecated flags:
+        // --single-process (deprecated, can cause stability issues)
+        // --disable-threaded-compositing (deprecated in modern Chrome)
+        // --disable-threaded-scrolling (deprecated in modern Chrome)
+        // --disable-renderer-backgrounding (deprecated in modern Chrome)
+        // --disable-backgrounding-occluded-windows (deprecated in modern Chrome)
+        // --disable-features=VizDisplayCompositor (duplicate, already in line above)
       ],
     });
     const browserVersion = await browser.version();
@@ -553,15 +701,21 @@ const checkout = async (page) => {
 };
 
 const mainSession = async () => {
-  const browser = await getNewBrowser();
+  const browser = await browserPool.getBrowser();
   let selector;
   let page = null;
 
   try {
     page = await browser.newPage();
     
-    // Set memory-efficient page settings
-    await page.setCacheEnabled(false);
+    // Ensure previous RUM session is ended
+    await ensureSessionEnd(page);
+    
+    // Clear browser context for fresh session
+    await clearBrowserContext(page);
+    
+    // Apply memory optimizations
+    await optimizePageResources(page);
     await page.setJavaScriptEnabled(true);
 
     await page.setUserAgent(
@@ -644,13 +798,12 @@ const mainSession = async () => {
   } catch (err) {
     console.log(`First session failed: ${err}`);
   } finally {
-    console.log('closing browser');
+    console.log('releasing browser back to pool');
     try {
       if (page) {
         await page.close();
       }
-      await browser.close();
-      if (browser && browser.process() != null) browser.process().kill('SIGINT');
+      browserPool.releaseBrowser(browser);
     } catch (cleanupError) {
       console.error('Error during cleanup:', cleanupError);
     }
@@ -659,10 +812,18 @@ const mainSession = async () => {
 
 // has some frustration signals due to a incorrect product item UI component configuration in the product page
 const secondSession = async () => {
-  const browser = await getNewBrowser();
+  const browser = await browserPool.getBrowser();
 
   try {
     const page = await browser.newPage();
+    
+    // Ensure previous RUM session is ended
+    await ensureSessionEnd(page);
+    
+    // Clear browser context for fresh session
+    await clearBrowserContext(page);
+    
+    await optimizePageResources(page);
 
     await page.setUserAgent(
       `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36`
@@ -726,16 +887,23 @@ const secondSession = async () => {
   } catch (err) {
     console.log(`Second session failed, ending session: ${err}`);
   } finally {
-    console.log('closing browser');
-    await browser.close();
-    if (browser && browser.process() != null) browser.process().kill('SIGINT');
+    console.log('releasing browser back to pool');
+    browserPool.releaseBrowser(browser);
   }
 };
 
 // third session visits taxonomy pages and purchases products
 const thirdSession = async () => {
-  const browser = await getNewBrowser();
+  const browser = await browserPool.getBrowser();
   const page = await browser.newPage();
+  
+  // Ensure previous RUM session is ended
+  await ensureSessionEnd(page);
+  
+  // Clear browser context for fresh session
+  await clearBrowserContext(page);
+  
+  await optimizePageResources(page);
 
   await page.setUserAgent(
     `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36`
@@ -798,19 +966,26 @@ const thirdSession = async () => {
   } catch (err) {
     console.log(`Third session failed: ${err}`);
   } finally {
-    console.log('closing browser');
-    await browser.close();
-    if (browser && browser.process() != null) browser.process().kill('SIGINT');
+    console.log('releasing browser back to pool');
+    browserPool.releaseBrowser(browser);
   }
 };
 
 // third session visits taxonomy pages and purchases products
 const fourthSession = async () => {
   console.log('Starting fourth session');
-  const browser = await getNewBrowser();
+  const browser = await browserPool.getBrowser();
 
   try {
     const page = await browser.newPage();
+    
+    // Ensure previous RUM session is ended
+    await ensureSessionEnd(page);
+    
+    // Clear browser context for fresh session
+    await clearBrowserContext(page);
+    
+    await optimizePageResources(page);
 
     await page.setUserAgent(
       `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36`
@@ -861,45 +1036,89 @@ const fourthSession = async () => {
   } catch (err) {
     console.log(`Fourth session failed: ${err}`);
   } finally {
-    console.log('closing browser');
-    await browser.close();
-    if (browser && browser.process() != null) browser.process().kill('SIGINT');
+    console.log('releasing browser back to pool');
+    browserPool.releaseBrowser(browser);
   }
 };
 
 // Optimized concurrent session management with memory monitoring
 const runSessions = async () => {
   const sessions = [mainSession, secondSession, thirdSession, fourthSession];
-  const maxConcurrent = 4; // Limit concurrent sessions to reduce memory pressure
+  const maxConcurrent = 8; // Increased concurrency with optimized memory usage
   const sessionPromises = [];
+  const sessionQueue = [];
   
-  for (let i = 0; i < 8; i++) {
-    // Wait if we have too many concurrent sessions
-    if (sessionPromises.length >= maxConcurrent) {
-      await Promise.race(sessionPromises);
-      // Remove completed sessions
-      sessionPromises.splice(0, sessionPromises.length);
-    }
-    
-    setTimeout(async () => {
-      const session = Math.floor(Math.random() * 4);
-      console.log('running session', session + 1);
-      logMemoryUsage(`Before Session ${session + 1}`);
-      
-      try {
-        await sessions[session]();
-        logMemoryUsage(`After Session ${session + 1}`);
-        forceGC(); // Trigger garbage collection after each session
-      } catch (error) {
-        console.error(`Session ${session + 1} failed:`, error);
-        logMemoryUsage(`Failed Session ${session + 1}`);
-      }
-    }, 1000 * i);
+  // Create a queue of sessions to run
+  for (let i = 0; i < 16; i++) { // Increased total sessions
+    sessionQueue.push({
+      id: i + 1,
+      session: sessions[Math.floor(Math.random() * sessions.length)],
+      delay: Math.random() * 2000 // Random delay up to 2 seconds
+    });
   }
+  
+  // Process sessions with controlled concurrency
+  const processSessions = async () => {
+    while (sessionQueue.length > 0 || sessionPromises.length > 0) {
+      // Start new sessions if we have capacity
+      while (sessionPromises.length < maxConcurrent && sessionQueue.length > 0) {
+        const sessionTask = sessionQueue.shift();
+        
+        const sessionPromise = (async () => {
+          await sleep(sessionTask.delay);
+          console.log(`Starting session ${sessionTask.id}`);
+          logMemoryUsage(`Before Session ${sessionTask.id}`);
+          
+          try {
+            await sessionTask.session();
+            logMemoryUsage(`After Session ${sessionTask.id}`);
+            forceGC(); // Trigger garbage collection after each session
+            console.log(`Completed session ${sessionTask.id}`);
+          } catch (error) {
+            console.error(`Session ${sessionTask.id} failed:`, error);
+            logMemoryUsage(`Failed Session ${sessionTask.id}`);
+          }
+        })();
+        
+        sessionPromises.push(sessionPromise);
+      }
+      
+      // Wait for at least one session to complete
+      if (sessionPromises.length > 0) {
+        await Promise.race(sessionPromises);
+        // Remove completed sessions
+        sessionPromises.splice(0, sessionPromises.length);
+      }
+    }
+  };
+  
+  await processSessions();
+  console.log('All sessions completed');
+  
+  // Clean up browser pool
+  await browserPool.closeAll();
+  console.log('Browser pool cleaned up');
 };
 
+// Graceful shutdown handler
+process.on('SIGINT', async () => {
+  console.log('Received SIGINT, shutting down gracefully...');
+  await browserPool.closeAll();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  console.log('Received SIGTERM, shutting down gracefully...');
+  await browserPool.closeAll();
+  process.exit(0);
+});
+
 // Start the optimized session runner
-runSessions();
+runSessions().catch(async (error) => {
+  console.error('Session runner failed:', error);
+  await browserPool.closeAll();
+  process.exit(1);
+});
 
 // (() => mainSession())();
 // (() => secondSession())();
