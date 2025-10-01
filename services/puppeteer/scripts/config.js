@@ -32,4 +32,10 @@ const config = {
   sessionDelay: 2000 // Random delay up to 2 seconds
 };
 
+// Debug logging
+console.log('🔧 Config loaded:');
+console.log(`  STOREDOG_URL: ${config.storedogUrl}`);
+console.log(`  PUPPETEER_TIMEOUT: ${config.puppeteerTimeout}`);
+console.log(`  PUPPETEER_MAX_CONCURRENT: ${config.maxConcurrency}`);
+
 module.exports = config;
