@@ -1,6 +1,18 @@
-// Frustration session - has frustration signals due to incorrect product item UI component
+// Frustration session - generates all three types of frustration signals
 const config = require('../config');
-const { setUtmParams, selectProductsPageProduct, selectRelatedProduct, goToFooterPage, addToCart, checkout, sleep } = require('../utils');
+const { 
+  setUtmParams, 
+  selectProductsPageProduct, 
+  selectRelatedProduct, 
+  goToFooterPage, 
+  addToCart, 
+  checkout, 
+  sleep,
+  generateRageClicks,
+  generateDeadClicks,
+  generateErrorClicks,
+  generateRandomFrustrationSignal
+} = require('../utils');
 const BaseSession = require('./baseSession');
 
 class FrustrationSession extends BaseSession {
@@ -18,18 +30,39 @@ class FrustrationSession extends BaseSession {
       let pageTitle = await page.title();
       console.log(`"${pageTitle}" loaded`);
 
+      // Generate frustration signals throughout the session
+      console.log('🎯 Starting frustration signal generation...');
+      
+      // Generate rage clicks early in the session
+      await generateRageClicks(page);
+      await sleep(1000);
+      
       // go to all products page (and maybe leave)
       await selectProductsPageProduct(page);
       await addToCart(page);
 
+      // Generate dead clicks after product interaction
+      await generateDeadClicks(page);
+      await sleep(1000);
+
       await selectProductsPageProduct(page);
       await addToCart(page);
 
-      // maybe select a related product
+      // maybe select a related product (this will fail and create frustration)
       if (Math.floor(Math.random() * 2) === 0) {
-        await selectRelatedProduct(page);
-        await addToCart(page);
+        try {
+          await selectRelatedProduct(page);
+          await addToCart(page);
+        } catch (error) {
+          console.log('Related product selection failed (intentional frustration)');
+          // Generate error clicks after the failure
+          await generateErrorClicks(page);
+        }
       }
+
+      // Generate random frustration signal
+      const signalType = await generateRandomFrustrationSignal(page);
+      console.log(`Generated ${signalType} frustration signal`);
 
       // maybe try to find another product on the products page
       if (Math.floor(Math.random() * 4) === 0) {
@@ -39,6 +72,10 @@ class FrustrationSession extends BaseSession {
 
       await goToFooterPage(page);
 
+      // Generate more rage clicks
+      await generateRageClicks(page);
+      await sleep(1000);
+
       // maybe try to find another product on the products page
       if (Math.floor(Math.random() * 4) === 0) {
         await selectProductsPageProduct(page);
@@ -46,6 +83,9 @@ class FrustrationSession extends BaseSession {
       }
 
       await goToFooterPage(page);
+      
+      // Final frustration signal before checkout
+      await generateDeadClicks(page);
 
       await sleep(1500);
       await checkout(page);

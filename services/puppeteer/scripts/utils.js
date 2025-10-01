@@ -260,6 +260,158 @@ const selectProductsPageProduct = async (page) => {
   }
 };
 
+// Frustration signal generators
+const generateRageClicks = async (page) => {
+  console.log('Generating rage clicks (3+ clicks in 1 second)...');
+  
+  try {
+    // Find a clickable element (button, link, etc.)
+    const clickableSelectors = [
+      'button',
+      'a',
+      '[role="button"]',
+      '.btn',
+      'input[type="submit"]',
+      'input[type="button"]'
+    ];
+    
+    let targetElement = null;
+    for (const selector of clickableSelectors) {
+      targetElement = await page.$(selector);
+      if (targetElement) break;
+    }
+    
+    if (targetElement) {
+      // Perform 4 rapid clicks to trigger rage click detection
+      for (let i = 0; i < 4; i++) {
+        await targetElement.click();
+        await sleep(100); // Small delay between clicks
+      }
+      console.log('Rage clicks generated successfully');
+    } else {
+      console.log('No clickable element found for rage clicks');
+    }
+  } catch (error) {
+    console.log('Rage clicks generation failed:', error.message);
+  }
+};
+
+const generateDeadClicks = async (page) => {
+  console.log('Generating dead clicks (clicks on non-interactive elements)...');
+  
+  try {
+    // Find non-interactive elements to click on
+    const deadClickSelectors = [
+      'div',
+      'span',
+      'p',
+      'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'img',
+      '.container',
+      '.wrapper'
+    ];
+    
+    let targetElement = null;
+    for (const selector of deadClickSelectors) {
+      targetElement = await page.$(selector);
+      if (targetElement) break;
+    }
+    
+    if (targetElement) {
+      await targetElement.click();
+      console.log('Dead click generated successfully');
+    } else {
+      console.log('No suitable element found for dead clicks');
+    }
+  } catch (error) {
+    console.log('Dead clicks generation failed:', error.message);
+  }
+};
+
+const generateErrorClicks = async (page) => {
+  console.log('Generating error clicks (clicks that trigger JavaScript errors)...');
+  
+  try {
+    // Inject a temporary error handler
+    await page.evaluate(() => {
+      window.tempErrorHandler = (event) => {
+        console.error('Intentional error for frustration signal:', event.error);
+      };
+      window.addEventListener('error', window.tempErrorHandler);
+    });
+    
+    // Try to click on elements that might cause errors
+    const errorProneSelectors = [
+      'button[onclick*="undefined"]',
+      'a[href="javascript:void(0)"]',
+      'button[data-action="nonexistent"]',
+      '[data-testid="broken-element"]'
+    ];
+    
+    let clicked = false;
+    for (const selector of errorProneSelectors) {
+      const element = await page.$(selector);
+      if (element) {
+        await element.click();
+        clicked = true;
+        break;
+      }
+    }
+    
+    // If no error-prone elements found, try clicking on a random element
+    if (!clicked) {
+      const randomElement = await page.$('body > *');
+      if (randomElement) {
+        await randomElement.click();
+      }
+    }
+    
+    // Trigger a JavaScript error
+    await page.evaluate(() => {
+      try {
+        // This will cause a ReferenceError
+        nonexistentFunction();
+      } catch (e) {
+        console.error('Intentional error for frustration signal:', e);
+      }
+    });
+    
+    console.log('Error clicks generated successfully');
+    
+    // Clean up error handler
+    await page.evaluate(() => {
+      if (window.tempErrorHandler) {
+        window.removeEventListener('error', window.tempErrorHandler);
+        delete window.tempErrorHandler;
+      }
+    });
+    
+  } catch (error) {
+    console.log('Error clicks generation failed:', error.message);
+  }
+};
+
+const generateRandomFrustrationSignal = async (page) => {
+  const signalTypes = ['rage', 'dead', 'error'];
+  const randomType = signalTypes[Math.floor(Math.random() * signalTypes.length)];
+  
+  console.log(`Generating random frustration signal: ${randomType}`);
+  
+  switch (randomType) {
+    case 'rage':
+      await generateRageClicks(page);
+      break;
+    case 'dead':
+      await generateDeadClicks(page);
+      break;
+    case 'error':
+      await generateErrorClicks(page);
+      break;
+  }
+  
+  return randomType;
+};
+
 const selectRelatedProduct = async (page) => {
   console.log('In selectRelatedProduct on page', await page.title());
   
@@ -640,5 +792,10 @@ module.exports = {
   addToCart,
   applyDiscountCode,
   useDiscountCode,
-  checkout
+  checkout,
+  // Frustration signal generators
+  generateRageClicks,
+  generateDeadClicks,
+  generateErrorClicks,
+  generateRandomFrustrationSignal
 };
