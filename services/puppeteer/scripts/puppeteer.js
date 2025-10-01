@@ -304,8 +304,9 @@ const getNewBrowser = async () => {
 };
 
 const choosePhone = () => {
-  // Custom device configurations that will always work
+  // Custom device configurations with different browsers
   const devices = [
+    // Mobile Safari (iOS) - Default browser
     {
       name: 'iPhone 15 Pro Max',
       userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
@@ -317,24 +318,33 @@ const choosePhone = () => {
       viewport: { width: 390, height: 844, deviceScaleFactor: 3, isMobile: true, hasTouch: true }
     },
     {
-      name: 'iPhone 13',
-      userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1',
-      viewport: { width: 390, height: 844, deviceScaleFactor: 3, isMobile: true, hasTouch: true }
-    },
-    {
       name: 'iPhone SE',
       userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.4 Mobile/15E148 Safari/604.1',
       viewport: { width: 375, height: 667, deviceScaleFactor: 2, isMobile: true, hasTouch: true }
     },
     {
+      name: 'iPad Pro',
+      userAgent: 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+      viewport: { width: 1024, height: 1366, deviceScaleFactor: 2, isMobile: true, hasTouch: true }
+    },
+    
+    // Chrome Mobile (iOS) - Alternative browser
+    {
+      name: 'iPhone 15 Pro Max (Chrome)',
+      userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/120.0.6099.119 Mobile/15E148 Safari/604.1',
+      viewport: { width: 430, height: 932, deviceScaleFactor: 3, isMobile: true, hasTouch: true }
+    },
+    {
+      name: 'iPhone 14 (Chrome)',
+      userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/119.0.6045.109 Mobile/15E148 Safari/604.1',
+      viewport: { width: 390, height: 844, deviceScaleFactor: 3, isMobile: true, hasTouch: true }
+    },
+    
+    // Chrome Mobile (Android) - Default browser
+    {
       name: 'Pixel 8 Pro',
       userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
       viewport: { width: 412, height: 892, deviceScaleFactor: 2.625, isMobile: true, hasTouch: true }
-    },
-    {
-      name: 'Pixel 7',
-      userAgent: 'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Mobile Safari/537.36',
-      viewport: { width: 412, height: 915, deviceScaleFactor: 2.625, isMobile: true, hasTouch: true }
     },
     {
       name: 'Galaxy S24',
@@ -342,14 +352,69 @@ const choosePhone = () => {
       viewport: { width: 412, height: 915, deviceScaleFactor: 3, isMobile: true, hasTouch: true }
     },
     {
-      name: 'iPad Pro',
-      userAgent: 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
-      viewport: { width: 1024, height: 1366, deviceScaleFactor: 2, isMobile: true, hasTouch: true }
+      name: 'Pixel 7',
+      userAgent: 'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+      viewport: { width: 412, height: 915, deviceScaleFactor: 2.625, isMobile: true, hasTouch: true }
     },
     {
-      name: 'iPad Mini',
-      userAgent: 'Mozilla/5.0 (iPad; CPU OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
-      viewport: { width: 768, height: 1024, deviceScaleFactor: 2, isMobile: true, hasTouch: true }
+      name: 'Galaxy S23',
+      userAgent: 'Mozilla/5.0 (Linux; Android 13; SM-S911B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+      viewport: { width: 412, height: 915, deviceScaleFactor: 3, isMobile: true, hasTouch: true }
+    },
+    {
+      name: 'Pixel 6',
+      userAgent: 'Mozilla/5.0 (Linux; Android 13; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+      viewport: { width: 412, height: 915, deviceScaleFactor: 2.625, isMobile: true, hasTouch: true }
+    },
+    
+    // Firefox Mobile (Android) - Alternative browser
+    {
+      name: 'OnePlus 12 (Firefox)',
+      userAgent: 'Mozilla/5.0 (Mobile; rv:109.0) Gecko/120.0 Firefox/120.0',
+      viewport: { width: 412, height: 915, deviceScaleFactor: 3, isMobile: true, hasTouch: true }
+    },
+    {
+      name: 'Xiaomi 14 (Firefox)',
+      userAgent: 'Mozilla/5.0 (Mobile; rv:109.0) Gecko/120.0 Firefox/120.0',
+      viewport: { width: 412, height: 915, deviceScaleFactor: 2.625, isMobile: true, hasTouch: true }
+    },
+    
+    // Desktop Safari (macOS)
+    {
+      name: 'MacBook Pro (Safari)',
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
+      viewport: { width: 1440, height: 900, deviceScaleFactor: 2, isMobile: false, hasTouch: false }
+    },
+    {
+      name: 'iMac (Safari)',
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Safari/605.1.15',
+      viewport: { width: 1920, height: 1080, deviceScaleFactor: 1, isMobile: false, hasTouch: false }
+    },
+    
+    // Desktop Chrome (Windows)
+    {
+      name: 'Windows PC (Chrome)',
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      viewport: { width: 1920, height: 1080, deviceScaleFactor: 1, isMobile: false, hasTouch: false }
+    },
+    {
+      name: 'Windows Laptop (Chrome)',
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+      viewport: { width: 1366, height: 768, deviceScaleFactor: 1, isMobile: false, hasTouch: false }
+    },
+    
+    // Desktop Firefox (Windows)
+    {
+      name: 'Windows PC (Firefox)',
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/120.0',
+      viewport: { width: 1920, height: 1080, deviceScaleFactor: 1, isMobile: false, hasTouch: false }
+    },
+    
+    // Desktop Edge (Windows)
+    {
+      name: 'Windows PC (Edge)',
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
+      viewport: { width: 1920, height: 1080, deviceScaleFactor: 1, isMobile: false, hasTouch: false }
     }
   ];
 
