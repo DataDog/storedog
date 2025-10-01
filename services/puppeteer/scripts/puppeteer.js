@@ -1247,15 +1247,40 @@ const fourthSession = async () => {
   }
 };
 
-// Optimized concurrent session management with memory monitoring
+// Progressive concurrency ramp-up to prevent memory spikes at startup
 const runSessions = async () => {
   const sessions = [mainSession, secondSession, thirdSession, fourthSession];
-  const maxConcurrent = 8; // Increased concurrency with optimized memory usage
   const sessionPromises = [];
   const sessionQueue = [];
   
+  // Progressive concurrency levels (configurable via environment variables)
+  const startupDelay = parseInt(process.env.PUPPETEER_STARTUP_DELAY) || 10000; // 10s default
+  const rampUpInterval = parseInt(process.env.PUPPETEER_RAMP_INTERVAL) || 30000; // 30s default
+  const maxConcurrency = parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 8; // 8 default (conservative for 8GB RAM)
+  
+  // Safety limits optimized for 8GB RAM system
+  const SAFETY_LIMITS = {
+    maxConcurrency: Math.min(maxConcurrency, 20), // Hard limit at 20 for 8GB RAM
+    memoryThreshold: 0.75, // Stop if memory usage exceeds 75% (6GB of 8GB)
+    cpuThreshold: 0.85,    // Stop if CPU usage exceeds 85%
+    maxMemoryMB: 6000      // Absolute memory limit: 6GB
+  };
+  
+  // Conservative concurrency levels optimized for 8GB RAM
+  const concurrencyLevels = [
+    { time: 0, maxConcurrent: 2 },                                                    // Start with 2
+    { time: rampUpInterval, maxConcurrent: Math.min(4, SAFETY_LIMITS.maxConcurrency) },      // Ramp to 4
+    { time: rampUpInterval * 2, maxConcurrent: Math.min(6, SAFETY_LIMITS.maxConcurrency) },  // Ramp to 6
+    { time: rampUpInterval * 3, maxConcurrent: Math.min(8, SAFETY_LIMITS.maxConcurrency) }, // Ramp to 8
+    { time: rampUpInterval * 4, maxConcurrent: Math.min(12, SAFETY_LIMITS.maxConcurrency) }, // Ramp to 12
+    { time: rampUpInterval * 5, maxConcurrent: SAFETY_LIMITS.maxConcurrency }               // Final ramp to max
+  ];
+  
+  let currentMaxConcurrent = concurrencyLevels[0].maxConcurrent;
+  let startTime = Date.now();
+  
   // Create a queue of sessions to run
-  for (let i = 0; i < 16; i++) { // Increased total sessions
+  for (let i = 0; i < 16; i++) { // Total sessions
     sessionQueue.push({
       id: i + 1,
       session: sessions[Math.floor(Math.random() * sessions.length)],
@@ -1263,16 +1288,65 @@ const runSessions = async () => {
     });
   }
   
-  // Process sessions with controlled concurrency
+  // System resource monitoring optimized for 8GB RAM
+  const checkSystemResources = () => {
+    const memUsage = process.memoryUsage();
+    const memUsageMB = memUsage.heapUsed / 1024 / 1024;
+    const memUsagePercent = memUsageMB / (memUsageMB + memUsage.heapTotal / 1024 / 1024);
+    
+    // Log resource usage every 30 seconds
+    if (Math.floor((Date.now() - startTime) / 30000) !== Math.floor((Date.now() - startTime - 1000) / 30000)) {
+      console.log(`📊 Resource Usage: Memory ${Math.round(memUsageMB)}MB (${Math.round(memUsagePercent * 100)}%), Active Sessions: ${sessionPromises.length}/${currentMaxConcurrent}`);
+    }
+    
+    // Emergency brake if absolute memory limit exceeded
+    if (memUsageMB > SAFETY_LIMITS.maxMemoryMB) {
+      console.log(`🚨 CRITICAL MEMORY USAGE: ${Math.round(memUsageMB)}MB > ${SAFETY_LIMITS.maxMemoryMB}MB limit - Stopping new sessions`);
+      return false;
+    }
+    
+    // Emergency brake if memory percentage is too high
+    if (memUsagePercent > SAFETY_LIMITS.memoryThreshold) {
+      console.log(`⚠️  HIGH MEMORY USAGE: ${Math.round(memUsagePercent * 100)}% (${Math.round(memUsageMB)}MB) - Stopping new sessions`);
+      return false;
+    }
+    
+    return true;
+  };
+
+  // Update concurrency based on elapsed time and system resources
+  const updateConcurrency = () => {
+    const elapsed = Date.now() - startTime;
+    const newLevel = concurrencyLevels
+      .slice()
+      .reverse()
+      .find(level => elapsed >= level.time);
+    
+    if (newLevel && newLevel.maxConcurrent !== currentMaxConcurrent) {
+      // Check system resources before ramping up
+      if (checkSystemResources()) {
+        currentMaxConcurrent = newLevel.maxConcurrent;
+        console.log(`🚀 Ramping up concurrency to ${currentMaxConcurrent} sessions (${Math.round(elapsed/1000)}s elapsed)`);
+        logMemoryUsage(`Concurrency ramp-up to ${currentMaxConcurrent}`);
+      } else {
+        console.log(`⚠️  Skipping ramp-up due to high resource usage`);
+      }
+    }
+  };
+  
+  // Process sessions with progressive concurrency
   const processSessions = async () => {
     while (sessionQueue.length > 0 || sessionPromises.length > 0) {
-      // Start new sessions if we have capacity
-      while (sessionPromises.length < maxConcurrent && sessionQueue.length > 0) {
+      // Update concurrency level based on elapsed time
+      updateConcurrency();
+      
+      // Start new sessions if we have capacity and system resources are OK
+      while (sessionPromises.length < currentMaxConcurrent && sessionQueue.length > 0 && checkSystemResources()) {
         const sessionTask = sessionQueue.shift();
         
         const sessionPromise = (async () => {
           await sleep(sessionTask.delay);
-          console.log(`Starting session ${sessionTask.id}`);
+          console.log(`Starting session ${sessionTask.id} (concurrency: ${sessionPromises.length + 1}/${currentMaxConcurrent})`);
           logMemoryUsage(`Before Session ${sessionTask.id}`);
           
           try {
@@ -1297,6 +1371,11 @@ const runSessions = async () => {
       }
     }
   };
+  
+  // Give container time to settle before starting sessions
+  console.log(`⏳ Waiting ${startupDelay/1000} seconds for container to settle...`);
+  await sleep(startupDelay);
+  console.log('🚀 Starting progressive concurrency ramp-up');
   
   await processSessions();
   console.log('All sessions completed');
