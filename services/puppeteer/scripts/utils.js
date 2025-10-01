@@ -206,14 +206,35 @@ const selectProduct = async (page) => {
     
     if (productLinks.length > 0) {
       const randomIndex = Math.floor(Math.random() * productLinks.length);
-      await productLinks[randomIndex].click();
-      await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
-      console.log('Selected product:', await page.title());
+      const productLink = productLinks[randomIndex];
+      
+      // Get the href to log which product we're selecting
+      const href = await productLink.evaluate(el => el.href);
+      console.log(`Clicking product link: ${href}`);
+      
+      await Promise.all([
+        productLink.click(),
+        page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 })
+      ]);
+      
+      const newTitle = await page.title();
+      console.log('Selected product:', newTitle);
+      
+      // Verify we're on a product page by checking for add-to-cart button
+      try {
+        await page.waitForSelector('#add-to-cart-button', { timeout: 3000 });
+        console.log('Confirmed on product page - add-to-cart button found');
+      } catch (verifyError) {
+        console.log('Warning: Not on a product page - no add-to-cart button found');
+        throw new Error('Failed to navigate to product page');
+      }
     } else {
       console.log('No product links found on this page');
+      throw new Error('No product links available');
     }
   } catch (error) {
-    console.log('No product links available on this page:', error.message);
+    console.log('Product selection failed:', error.message);
+    throw error; // Re-throw to be caught by calling function
   }
 };
 
@@ -514,44 +535,58 @@ const goToFooterPage = async (page) => {
 const addToCart = async (page) => {
   console.log('In addToCart on page', await page.title());
 
-  await page.waitForSelector('#add-to-cart-button', {
-    visible: true,
-  });
+  try {
+    // Wait for add to cart button with shorter timeout
+    await page.waitForSelector('#add-to-cart-button', {
+      visible: true,
+      timeout: 10000 // Reduced from 30s to 10s
+    });
 
-  // select a variant if it exists
-  const variantSelector = 'select#variant-select';
-  const variantSelect = await page.$(variantSelector);
-  console.log('variantSelect', variantSelect);
-  if (variantSelect) {
-    // get all the values
-    const variantOptions = await page.$$eval(
-      `${variantSelector} option`,
-      (options) => options.map((option) => option.value)
-    );
+    // select a variant if it exists
+    const variantSelector = 'select#variant-select';
+    const variantSelect = await page.$(variantSelector);
+    console.log('variantSelect', variantSelect);
+    if (variantSelect) {
+      // get all the values
+      const variantOptions = await page.$$eval(
+        `${variantSelector} option`,
+        (options) => options.map((option) => option.value)
+      );
 
-    // select a random value
-    const randomVariantIndex = Math.floor(
-      Math.random() * variantOptions.length
-    );
-    const randomVariantValue = variantOptions[randomVariantIndex];
+      // select a random value
+      const randomVariantIndex = Math.floor(
+        Math.random() * variantOptions.length
+      );
+      const randomVariantValue = variantOptions[randomVariantIndex];
 
-    await page.select(variantSelector, randomVariantValue);
+      await page.select(variantSelector, randomVariantValue);
 
-    console.log('selected variant', randomVariantValue);
-    // Wait for variant selection to take effect
-    await sleep(1000);
+      console.log('selected variant', randomVariantValue);
+      // Wait for variant selection to take effect
+      await sleep(1000);
+    }
+
+    await page.click('#add-to-cart-button');
+    console.log('clicked add to cart');
+
+    // Wait for sidebar to appear and close it
+    try {
+      await page.waitForSelector('#close-sidebar', {
+        visible: true,
+        timeout: 5000
+      });
+      console.log('close sidebar is visible');
+      await page.click('#close-sidebar');
+    } catch (sidebarError) {
+      console.log('Close sidebar not found or not visible:', sidebarError.message);
+      // This is not critical, continue execution
+    }
+
+    return;
+  } catch (error) {
+    console.log('Add to cart failed:', error.message);
+    throw error; // Re-throw to be caught by calling function
   }
-
-  await page.click('#add-to-cart-button');
-  console.log('clicked add to cart');
-
-  await page.waitForSelector('#close-sidebar', {
-    visible: true,
-  });
-  console.log('close sidebar is visible');
-  await page.click('#close-sidebar');
-
-  return;
 };
 
 const applyDiscountCode = async (page, discountCode) => {

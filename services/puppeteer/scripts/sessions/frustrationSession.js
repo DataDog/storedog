@@ -38,15 +38,25 @@ class FrustrationSession extends BaseSession {
       await sleep(1000);
       
       // go to all products page (and maybe leave)
-      await selectProductsPageProduct(page);
-      await addToCart(page);
+      try {
+        await selectProductsPageProduct(page);
+        await addToCart(page);
+      } catch (error) {
+        console.log('Product selection/add to cart failed (intentional frustration):', error.message);
+        await generateErrorClicks(page);
+      }
 
       // Generate dead clicks after product interaction
       await generateDeadClicks(page);
       await sleep(1000);
 
-      await selectProductsPageProduct(page);
-      await addToCart(page);
+      try {
+        await selectProductsPageProduct(page);
+        await addToCart(page);
+      } catch (error) {
+        console.log('Second product selection/add to cart failed (intentional frustration):', error.message);
+        await generateErrorClicks(page);
+      }
 
       // maybe select a related product (this will fail and create frustration)
       if (Math.floor(Math.random() * 2) === 0) {
@@ -66,8 +76,13 @@ class FrustrationSession extends BaseSession {
 
       // maybe try to find another product on the products page
       if (Math.floor(Math.random() * 4) === 0) {
-        await selectProductsPageProduct(page);
-        await addToCart(page);
+        try {
+          await selectProductsPageProduct(page);
+          await addToCart(page);
+        } catch (error) {
+          console.log('Random product selection/add to cart failed (intentional frustration):', error.message);
+          await generateErrorClicks(page);
+        }
       }
 
       await goToFooterPage(page);
@@ -78,8 +93,13 @@ class FrustrationSession extends BaseSession {
 
       // maybe try to find another product on the products page
       if (Math.floor(Math.random() * 4) === 0) {
-        await selectProductsPageProduct(page);
-        await addToCart(page);
+        try {
+          await selectProductsPageProduct(page);
+          await addToCart(page);
+        } catch (error) {
+          console.log('Final product selection/add to cart failed (intentional frustration):', error.message);
+          await generateErrorClicks(page);
+        }
       }
 
       await goToFooterPage(page);
