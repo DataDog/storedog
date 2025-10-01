@@ -20,36 +20,53 @@ class HomePageSession extends BaseSession {
       const pageTitle = await page.title();
       console.log(`"${pageTitle}" loaded`);
 
-      await selectHomePageProduct(page);
-      await sleep(1000);
-      await addToCart(page);
+      try {
+        await selectHomePageProduct(page);
+        await sleep(1000);
+        await addToCart(page);
+      } catch (productError) {
+        console.log('Home page product selection failed:', productError.message);
+        console.log('Continuing session without adding to cart...');
+      }
 
       // maybe purchase that extra product
       if (Math.floor(Math.random() * 3) === 0) {
-        await selectRelatedProduct(page);
-        await addToCart(page);
+        try {
+          await selectRelatedProduct(page);
+          await addToCart(page);
+        } catch (relatedError) {
+          console.log('Related product selection failed:', relatedError.message);
+        }
       }
 
       await goToFooterPage(page);
 
       // maybe go back to the home page and purchase another product
       if (Math.floor(Math.random() * 3) === 0) {
-        const logo = await page.$('[href="/"]');
-        await logo.evaluate((el) => el.click());
-        await page.waitForNavigation();
-        await selectHomePageProduct(page);
-        await sleep(1000);
-        await addToCart(page);
+        try {
+          const logo = await page.$('[href="/"]');
+          await logo.evaluate((el) => el.click());
+          await page.waitForNavigation();
+          await selectHomePageProduct(page);
+          await sleep(1000);
+          await addToCart(page);
+        } catch (homeError) {
+          console.log('Home page return failed:', homeError.message);
+        }
       }
 
       // maybe do that again
       if (Math.floor(Math.random() * 3) === 0) {
-        const logo = await page.$('[href="/"]');
-        await logo.evaluate((el) => el.click());
-        await page.waitForNavigation();
-        await selectHomePageProduct(page);
-        await sleep(2000);
-        await addToCart(page);
+        try {
+          const logo = await page.$('[href="/"]');
+          await logo.evaluate((el) => el.click());
+          await page.waitForNavigation();
+          await selectHomePageProduct(page);
+          await sleep(2000);
+          await addToCart(page);
+        } catch (homeError2) {
+          console.log('Second home page return failed:', homeError2.message);
+        }
       }
 
       await goToFooterPage(page);
