@@ -157,7 +157,11 @@ const optimizePageResources = async (page) => {
 
 const getNewBrowser = async () => {
   try {
+    // Use Firefox if PUPPETEER_BROWSER=firefox, otherwise use Chrome
+    const product = process.env.PUPPETEER_BROWSER || 'chrome';
+    
     const browser = await puppeteer.launch({
+      product: product, // 'chrome' or 'firefox'
       headless: 'new',
       defaultViewport: null,
       timeout: 30000,
