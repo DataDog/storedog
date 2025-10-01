@@ -159,39 +159,50 @@ const ensureSessionEnd = async (page) => {
 
 // Optimize page resource loading for memory efficiency
 const optimizePageResources = async (page) => {
-  // Enable request interception to control resource loading
-  await page.setRequestInterception(true);
-  
-  page.on('request', (request) => {
-    const resourceType = request.resourceType();
-    
-    // Allow all resources to load (fonts, media, images, etc.)
-    // Comment out the blocking logic below if you want unrestricted resource loading
-    /*
-    if (['font', 'media'].includes(resourceType)) {
-      request.abort();
-    } else if (resourceType === 'stylesheet') {
-      // Allow CSS but with lower priority
-      request.continue();
-    } else {
-      // Allow images, scripts, and other essential resources
-      request.continue();
+  try {
+    // Check if page is still connected before proceeding
+    if (page.isClosed()) {
+      console.log('Page already closed, skipping resource optimization');
+      return;
     }
-    */
+
+    // Enable request interception to control resource loading
+    await page.setRequestInterception(true);
     
-    // Allow all resources to continue loading
-    request.continue();
-  });
-  
-  // Set cache to false to prevent memory buildup
-  await page.setCacheEnabled(false);
-  
-  // Disable unnecessary features
-  await page.evaluateOnNewDocument(() => {
-    // Disable animations to reduce CPU/memory usage
-    Object.defineProperty(document, 'hidden', { value: false });
-    Object.defineProperty(document, 'visibilityState', { value: 'visible' });
-  });
+    page.on('request', (request) => {
+      const resourceType = request.resourceType();
+      
+      // Allow all resources to load (fonts, media, images, etc.)
+      // Comment out the blocking logic below if you want unrestricted resource loading
+      /*
+      if (['font', 'media'].includes(resourceType)) {
+        request.abort();
+      } else if (resourceType === 'stylesheet') {
+        // Allow CSS but with lower priority
+        request.continue();
+      } else {
+        // Allow images, scripts, and other essential resources
+        request.continue();
+      }
+      */
+      
+      // Allow all resources to continue loading
+      request.continue();
+    });
+    
+    // Set cache to false to prevent memory buildup
+    await page.setCacheEnabled(false);
+    
+    // Disable unnecessary features
+    await page.evaluateOnNewDocument(() => {
+      // Disable animations to reduce CPU/memory usage
+      Object.defineProperty(document, 'hidden', { value: false });
+      Object.defineProperty(document, 'visibilityState', { value: 'visible' });
+    });
+  } catch (error) {
+    console.log('Error optimizing page resources:', error.message);
+    // Continue execution even if optimization fails
+  }
 };
 
 const getNewBrowser = async () => {
@@ -906,6 +917,12 @@ const mainSession = async () => {
     // Clear browser context for fresh session
     await clearBrowserContext(page);
     
+    // Check if page is still connected before applying optimizations
+    if (page.isClosed()) {
+      console.log('Page closed during setup, skipping session');
+      return;
+    }
+    
     // Apply memory optimizations
     await optimizePageResources(page);
     await page.setJavaScriptEnabled(true);
@@ -1098,16 +1115,6 @@ const thirdSession = async () => {
   await clearBrowserContext(page);
   
   await optimizePageResources(page);
-
-  await page.setUserAgent(
-    `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36`
-  );
-
-  await page.setViewport({
-    width: 1366,
-    height: 768,
-    deviceScaleFactor: 1,
-  });
 
   await page.setDefaultNavigationTimeout(
     process.env.PUPPETEER_TIMEOUT || 40000
