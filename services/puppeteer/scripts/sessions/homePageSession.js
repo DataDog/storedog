@@ -1,6 +1,6 @@
 // Home page session - visits home page and browses products
 const config = require('../config');
-const { setUtmParams } = require('../utils');
+const { setUtmParams, selectHomePageProduct, selectRelatedProduct, goToFooterPage, addToCart, checkout } = require('../utils');
 const BaseSession = require('./baseSession');
 
 class HomePageSession extends BaseSession {
@@ -11,29 +11,60 @@ class HomePageSession extends BaseSession {
     const { browser, page } = setup;
     
     try {
-      const urlWithUtm = setUtmParams(config.storedogUrl);
-      
+      // randomly set utm params
+      const urlWithUtm = Math.random() > 0.5 ? setUtmParams(config.storedogUrl) : config.storedogUrl;
+
+      // go to home page
       await page.goto(urlWithUtm, { waitUntil: 'domcontentloaded' });
-      let pageTitle = await page.title();
+
+      const pageTitle = await page.title();
       console.log(`"${pageTitle}" loaded`);
-      
-      await page.waitForSelector('img[alt*="Datadog"]', { timeout: 10000 });
-      await page.waitForSelector('a[href*="/products/"]', { timeout: 10000 });
-      
-      const productLinks = await page.$$eval('a[href*="/products/"]', links => 
-        links.slice(0, 3).map(link => link.href)
-      );
-      
-      for (const productUrl of productLinks) {
-        await page.goto(productUrl, { waitUntil: 'domcontentloaded' });
-        await page.waitForTimeout(1000);
+
+      await selectHomePageProduct(page);
+      await page.waitForTimeout(1000);
+      await addToCart(page);
+
+      // maybe purchase that extra product
+      if (Math.floor(Math.random() * 3) === 0) {
+        await selectRelatedProduct(page);
+        await addToCart(page);
       }
+
+      await goToFooterPage(page);
+
+      // maybe go back to the home page and purchase another product
+      if (Math.floor(Math.random() * 3) === 0) {
+        const logo = await page.$('[href="/"]');
+        await logo.evaluate((el) => el.click());
+        await page.waitForNavigation();
+        await selectHomePageProduct(page);
+        await page.waitForTimeout(1000);
+        await addToCart(page);
+      }
+
+      // maybe do that again
+      if (Math.floor(Math.random() * 3) === 0) {
+        const logo = await page.$('[href="/"]');
+        await logo.evaluate((el) => el.click());
+        await page.waitForNavigation();
+        await selectHomePageProduct(page);
+        await page.waitForTimeout(2000);
+        await addToCart(page);
+      }
+
+      await goToFooterPage(page);
+
+      await checkout(page);
+      await page.waitForTimeout(1000);
+      const url = await page.url();
+      await page.goto(`${url}?end_session=true`, {
+        waitUntil: 'domcontentloaded',
+      });
       
-      await page.goto(config.storedogUrl, { waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(2000);
+      console.log('Home page session completed');
       
     } catch (error) {
-      console.error('Main session failed:', error);
+      console.error('Home page session failed:', error);
     } finally {
       await this.cleanup(browser, page);
     }

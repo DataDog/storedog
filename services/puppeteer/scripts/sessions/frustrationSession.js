@@ -1,6 +1,6 @@
 // Frustration session - has frustration signals due to incorrect product item UI component
 const config = require('../config');
-const { setUtmParams } = require('../utils');
+const { setUtmParams, selectProductsPageProduct, selectRelatedProduct, goToFooterPage, addToCart, checkout } = require('../utils');
 const BaseSession = require('./baseSession');
 
 class FrustrationSession extends BaseSession {
@@ -12,26 +12,50 @@ class FrustrationSession extends BaseSession {
     
     try {
       const urlWithUtm = `${config.storedogUrl}?utm_campaign=blog_post&utm_medium=social&utm_source=facebook`;
-      
+
+      // go to home page
       await page.goto(urlWithUtm, { waitUntil: 'domcontentloaded' });
       let pageTitle = await page.title();
       console.log(`"${pageTitle}" loaded`);
-      
-      await page.waitForSelector('img[alt*="Datadog"]', { timeout: 10000 });
-      await page.waitForSelector('a[href*="/products/"]', { timeout: 10000 });
-      
-      // Navigate to a product page (this will trigger frustration signals)
-      const productLinks = await page.$$eval('a[href*="/products/"]', links => 
-        links.slice(0, 1).map(link => link.href)
-      );
-      
-      if (productLinks.length > 0) {
-        await page.goto(productLinks[0], { waitUntil: 'domcontentloaded' });
-        await page.waitForTimeout(2000);
-        
-        // This session intentionally has frustration signals
-        console.log('Frustration session completed with frustration signals');
+
+      // go to all products page (and maybe leave)
+      await selectProductsPageProduct(page);
+      await addToCart(page);
+
+      await selectProductsPageProduct(page);
+      await addToCart(page);
+
+      // maybe select a related product
+      if (Math.floor(Math.random() * 2) === 0) {
+        await selectRelatedProduct(page);
+        await addToCart(page);
       }
+
+      // maybe try to find another product on the products page
+      if (Math.floor(Math.random() * 4) === 0) {
+        await selectProductsPageProduct(page);
+        await addToCart(page);
+      }
+
+      await goToFooterPage(page);
+
+      // maybe try to find another product on the products page
+      if (Math.floor(Math.random() * 4) === 0) {
+        await selectProductsPageProduct(page);
+        await addToCart(page);
+      }
+
+      await goToFooterPage(page);
+
+      await page.waitForTimeout(1500);
+      await checkout(page);
+      await page.waitForTimeout(1500);
+      const url = await page.url();
+      await page.goto(`${url}?end_session=true`, {
+        waitUntil: 'domcontentloaded',
+      });
+      
+      console.log('Frustration session completed with frustration signals');
       
     } catch (error) {
       console.error('Frustration session failed:', error);

@@ -1,6 +1,6 @@
 // Taxonomy session - visits taxonomy pages and purchases products
 const config = require('../config');
-const { setUtmParams } = require('../utils');
+const { setUtmParams, selectProduct, addToCart, checkout } = require('../utils');
 const BaseSession = require('./baseSession');
 
 class TaxonomySession extends BaseSession {
@@ -20,23 +20,34 @@ class TaxonomySession extends BaseSession {
       await page.goto(urlWithUtm, { waitUntil: 'networkidle0' });
       let pageTitle = await page.title();
       console.log(`"${pageTitle}" loaded`);
+
+      // get page url
+      const pageUrl = await page.url();
+      console.log(`"${pageUrl}" loaded`);
+
+      await page.waitForTimeout(1000);
+
+      // select a product
+      await selectProduct(page);
+
+      console.log('on page', await page.title());
+
+      // add to cart
+      await addToCart(page);
+
+      console.log('moving on to checkout');
+      await page.waitForTimeout(1500);
+      await checkout(page);
+      await page.waitForTimeout(1500);
       
-      await page.waitForSelector('img[alt*="Datadog"]', { timeout: 10000 });
-      await page.waitForSelector('a[href*="/products/"]', { timeout: 10000 });
-      
-      // Navigate to product pages
-      const productLinks = await page.$$eval('a[href*="/products/"]', links => 
-        links.slice(0, 3).map(link => link.href)
-      );
-      
-      for (const productUrl of productLinks) {
-        await page.goto(productUrl, { waitUntil: 'domcontentloaded' });
-        await page.waitForTimeout(1000);
-      }
-      
-      // Simulate purchase flow
-      await page.goto(bestsellersUrl, { waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(2000);
+      // go to home page with end session param
+      const url = await page.url();
+      const endUrl = `${url.split('?')[0]}?end_session=true`;
+      console.log('endUrl', endUrl);
+
+      await page.goto(endUrl, {
+        waitUntil: 'domcontentloaded',
+      });
       
       console.log('Taxonomy session completed with taxonomy browsing and purchases');
       

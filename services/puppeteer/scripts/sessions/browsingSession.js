@@ -1,6 +1,6 @@
 // Browsing session - additional browsing and interaction patterns
 const config = require('../config');
-const { setUtmParams } = require('../utils');
+const { setUtmParams, selectProduct, addToCart, checkout } = require('../utils');
 const BaseSession = require('./baseSession');
 
 class BrowsingSession extends BaseSession {
@@ -14,26 +14,36 @@ class BrowsingSession extends BaseSession {
     try {
       const urlWithUtm = Math.random() > 0.5 ? setUtmParams(config.storedogUrl) : config.storedogUrl;
       
+      // go to home page
       await page.goto(urlWithUtm, { waitUntil: 'domcontentloaded' });
       let pageTitle = await page.title();
       console.log(`"${pageTitle}" loaded`);
-      
-      await page.waitForSelector('img[alt*="Datadog"]', { timeout: 10000 });
-      await page.waitForSelector('a[href*="/products/"]', { timeout: 10000 });
-      
-      // Browse different sections
-      const productLinks = await page.$$eval('a[href*="/products/"]', links => 
-        links.slice(0, 2).map(link => link.href)
-      );
-      
-      for (const productUrl of productLinks) {
-        await page.goto(productUrl, { waitUntil: 'domcontentloaded' });
-        await page.waitForTimeout(1500);
-      }
-      
-      // Return to home page
-      await page.goto(config.storedogUrl, { waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(2000);
+
+      // select any link along the top nav
+      const navLinks = await page.$$('#main-navbar a');
+      const randomIndex = Math.floor(Math.random() * navLinks.length);
+      const randomLink = navLinks[randomIndex];
+      await Promise.all([
+        page.waitForNavigation(),
+        randomLink.evaluate((el) => el.click()),
+      ]);
+      pageTitle = await page.title();
+      console.log(`"${pageTitle}" loaded`);
+
+      // select a product
+      await selectProduct(page);
+
+      // add to cart
+      await addToCart(page);
+
+      console.log('moving on to checkout');
+      await page.waitForTimeout(1500);
+      await checkout(page);
+      await page.waitForTimeout(1500);
+      const url = await page.url();
+      await page.goto(`${url}?end_session=true`, {
+        waitUntil: 'domcontentloaded',
+      });
       
       console.log('Browsing session completed');
       
