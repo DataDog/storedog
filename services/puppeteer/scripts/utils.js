@@ -744,12 +744,29 @@ const checkout = async (page) => {
       timeout: 10000,
     });
 
+    console.log('Found cart toggle button, clicking...');
     await Promise.all([
       sleep(500),
       page.click('button[data-dd-action-name="Toggle Cart"]'),
     ]);
 
-    // Wait for cart to open instead of fixed timeout
+    // Wait for cart sidebar to open
+    await page.waitForSelector('#sidebar', {
+      visible: true,
+      timeout: 10000,
+    });
+    console.log('Cart sidebar opened');
+
+    // Check if cart has items before proceeding to checkout
+    const cartItems = await page.$$('li[class*="root"], .cart-item, [class*="cart-item"], .line-item, [class*="line-item"]');
+    console.log(`Found ${cartItems.length} items in cart`);
+
+    if (cartItems.length === 0) {
+      console.log('Cart is empty, cannot proceed to checkout');
+      return;
+    }
+
+    // Wait for proceed to checkout button
     await page.waitForSelector(
       'button[data-dd-action-name="Proceed to Checkout"]',
       {
@@ -758,8 +775,7 @@ const checkout = async (page) => {
       }
     );
 
-    console.log('opened cart...');
-
+    console.log('Found proceed to checkout button, clicking...');
     await Promise.all([
       sleep(2000),
       page.click('button[data-dd-action-name="Proceed to Checkout"]'),
