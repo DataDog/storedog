@@ -61,7 +61,17 @@ class BrowserPool {
   }
 
   releaseBrowser(browser) {
-    this.availableBrowsers.push(browser);
+    // Check if browser is still connected before adding back to pool
+    if (browser && browser.isConnected()) {
+      this.availableBrowsers.push(browser);
+    } else {
+      console.log('Browser disconnected, not adding back to pool');
+      // Remove from browsers array if it exists
+      const index = this.browsers.indexOf(browser);
+      if (index > -1) {
+        this.browsers.splice(index, 1);
+      }
+    }
   }
 
   async closeAll() {
@@ -83,6 +93,12 @@ const browserPool = new BrowserPool(6); // Increased pool size
 // Clear browser context to ensure fresh sessions
 const clearBrowserContext = async (page) => {
   try {
+    // Check if page is still connected
+    if (page.isClosed()) {
+      console.log('Page already closed, skipping context clearing');
+      return;
+    }
+    
     // Clear all cookies
     const client = await page.target().createCDPSession();
     await client.send('Network.clearBrowserCookies');
@@ -96,25 +112,28 @@ const clearBrowserContext = async (page) => {
     
     console.log('Browser context cleared for new session');
   } catch (error) {
-    console.log('Error clearing browser context:', error);
+    console.log('Error clearing browser context:', error.message);
   }
 };
 
 // Ensure RUM SDK session is properly ended
 const ensureSessionEnd = async (page) => {
   try {
-    // Navigate to a page with end_session=true to trigger datadogRum.stopSession()
-    await page.goto(`${startUrl}?end_session=true`, { 
-      waitUntil: 'domcontentloaded',
-      timeout: 10000 
-    });
-    
-    // Wait a moment for the session to be properly ended
-    await sleep(1000);
-    
-    console.log('RUM session ended');
+    // Check if page is still connected before navigating
+    if (!page.isClosed()) {
+      // Navigate to a page with end_session=true to trigger datadogRum.stopSession()
+      await page.goto(`${startUrl}?end_session=true`, { 
+        waitUntil: 'domcontentloaded',
+        timeout: 10000 
+      });
+      
+      // Wait a moment for the session to be properly ended
+      await sleep(1000);
+      
+      console.log('RUM session ended');
+    }
   } catch (error) {
-    console.log('Error ending RUM session:', error);
+    console.log('Error ending RUM session:', error.message);
   }
 };
 
@@ -847,12 +866,17 @@ const mainSession = async () => {
   } finally {
     console.log('releasing browser back to pool');
     try {
-      if (page) {
+      if (page && !page.isClosed()) {
         await page.close();
       }
+    } catch (pageError) {
+      console.log('Page already closed or error closing page:', pageError.message);
+    }
+    
+    try {
       browserPool.releaseBrowser(browser);
-    } catch (cleanupError) {
-      console.error('Error during cleanup:', cleanupError);
+    } catch (browserError) {
+      console.log('Error releasing browser to pool:', browserError.message);
     }
   }
 };
@@ -935,7 +959,11 @@ const secondSession = async () => {
     console.log(`Second session failed, ending session: ${err}`);
   } finally {
     console.log('releasing browser back to pool');
-    browserPool.releaseBrowser(browser);
+    try {
+      browserPool.releaseBrowser(browser);
+    } catch (browserError) {
+      console.log('Error releasing browser to pool:', browserError.message);
+    }
   }
 };
 
@@ -1014,7 +1042,11 @@ const thirdSession = async () => {
     console.log(`Third session failed: ${err}`);
   } finally {
     console.log('releasing browser back to pool');
-    browserPool.releaseBrowser(browser);
+    try {
+      browserPool.releaseBrowser(browser);
+    } catch (browserError) {
+      console.log('Error releasing browser to pool:', browserError.message);
+    }
   }
 };
 
@@ -1084,7 +1116,11 @@ const fourthSession = async () => {
     console.log(`Fourth session failed: ${err}`);
   } finally {
     console.log('releasing browser back to pool');
-    browserPool.releaseBrowser(browser);
+    try {
+      browserPool.releaseBrowser(browser);
+    } catch (browserError) {
+      console.log('Error releasing browser to pool:', browserError.message);
+    }
   }
 };
 
