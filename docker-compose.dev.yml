@@ -261,7 +261,7 @@ services:
     networks:
       - storedog-network
     volumes:
-      - ./services/puppeteer/scripts/puppeteer.js:/home/pptruser/puppeteer.js
+      - ./services/puppeteer/scripts:/home/pptruser/scripts
     depends_on:
       - frontend
     shm_size: '4gb' # Increase shared memory size
