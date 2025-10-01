@@ -264,63 +264,28 @@ const selectRelatedProduct = async (page) => {
   console.log('In selectRelatedProduct on page', await page.title());
   
   try {
-    // Try multiple selectors for related/similar products
-    const relatedSelectors = [
-      '.related-products a',           // Standard related products
-      '.similar-products a',          // Similar products
-      '.recommended-products a',      // Recommended products
-      '.product-recommendations a',   // Product recommendations
-      '.you-might-also-like a',       // You might also like
-      '.suggested-products a',        // Suggested products
-      '.product-grid a[href*="/products/"]', // Any product links in grid
-      '.product-list a[href*="/products/"]', // Any product links in list
-      'a[href*="/products/"]'         // Any product links on page
-    ];
+    // Original frustration-causing behavior: hardcoded selector that may not exist
+    const selector = '[aria-label="Learning Bits"]';
+    console.log(`Looking for hardcoded selector: ${selector}`);
     
-    let relatedLinks = [];
-    let usedSelector = '';
-    
-    for (const selector of relatedSelectors) {
-      try {
-        await page.waitForSelector(selector, { 
-          timeout: 2000,
-          visible: true 
-        });
-        
-        relatedLinks = await page.$$(selector);
-        if (relatedLinks.length > 0) {
-          usedSelector = selector;
-          console.log(`Found ${relatedLinks.length} related products using selector: ${selector}`);
-          break;
-        }
-      } catch (e) {
-        // Continue to next selector
-      }
-    }
-    
-    if (relatedLinks.length > 0) {
-      // Filter out the current product if possible
-      const currentUrl = page.url();
-      const filteredLinks = relatedLinks.filter(async (link) => {
-        try {
-          const href = await link.evaluate(el => el.href);
-          return href !== currentUrl;
-        } catch (e) {
-          return true; // Keep link if we can't check href
-        }
-      });
-      
-      const linksToUse = filteredLinks.length > 0 ? filteredLinks : relatedLinks;
-      const randomIndex = Math.floor(Math.random() * linksToUse.length);
-      
-      await linksToUse[randomIndex].click();
-      await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
-      console.log('Selected related product:', await page.title());
+    const element = await page.$(selector);
+    if (element) {
+      console.log('Found Learning Bits product, clicking...');
+      await Promise.all([
+        page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
+        page.click(selector)
+      ]);
+      const pageTitle = await page.title();
+      console.log(`"${pageTitle}" loaded`);
     } else {
-      console.log('No related products found, skipping related product selection');
+      console.log('Learning Bits product not found - this creates frustration signals!');
+      // Don't fallback - let this fail to create frustration
+      throw new Error('Learning Bits product not found - intentional frustration signal');
     }
   } catch (error) {
-    console.log('Related products not available on this page, skipping:', error.message);
+    console.log('selectRelatedProduct failed (intentional frustration):', error.message);
+    // Don't provide fallback - this failure is the frustration signal
+    throw error;
   }
 };
 
