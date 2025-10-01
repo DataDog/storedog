@@ -37,14 +37,41 @@ class SessionManager {
   }
 
   async runSessions(sessionFunctions) {
-    // Create session queue
-    for (let i = 0; i < config.totalSessions; i++) {
-      this.sessionQueue.push({
+    // Create session queue with balanced distribution
+    const sessionTypes = ['HomePage', 'Frustration', 'Taxonomy', 'Browsing']; // Known session types
+    const sessionStats = { completed: 0, failed: 0, byType: {} };
+    
+    // Ensure each session type runs at least once
+    const guaranteedSessions = [];
+    for (let i = 0; i < sessionFunctions.length; i++) {
+      guaranteedSessions.push({
         id: i + 1,
-        session: sessionFunctions[Math.floor(Math.random() * sessionFunctions.length)],
+        session: sessionFunctions[i],
+        sessionType: sessionTypes[i] || `Session-${i + 1}`,
         delay: Math.random() * config.sessionDelay
       });
     }
+    
+    // Fill remaining slots with random distribution
+    const remainingSessions = config.totalSessions - sessionFunctions.length;
+    for (let i = 0; i < remainingSessions; i++) {
+      const randomIndex = Math.floor(Math.random() * sessionFunctions.length);
+      guaranteedSessions.push({
+        id: sessionFunctions.length + i + 1,
+        session: sessionFunctions[randomIndex],
+        sessionType: sessionTypes[randomIndex] || `Session-${randomIndex + 1}`,
+        delay: Math.random() * config.sessionDelay
+      });
+    }
+    
+    // Shuffle the queue to randomize execution order
+    this.sessionQueue = guaranteedSessions.sort(() => Math.random() - 0.5);
+    
+    console.log(`📋 Session Distribution:`);
+    console.log(`   Total Sessions: ${config.totalSessions}`);
+    console.log(`   Guaranteed: ${sessionFunctions.length} (one of each type)`);
+    console.log(`   Random: ${remainingSessions} (distributed randomly)`);
+    console.log(`   Session Types: ${sessionTypes.join(', ')}`);
 
     // Progressive concurrency levels
     const concurrencyLevels = [
@@ -99,17 +126,20 @@ class SessionManager {
           
           const sessionPromise = (async () => {
             await sleep(sessionTask.delay);
-            console.log(`Starting session ${sessionTask.id} (concurrency: ${this.sessionPromises.length + 1}/${currentMaxConcurrent})`);
-            logMemoryUsage(`Before Session ${sessionTask.id}`);
+            console.log(`🚀 Starting ${sessionTask.sessionType} session ${sessionTask.id} (concurrency: ${this.sessionPromises.length + 1}/${currentMaxConcurrent})`);
+            logMemoryUsage(`Before ${sessionTask.sessionType} Session ${sessionTask.id}`);
             
             try {
               await sessionTask.session();
-              logMemoryUsage(`After Session ${sessionTask.id}`);
+              logMemoryUsage(`After ${sessionTask.sessionType} Session ${sessionTask.id}`);
               forceGC();
-              console.log(`Completed session ${sessionTask.id}`);
+              console.log(`✅ Completed ${sessionTask.sessionType} session ${sessionTask.id}`);
+              sessionStats.completed++;
+              sessionStats.byType[sessionTask.sessionType] = (sessionStats.byType[sessionTask.sessionType] || 0) + 1;
             } catch (error) {
-              console.error(`Session ${sessionTask.id} failed:`, error);
-              logMemoryUsage(`Failed Session ${sessionTask.id}`);
+              console.error(`❌ ${sessionTask.sessionType} session ${sessionTask.id} failed:`, error);
+              logMemoryUsage(`Failed ${sessionTask.sessionType} Session ${sessionTask.id}`);
+              sessionStats.failed++;
             }
           })();
           
@@ -133,7 +163,17 @@ class SessionManager {
     console.log('🚀 Starting progressive concurrency ramp-up');
 
     await processSessions();
-    console.log('All sessions completed');
+    
+    // Log session statistics
+    console.log('\n📊 Session Statistics:');
+    console.log(`   Total Sessions: ${sessionStats.completed + sessionStats.failed}`);
+    console.log(`   Completed: ${sessionStats.completed}`);
+    console.log(`   Failed: ${sessionStats.failed}`);
+    console.log('   By Type:');
+    Object.entries(sessionStats.byType).forEach(([type, count]) => {
+      console.log(`     ${type}: ${count} sessions`);
+    });
+    console.log('✅ All sessions completed');
 
     await this.browserPool.closeAll();
     console.log('Browser pool cleaned up');
