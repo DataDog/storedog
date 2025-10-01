@@ -305,24 +305,21 @@ const getNewBrowser = async () => {
 
 const choosePhone = () => {
   const deviceNames = [
-    'iPhone 15 Pro Max',
-    'iPhone 15',
-    'iPhone 14 Pro Max',
-    'iPhone 14',
+    'iPhone 13 Pro Max',
     'iPhone 13 Pro',
+    'iPhone 13',
+    'iPhone 12 Pro Max',
+    'iPhone 12 Pro',
     'iPhone 12',
-    'iPhone SE (3rd generation)',
-    'Pixel 8 Pro',
-    'Pixel 7',
-    'Pixel 6',
-    'Galaxy S24 Ultra',
-    'Galaxy S24',
-    'Galaxy S23',
-    'Galaxy Z Fold 5',
-    'Galaxy Z Flip 5',
-    'iPad Pro (6th generation)',
-    'iPad Air (5th generation)',
-    'iPad Mini (6th generation)',
+    'iPhone SE',
+    'Pixel 5',
+    'Pixel 4',
+    'Galaxy S III',
+    'Galaxy S5',
+    'Galaxy Note II',
+    'iPad Pro',
+    'iPad',
+    'iPad Mini',
   ];
 
   const deviceIndex = Math.floor(Math.random() * deviceNames.length);
