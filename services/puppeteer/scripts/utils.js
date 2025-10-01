@@ -498,9 +498,9 @@ const goToFooterPage = async (page) => {
   console.log('In goToFooterPage on page', await page.title());
   
   try {
-    // Scroll to footer
+    // Scroll to footer using Puppeteer's scroll method
     await page.evaluate(() => {
-      window.scrollTo(0, document.body.scrollHeight);
+      document.documentElement.scrollTop = document.body.scrollHeight;
     });
     
     await sleep(1000);
