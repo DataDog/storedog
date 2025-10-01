@@ -568,6 +568,16 @@ const addToCart = async (page) => {
   console.log('In addToCart on page', await page.title());
 
   try {
+    // First check if we're on a product page by looking for product-related elements
+    const pageUrl = await page.url();
+    const isProductPage = pageUrl.includes('/products/') || 
+                         await page.$('#add-to-cart-button') !== null ||
+                         await page.$('[class*="product"]') !== null;
+    
+    if (!isProductPage) {
+      throw new Error(`Not on a product page (URL: ${pageUrl}) - add-to-cart button not available`);
+    }
+
     // Wait for add to cart button with shorter timeout
     await page.waitForSelector('#add-to-cart-button', {
       visible: true,
