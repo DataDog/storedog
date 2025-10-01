@@ -6,7 +6,8 @@ const { setTimeout: sleep } = require('node:timers/promises');
 const logMemoryUsage = (context) => {
   const memUsage = process.memoryUsage();
   const memUsageMB = Math.round(memUsage.heapUsed / 1024 / 1024);
-  console.log(`💾 Memory Usage (${context}): ${memUsageMB}MB`);
+  const memUsageGB = (memUsageMB / 1024).toFixed(2);
+  console.log(`💾 Memory Usage (${context}): ${memUsageMB}MB (${memUsageGB}GB)`);
 };
 
 // Force garbage collection

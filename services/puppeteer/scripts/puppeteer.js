@@ -1316,12 +1316,15 @@ const runSessions = async () => {
     
     // Log resource usage every 30 seconds
     if (Math.floor((Date.now() - startTime) / 30000) !== Math.floor((Date.now() - startTime - 1000) / 30000)) {
-      console.log(`📊 Resource Usage: Memory ${Math.round(memUsageMB)}MB (${Math.round(memUsagePercent * 100)}%), Active Sessions: ${sessionPromises.length}/${currentMaxConcurrent}`);
+      const memUsageGB = (memUsageMB / 1024).toFixed(2);
+      console.log(`📊 Resource Usage: Memory ${Math.round(memUsageMB)}MB (${memUsageGB}GB) (${Math.round(memUsagePercent * 100)}%), Active Sessions: ${sessionPromises.length}/${currentMaxConcurrent}`);
     }
     
     // Emergency brake if absolute memory limit exceeded
     if (memUsageMB > SAFETY_LIMITS.maxMemoryMB) {
-      console.log(`🚨 CRITICAL MEMORY USAGE: ${Math.round(memUsageMB)}MB > ${SAFETY_LIMITS.maxMemoryMB}MB limit - Stopping new sessions`);
+      const memUsageGB = (memUsageMB / 1024).toFixed(2);
+      const maxMemoryGB = (SAFETY_LIMITS.maxMemoryMB / 1024).toFixed(2);
+      console.log(`🚨 CRITICAL MEMORY USAGE: ${Math.round(memUsageMB)}MB (${memUsageGB}GB) > ${SAFETY_LIMITS.maxMemoryMB}MB (${maxMemoryGB}GB) limit - Stopping new sessions`);
       return false;
     }
     
@@ -1395,7 +1398,8 @@ const runSessions = async () => {
   // Log system configuration
   console.log(`🖥️  System Configuration:`);
   console.log(`   Max Concurrency: ${SAFETY_LIMITS.maxConcurrency}`);
-  console.log(`   Memory Limit: ${SAFETY_LIMITS.maxMemoryMB}MB`);
+  const maxMemoryGB = (SAFETY_LIMITS.maxMemoryMB / 1024).toFixed(2);
+  console.log(`   Memory Limit: ${SAFETY_LIMITS.maxMemoryMB}MB (${maxMemoryGB}GB)`);
   console.log(`   Memory Threshold: ${Math.round(SAFETY_LIMITS.memoryThreshold * 100)}%`);
   
   // Give container time to settle before starting sessions

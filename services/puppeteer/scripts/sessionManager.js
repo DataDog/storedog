@@ -93,11 +93,14 @@ class SessionManager {
       const memUsageMB = memUsage.heapUsed / 1024 / 1024;
       
       if (Math.floor((Date.now() - startTime) / 30000) !== Math.floor((Date.now() - startTime - 1000) / 30000)) {
-        console.log(`📊 Resource Usage: Memory ${Math.round(memUsageMB)}MB (${Math.round((memUsageMB / (memUsageMB + memUsage.heapTotal / 1024 / 1024)) * 100)}%), Active Sessions: ${this.sessionPromises.length}/${currentMaxConcurrent}`);
+        const memUsageGB = (memUsageMB / 1024).toFixed(2);
+        console.log(`📊 Resource Usage: Memory ${Math.round(memUsageMB)}MB (${memUsageGB}GB) (${Math.round((memUsageMB / (memUsageMB + memUsage.heapTotal / 1024 / 1024)) * 100)}%), Active Sessions: ${this.sessionPromises.length}/${currentMaxConcurrent}`);
       }
       
       if (memUsageMB > config.safetyLimits.maxMemoryMB) {
-        console.log(`🚨 CRITICAL MEMORY USAGE: ${Math.round(memUsageMB)}MB > ${config.safetyLimits.maxMemoryMB}MB limit - Stopping new sessions`);
+        const memUsageGB = (memUsageMB / 1024).toFixed(2);
+        const maxMemoryGB = (config.safetyLimits.maxMemoryMB / 1024).toFixed(2);
+        console.log(`🚨 CRITICAL MEMORY USAGE: ${Math.round(memUsageMB)}MB (${memUsageGB}GB) > ${config.safetyLimits.maxMemoryMB}MB (${maxMemoryGB}GB) limit - Stopping new sessions`);
         return false;
       }
       
@@ -155,7 +158,8 @@ class SessionManager {
 
     console.log(`🖥️  System Configuration:`);
     console.log(`   Max Concurrency: ${config.maxConcurrency}`);
-    console.log(`   Memory Limit: ${config.safetyLimits.maxMemoryMB}MB`);
+    const maxMemoryGB = (config.safetyLimits.maxMemoryMB / 1024).toFixed(2);
+    console.log(`   Memory Limit: ${config.safetyLimits.maxMemoryMB}MB (${maxMemoryGB}GB)`);
     console.log(`   Memory Threshold: ${Math.round(config.safetyLimits.memoryThreshold * 100)}%`);
 
     console.log(`⏳ Waiting ${config.startupDelay/1000} seconds for container to settle...`);
