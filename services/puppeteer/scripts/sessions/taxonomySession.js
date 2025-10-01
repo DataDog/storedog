@@ -21,16 +21,41 @@ class TaxonomySession extends BaseSession {
       let pageTitle = await page.title();
       console.log(`"${pageTitle}" loaded`);
 
-      // Try to navigate to best sellers page (simple approach like browsing session)
+      // Try to navigate to best sellers page (robust approach for Next.js Link components)
       try {
+        // First try the direct link element
         const bestSellersLink = await page.$('#bestsellers-link');
         if (bestSellersLink) {
           console.log('Found best sellers link, navigating...');
-          await Promise.all([
-            page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
-            bestSellersLink.click()
-          ]);
-          console.log('Successfully navigated to Best Sellers page');
+          try {
+            await Promise.all([
+              page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
+              bestSellersLink.click()
+            ]);
+            console.log('Successfully navigated to Best Sellers page');
+          } catch (clickError) {
+            console.log('Direct link click failed, trying parent Link element:', clickError.message);
+            // Try clicking the parent Link element (Next.js wrapper)
+            try {
+              const parentLink = await page.$('a[href="/taxonomies/categories/bestsellers"]');
+              if (parentLink) {
+                await Promise.all([
+                  page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
+                  parentLink.click()
+                ]);
+                console.log('Successfully navigated to Best Sellers page via parent Link');
+              } else {
+                throw new Error('Parent Link not found');
+              }
+            } catch (parentError) {
+              console.log('Parent Link click failed, using direct URL:', parentError.message);
+              const bestSellersUrl = config.storedogUrl.endsWith('/')
+                ? `${config.storedogUrl}taxonomies/categories/bestsellers`
+                : `${config.storedogUrl}/taxonomies/categories/bestsellers`;
+              await page.goto(bestSellersUrl, { waitUntil: 'domcontentloaded' });
+              console.log('Successfully navigated to Best Sellers page via direct URL');
+            }
+          }
         } else {
           console.log('Best sellers link not found, trying direct URL...');
           const bestSellersUrl = config.storedogUrl.endsWith('/')
