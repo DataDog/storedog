@@ -306,36 +306,22 @@ const getNewBrowser = async () => {
 const choosePhone = () => {
   const deviceNames = [
     'iPhone 15 Pro Max',
-    'iPhone 15 Pro',
     'iPhone 15',
     'iPhone 14 Pro Max',
-    'iPhone 14 Pro',
     'iPhone 14',
-    'iPhone 13 Pro Max',
     'iPhone 13 Pro',
-    'iPhone 13',
-    'iPhone 12 Pro Max',
-    'iPhone 12 Pro',
     'iPhone 12',
     'iPhone SE (3rd generation)',
     'Pixel 8 Pro',
-    'Pixel 8',
-    'Pixel 7 Pro',
     'Pixel 7',
-    'Pixel 6 Pro',
     'Pixel 6',
     'Galaxy S24 Ultra',
-    'Galaxy S24+',
     'Galaxy S24',
-    'Galaxy S23 Ultra',
-    'Galaxy S23+',
     'Galaxy S23',
     'Galaxy Z Fold 5',
     'Galaxy Z Flip 5',
     'iPad Pro (6th generation)',
-    'iPad Pro (5th generation)',
     'iPad Air (5th generation)',
-    'iPad (10th generation)',
     'iPad Mini (6th generation)',
   ];
 
@@ -816,6 +802,11 @@ const mainSession = async () => {
   try {
     page = await browser.newPage();
     
+    // Emulate a random mobile device
+    const device = choosePhone();
+    await page.emulate(device);
+    console.log(`Emulating device: ${device.name}`);
+    
     // Ensure previous RUM session is ended
     await ensureSessionEnd(page);
     
@@ -930,6 +921,11 @@ const secondSession = async () => {
   try {
     const page = await browser.newPage();
     
+    // Emulate a random mobile device
+    const device = choosePhone();
+    await page.emulate(device);
+    console.log(`Emulating device: ${device.name}`);
+    
     // Ensure previous RUM session is ended
     await ensureSessionEnd(page);
     
@@ -1013,6 +1009,11 @@ const secondSession = async () => {
 const thirdSession = async () => {
   const browser = await browserPool.getBrowser();
   const page = await browser.newPage();
+  
+  // Emulate a random mobile device
+  const device = choosePhone();
+  await page.emulate(device);
+  console.log(`Emulating device: ${device.name}`);
   
   // Ensure previous RUM session is ended
   await ensureSessionEnd(page);
@@ -1099,6 +1100,11 @@ const fourthSession = async () => {
 
   try {
     const page = await browser.newPage();
+    
+    // Emulate a random mobile device
+    const device = choosePhone();
+    await page.emulate(device);
+    console.log(`Emulating device: ${device.name}`);
     
     // Ensure previous RUM session is ended
     await ensureSessionEnd(page);
