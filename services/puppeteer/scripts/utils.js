@@ -364,9 +364,28 @@ const goToFooterPage = async (page) => {
       const linkText = await footerLinks[randomIndex].evaluate(el => el.textContent?.trim());
       console.log(`Clicking footer link: "${linkText}"`);
       
-      await footerLinks[randomIndex].click();
-      await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
-      console.log('Navigated to footer page:', await page.title());
+      // Check if this is a navigation link or just a scroll/anchor link
+      const href = await footerLinks[randomIndex].evaluate(el => el.getAttribute('href'));
+      const isNavigationLink = href && !href.startsWith('#') && href !== window.location.pathname;
+      
+      if (isNavigationLink) {
+        try {
+          await Promise.all([
+            page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
+            footerLinks[randomIndex].click()
+          ]);
+          console.log('Navigated to footer page:', await page.title());
+        } catch (navError) {
+          console.log('Navigation timeout, link might not cause navigation:', navError.message);
+          // Just click without waiting for navigation
+          await footerLinks[randomIndex].click();
+          await sleep(1000);
+        }
+      } else {
+        console.log('Footer link appears to be anchor/scroll link, clicking without navigation wait');
+        await footerLinks[randomIndex].click();
+        await sleep(1000);
+      }
     } else {
       console.log('No footer links found, staying on current page');
     }

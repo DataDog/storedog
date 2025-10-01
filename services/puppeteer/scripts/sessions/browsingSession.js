@@ -21,14 +21,28 @@ class BrowsingSession extends BaseSession {
 
       // select any link along the top nav
       const navLinks = await page.$$('#main-navbar a');
-      const randomIndex = Math.floor(Math.random() * navLinks.length);
-      const randomLink = navLinks[randomIndex];
-      await Promise.all([
-        page.waitForNavigation(),
-        randomLink.evaluate((el) => el.click()),
-      ]);
-      pageTitle = await page.title();
-      console.log(`"${pageTitle}" loaded`);
+      if (navLinks.length > 0) {
+        const randomIndex = Math.floor(Math.random() * navLinks.length);
+        const randomLink = navLinks[randomIndex];
+        
+        try {
+          await Promise.all([
+            page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
+            randomLink.evaluate((el) => el.click()),
+          ]);
+          pageTitle = await page.title();
+          console.log(`"${pageTitle}" loaded`);
+        } catch (navError) {
+          console.log('Navigation timeout, link might not cause navigation:', navError.message);
+          // Just click without waiting for navigation
+          await randomLink.evaluate((el) => el.click());
+          await sleep(1000);
+          pageTitle = await page.title();
+          console.log(`"${pageTitle}" loaded`);
+        }
+      } else {
+        console.log('No navigation links found, staying on current page');
+      }
 
       // select a product
       await selectProduct(page);
