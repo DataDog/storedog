@@ -39,11 +39,126 @@ scripts/
 - `PUPPETEER_RAMP_INTERVAL`: Ramp-up interval in ms (default: 30000)
 - `PUPPETEER_ENABLE_CACHE`: Enable cache (default: false)
 
+### Concurrency Configuration
+
+The script uses progressive concurrency ramping to prevent memory spikes at startup. The `PUPPETEER_MAX_CONCURRENT` environment variable controls the maximum number of simultaneous sessions.
+
+#### Recommended Settings by System Memory
+
+**8GB RAM Systems:**
+```bash
+export PUPPETEER_MAX_CONCURRENT=8
+export PUPPETEER_STARTUP_DELAY=10000
+export PUPPETEER_RAMP_INTERVAL=30000
+```
+- **Browser Pool**: 8 browsers
+- **Total Sessions**: 16
+- **Memory Usage**: ~2-3GB peak
+- **Ramp Schedule**: 2 → 4 → 8 sessions over 3.5 minutes
+
+**16GB RAM Systems:**
+```bash
+export PUPPETEER_MAX_CONCURRENT=20
+export PUPPETEER_STARTUP_DELAY=15000
+export PUPPETEER_RAMP_INTERVAL=45000
+```
+- **Browser Pool**: 20 browsers
+- **Total Sessions**: 20
+- **Memory Usage**: ~4-6GB peak
+- **Ramp Schedule**: 2 → 4 → 8 → 16 → 20 sessions over 7 minutes
+
+**High-Performance Systems (32GB+ RAM):**
+```bash
+export PUPPETEER_MAX_CONCURRENT=50
+export PUPPETEER_STARTUP_DELAY=20000
+export PUPPETEER_RAMP_INTERVAL=60000
+```
+- **Browser Pool**: 20 browsers (capped for stability)
+- **Total Sessions**: 50
+- **Memory Usage**: ~8-12GB peak
+- **Ramp Schedule**: 2 → 4 → 8 → 16 → 24 → 32 → 40 → 50 sessions over 10 minutes
+
+#### Progressive Ramp-Up Schedule
+
+The script automatically scales the ramp-up schedule based on your `PUPPETEER_MAX_CONCURRENT` setting:
+
+| Time | 8GB (max=8) | 16GB (max=20) | 32GB+ (max=50) |
+|------|-------------|---------------|----------------|
+| 0s   | 2 sessions  | 2 sessions    | 2 sessions     |
+| 30s  | 4 sessions  | 4 sessions    | 4 sessions     |
+| 60s  | 8 sessions  | 8 sessions    | 8 sessions     |
+| 90s  | 8 sessions  | 16 sessions   | 16 sessions    |
+| 120s | 8 sessions  | 20 sessions   | 24 sessions    |
+| 150s | 8 sessions  | 20 sessions   | 32 sessions    |
+| 180s | 8 sessions  | 20 sessions   | 40 sessions    |
+| 210s | 8 sessions  | 20 sessions   | 50 sessions    |
+
+#### Memory Safety Limits
+
+The script includes automatic safety limits to prevent system overload:
+- **Memory Threshold**: 80% of available RAM
+- **CPU Threshold**: 85% CPU usage
+- **Absolute Memory Limit**: 12GB (configurable)
+- **Auto-scaling**: Browser pool size scales with concurrency (6-20 browsers)
+
 ### Adding New Sessions
 1. Create new file in `sessions/` directory
 2. Extend `BaseSession` class
 3. Implement `run()` method
 4. That's it! No configuration needed
+
+## 🚀 Usage
+
+### Basic Usage
+```bash
+# Run with default settings (8 concurrent sessions)
+node puppeteer-modular.js
+
+# Run with custom URL
+node puppeteer-modular.js http://localhost:3000
+
+# Run with environment variables
+export STOREDOG_URL=http://localhost:3000
+export PUPPETEER_MAX_CONCURRENT=20
+node puppeteer-modular.js
+```
+
+### Docker Usage
+```bash
+# Using docker-compose with custom concurrency
+PUPPETEER_MAX_CONCURRENT=20 docker-compose up puppeteer
+
+# Or set in docker-compose.yml
+environment:
+  - PUPPETEER_MAX_CONCURRENT=20
+  - STOREDOG_URL=http://frontend:3000
+```
+
+### Kubernetes Usage
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: puppeteer-traffic
+spec:
+  template:
+    spec:
+      containers:
+      - name: puppeteer
+        image: storedog-puppeteer:latest
+        env:
+        - name: PUPPETEER_MAX_CONCURRENT
+          value: "20"
+        - name: STOREDOG_URL
+          value: "http://frontend-service:3000"
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "1000m"
+          limits:
+            memory: "8Gi"
+            cpu: "2000m"
+```
 
 ## 🔧 Features
 
