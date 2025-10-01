@@ -99,19 +99,93 @@ const optimizePageResources = async (page) => {
 // Product selection and cart functions
 const selectHomePageProduct = async (page) => {
   console.log('In selectHomePageProduct on page', await page.title());
-  // Wait for products to load instead of fixed timeout
-  await page.waitForSelector('.product-item', { visible: true });
-  const allProducts = await page.$$('.product-item');
-  const randomProductIndex = Math.floor(Math.random() * allProducts.length);
-  const randomProduct = allProducts[randomProductIndex];
-  // reassign selector to the random product's aria-label
-  const productAriaLabel = await randomProduct.evaluate((el) =>
-    el.getAttribute('aria-label')
-  );
-
-  const selector = `[aria-label="${productAriaLabel}"]`;
-
-  await Promise.all([page.waitForNavigation(), page.click(selector)]);
+  
+  try {
+    // Try multiple selectors for product items
+    const productSelectors = [
+      '.product-item',
+      '[class*="product-item"]',
+      '[class*="ProductCard"]',
+      'a[aria-label]',
+      '.grid a',
+      'div[class*="product"] a'
+    ];
+    
+    let products = [];
+    let usedSelector = '';
+    
+    // Try each selector until we find products
+    for (const selector of productSelectors) {
+      try {
+        console.log(`Trying selector: ${selector}`);
+        await page.waitForSelector(selector, { visible: true, timeout: 5000 });
+        products = await page.$$(selector);
+        if (products.length > 0) {
+          usedSelector = selector;
+          console.log(`Found ${products.length} products using selector: ${selector}`);
+          break;
+        }
+      } catch (error) {
+        console.log(`Selector ${selector} failed:`, error.message);
+        continue;
+      }
+    }
+    
+    if (products.length === 0) {
+      throw new Error('No products found with any selector');
+    }
+    
+    const randomProductIndex = Math.floor(Math.random() * products.length);
+    const randomProduct = products[randomProductIndex];
+    
+    // Try to get aria-label, fallback to href or text content
+    let productAriaLabel = await randomProduct.evaluate((el) => el.getAttribute('aria-label'));
+    
+    if (!productAriaLabel) {
+      // Try to get href for product link
+      const href = await randomProduct.evaluate((el) => el.getAttribute('href'));
+      if (href) {
+        productAriaLabel = href.split('/').pop() || 'product';
+      } else {
+        // Fallback to text content
+        productAriaLabel = await randomProduct.evaluate((el) => el.textContent?.trim()) || 'product';
+      }
+    }
+    
+    console.log(`Selected product: ${productAriaLabel}`);
+    
+    // Click the product
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
+      randomProduct.click()
+    ]);
+    
+    console.log('Successfully navigated to product page');
+    
+  } catch (error) {
+    console.error('Error selecting home page product:', error.message);
+    
+    // Fallback: try to find any clickable element that might be a product
+    try {
+      const fallbackSelectors = ['a[href*="/products/"]', 'a[href*="product"]', 'a'];
+      for (const selector of fallbackSelectors) {
+        const elements = await page.$$(selector);
+        if (elements.length > 0) {
+          const randomElement = elements[Math.floor(Math.random() * elements.length)];
+          await Promise.all([
+            page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
+            randomElement.click()
+          ]);
+          console.log('Fallback navigation successful');
+          break;
+        }
+      }
+    } catch (fallbackError) {
+      console.error('Fallback navigation also failed:', fallbackError.message);
+      throw new Error('Unable to select any product from home page');
+    }
+  }
+  
   // Short delay for UI to settle
   await sleep(1000);
   const pageTitle = await page.title();
