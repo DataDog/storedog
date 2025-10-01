@@ -910,16 +910,6 @@ const mainSession = async () => {
     await optimizePageResources(page);
     await page.setJavaScriptEnabled(true);
 
-    await page.setUserAgent(
-      `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36`
-    );
-
-    await page.setViewport({
-      width: 1366,
-      height: 768,
-      deviceScaleFactor: 1,
-    });
-
     await page.setDefaultNavigationTimeout(
       process.env.PUPPETEER_TIMEOUT || 40000
     );
@@ -1028,15 +1018,6 @@ const secondSession = async () => {
     
     await optimizePageResources(page);
 
-    await page.setUserAgent(
-      `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36`
-    );
-
-    await page.setViewport({
-      width: 1366,
-      height: 768,
-      deviceScaleFactor: 1,
-    });
 
     await page.setDefaultNavigationTimeout(
       process.env.PUPPETEER_TIMEOUT || 40000
@@ -1106,7 +1087,8 @@ const thirdSession = async () => {
   
   // Emulate a random mobile device
   const device = choosePhone();
-  await page.emulate(device);
+  await page.setViewport(device.viewport);
+  await page.setUserAgent(device.userAgent);
   console.log(`Emulating device: ${device.name}`);
   
   // Ensure previous RUM session is ended
@@ -1209,15 +1191,6 @@ const fourthSession = async () => {
     
     await optimizePageResources(page);
 
-    await page.setUserAgent(
-      `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36`
-    );
-
-    await page.setViewport({
-      width: 1366,
-      height: 768,
-      deviceScaleFactor: 1,
-    });
 
     await page.setDefaultNavigationTimeout(
       process.env.PUPPETEER_TIMEOUT || 40000
