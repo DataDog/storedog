@@ -171,6 +171,17 @@ const optimizePageResources = async (page) => {
     
     page.on('request', (request) => {
       const resourceType = request.resourceType();
+      const url = request.url();
+      
+      // Ensure Next.js development files are never blocked
+      if (url.includes('_devPagesManifest.json') || 
+          url.includes('_next/static/') || 
+          url.includes('_next/webpack-hmr') ||
+          url.includes('_next/webpack-dev-middleware') ||
+          url.includes('__webpack_hmr')) {
+        request.continue();
+        return;
+      }
       
       // Allow all resources to load (fonts, media, images, etc.)
       // Comment out the blocking logic below if you want unrestricted resource loading
@@ -190,8 +201,15 @@ const optimizePageResources = async (page) => {
       request.continue();
     });
     
-    // Set cache to false to prevent memory buildup
-    await page.setCacheEnabled(false);
+    // Set cache based on environment - disable for production, enable for development
+    const enableCache = process.env.PUPPETEER_ENABLE_CACHE === 'true';
+    await page.setCacheEnabled(enableCache);
+    
+    if (enableCache) {
+      console.log('📦 Cache enabled (development mode)');
+    } else {
+      console.log('📦 Cache disabled (production mode)');
+    }
     
     // Disable unnecessary features
     await page.evaluateOnNewDocument(() => {
@@ -1258,22 +1276,24 @@ const runSessions = async () => {
   const rampUpInterval = parseInt(process.env.PUPPETEER_RAMP_INTERVAL) || 30000; // 30s default
   const maxConcurrency = parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 8; // 8 default (conservative for 8GB RAM)
   
-  // Safety limits optimized for 8GB RAM system
+  // Safety limits - user configurable via environment variables
   const SAFETY_LIMITS = {
-    maxConcurrency: Math.min(maxConcurrency, 20), // Hard limit at 20 for 8GB RAM
-    memoryThreshold: 0.75, // Stop if memory usage exceeds 75% (6GB of 8GB)
+    maxConcurrency: Math.min(maxConcurrency, 50), // Hard limit at 50 (suitable for 16GB+ systems)
+    memoryThreshold: 0.80, // Stop if memory usage exceeds 80%
     cpuThreshold: 0.85,    // Stop if CPU usage exceeds 85%
-    maxMemoryMB: 6000      // Absolute memory limit: 6GB
+    maxMemoryMB: 12000     // Absolute memory limit: 12GB (suitable for 16GB+ systems)
   };
   
-  // Conservative concurrency levels optimized for 8GB RAM
+  // Progressive concurrency levels (scales with maxConcurrency setting)
   const concurrencyLevels = [
     { time: 0, maxConcurrent: 2 },                                                    // Start with 2
     { time: rampUpInterval, maxConcurrent: Math.min(4, SAFETY_LIMITS.maxConcurrency) },      // Ramp to 4
-    { time: rampUpInterval * 2, maxConcurrent: Math.min(6, SAFETY_LIMITS.maxConcurrency) },  // Ramp to 6
-    { time: rampUpInterval * 3, maxConcurrent: Math.min(8, SAFETY_LIMITS.maxConcurrency) }, // Ramp to 8
-    { time: rampUpInterval * 4, maxConcurrent: Math.min(12, SAFETY_LIMITS.maxConcurrency) }, // Ramp to 12
-    { time: rampUpInterval * 5, maxConcurrent: SAFETY_LIMITS.maxConcurrency }               // Final ramp to max
+    { time: rampUpInterval * 2, maxConcurrent: Math.min(8, SAFETY_LIMITS.maxConcurrency) }, // Ramp to 8
+    { time: rampUpInterval * 3, maxConcurrent: Math.min(16, SAFETY_LIMITS.maxConcurrency) }, // Ramp to 16
+    { time: rampUpInterval * 4, maxConcurrent: Math.min(24, SAFETY_LIMITS.maxConcurrency) }, // Ramp to 24
+    { time: rampUpInterval * 5, maxConcurrent: Math.min(32, SAFETY_LIMITS.maxConcurrency) }, // Ramp to 32
+    { time: rampUpInterval * 6, maxConcurrent: Math.min(40, SAFETY_LIMITS.maxConcurrency) }, // Ramp to 40
+    { time: rampUpInterval * 7, maxConcurrent: SAFETY_LIMITS.maxConcurrency }               // Final ramp to max
   ];
   
   let currentMaxConcurrent = concurrencyLevels[0].maxConcurrent;
@@ -1371,6 +1391,12 @@ const runSessions = async () => {
       }
     }
   };
+  
+  // Log system configuration
+  console.log(`🖥️  System Configuration:`);
+  console.log(`   Max Concurrency: ${SAFETY_LIMITS.maxConcurrency}`);
+  console.log(`   Memory Limit: ${SAFETY_LIMITS.maxMemoryMB}MB`);
+  console.log(`   Memory Threshold: ${Math.round(SAFETY_LIMITS.memoryThreshold * 100)}%`);
   
   // Give container time to settle before starting sessions
   console.log(`⏳ Waiting ${startupDelay/1000} seconds for container to settle...`);
