@@ -224,37 +224,155 @@ const addToCart = async (page) => {
   return;
 };
 
+const applyDiscountCode = async (page, discountCode) => {
+  try {
+    await page.waitForSelector('input[name="discount-code"]', {
+      visible: true,
+    });
+
+    await page.type('input[name="discount-code"]', discountCode, {
+      delay: Math.floor(Math.random() * 430) + 150,
+    });
+
+    console.log('entered code', discountCode);
+
+    await page.waitForSelector('button[data-dd-action-name="Apply Discount"]', {
+      visible: true,
+    });
+
+    await page.click('button[data-dd-action-name="Apply Discount"]');
+
+    console.log('Clicked discount code button');
+  } catch (e) {
+    console.error(e);
+  }
+
+  await sleep(1000);
+};
+
+const useDiscountCode = async (page) => {
+  try {
+    console.log('In useDiscountCode on page', await page.title());
+
+    // First try to find the discount code on the current page
+    let discountCode = null;
+    
+    try {
+      // Look for discount code in various places on the page
+      // Try different selectors for discount codes
+      const selectors = [
+        '#discount-code',
+        '[id*="discount"]',
+        '[class*="discount"]',
+        'strong',
+        '.discount-wrapper strong',
+        '.discount-wrapper span strong'
+      ];
+      
+      for (const selector of selectors) {
+        try {
+          const element = await page.$(selector);
+          if (element) {
+            const text = await element.evaluate(el => el.textContent?.trim());
+            // Check if it looks like a discount code (uppercase, alphanumeric, reasonable length)
+            if (text && /^[A-Z0-9]{3,15}$/.test(text)) {
+              discountCode = text;
+              console.log(`Found discount code "${discountCode}" using selector: ${selector}`);
+              break;
+            }
+          }
+        } catch (e) {
+          // Continue to next selector
+        }
+      }
+      
+      if (discountCode) {
+        console.log('Using dynamic discount code:', discountCode);
+      } else {
+        console.log('No discount code found on page, using fallback');
+      }
+    } catch (e) {
+      console.log('Could not find discount code on page, using fallback');
+    }
+
+    // If no discount code found on page, use fallback list
+    if (!discountCode) {
+      const discountCodes = [
+        'DISCOUNT',
+        'COOLBITS', 
+        'LEARNINGBITS',
+        'BITS',
+        'COOL',
+        'STOREDOG',
+        'STOREDOG10',
+      ];
+      const randomIndex = Math.floor(Math.random() * discountCodes.length);
+      discountCode = discountCodes[randomIndex];
+      console.log('Using fallback discount code:', discountCode);
+    }
+
+    // Now try to apply the discount code
+    await page.waitForSelector('input[name="discount-code"]', {
+      visible: true,
+      timeout: 5000,
+    });
+
+    // Short delay before entering discount code
+    await sleep(1000);
+
+    await applyDiscountCode(page, discountCode);
+
+    await sleep(1000);
+
+    // Sometimes try the same code again (for frustration signals)
+    if (Math.floor(Math.random() * 10) + 1 < 7) {
+      console.log(`trying discount code ${discountCode} again...`);
+      await applyDiscountCode(page, discountCode);
+    }
+  } catch (e) {
+    console.error('Discount code application failed:', e.message);
+  }
+
+  await sleep(500);
+  return;
+};
+
 const checkout = async (page) => {
   console.log('In checkout on page', await page.title());
 
-  await page.waitForSelector('button[data-dd-action-name="Toggle Cart"]', {
-    visible: true,
-  });
-
-  await Promise.all([
-    sleep(500),
-    page.click('button[data-dd-action-name="Toggle Cart"]'),
-  ]);
-
-  // Wait for cart to open instead of fixed timeout
-  await page.waitForSelector(
-    'button[data-dd-action-name="Proceed to Checkout"]',
-    {
+  try {
+    // Try to find and click the cart toggle button
+    await page.waitForSelector('button[data-dd-action-name="Toggle Cart"]', {
       visible: true,
-    }
-  );
+      timeout: 10000,
+    });
 
-  console.log('opened cart...');
+    await Promise.all([
+      sleep(500),
+      page.click('button[data-dd-action-name="Toggle Cart"]'),
+    ]);
 
-  await Promise.all([
-    sleep(2000),
-    page.click('button[data-dd-action-name="Proceed to Checkout"]'),
-  ]);
+    // Wait for cart to open instead of fixed timeout
+    await page.waitForSelector(
+      'button[data-dd-action-name="Proceed to Checkout"]',
+      {
+        visible: true,
+        timeout: 10000,
+      }
+    );
 
-  // Wait for checkout page to load
-  await page.waitForSelector('button[data-dd-action-name="Confirm Purchase"]', {
-    visible: true,
-  });
+    console.log('opened cart...');
+
+    await Promise.all([
+      sleep(2000),
+      page.click('button[data-dd-action-name="Proceed to Checkout"]'),
+    ]);
+
+    // Wait for checkout page to load
+    await page.waitForSelector('button[data-dd-action-name="Confirm Purchase"]', {
+      visible: true,
+      timeout: 15000,
+    });
 
   // Wait for checkout form to be ready
   await sleep(2000);
@@ -267,23 +385,67 @@ const checkout = async (page) => {
     el.parentNode.scrollTo(0, el.getBoundingClientRect().bottom);
   });
 
-  // Fill out checkout form
-  await page.type('input[name="order[email]"]', 'test@example.com');
-  await page.type('input[name="order[bill_address_attributes][firstname]"]', 'Test');
-  await page.type('input[name="order[bill_address_attributes][lastname]"]', 'User');
-  await page.type('input[name="order[bill_address_attributes][address1]"]', '123 Test St');
-  await page.type('input[name="order[bill_address_attributes][city]"]', 'Test City');
-  await page.select('select[name="order[bill_address_attributes][state_id]"]', '1');
-  await page.type('input[name="order[bill_address_attributes][zipcode]"]', '12345');
-  await page.type('input[name="order[bill_address_attributes][phone]"]', '555-1234');
+  // only use discount sometimes, try to enter a discount (and get errors)
+  if (Math.floor(Math.random() * 10 + 1) > 5) {
+    console.log('applying discount code...');
 
-  await sleep(1000);
+    await useDiscountCode(page);
 
-  // Confirm purchase
-  await page.click('button[data-dd-action-name="Confirm Purchase"]');
-  console.log('Purchase confirmed');
+    // rarely still checkout
+    if (Math.floor(Math.random() * 10 + 1) <= 7) {
+      console.log(
+        'begrudgingly checking out even though discount code failed...'
+      );
 
-  await sleep(3000);
+      await Promise.all([
+        sleep(1000),
+        page.click('button[data-dd-action-name="Confirm Purchase"]'),
+      ]);
+
+      // Wait for purchase confirmation
+      await page.waitForSelector('.purchase-confirmed-msg', { visible: true });
+
+      console.log('purchase confirmed');
+      console.log('Checkout complete');
+
+      await sleep(3000);
+    }
+  } else {
+    console.log('proceeded to checkout...');
+
+    await Promise.all([
+      sleep(2000),
+      page.click('button[data-dd-action-name="Confirm Purchase"]'),
+    ]);
+
+    // Wait for purchase confirmation
+    await page.waitForSelector('.purchase-confirmed-msg', { visible: true });
+
+    console.log('purchase confirmed');
+    console.log('Checkout complete');
+
+    await sleep(3000);
+  }
+  } catch (error) {
+    console.error('Checkout failed:', error.message);
+    console.log('Attempting simplified checkout...');
+    
+    // Fallback: try to find any checkout button
+    try {
+      const checkoutButtons = await page.$$('button');
+      for (const button of checkoutButtons) {
+        const text = await button.evaluate(el => el.textContent?.toLowerCase());
+        if (text && (text.includes('checkout') || text.includes('purchase') || text.includes('buy'))) {
+          await button.click();
+          await sleep(2000);
+          console.log('Fallback checkout completed');
+          break;
+        }
+      }
+    } catch (fallbackError) {
+      console.error('Fallback checkout also failed:', fallbackError.message);
+    }
+  }
 };
 
 module.exports = {
@@ -298,5 +460,7 @@ module.exports = {
   selectRelatedProduct,
   goToFooterPage,
   addToCart,
+  applyDiscountCode,
+  useDiscountCode,
   checkout
 };
