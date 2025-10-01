@@ -381,12 +381,12 @@ const choosePhone = () => {
     // Firefox Mobile (Android) - Alternative browser
     {
       name: 'OnePlus 12 (Firefox)',
-      userAgent: 'Mozilla/5.0 (Mobile; rv:109.0) Gecko/120.0 Firefox/120.0',
+      userAgent: 'Mozilla/5.0 (Linux; Android 14; CPH2581) AppleWebKit/537.36 (KHTML, like Gecko) Firefox/120.0',
       viewport: { width: 412, height: 915, deviceScaleFactor: 3, isMobile: true, hasTouch: true }
     },
     {
       name: 'Xiaomi 14 (Firefox)',
-      userAgent: 'Mozilla/5.0 (Mobile; rv:109.0) Gecko/120.0 Firefox/120.0',
+      userAgent: 'Mozilla/5.0 (Linux; Android 14; 23127PN0CC) AppleWebKit/537.36 (KHTML, like Gecko) Firefox/120.0',
       viewport: { width: 412, height: 915, deviceScaleFactor: 2.625, isMobile: true, hasTouch: true }
     },
     
