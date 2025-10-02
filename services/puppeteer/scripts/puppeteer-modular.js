@@ -23,12 +23,7 @@ function loadSessionClasses() {
       const SessionClass = require(sessionPath);
       
       if (SessionClass && typeof SessionClass === 'function') {
-        sessionClasses.push({
-          name: file.replace('.js', ''),
-          class: SessionClass,
-          path: sessionPath
-        });
-        console.log(`📁 Loaded session: ${file}`);
+        sessionClasses.push(SessionClass);
       }
     }
     
@@ -44,20 +39,17 @@ function loadSessionClasses() {
 async function main() {
   console.log('🚀 Starting Puppeteer Traffic Generator');
   
-  // Accept STOREDOG_URL from command line arguments
+  // Accept STOREDOG_URL from command line or environment
   const storedogUrl = process.argv[2] || process.env.STOREDOG_URL || 'http://service-proxy:80';
   
   // Update config with the URL
   const config = require('./config');
   config.storedogUrl = storedogUrl;
   
-  console.log(`🌐 Target URL: ${storedogUrl}`);
+  console.log(`🌐 Target: ${storedogUrl}`);
   
   try {
     const sessionManager = new SessionManager();
-    
-    // Log device statistics
-    sessionManager.getDeviceManager().logDeviceStats();
     
     // Dynamically load all session types
     const sessionClasses = loadSessionClasses();
@@ -68,14 +60,9 @@ async function main() {
     }
     
     // Create session functions from loaded classes
-    const sessionFunctions = sessionClasses.map(sessionInfo => {
-      return () => {
-        console.log(`🎭 Starting ${sessionInfo.name} session`);
-        return new sessionInfo.class(sessionManager).run();
-      };
-    });
-    
-    console.log(`🎯 Available session types: ${sessionClasses.map(s => s.name).join(', ')}`);
+    const sessionFunctions = sessionClasses.map(SessionClass => 
+      () => new SessionClass(sessionManager).run()
+    );
     
     // Run sessions with progressive concurrency
     await sessionManager.runSessions(sessionFunctions);
@@ -90,12 +77,12 @@ async function main() {
 
 // Graceful shutdown
 process.on('SIGINT', () => {
-  console.log('\n🛑 Received SIGINT, shutting down gracefully...');
+  console.log('\n🛑 Shutting down gracefully...');
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  console.log('\n🛑 Received SIGTERM, shutting down gracefully...');
+  console.log('\n🛑 Shutting down gracefully...');
   process.exit(0);
 });
 
