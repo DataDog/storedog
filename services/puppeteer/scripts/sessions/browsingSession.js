@@ -13,27 +13,17 @@ class BrowsingSession extends BaseSession {
     
     try {
       const urlWithUtm = Math.random() > 0.5 ? setUtmParams(config.storedogUrl) : config.storedogUrl;
-      let pageTitle;
       
-      // go to home page
+      // Go to home page
       try {
         await page.goto(urlWithUtm, { waitUntil: 'domcontentloaded', timeout: 15000 });
-        pageTitle = await page.title();
+        const pageTitle = await page.title();
         console.log(`"${pageTitle}" loaded`);
       } catch (gotoError) {
-        console.log('Initial page load failed:', gotoError.message);
-        console.log('Attempting to continue with current page...');
-        // Try to get current page title even if goto failed
-        try {
-          pageTitle = await page.title();
-          console.log(`Current page: "${pageTitle}"`);
-        } catch (titleError) {
-          console.log('Could not get page title, page may not be loaded');
-          pageTitle = 'Unknown Page';
-        }
+        console.log('Initial page load failed, continuing with current page');
       }
 
-      // select any link along the top nav
+      // Select and navigate to a random navbar link
       const navLinks = await page.$$('#main-navbar a');
       if (navLinks.length > 0) {
         const randomIndex = Math.floor(Math.random() * navLinks.length);
@@ -44,30 +34,28 @@ class BrowsingSession extends BaseSession {
             page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
             randomLink.evaluate((el) => el.click()),
           ]);
-          pageTitle = await page.title();
-          console.log(`"${pageTitle}" loaded`);
+          const pageTitle = await page.title();
+          console.log(`Navigated to "${pageTitle}"`);
         } catch (navError) {
-          console.log('Navigation timeout, link might not cause navigation:', navError.message);
-          // Just click without waiting for navigation
+          console.log('Navigation timeout, clicking without waiting');
           await randomLink.evaluate((el) => el.click());
           await sleep(1000);
-          pageTitle = await page.title();
-          console.log(`"${pageTitle}" loaded`);
         }
       } else {
         console.log('No navigation links found, staying on current page');
       }
 
-      // select a product
+      // Select a product and add to cart
       await selectProduct(page);
-
-      // add to cart
       await addToCart(page);
 
-      console.log('moving on to checkout');
-      await sleep(1500);
+      // Proceed to checkout
+      console.log('Moving to checkout');
+      await sleep(1500); // Allow UI to settle
       await checkout(page);
-      await sleep(1500);
+      
+      // End session
+      await sleep(1500); // Allow checkout to complete
       const url = await page.url();
       await page.goto(`${url}?end_session=true`, {
         waitUntil: 'domcontentloaded',
