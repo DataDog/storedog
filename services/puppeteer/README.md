@@ -48,10 +48,54 @@ scripts/
 | `STOREDOG_URL` | `http://service-proxy:80` | Target application URL |
 | `PUPPETEER_MAX_CONCURRENT` | `8` | Maximum concurrent sessions |
 | `PUPPETEER_BROWSER_POOL_SIZE` | `same as concurrent` | Number of browser instances in pool (6-20) |
+| `PUPPETEER_SYSTEM_MEMORY` | `8GB` | System memory tier (`8GB`, `16GB`, `32GB`) - auto-sets Node.js heap |
 | `PUPPETEER_STARTUP_DELAY` | `10000` | Initial delay before starting sessions (ms) |
 | `PUPPETEER_RAMP_INTERVAL` | `30000` | Time between concurrency increases (ms) |
 | `PUPPETEER_BROWSER` | `chrome` | Browser engine (`chrome` or `firefox`) |
 | `PUPPETEER_ENABLE_CACHE` | `false` | Enable browser caching |
+
+### System Memory Configuration
+
+The `PUPPETEER_SYSTEM_MEMORY` environment variable automatically sets the appropriate Node.js heap size for your system. This is essential for preventing "JavaScript heap out of memory" errors.
+
+#### Memory Tier Settings
+
+| System Memory | Node.js Heap | Recommended Concurrent | Max Browser Pool |
+|---------------|--------------|----------------------|------------------|
+| **8GB** | 3GB | 12-18 sessions | 18 browsers |
+| **16GB** | 6GB | 20-32 sessions | 20 browsers |
+| **32GB** | 8GB | 32-50 sessions | 20 browsers |
+
+#### Usage Examples
+
+**8GB System:**
+```bash
+export PUPPETEER_SYSTEM_MEMORY=8GB
+export PUPPETEER_MAX_CONCURRENT=18
+# Automatically sets: 3GB Node.js heap
+```
+
+**16GB System:**
+```bash
+export PUPPETEER_SYSTEM_MEMORY=16GB
+export PUPPETEER_MAX_CONCURRENT=32
+# Automatically sets: 6GB Node.js heap
+```
+
+**32GB+ System:**
+```bash
+export PUPPETEER_SYSTEM_MEMORY=32GB
+export PUPPETEER_MAX_CONCURRENT=50
+# Automatically sets: 8GB Node.js heap
+```
+
+**Docker Deployment:**
+```yaml
+environment:
+  - PUPPETEER_SYSTEM_MEMORY=16GB
+  - PUPPETEER_MAX_CONCURRENT=32
+  - PUPPETEER_BROWSER_POOL_SIZE=20
+```
 
 ### Browser Pool Configuration
 
@@ -218,10 +262,11 @@ export PUPPETEER_BROWSER_POOL_SIZE=20
 
 **"JavaScript heap out of memory" errors:**
 ```bash
-# Increase Node.js heap size
-export NODE_OPTIONS="--max-old-space-size=3072"  # 3GB
-# Or for larger systems
-export NODE_OPTIONS="--max-old-space-size=4096"  # 4GB
+# Set system memory tier (recommended)
+export PUPPETEER_SYSTEM_MEMORY=16GB  # Auto-sets 6GB heap
+
+# Or manually set Node.js heap size
+export NODE_OPTIONS="--max-old-space-size=6144"  # 6GB
 ```
 
 **System memory pressure:**
@@ -238,34 +283,36 @@ export PUPPETEER_MAX_CONCURRENT=16     # Instead of 18+
 # Docker/Kubernetes - ensure adequate memory limits
 resources:
   limits:
-    memory: "8Gi"  # Match your system capacity
+    memory: "16Gi"  # Match your PUPPETEER_SYSTEM_MEMORY setting
 ```
 
 ## 🚀 Usage
 
 ### Basic Usage
 ```bash
-# Run with default settings (8 concurrent sessions)
+# Run with default settings (8GB system)
 node puppeteer-modular.js
 
 # Run with custom URL
 node puppeteer-modular.js http://localhost:3000
 
-# Run with custom concurrency
-export PUPPETEER_MAX_CONCURRENT=16
+# Run on 16GB system with high concurrency
+export PUPPETEER_SYSTEM_MEMORY=16GB
+export PUPPETEER_MAX_CONCURRENT=32
 export STOREDOG_URL=http://localhost:3000
 node puppeteer-modular.js
 ```
 
 ### Docker Usage
 ```bash
-# Using docker-compose
-PUPPETEER_MAX_CONCURRENT=16 docker-compose up puppeteer
+# Using docker-compose for 16GB system
+PUPPETEER_SYSTEM_MEMORY=16GB PUPPETEER_MAX_CONCURRENT=32 docker-compose up puppeteer
 
 # Or set in docker-compose.yml
 environment:
-  - PUPPETEER_MAX_CONCURRENT=16
-  - PUPPETEER_BROWSER_POOL_SIZE=16
+  - PUPPETEER_SYSTEM_MEMORY=16GB
+  - PUPPETEER_MAX_CONCURRENT=32
+  - PUPPETEER_BROWSER_POOL_SIZE=20
   - STOREDOG_URL=http://frontend:3000
 ```
 
@@ -282,16 +329,18 @@ spec:
       - name: puppeteer
         image: storedog-puppeteer:latest
         env:
+        - name: PUPPETEER_SYSTEM_MEMORY
+          value: "16GB"
         - name: PUPPETEER_MAX_CONCURRENT
-          value: "16"
+          value: "32"
         - name: PUPPETEER_BROWSER_POOL_SIZE
-          value: "16"
+          value: "20"
         - name: STOREDOG_URL
           value: "http://frontend-service:3000"
         resources:
           limits:
-            memory: "8Gi"
-            cpu: "4000m"
+            memory: "16Gi"  # Match PUPPETEER_SYSTEM_MEMORY
+            cpu: "8000m"
 ```
 
 ## 📊 Device Emulation

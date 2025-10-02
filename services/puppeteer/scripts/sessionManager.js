@@ -30,6 +30,12 @@ class SessionManager {
           }
         `
       });
+      
+      // Force garbage collection after context clearing
+      await client.send('Runtime.runScript', {
+        expression: 'if (window.gc) window.gc();'
+      }).catch(() => {}); // Ignore if not available
+      
       console.log('Browser context cleared');
     } catch (error) {
       console.log('Error clearing browser context:', error.message);
@@ -136,6 +142,12 @@ class SessionManager {
             p.then && 
             typeof p.then === 'function'
           );
+          
+          // Proactive memory management - force GC periodically
+          if (sessionStats.completed % 5 === 0) {
+            forceGC();
+            logMemoryUsage(`After ${sessionStats.completed} sessions`);
+          }
         }
       }
     };
