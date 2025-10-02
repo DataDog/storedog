@@ -48,7 +48,7 @@ scripts/
 | `STOREDOG_URL` | `http://service-proxy:80` | Target application URL |
 | `PUPPETEER_MAX_CONCURRENT` | `8` | Maximum concurrent sessions |
 | `PUPPETEER_BROWSER_POOL_SIZE` | `same as concurrent` | Number of browser instances in pool (6-20) |
-| `PUPPETEER_SYSTEM_MEMORY` | `8GB` | System memory tier (`8GB`, `16GB`, `32GB`) - auto-sets Node.js heap |
+| `PUPPETEER_SYSTEM_MEMORY` | `8GB` | System memory spec: `8GB` (n2-standard-2) or `16GB` (n2-standard-4) |
 | `PUPPETEER_STARTUP_DELAY` | `10000` | Initial delay before starting sessions (ms) |
 | `PUPPETEER_RAMP_INTERVAL` | `30000` | Time between concurrency increases (ms) |
 | `PUPPETEER_BROWSER` | `chrome` | Browser engine (`chrome` or `firefox`) |
