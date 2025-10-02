@@ -37,23 +37,33 @@ class SessionManager {
   }
 
   async runSessions(sessionFunctions) {
-    // Create session queue with simple distribution
+    // Create session queue with guaranteed minimum + random distribution
     const sessionStats = { completed: 0, failed: 0 };
     
-    // Create sessions with random distribution
-    for (let i = 0; i < config.totalSessions; i++) {
-      const randomIndex = Math.floor(Math.random() * sessionFunctions.length);
+    // First, ensure each session type runs at least once
+    for (let i = 0; i < sessionFunctions.length; i++) {
       this.sessionQueue.push({
         id: i + 1,
+        session: sessionFunctions[i],
+        delay: Math.random() * config.sessionDelay
+      });
+    }
+    
+    // Fill remaining slots with random distribution
+    const remainingSessions = config.totalSessions - sessionFunctions.length;
+    for (let i = 0; i < remainingSessions; i++) {
+      const randomIndex = Math.floor(Math.random() * sessionFunctions.length);
+      this.sessionQueue.push({
+        id: sessionFunctions.length + i + 1,
         session: sessionFunctions[randomIndex],
         delay: Math.random() * config.sessionDelay
       });
     }
     
-    // Shuffle the queue
+    // Shuffle the queue to randomize execution order
     this.sessionQueue = this.sessionQueue.sort(() => Math.random() - 0.5);
     
-    console.log(`📋 Starting ${config.totalSessions} sessions with ${config.maxConcurrency} max concurrency`);
+    console.log(`📋 Starting ${config.totalSessions} sessions (${sessionFunctions.length} guaranteed + ${remainingSessions} random)`);
 
     // Simplified concurrency levels
     const concurrencyLevels = [
