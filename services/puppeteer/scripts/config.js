@@ -18,9 +18,9 @@ const config = {
     maxMemoryMB: 12000 // 12GB
   },
   
-  // Browser pool settings (configurable, defaults to 1:1 ratio with sessions)
+  // Browser pool settings (conservative limit like yesterday)
   browserPoolSize: parseInt(process.env.PUPPETEER_BROWSER_POOL_SIZE) || 
-                   Math.min(Math.max(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 8, 6), 20),
+                   Math.min(Math.max(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 8, 6), 18),
   
   // Session settings
   totalSessions: Math.max(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 8, 16),
