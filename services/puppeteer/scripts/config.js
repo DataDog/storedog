@@ -18,7 +18,7 @@ const config = {
     maxMemoryMB: 12000 // 12GB
   },
   
-  // Browser pool settings (conservative limit like yesterday)
+  // Browser pool settings (18 worked on 8GB yesterday, so 18 should work on 16GB)
   browserPoolSize: parseInt(process.env.PUPPETEER_BROWSER_POOL_SIZE) || 
                    Math.min(Math.max(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 8, 6), 18),
   
