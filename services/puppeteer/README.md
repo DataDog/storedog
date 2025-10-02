@@ -46,54 +46,41 @@ scripts/
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `STOREDOG_URL` | `http://service-proxy:80` | Target application URL |
-| `PUPPETEER_MAX_CONCURRENT` | `varies by tier` | Maximum concurrent sessions |
-| `PUPPETEER_MEMORY_TIER` | `8GB` | System memory tier (`8GB`, `16GB`, `32GB`) |
-| `PUPPETEER_BROWSER_POOL_SIZE` | `varies by tier` | Number of browser instances in pool |
+| `PUPPETEER_MAX_CONCURRENT` | `8` | Maximum concurrent sessions |
+| `PUPPETEER_BROWSER_POOL_SIZE` | `same as concurrent` | Number of browser instances in pool (6-20) |
 | `PUPPETEER_STARTUP_DELAY` | `10000` | Initial delay before starting sessions (ms) |
 | `PUPPETEER_RAMP_INTERVAL` | `30000` | Time between concurrency increases (ms) |
 | `PUPPETEER_BROWSER` | `chrome` | Browser engine (`chrome` or `firefox`) |
 | `PUPPETEER_ENABLE_CACHE` | `false` | Enable browser caching |
 
-### Memory Tier Configuration
+### Browser Pool Configuration
 
-The `PUPPETEER_MEMORY_TIER` environment variable automatically configures optimal settings based on your system's available memory. This is especially useful for Docker deployments across different sized systems.
+The `PUPPETEER_BROWSER_POOL_SIZE` controls how many browser instances are created. More browsers use more memory but reduce session waiting time.
 
-#### Available Memory Tiers
+#### Browser Pool Strategies
 
-| Tier | Node.js Heap | Default Concurrent | Max Browsers | Memory Threshold | Safety Limit |
-|------|--------------|-------------------|--------------|------------------|--------------|
-| **8GB** | 6GB | 12 sessions | 10 browsers | 75% | 6GB |
-| **16GB** | 12GB | 20 sessions | 16 browsers | 80% | 12GB |
-| **32GB** | 16GB | 32 sessions | 20 browsers | 85% | 24GB |
-
-#### Usage Examples
-
+**1:1 Ratio (Default):**
 ```bash
-# 8GB system (conservative)
-export PUPPETEER_MEMORY_TIER=8GB
-
-# 16GB system (recommended for production)
-export PUPPETEER_MEMORY_TIER=16GB
-
-# 32GB+ system (high performance)
-export PUPPETEER_MEMORY_TIER=32GB
+export PUPPETEER_MAX_CONCURRENT=18
+# Automatically gets 18 browsers (1 per session)
 ```
 
-**Docker Compose Example:**
-```yaml
-environment:
-  - PUPPETEER_MEMORY_TIER=16GB
-  - STOREDOG_URL=http://frontend:3000
-  # Automatically sets: 20 concurrent, 16 browsers, 12GB Node heap
+**Memory Conservation:**
+```bash
+export PUPPETEER_MAX_CONCURRENT=18
+export PUPPETEER_BROWSER_POOL_SIZE=12  # 1.5 sessions per browser
 ```
 
-**Override Defaults:**
-```yaml
-environment:
-  - PUPPETEER_MEMORY_TIER=16GB           # Base configuration
-  - PUPPETEER_MAX_CONCURRENT=25          # Override concurrent sessions
-  - PUPPETEER_BROWSER_POOL_SIZE=18       # Override browser pool
+**High Performance:**
+```bash
+export PUPPETEER_MAX_CONCURRENT=16
+export PUPPETEER_BROWSER_POOL_SIZE=20  # Extra browsers for faster session starts
 ```
+
+#### Browser Pool Limits
+- **Minimum**: 6 browsers (even with 1-2 concurrent sessions)
+- **Maximum**: 20 browsers (prevents excessive memory usage)
+- **Default**: Same as concurrent sessions (1:1 ratio)
 
 ### Memory Safety Limits (Internal)
 
@@ -109,72 +96,66 @@ safetyLimits: {
 
 ### Concurrency Configuration
 
-The script uses progressive concurrency ramping to prevent memory spikes at startup. Use `PUPPETEER_MEMORY_TIER` for automatic optimal configuration, or set individual variables for custom tuning.
+The script uses progressive concurrency ramping to prevent memory spikes at startup.
 
-#### Quick Start with Memory Tiers
+#### Recommended Settings for 8GB Systems
 
-**8GB System:**
+**Conservative (Guaranteed Stable):**
 ```bash
-export PUPPETEER_MEMORY_TIER=8GB
-# Automatically configures: 12 concurrent, 10 browsers, 6GB Node heap
+export PUPPETEER_MAX_CONCURRENT=12
+export PUPPETEER_BROWSER_POOL_SIZE=12  # 1:1 ratio
 ```
 
-**16GB System:**
+**Balanced (Good Performance):**
 ```bash
-export PUPPETEER_MEMORY_TIER=16GB  
-# Automatically configures: 20 concurrent, 16 browsers, 12GB Node heap
+export PUPPETEER_MAX_CONCURRENT=16
+export PUPPETEER_BROWSER_POOL_SIZE=16  # 1:1 ratio
 ```
 
-**32GB+ System:**
+**Aggressive (Push Limits):**
 ```bash
-export PUPPETEER_MEMORY_TIER=32GB
-# Automatically configures: 32 concurrent, 20 browsers, 16GB Node heap
+export PUPPETEER_MAX_CONCURRENT=18
+export PUPPETEER_BROWSER_POOL_SIZE=18  # 1:1 ratio
+# May need NODE_OPTIONS="--max-old-space-size=3072"
 ```
 
-#### Manual Configuration (Advanced)
+#### Memory Conservation Strategy
 
-If you need custom settings, you can override the memory tier defaults:
+If hitting memory limits, reduce browser pool instead of concurrent sessions:
 
 ```bash
-# Start with a memory tier, then override specific settings
-export PUPPETEER_MEMORY_TIER=16GB
-export PUPPETEER_MAX_CONCURRENT=25          # Push beyond default 20
-export PUPPETEER_BROWSER_POOL_SIZE=18       # More browsers for better distribution
-export PUPPETEER_STARTUP_DELAY=20000        # Slower ramp-up for stability
-export PUPPETEER_RAMP_INTERVAL=60000        # More time between increases
+export PUPPETEER_MAX_CONCURRENT=18     # Keep high concurrency
+export PUPPETEER_BROWSER_POOL_SIZE=12  # Reduce browsers (1.5:1 ratio)
 ```
+
+This trades some performance (session waiting) for memory savings.
 
 ## 🚀 Usage
 
 ### Basic Usage
 ```bash
-# Run with default settings (8GB tier)
+# Run with default settings (8 concurrent sessions)
 node puppeteer-modular.js
 
 # Run with custom URL
 node puppeteer-modular.js http://localhost:3000
 
-# Run with memory tier configuration
-export PUPPETEER_MEMORY_TIER=16GB
+# Run with custom concurrency
+export PUPPETEER_MAX_CONCURRENT=16
 export STOREDOG_URL=http://localhost:3000
 node puppeteer-modular.js
 ```
 
 ### Docker Usage
 ```bash
-# Using docker-compose with memory tier
-PUPPETEER_MEMORY_TIER=16GB docker-compose up puppeteer
+# Using docker-compose
+PUPPETEER_MAX_CONCURRENT=16 docker-compose up puppeteer
 
 # Or set in docker-compose.yml
 environment:
-  - PUPPETEER_MEMORY_TIER=16GB
+  - PUPPETEER_MAX_CONCURRENT=16
+  - PUPPETEER_BROWSER_POOL_SIZE=16
   - STOREDOG_URL=http://frontend:3000
-  
-# Advanced: Override specific settings
-environment:
-  - PUPPETEER_MEMORY_TIER=16GB
-  - PUPPETEER_MAX_CONCURRENT=25
-  - PUPPETEER_BROWSER_POOL_SIZE=18
 ```
 
 ### Kubernetes Usage
@@ -190,13 +171,15 @@ spec:
       - name: puppeteer
         image: storedog-puppeteer:latest
         env:
-        - name: PUPPETEER_MEMORY_TIER
-          value: "16GB"
+        - name: PUPPETEER_MAX_CONCURRENT
+          value: "16"
+        - name: PUPPETEER_BROWSER_POOL_SIZE
+          value: "16"
         - name: STOREDOG_URL
           value: "http://frontend-service:3000"
         resources:
           limits:
-            memory: "16Gi"  # Match memory tier
+            memory: "8Gi"
             cpu: "4000m"
 ```
 

@@ -11,22 +11,23 @@ const config = {
   maxConcurrency: parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 8,
   enableCache: process.env.PUPPETEER_ENABLE_CACHE === 'true',
   
-  // Safety limits
+  // Safety limits (conservative for 8GB systems)
   safetyLimits: {
-    memoryThreshold: 0.80, // 80%
+    memoryThreshold: 0.70, // 70% (more conservative)
     cpuThreshold: 0.85, // 85%
-    maxMemoryMB: 12000 // 12GB
+    maxMemoryMB: 4000 // 4GB (safe limit for 8GB system)
   },
   
-  // Browser pool settings (minimum 6, maximum 20)
-  browserPoolSize: Math.min(Math.max(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 8, 6), 20),
+  // Browser pool settings (configurable, defaults to 1:1 ratio with sessions)
+  browserPoolSize: parseInt(process.env.PUPPETEER_BROWSER_POOL_SIZE) || 
+                   Math.min(Math.max(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 8, 6), 20),
   
-  // Session settings (minimum 16 sessions)
+  // Session settings
   totalSessions: Math.max(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 8, 16),
   sessionDelay: 2000 // Random delay up to 2 seconds
 };
 
 // Debug logging
-console.log('🔧 Config loaded:', config.storedogUrl, `(${config.maxConcurrency} concurrent)`);
+console.log('🔧 Config loaded:', config.storedogUrl, `(${config.maxConcurrency} concurrent, ${config.browserPoolSize} browsers)`);
 
 module.exports = config;
