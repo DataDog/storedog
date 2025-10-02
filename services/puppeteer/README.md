@@ -55,32 +55,82 @@ scripts/
 
 ### Browser Pool Configuration
 
-The `PUPPETEER_BROWSER_POOL_SIZE` controls how many browser instances are created. More browsers use more memory but reduce session waiting time.
+The `PUPPETEER_BROWSER_POOL_SIZE` controls how many browser instances are created. You have independent control over concurrent sessions and browser pool size for optimal performance tuning.
 
-#### Browser Pool Strategies
+#### Browser Pool vs. Concurrent Sessions
 
-**1:1 Ratio (Default):**
+- **`PUPPETEER_MAX_CONCURRENT`**: How many sessions run simultaneously
+- **`PUPPETEER_BROWSER_POOL_SIZE`**: How many browser instances are available
+- **Ratio**: Sessions per browser (affects performance and memory)
+
+#### Scaling Strategies by System Size
+
+**8GB Systems:**
 ```bash
+# Conservative (guaranteed stable)
+export PUPPETEER_MAX_CONCURRENT=12
+export PUPPETEER_BROWSER_POOL_SIZE=12   # 1:1 ratio
+
+# Balanced performance
 export PUPPETEER_MAX_CONCURRENT=18
-# Automatically gets 18 browsers (1 per session)
-```
+export PUPPETEER_BROWSER_POOL_SIZE=18   # 1:1 ratio
 
-**Memory Conservation:**
-```bash
+# Memory conservation
 export PUPPETEER_MAX_CONCURRENT=18
-export PUPPETEER_BROWSER_POOL_SIZE=12  # 1.5 sessions per browser
+export PUPPETEER_BROWSER_POOL_SIZE=12   # 1.5:1 ratio (sessions wait, less memory)
 ```
 
-**High Performance:**
+**16GB Systems:**
 ```bash
-export PUPPETEER_MAX_CONCURRENT=16
-export PUPPETEER_BROWSER_POOL_SIZE=20  # Extra browsers for faster session starts
+# High performance
+export PUPPETEER_MAX_CONCURRENT=32
+export PUPPETEER_BROWSER_POOL_SIZE=20   # 1.6:1 ratio (max browsers)
+
+# Optimal 1:1 ratio
+export PUPPETEER_MAX_CONCURRENT=20
+export PUPPETEER_BROWSER_POOL_SIZE=20   # 1:1 ratio (no waiting)
 ```
 
-#### Browser Pool Limits
+**32GB+ Systems:**
+```bash
+# Maximum throughput
+export PUPPETEER_MAX_CONCURRENT=50
+export PUPPETEER_BROWSER_POOL_SIZE=20   # 2.5:1 ratio (high session reuse)
+
+# Balanced high performance
+export PUPPETEER_MAX_CONCURRENT=40
+export PUPPETEER_BROWSER_POOL_SIZE=20   # 2:1 ratio
+```
+
+#### Browser Pool Limits and Memory Impact
+
+| Browser Count | Memory Usage | Best For |
+|---------------|--------------|----------|
+| 6 browsers | ~1.2-2.4GB | Very low memory systems |
+| 12 browsers | ~2.4-4.8GB | 8GB systems, memory conservation |
+| 18 browsers | ~3.6-7.2GB | 8GB systems, balanced performance |
+| 20 browsers | ~4.0-8.0GB | 16GB+ systems, maximum performance |
+
+**Key Points:**
 - **Minimum**: 6 browsers (even with 1-2 concurrent sessions)
 - **Maximum**: 20 browsers (prevents excessive memory usage)
-- **Default**: Same as concurrent sessions (1:1 ratio)
+- **Memory per browser**: ~200-400MB depending on pages loaded
+- **1:1 ratio**: Optimal performance (no session waiting)
+- **Higher ratios**: Memory conservation (sessions wait for available browsers)
+
+#### Performance vs. Memory Trade-offs
+
+**More Browsers (1:1 ratio):**
+- ✅ Faster session starts (no waiting)
+- ✅ Better concurrency
+- ❌ Higher memory usage
+- ❌ More system resources
+
+**Fewer Browsers (higher ratios):**
+- ✅ Lower memory usage
+- ✅ Fewer system resources
+- ❌ Sessions wait in queue
+- ❌ Potential Node.js memory pressure from queuing
 
 ### Memory Safety Limits (Internal)
 
@@ -96,39 +146,100 @@ safetyLimits: {
 
 ### Concurrency Configuration
 
-The script uses progressive concurrency ramping to prevent memory spikes at startup.
+The script uses progressive concurrency ramping to prevent memory spikes at startup. You can independently control concurrent sessions and browser pool size for optimal tuning.
 
-#### Recommended Settings for 8GB Systems
+#### Quick Start Recommendations
 
-**Conservative (Guaranteed Stable):**
+**8GB Systems:**
 ```bash
-export PUPPETEER_MAX_CONCURRENT=12
-export PUPPETEER_BROWSER_POOL_SIZE=12  # 1:1 ratio
-```
-
-**Balanced (Good Performance):**
-```bash
-export PUPPETEER_MAX_CONCURRENT=16
-export PUPPETEER_BROWSER_POOL_SIZE=16  # 1:1 ratio
-```
-
-**Aggressive (Push Limits):**
-```bash
+# Start here - proven stable
 export PUPPETEER_MAX_CONCURRENT=18
-export PUPPETEER_BROWSER_POOL_SIZE=18  # 1:1 ratio
-# May need NODE_OPTIONS="--max-old-space-size=3072"
+export PUPPETEER_BROWSER_POOL_SIZE=18
 ```
 
-#### Memory Conservation Strategy
+**16GB Systems:**
+```bash
+# Recommended starting point
+export PUPPETEER_MAX_CONCURRENT=32
+export PUPPETEER_BROWSER_POOL_SIZE=20
+```
 
-If hitting memory limits, reduce browser pool instead of concurrent sessions:
+**32GB+ Systems:**
+```bash
+# High throughput configuration
+export PUPPETEER_MAX_CONCURRENT=50
+export PUPPETEER_BROWSER_POOL_SIZE=20
+```
 
+#### Advanced Tuning
+
+**Memory Pressure? Reduce browsers first:**
 ```bash
 export PUPPETEER_MAX_CONCURRENT=18     # Keep high concurrency
-export PUPPETEER_BROWSER_POOL_SIZE=12  # Reduce browsers (1.5:1 ratio)
+export PUPPETEER_BROWSER_POOL_SIZE=12  # Reduce memory usage
 ```
 
-This trades some performance (session waiting) for memory savings.
+**Need faster session starts? Add browsers:**
+```bash
+export PUPPETEER_MAX_CONCURRENT=16     # Moderate concurrency
+export PUPPETEER_BROWSER_POOL_SIZE=20  # Extra browsers for speed
+```
+
+**Node.js heap pressure? May need:**
+```bash
+export NODE_OPTIONS="--max-old-space-size=3072"  # 3GB heap for high concurrency
+```
+
+#### Scaling Path Examples
+
+**8GB → 16GB System Upgrade:**
+```bash
+# Before (8GB)
+export PUPPETEER_MAX_CONCURRENT=18
+export PUPPETEER_BROWSER_POOL_SIZE=18
+
+# After (16GB) - 78% more throughput
+export PUPPETEER_MAX_CONCURRENT=32
+export PUPPETEER_BROWSER_POOL_SIZE=20
+```
+
+**16GB → 32GB System Upgrade:**
+```bash
+# Before (16GB)
+export PUPPETEER_MAX_CONCURRENT=32
+export PUPPETEER_BROWSER_POOL_SIZE=20
+
+# After (32GB) - 56% more throughput
+export PUPPETEER_MAX_CONCURRENT=50
+export PUPPETEER_BROWSER_POOL_SIZE=20
+```
+
+#### Troubleshooting Memory Issues
+
+**"JavaScript heap out of memory" errors:**
+```bash
+# Increase Node.js heap size
+export NODE_OPTIONS="--max-old-space-size=3072"  # 3GB
+# Or for larger systems
+export NODE_OPTIONS="--max-old-space-size=4096"  # 4GB
+```
+
+**System memory pressure:**
+```bash
+# Reduce browser pool first (keeps concurrency high)
+export PUPPETEER_BROWSER_POOL_SIZE=12  # Instead of 18-20
+
+# If still having issues, reduce concurrency
+export PUPPETEER_MAX_CONCURRENT=16     # Instead of 18+
+```
+
+**Container memory limits:**
+```yaml
+# Docker/Kubernetes - ensure adequate memory limits
+resources:
+  limits:
+    memory: "8Gi"  # Match your system capacity
+```
 
 ## 🚀 Usage
 
