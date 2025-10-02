@@ -4,6 +4,33 @@ const { setUtmParams, selectHomePageProduct, selectRelatedProduct, goToFooterPag
 const BaseSession = require('./baseSession');
 
 class HomePageSession extends BaseSession {
+  // Helper function for random chance (33% probability)
+  randomChance() {
+    return Math.floor(Math.random() * 3) === 0;
+  }
+
+  // Helper function to return to home page and purchase
+  async returnToHomeAndPurchase(page, sleepDuration = 1000) {
+    try {
+      const logo = await page.$('[href="/"]');
+      if (!logo) {
+        console.log('Home logo not found');
+        return;
+      }
+      
+      await Promise.all([
+        page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
+        logo.evaluate((el) => el.click())
+      ]);
+      
+      await selectHomePageProduct(page);
+      await sleep(sleepDuration);
+      await addToCart(page);
+    } catch (error) {
+      console.log('Home page return failed:', error.message);
+    }
+  }
+
   async run() {
     const setup = await this.setupPage();
     if (!setup) return;
@@ -11,78 +38,53 @@ class HomePageSession extends BaseSession {
     const { browser, page } = setup;
     
     try {
-      // randomly set utm params
+      // Randomly set utm params
       const urlWithUtm = Math.random() > 0.5 ? setUtmParams(config.storedogUrl) : config.storedogUrl;
 
-      // go to home page
+      // Go to home page
       try {
         await page.goto(urlWithUtm, { waitUntil: 'domcontentloaded', timeout: 15000 });
         const pageTitle = await page.title();
         console.log(`"${pageTitle}" loaded`);
       } catch (gotoError) {
-        console.log('Initial page load failed:', gotoError.message);
-        console.log('Attempting to continue with current page...');
-        // Try to get current page title even if goto failed
-        try {
-          const pageTitle = await page.title();
-          console.log(`Current page: "${pageTitle}"`);
-        } catch (titleError) {
-          console.log('Could not get page title, page may not be loaded');
-        }
+        console.log('Initial page load failed, continuing with current page');
       }
 
+      // Try to select and purchase a product
       try {
         await selectHomePageProduct(page);
         await sleep(1000);
         await addToCart(page);
       } catch (productError) {
-        console.log('Home page product selection failed:', productError.message);
-        console.log('Continuing session without adding to cart...');
+        console.log('Product selection failed, continuing session');
       }
 
-      // maybe purchase that extra product
-      if (Math.floor(Math.random() * 3) === 0) {
+      // Maybe purchase an extra product (33% chance)
+      if (this.randomChance()) {
         try {
           await selectRelatedProduct(page);
           await addToCart(page);
         } catch (relatedError) {
-          console.log('Related product selection failed:', relatedError.message);
+          console.log('Related product selection failed');
         }
       }
 
       await goToFooterPage(page);
 
-      // maybe go back to the home page and purchase another product
-      if (Math.floor(Math.random() * 3) === 0) {
-        try {
-          const logo = await page.$('[href="/"]');
-          await logo.evaluate((el) => el.click());
-          await page.waitForNavigation();
-          await selectHomePageProduct(page);
-          await sleep(1000);
-          await addToCart(page);
-        } catch (homeError) {
-          console.log('Home page return failed:', homeError.message);
-        }
+      // Maybe return to home page and purchase (33% chance)
+      if (this.randomChance()) {
+        await this.returnToHomeAndPurchase(page, 1000);
       }
 
-      // maybe do that again
-      if (Math.floor(Math.random() * 3) === 0) {
-        try {
-          const logo = await page.$('[href="/"]');
-          await logo.evaluate((el) => el.click());
-          await page.waitForNavigation();
-          await selectHomePageProduct(page);
-          await sleep(2000);
-          await addToCart(page);
-        } catch (homeError2) {
-          console.log('Second home page return failed:', homeError2.message);
-        }
+      // Maybe do it again (33% chance)
+      if (this.randomChance()) {
+        await this.returnToHomeAndPurchase(page, 2000);
       }
 
       await goToFooterPage(page);
-
       await checkout(page);
+      
+      // End session
       await sleep(1000);
       const url = await page.url();
       await page.goto(`${url}?end_session=true`, {
