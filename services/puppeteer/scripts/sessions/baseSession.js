@@ -1,5 +1,4 @@
 // Base session class
-const config = require('../config');
 const { optimizePageResources } = require('../utils');
 
 class BaseSession {
@@ -31,7 +30,8 @@ class BaseSession {
     // Apply memory optimizations
     await optimizePageResources(page);
     
-    await page.setDefaultNavigationTimeout(config.puppeteerTimeout);
+    // Set consistent navigation timeout
+    await page.setDefaultNavigationTimeout(15000);
     
     return { browser, page };
   }
@@ -42,12 +42,12 @@ class BaseSession {
         await page.close();
       }
     } catch (error) {
-      console.log('Error during cleanup:', error.message);
+      console.log('Page cleanup error:', error.message);
     } finally {
       try {
         await this.browserPool.releaseBrowser(browser);
       } catch (browserError) {
-        console.log('Error releasing browser to pool:', browserError.message);
+        console.log('Browser release error:', browserError.message);
       }
     }
   }
