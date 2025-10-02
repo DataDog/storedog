@@ -1,6 +1,6 @@
 // Session management and execution
 const config = require('./config');
-const { sleep, logMemoryUsage, forceGC, setUtmParams, optimizePageResources } = require('./utils');
+const { sleep, logMemoryUsage, forceGC } = require('./utils');
 const DeviceManager = require('./deviceManager');
 const BrowserPool = require('./browserPool');
 
@@ -30,77 +30,49 @@ class SessionManager {
           }
         `
       });
-      console.log('Chrome context cleared (CDP + storage)');
+      console.log('Browser context cleared');
     } catch (error) {
       console.log('Error clearing browser context:', error.message);
     }
   }
 
   async runSessions(sessionFunctions) {
-    // Create session queue with balanced distribution
-    const sessionTypes = ['HomePage', 'Frustration', 'Taxonomy', 'Browsing']; // Known session types
-    const sessionStats = { completed: 0, failed: 0, byType: {} };
+    // Create session queue with simple distribution
+    const sessionStats = { completed: 0, failed: 0 };
     
-    // Ensure each session type runs at least once
-    const guaranteedSessions = [];
-    for (let i = 0; i < sessionFunctions.length; i++) {
-      guaranteedSessions.push({
-        id: i + 1,
-        session: sessionFunctions[i],
-        sessionType: sessionTypes[i] || `Session-${i + 1}`,
-        delay: Math.random() * config.sessionDelay
-      });
-    }
-    
-    // Fill remaining slots with random distribution
-    const remainingSessions = config.totalSessions - sessionFunctions.length;
-    for (let i = 0; i < remainingSessions; i++) {
+    // Create sessions with random distribution
+    for (let i = 0; i < config.totalSessions; i++) {
       const randomIndex = Math.floor(Math.random() * sessionFunctions.length);
-      guaranteedSessions.push({
-        id: sessionFunctions.length + i + 1,
+      this.sessionQueue.push({
+        id: i + 1,
         session: sessionFunctions[randomIndex],
-        sessionType: sessionTypes[randomIndex] || `Session-${randomIndex + 1}`,
         delay: Math.random() * config.sessionDelay
       });
     }
     
-    // Shuffle the queue to randomize execution order
-    this.sessionQueue = guaranteedSessions.sort(() => Math.random() - 0.5);
+    // Shuffle the queue
+    this.sessionQueue = this.sessionQueue.sort(() => Math.random() - 0.5);
     
-    console.log(`📋 Session Distribution:`);
-    console.log(`   Total Sessions: ${config.totalSessions}`);
-    console.log(`   Guaranteed: ${sessionFunctions.length} (one of each type)`);
-    console.log(`   Random: ${remainingSessions} (distributed randomly)`);
-    console.log(`   Session Types: ${sessionTypes.join(', ')}`);
+    console.log(`📋 Starting ${config.totalSessions} sessions with ${config.maxConcurrency} max concurrency`);
 
-    // Progressive concurrency levels
+    // Simplified concurrency levels
     const concurrencyLevels = [
       { time: 0, maxConcurrent: 2 },
       { time: config.rampUpInterval, maxConcurrent: Math.min(4, config.maxConcurrency) },
       { time: config.rampUpInterval * 2, maxConcurrent: Math.min(8, config.maxConcurrency) },
-      { time: config.rampUpInterval * 3, maxConcurrent: Math.min(16, config.maxConcurrency) },
-      { time: config.rampUpInterval * 4, maxConcurrent: Math.min(24, config.maxConcurrency) },
-      { time: config.rampUpInterval * 5, maxConcurrent: Math.min(32, config.maxConcurrency) },
-      { time: config.rampUpInterval * 6, maxConcurrent: Math.min(40, config.maxConcurrency) },
-      { time: config.rampUpInterval * 7, maxConcurrent: config.maxConcurrency }
+      { time: config.rampUpInterval * 3, maxConcurrent: config.maxConcurrency }
     ];
 
     let currentMaxConcurrent = concurrencyLevels[0].maxConcurrent;
     let startTime = Date.now();
 
-    const checkSystemResources = () => {
-      const memUsage = process.memoryUsage();
-      const memUsageMB = memUsage.heapUsed / 1024 / 1024;
-      
-      if (Math.floor((Date.now() - startTime) / 30000) !== Math.floor((Date.now() - startTime - 1000) / 30000)) {
-        const memUsageGB = (memUsageMB / 1024).toFixed(2);
-        console.log(`📊 Resource Usage: Memory ${Math.round(memUsageMB)}MB (${memUsageGB}GB) (${Math.round((memUsageMB / (memUsageMB + memUsage.heapTotal / 1024 / 1024)) * 100)}%), Active Sessions: ${this.sessionPromises.length}/${currentMaxConcurrent}`);
-      }
+    const checkMemoryLimit = () => {
+      const memUsageMB = process.memoryUsage().heapUsed / 1024 / 1024;
       
       if (memUsageMB > config.safetyLimits.maxMemoryMB) {
         const memUsageGB = (memUsageMB / 1024).toFixed(2);
         const maxMemoryGB = (config.safetyLimits.maxMemoryMB / 1024).toFixed(2);
-        console.log(`🚨 CRITICAL MEMORY USAGE: ${Math.round(memUsageMB)}MB (${memUsageGB}GB) > ${config.safetyLimits.maxMemoryMB}MB (${maxMemoryGB}GB) limit - Stopping new sessions`);
+        console.log(`🚨 Memory limit exceeded: ${Math.round(memUsageMB)}MB (${memUsageGB}GB) > ${maxMemoryGB}GB`);
         return false;
       }
       
@@ -111,12 +83,9 @@ class SessionManager {
       const elapsed = Date.now() - startTime;
       const newLevel = concurrencyLevels.slice().reverse().find(level => elapsed >= level.time);
       
-      if (newLevel && newLevel.maxConcurrent !== currentMaxConcurrent) {
-        if (checkSystemResources()) {
-          currentMaxConcurrent = newLevel.maxConcurrent;
-          console.log(`🚀 Ramping up concurrency to ${currentMaxConcurrent} sessions (${Math.round(elapsed/1000)}s elapsed)`);
-          logMemoryUsage(`Concurrency ramp-up to ${currentMaxConcurrent}`);
-        }
+      if (newLevel && newLevel.maxConcurrent !== currentMaxConcurrent && checkMemoryLimit()) {
+        currentMaxConcurrent = newLevel.maxConcurrent;
+        console.log(`🚀 Concurrency: ${currentMaxConcurrent} sessions (${Math.round(elapsed/1000)}s elapsed)`);
       }
     };
 
@@ -124,24 +93,23 @@ class SessionManager {
       while (this.sessionQueue.length > 0 || this.sessionPromises.length > 0) {
         updateConcurrency();
         
-        while (this.sessionPromises.length < currentMaxConcurrent && this.sessionQueue.length > 0 && checkSystemResources()) {
+        // Start new sessions up to concurrency limit
+        while (this.sessionPromises.length < currentMaxConcurrent && 
+               this.sessionQueue.length > 0 && 
+               checkMemoryLimit()) {
+          
           const sessionTask = this.sessionQueue.shift();
           
           const sessionPromise = (async () => {
             await sleep(sessionTask.delay);
-            console.log(`🚀 Starting ${sessionTask.sessionType} session ${sessionTask.id} (concurrency: ${this.sessionPromises.length + 1}/${currentMaxConcurrent})`);
-            logMemoryUsage(`Before ${sessionTask.sessionType} Session ${sessionTask.id}`);
+            console.log(`🚀 Starting session ${sessionTask.id}`);
             
             try {
               await sessionTask.session();
-              logMemoryUsage(`After ${sessionTask.sessionType} Session ${sessionTask.id}`);
-              forceGC();
-              console.log(`✅ Completed ${sessionTask.sessionType} session ${sessionTask.id}`);
+              console.log(`✅ Completed session ${sessionTask.id}`);
               sessionStats.completed++;
-              sessionStats.byType[sessionTask.sessionType] = (sessionStats.byType[sessionTask.sessionType] || 0) + 1;
             } catch (error) {
-              console.error(`❌ ${sessionTask.sessionType} session ${sessionTask.id} failed:`, error);
-              logMemoryUsage(`Failed ${sessionTask.sessionType} Session ${sessionTask.id}`);
+              console.error(`❌ Session ${sessionTask.id} failed:`, error.message);
               sessionStats.failed++;
             }
           })();
@@ -149,38 +117,29 @@ class SessionManager {
           this.sessionPromises.push(sessionPromise);
         }
         
+        // Wait for at least one session to complete
         if (this.sessionPromises.length > 0) {
           await Promise.race(this.sessionPromises);
-          this.sessionPromises.splice(0, this.sessionPromises.length);
+          // Remove completed promises
+          this.sessionPromises = this.sessionPromises.filter(p => 
+            p.constructor.name === 'Promise' && 
+            p.then && 
+            typeof p.then === 'function'
+          );
         }
       }
     };
 
-    console.log(`🖥️  System Configuration:`);
-    console.log(`   Max Concurrency: ${config.maxConcurrency}`);
-    const maxMemoryGB = (config.safetyLimits.maxMemoryMB / 1024).toFixed(2);
-    console.log(`   Memory Limit: ${config.safetyLimits.maxMemoryMB}MB (${maxMemoryGB}GB)`);
-    console.log(`   Memory Threshold: ${Math.round(config.safetyLimits.memoryThreshold * 100)}%`);
-
-    console.log(`⏳ Waiting ${config.startupDelay/1000} seconds for container to settle...`);
+    console.log(`⏳ Waiting ${config.startupDelay/1000}s for system to settle...`);
     await sleep(config.startupDelay);
-    console.log('🚀 Starting progressive concurrency ramp-up');
-
+    
     await processSessions();
     
-    // Log session statistics
-    console.log('\n📊 Session Statistics:');
-    console.log(`   Total Sessions: ${sessionStats.completed + sessionStats.failed}`);
-    console.log(`   Completed: ${sessionStats.completed}`);
-    console.log(`   Failed: ${sessionStats.failed}`);
-    console.log('   By Type:');
-    Object.entries(sessionStats.byType).forEach(([type, count]) => {
-      console.log(`     ${type}: ${count} sessions`);
-    });
-    console.log('✅ All sessions completed');
-
+    // Final statistics
+    console.log(`📊 Sessions completed: ${sessionStats.completed}, failed: ${sessionStats.failed}`);
+    
     await this.browserPool.closeAll();
-    console.log('Browser pool cleaned up');
+    console.log('✅ All sessions completed');
   }
 
   getDeviceManager() {
