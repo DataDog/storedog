@@ -1,6 +1,6 @@
 // Device management module
 const fs = require('fs');
-const config = require('./config');
+const path = require('path');
 
 class DeviceManager {
   constructor() {
@@ -9,7 +9,8 @@ class DeviceManager {
 
   loadDevices() {
     try {
-      const devicesData = fs.readFileSync(config.devicesPath, 'utf8');
+      const devicesPath = path.join(__dirname, 'devices.json');
+      const devicesData = fs.readFileSync(devicesPath, 'utf8');
       const parsed = JSON.parse(devicesData);
       return parsed.devices || [];
     } catch (error) {
@@ -25,49 +26,6 @@ class DeviceManager {
     
     const deviceIndex = Math.floor(Math.random() * this.devices.length);
     return this.devices[deviceIndex];
-  }
-
-  getDevicesByCategory(category) {
-    return this.devices.filter(device => device.category === category);
-  }
-
-  getDevicesByOS(os) {
-    return this.devices.filter(device => device.os === os);
-  }
-
-  getDevicesByBrowser(browser) {
-    return this.devices.filter(device => device.browser === browser);
-  }
-
-  getDeviceStats() {
-    const stats = {
-      total: this.devices.length,
-      byCategory: {},
-      byOS: {},
-      byBrowser: {}
-    };
-
-    this.devices.forEach(device => {
-      // Count by category
-      stats.byCategory[device.category] = (stats.byCategory[device.category] || 0) + 1;
-      
-      // Count by OS
-      stats.byOS[device.os] = (stats.byOS[device.os] || 0) + 1;
-      
-      // Count by browser
-      stats.byBrowser[device.browser] = (stats.byBrowser[device.browser] || 0) + 1;
-    });
-
-    return stats;
-  }
-
-  logDeviceStats() {
-    const stats = this.getDeviceStats();
-    console.log('📱 Device Statistics:');
-    console.log(`   Total devices: ${stats.total}`);
-    console.log(`   Categories: ${JSON.stringify(stats.byCategory)}`);
-    console.log(`   Operating Systems: ${JSON.stringify(stats.byOS)}`);
-    console.log(`   Browsers: ${JSON.stringify(stats.byBrowser)}`);
   }
 }
 
