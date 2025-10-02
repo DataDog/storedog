@@ -20,9 +20,13 @@ class BrowserPool {
       '--disable-renderer-backgrounding',
       '--disable-field-trial-config',
       '--disable-back-forward-cache',
-      '--disable-ipc-flooding-protection',
-      '--max_old_space_size=256'
+      '--disable-ipc-flooding-protection'
     ];
+
+    // Add cache control based on config
+    if (!config.enableCache) {
+      this.chromeArgs.push('--disable-web-security', '--disable-http-cache');
+    }
   }
 
   async getBrowser() {
@@ -37,9 +41,16 @@ class BrowserPool {
       headless: true,
       args: this.chromeArgs,
       slowMo: 50,
-      timeout: 30000
+      timeout: 15000
     });
-    console.log(`Started ${browser.version()}`);
+    
+    try {
+      const version = await browser.version();
+      console.log(`Browser started: ${version}`);
+    } catch (error) {
+      console.log('Browser started (version unavailable)');
+    }
+    
     return browser;
   }
 
