@@ -1,14 +1,5 @@
 // Configuration module for Puppeteer script
 
-// Get system memory tier and set appropriate safety limits
-const systemMemory = process.env.PUPPETEER_SYSTEM_MEMORY || '8GB';
-const memoryLimits = {
-  '8GB': { maxMemoryMB: 5000, memoryThreshold: 0.70 },   // 5GB limit, 70% threshold
-  '16GB': { maxMemoryMB: 10000, memoryThreshold: 0.75 }, // 10GB limit, 75% threshold  
-  '32GB': { maxMemoryMB: 20000, memoryThreshold: 0.80 }  // 20GB limit, 80% threshold
-};
-const limits = memoryLimits[systemMemory] || memoryLimits['8GB'];
-
 const config = {
   // Environment variables with defaults
   storedogUrl: process.env.STOREDOG_URL || 'http://service-proxy:80',
@@ -20,11 +11,11 @@ const config = {
   maxConcurrency: parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 8,
   enableCache: process.env.PUPPETEER_ENABLE_CACHE === 'true',
   
-  // Safety limits (scales with system memory)
+  // Safety limits (working values from 6pm yesterday)
   safetyLimits: {
-    memoryThreshold: limits.memoryThreshold,
+    memoryThreshold: 0.80, // 80%
     cpuThreshold: 0.85, // 85%
-    maxMemoryMB: limits.maxMemoryMB
+    maxMemoryMB: 12000 // 12GB
   },
   
   // Browser pool settings (configurable, defaults to 1:1 ratio with sessions)
@@ -33,14 +24,10 @@ const config = {
   
   // Session settings
   totalSessions: Math.max(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 8, 16),
-  sessionDelay: 2000, // Random delay up to 2 seconds
-  
-  // System memory tier info
-  systemMemory: systemMemory
+  sessionDelay: 2000 // Random delay up to 2 seconds
 };
 
 // Debug logging
 console.log('🔧 Config loaded:', config.storedogUrl, `(${config.maxConcurrency} concurrent, ${config.browserPoolSize} browsers)`);
-console.log(`🧠 System memory: ${systemMemory} (${limits.maxMemoryMB}MB limit, ${Math.round(limits.memoryThreshold*100)}% threshold)`);
 
 module.exports = config;
