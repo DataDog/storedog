@@ -58,10 +58,10 @@ export default function CoolHatsPage({ hatProducts }: CoolHatsPageProps) {
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-4">
             🧢 Cool Hats Collection
           </h1>
-          <Text className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Welcome to our awesome hat collection! You clicked on the Cool Hats ad and landed here. 
             Discover headwear that's both stylish and functional.
-          </Text>
+          </p>
         </div>
 
 
@@ -70,18 +70,18 @@ export default function CoolHatsPage({ hatProducts }: CoolHatsPageProps) {
         <div className="text-center py-12">
           <div className="text-6xl mb-4">🧢</div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">No Hat Products Found</h2>
-          <Text className="text-gray-600">
+          <p className="text-gray-600">
             We're still building our hat collection! Check back soon for awesome headwear.
-          </Text>
+          </p>
         </div>
 
                        {/* Call to Action */}
                <div className="mt-16 text-center">
                  <div className="bg-purple-900 rounded-lg p-8">
                    <h2 className="text-3xl font-bold mb-4 text-white">Love Fashion? We've Got You Covered!</h2>
-                   <Text className="text-xl mb-6 text-white opacity-90">
+                   <p className="text-xl mb-6 text-white opacity-90">
                      Join our hat enthusiasts community and be the first to know about new arrivals.
-                   </Text>
+                   </p>
                    <a href="/" className="inline-block bg-white text-purple-800 font-bold py-3 px-8 rounded-lg hover:bg-gray-100 transition-colors">
                      Explore All Products
                    </a>
