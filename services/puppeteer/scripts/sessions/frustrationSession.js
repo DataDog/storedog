@@ -16,6 +16,17 @@ const {
 const BaseSession = require('./baseSession');
 
 class FrustrationSession extends BaseSession {
+  // Helper method to attempt product selection and generate frustration on failure
+  async tryProductSelectionWithFrustration(page, description) {
+    try {
+      await selectProductsPageProduct(page);
+      await addToCart(page);
+    } catch (error) {
+      console.log(`${description} failed (intentional frustration):`, error.message);
+      await generateErrorClicks(page);
+    }
+  }
+
   async run() {
     const setup = await this.setupPage();
     if (!setup) return;
@@ -25,21 +36,13 @@ class FrustrationSession extends BaseSession {
     try {
       const urlWithUtm = `${config.storedogUrl}?utm_campaign=blog_post&utm_medium=social&utm_source=facebook`;
 
-      // go to home page
+      // Go to home page
       try {
         await page.goto(urlWithUtm, { waitUntil: 'domcontentloaded', timeout: 15000 });
-        let pageTitle = await page.title();
+        const pageTitle = await page.title();
         console.log(`"${pageTitle}" loaded`);
       } catch (gotoError) {
-        console.log('Initial page load failed:', gotoError.message);
-        console.log('Attempting to continue with current page...');
-        // Try to get current page title even if goto failed
-        try {
-          const pageTitle = await page.title();
-          console.log(`Current page: "${pageTitle}"`);
-        } catch (titleError) {
-          console.log('Could not get page title, page may not be loaded');
-        }
+        console.log('Initial page load failed, continuing with current page');
       }
 
       // Generate frustration signals throughout the session
@@ -49,35 +52,23 @@ class FrustrationSession extends BaseSession {
       await generateRageClicks(page);
       await sleep(1000);
       
-      // go to all products page (and maybe leave)
-      try {
-        await selectProductsPageProduct(page);
-        await addToCart(page);
-      } catch (error) {
-        console.log('Product selection/add to cart failed (intentional frustration):', error.message);
-        await generateErrorClicks(page);
-      }
+      // First product selection attempt
+      await this.tryProductSelectionWithFrustration(page, 'Product selection/add to cart');
 
       // Generate dead clicks after product interaction
       await generateDeadClicks(page);
       await sleep(1000);
 
-      try {
-        await selectProductsPageProduct(page);
-        await addToCart(page);
-      } catch (error) {
-        console.log('Second product selection/add to cart failed (intentional frustration):', error.message);
-        await generateErrorClicks(page);
-      }
+      // Second product selection attempt
+      await this.tryProductSelectionWithFrustration(page, 'Second product selection/add to cart');
 
-      // maybe select a related product (this will fail and create frustration)
+      // Maybe select a related product (50% chance - this will fail and create frustration)
       if (Math.floor(Math.random() * 2) === 0) {
         try {
           await selectRelatedProduct(page);
           await addToCart(page);
         } catch (error) {
           console.log('Related product selection failed (intentional frustration)');
-          // Generate error clicks after the failure
           await generateErrorClicks(page);
         }
       }
@@ -86,15 +77,9 @@ class FrustrationSession extends BaseSession {
       const signalType = await generateRandomFrustrationSignal(page);
       console.log(`Generated ${signalType} frustration signal`);
 
-      // maybe try to find another product on the products page
+      // Maybe try another product selection (25% chance)
       if (Math.floor(Math.random() * 4) === 0) {
-        try {
-          await selectProductsPageProduct(page);
-          await addToCart(page);
-        } catch (error) {
-          console.log('Random product selection/add to cart failed (intentional frustration):', error.message);
-          await generateErrorClicks(page);
-        }
+        await this.tryProductSelectionWithFrustration(page, 'Random product selection/add to cart');
       }
 
       await goToFooterPage(page);
@@ -103,15 +88,9 @@ class FrustrationSession extends BaseSession {
       await generateRageClicks(page);
       await sleep(1000);
 
-      // maybe try to find another product on the products page
+      // Maybe try final product selection (25% chance)
       if (Math.floor(Math.random() * 4) === 0) {
-        try {
-          await selectProductsPageProduct(page);
-          await addToCart(page);
-        } catch (error) {
-          console.log('Final product selection/add to cart failed (intentional frustration):', error.message);
-          await generateErrorClicks(page);
-        }
+        await this.tryProductSelectionWithFrustration(page, 'Final product selection/add to cart');
       }
 
       await goToFooterPage(page);
@@ -119,9 +98,12 @@ class FrustrationSession extends BaseSession {
       // Final frustration signal before checkout
       await generateDeadClicks(page);
 
-      await sleep(1500);
+      // Proceed to checkout
+      await sleep(1500); // Allow UI to settle
       await checkout(page);
-      await sleep(1500);
+      
+      // End session
+      await sleep(1500); // Allow checkout to complete
       const url = await page.url();
       await page.goto(`${url}?end_session=true`, {
         waitUntil: 'domcontentloaded',
