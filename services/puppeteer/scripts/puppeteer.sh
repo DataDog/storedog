@@ -13,9 +13,6 @@ done
 
 printf "\nBrowser replay starting.\n\n"
 
-# Set appropriate Node.js memory options
-set_node_options
-
 while :
 do
   node puppeteer-modular.js $STOREDOG_URL
