@@ -8,14 +8,15 @@ spec:
       name: postgres
   clusterIP: None
   selector:
-    app: postgres
+    app: store-db
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: postgres
   labels:
-    tags.datadoghq.com/env: ${DD_ENV}
+    app: store-db
+    team: database
     tags.datadoghq.com/service: store-db
     tags.datadoghq.com/version: "15.0"
 spec:
@@ -23,16 +24,16 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: postgres
+      app: store-db
   template:
     metadata:
       labels:
-        app: postgres
-        tags.datadoghq.com/env: ${DD_ENV}
+        app: store-db
+        team: database
         tags.datadoghq.com/service: store-db
         tags.datadoghq.com/version: "15.0"
       annotations:
-        ad.datadoghq.com/postgres.logs: '[{"source": "postgresql", "auto_multi_line_detection":true}]'
+        ad.datadoghq.com/postgres.logs: '[{"source": "postgresql", "auto_multi_line_detection": true}]'
         ad.datadoghq.com/postgres.checks: |
           {
             "postgres": {

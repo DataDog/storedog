@@ -1,50 +1,44 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: dbm
+  name: ads-python
 spec:
   ports:
-    - port: 7595
-      targetPort: 7595
+    - port: 3030
+      targetPort: 3030
       name: http
   selector:
-    app: dbm
+    app: store-ads-python
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: dbm
+  name: ads-python
   labels:
-    app: store-dbm
-    team: database
+    app: store-ads-python
+    team: advertisements
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: store-dbm
+      app: store-ads-python
   template:
     metadata:
       labels:
-        app: store-dbm
-        team: database
+        app: store-ads-python
+        team: advertisements
       annotations:
-        ad.datadoghq.com/dbm.logs: '[{"source": "python"}]'
+        ad.datadoghq.com/ads-python.logs: '[{"source": "python"}]'
     spec:
       volumes:
-        - name: app-volume
-          emptyDir: {}
         - name: apmsocketpath
           hostPath:
             path: /var/run/datadog/
-      initContainers:
-        - name: wait-for-db
-          image: busybox:1.37.0
-          command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done;']
       containers:
-        - name: store-dbm
-          image: ${REGISTRY_URL}/dbm:${SD_TAG}
+        - name: ads-python
+          image: ${REGISTRY_URL}/ads-python:${SD_TAG}
           ports:
-            - containerPort: 7595
+            - containerPort: 3030
           env:
             - name: POSTGRES_PASSWORD
               valueFrom:
@@ -62,26 +56,29 @@ spec:
                   name: storedog-config
                   key: DB_HOST
             - name: DD_ENV
-              value: ${DD_ENV}
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: DD_ENV
             - name: DD_SERVICE
-              value: storedog-dbm
+              value: store-ads-python
             - name: DD_VERSION
-              value: ${DD_VERSION_DBM}
-            - name: DD_DBM_PROPAGATION_MODE
-              value: full
-            - name: DD_LOGS_INJECTION
+              value: ${DD_VERSION_ADS_PYTHON}
+            - name: DD_RUNTIME_METRICS_ENABLED
               value: "true"
             - name: DD_PROFILING_ENABLED
               value: "true"
-            - name: DD_APPSEC_ENABLED
+            - name: DD_PROFILING_ALLOCATION_ENABLED
+              value: "true"
+            - name: DD_PROFILING_TIMELINE_ENABLED
               value: "true"
           resources:
             requests:
-              memory: "128Mi"
-              cpu: "100m"
-            limits:
               memory: "256Mi"
               cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "400m"
           volumeMounts:
             - name: apmsocketpath
               mountPath: /var/run/datadog

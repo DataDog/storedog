@@ -11,6 +11,7 @@ services:
       - DD_LOGS_ENABLED=true
       - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
       - DD_CONTAINER_EXCLUDE=image:agent name:puppeteer
+      - DD_CLOUD_PROVIDER_METADATA=[]
       - DD_HOSTNAME=${DD_HOSTNAME-development-host}
       - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
     networks:
@@ -38,9 +39,9 @@ services:
       - storedog-network
     environment:
       - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-development}
       - DD_SERVICE=store-frontend-api # used for Next.js API routes
       - DD_VERSION=${NEXT_PUBLIC_DD_VERSION_FRONTEND-1.0.0}
-      - DD_LOGS_INJECTION=true
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
       - DD_PROFILING_TIMELINE_ENABLED=true
@@ -59,13 +60,13 @@ services:
       - NEXT_PUBLIC_SPREE_IMAGE_HOST=${NEXT_PUBLIC_SPREE_IMAGE_HOST:-/services/backend}
       - NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN=${NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN:-service-proxy}
     labels:
-      com.datadoghq.ad.logs: '[{"source": "nodejs", "auto_multi_line_detection":true }]'
+      com.datadoghq.ad.logs: '[{"source": "nodejs", "auto_multi_line_detection": true }]'
 
   # Backend service (Ruby on Rails/Spree)
   backend:
     build:
       context: ./services/backend
-    command: wait-for-it postgres:5432 -- bundle exec rails s -b 0.0.0.0 -p 4000 --pid /app/tmp/pids/server.pid
+    command: wait-for-it postgres:5432 -- bundle exec ddprofrb exec rails s -b 0.0.0.0 -p 4000 --pid /app/tmp/pids/server.pid
     depends_on:
       - 'postgres'
       - 'redis'
@@ -85,21 +86,21 @@ services:
       - DB_POOL=${DB_POOL:-25}
       - MAX_THREADS=${MAX_THREADS:-5}
       - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-development}
       - DD_SERVICE=store-backend
       - DD_VERSION=${DD_VERSION_BACKEND:-1.0.0}
-      - DD_LOGS_INJECTION=true
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
       - DD_PROFILING_ALLOCATION_ENABLED=true
       - DD_PROFILING_TIMELINE_ENABLED=true
     labels:
-      com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection":true }]'
+      com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection": true }]'
 
   # Background job processor (Sidekiq)
   worker:
     build:
       context: ./services/backend
-    command: wait-for-it postgres:5432 -- bundle exec sidekiq -C config/sidekiq.yml
+    command: wait-for-it postgres:5432 -- bundle exec ddprofrb exec sidekiq -C config/sidekiq.yml
     depends_on:
       - 'postgres'
       - 'redis'
@@ -121,15 +122,15 @@ services:
       - DB_POOL=${DB_POOL:-25}
       - MAX_THREADS=${MAX_THREADS:-5}
       - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-development}
       - DD_SERVICE=store-worker
       - DD_VERSION=${DD_VERSION_BACKEND:-1.0.0}
-      - DD_LOGS_INJECTION=true
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
       - DD_PROFILING_TIMELINE_ENABLED=true
       - DD_PROFILING_ALLOCATION_ENABLED=true
     labels:
-      com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection":true }]'
+      com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection": true }]'
 
   # Discounts service (Python/Flask)
   discounts:
@@ -140,15 +141,13 @@ services:
       - postgres
       - dd-agent
     environment:
-      - FLASK_APP=discounts.py
-      - FLASK_DEBUG=0
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_HOST=postgres
       - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-development}
       - DD_SERVICE=store-discounts
       - DD_VERSION=${DD_VERSION_DISCOUNTS:-1.0.0}
-      - DD_LOGS_INJECTION=true
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
       - DD_PROFILING_TIMELINE_ENABLED=true
@@ -172,9 +171,9 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_HOST=postgres
       - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-development}
       - DD_SERVICE=store-ads
       - DD_VERSION=${DD_VERSION_ADS:-1.0.0}
-      - DD_LOGS_INJECTION=true
       - DD_PROFILING_ENABLED=true
       - DD_PROFILING_TIMELINE_ENABLED=true
       - DD_PROFILING_ALLOCATION_ENABLED=true
@@ -197,6 +196,7 @@ services:
       - dd-agent
     environment:
       - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-development}
       - DD_SERVICE=service-proxy
       - DD_VERSION=${DD_VERSION_NGINX:-1.28.0}
     labels:
@@ -225,7 +225,7 @@ services:
       com.datadoghq.ad.check_names: '["postgres"]'
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":5432, "username":"datadog", "password":"datadog"}]'
-      com.datadoghq.ad.logs: '[{"source": "postgresql", "auto_multi_line_detection":true, "path": "/var/log/pg_log/postgresql*.json", "type": "file"}]'
+      com.datadoghq.ad.logs: '[{"source": "postgresql", "service":"store-db", "auto_multi_line_detection": true, "path": "/var/log/pg_log/postgresql*.json", "type": "file"}]'
 
   # Cache and job queue
   redis:
@@ -238,7 +238,6 @@ services:
       - storedog-network
     labels:
       com.datadoghq.tags.service: 'redis'
-      com.datadoghq.tags.env: '${DD_ENV:-development}'
       com.datadoghq.tags.version: '${DD_VERSION_REDIS:-6.2}'
       com.datadoghq.ad.check_names: '["redisdb"]'
       com.datadoghq.ad.init_configs: '[{}]'

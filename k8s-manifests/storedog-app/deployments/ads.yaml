@@ -8,21 +8,25 @@ spec:
       targetPort: 3030
       name: http
   selector:
-    app: ads
+    app: store-ads
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ads
+  labels:
+    app: store-ads
+    team: advertisements
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ads
+      app: store-ads
   template:
     metadata:
       labels:
-        app: ads
+        app: store-ads
+        team: advertisements
       annotations:
         ad.datadoghq.com/ads.logs: '[{"source": "java"}]'
     spec:
@@ -36,14 +40,30 @@ spec:
           ports:
             - containerPort: 3030
           env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: storedog-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: POSTGRES_USER
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: DB_HOST
             - name: DD_ENV
-              value: ${DD_ENV}
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: DD_ENV
             - name: DD_SERVICE
               value: store-ads
             - name: DD_VERSION
               value: ${DD_VERSION_ADS}
-            - name: DD_LOGS_INJECTION
-              value: "true"
             - name: DD_RUNTIME_METRICS_ENABLED
               value: "true"
             - name: DD_PROFILING_ENABLED

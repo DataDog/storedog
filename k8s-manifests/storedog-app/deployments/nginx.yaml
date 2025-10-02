@@ -16,8 +16,10 @@ kind: Deployment
 metadata:
   name: service-proxy
   labels:
+    app: service-proxy
+    team: edge
     tags.datadoghq.com/service: service-proxy
-    tags.datadoghq.com/version: 1.28.0
+    tags.datadoghq.com/version: ${DD_VERSION_NGINX}
 spec:
   replicas: 1
   selector:
@@ -27,15 +29,16 @@ spec:
     metadata:
       labels:
         app: service-proxy
+        team: edge
         tags.datadoghq.com/service: service-proxy
-        tags.datadoghq.com/version: 1.28.0
+        tags.datadoghq.com/version: ${DD_VERSION_NGINX}
       annotations:
         ad.datadoghq.com/service-proxy.logs: '[{"source": "nginx"}]'
         ad.datadoghq.com/service-proxy.checks: |
           {
             "nginx": {
-            "init_config": {},
-            "instances": [{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]
+              "init_config": {},
+              "instances": [{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]
             }
           }
     spec:
@@ -52,7 +55,10 @@ spec:
             - name: NGINX_RESOLVER
               value: "kube-dns.kube-system.svc.cluster.local"
             - name: DD_ENV
-              value: ${DD_ENV}
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: DD_ENV
             - name: DD_SERVICE
               value: service-proxy
             - name: DD_VERSION

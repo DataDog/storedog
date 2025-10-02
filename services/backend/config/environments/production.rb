@@ -77,6 +77,13 @@ Rails.application.configure do
   # Log to a dedicated file
   config.lograge.logger = ActiveSupport::Logger.new(STDOUT)
 
+  # Log configuration for Datadog
+  # disable ActiveSupport::TaggedLogging to prevent plain-text TaggedLogging tags from polluting the log lines.
+  config.logger = ActiveSupport::Logger.new(STDOUT)
+  config.active_job.logger = ActiveSupport::Logger.new(STDOUT)
+  config.active_job.lograge = ActiveSupport::Logger.new(STDOUT)
+
+
   # Use a different cache store in production.
   if ENV['MEMCACHEDCLOUD_SERVERS'].present?
     memcached_config = {
@@ -142,14 +149,6 @@ Rails.application.configure do
     logger           = ActiveSupport::Logger.new(STDOUT)
     logger.formatter = config.log_formatter
     config.logger    = ActiveSupport::TaggedLogging.new(logger)
-  end
-
-  # papertrail config
-  if ENV['PAPERTRAIL_HOSTNAME'].present? && ENV['PAPERTRAIL_REMOTE_PORT'].present?
-    remote_syslog_logger = RemoteSyslogLogger.new(ENV['PAPERTRAIL_HOSTNAME'],
-                                                  ENV['PAPERTRAIL_REMOTE_PORT'],
-                                                  program: "spree-#{ENV['RAILS_ENV']}")
-    config.logger = ActiveSupport::TaggedLogging.new remote_syslog_logger
   end
 
   # sendgrid mail

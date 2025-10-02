@@ -28,7 +28,6 @@ ARG DD_GIT_COMMIT_SHA
 
 # Default environment variables
 ENV FLASK_APP=discounts.py \
-    FLASK_DEBUG=0 \
     POSTGRES_HOST=postgres \
     POSTGRES_PORT=5432 \
     POSTGRES_PASSWORD=postgres \
@@ -39,13 +38,7 @@ ENV FLASK_APP=discounts.py \
 # Install dependencies via pip and avoid caching build artifacts
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Pass in Port mapping (default to 2814)
-ARG DISCOUNTS_PORT=2814
-# Because CMD is a runtime instruction, we have to create an additional ENV var that reads the ARG val
-# Only ENV vars are accessible via CMD
-ENV DISCOUNTS_PORT ${DISCOUNTS_PORT}
-
 # required to get logs out of the container
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
-CMD ["sh", "-c", "ddtrace-run flask run --port=${DISCOUNTS_PORT} --host=0.0.0.0"]
+CMD ["sh", "-c", "ddtrace-run flask run --port=2814 --host=0.0.0.0"]
