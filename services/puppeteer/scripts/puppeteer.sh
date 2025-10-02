@@ -17,15 +17,15 @@ printf "\nBrowser replay starting.\n\n"
 set_node_options() {
   case "${PUPPETEER_SYSTEM_MEMORY:-8GB}" in
     "32GB")
-      export NODE_OPTIONS="--max-old-space-size=8192"  # 8GB heap
-      echo "🔧 32GB system: Node.js heap set to 8GB"
+      export NODE_OPTIONS="--max-old-space-size=10240"  # 10GB heap
+      echo "🔧 32GB system: Node.js heap set to 10GB"
       ;;
     "16GB")
-      export NODE_OPTIONS="--max-old-space-size=6144"  # 6GB heap
-      echo "🔧 16GB system: Node.js heap set to 6GB"
+      export NODE_OPTIONS="--max-old-space-size=8192"   # 8GB heap (increased)
+      echo "🔧 16GB system: Node.js heap set to 8GB"
       ;;
     "8GB"|*)
-      export NODE_OPTIONS="--max-old-space-size=3072"  # 3GB heap
+      export NODE_OPTIONS="--max-old-space-size=3072"   # 3GB heap
       echo "🔧 8GB system: Node.js heap set to 3GB"
       ;;
   esac
