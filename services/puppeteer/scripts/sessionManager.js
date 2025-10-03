@@ -66,13 +66,50 @@ class SessionManager {
     
     console.log(`📋 Starting ${config.totalSessions} sessions (${sessionFunctions.length} guaranteed + ${remainingSessions} random)`);
 
-    // Simplified concurrency levels
-    const concurrencyLevels = [
-      { time: 0, maxConcurrent: 2 },
-      { time: config.rampUpInterval, maxConcurrent: Math.min(4, config.maxConcurrency) },
-      { time: config.rampUpInterval * 2, maxConcurrent: Math.min(8, config.maxConcurrency) },
-      { time: config.rampUpInterval * 3, maxConcurrent: config.maxConcurrency }
-    ];
+    // Progressive concurrency levels (fractional ramp-up)
+    const generateConcurrencyLevels = (maxConcurrency, interval) => {
+      const levels = [{ time: 0, maxConcurrent: 2 }]; // Always start with 2
+      
+      // Generate fractional steps: 2, 4, 8, then 25%, 50%, 75%, 100%
+      const fixedSteps = [4, 8];
+      const fractions = [0.25, 0.50, 0.75, 1.0];
+      
+      let stepIndex = 1;
+      
+      // Add fixed steps (4, 8) if they're less than max
+      for (const step of fixedSteps) {
+        if (step < maxConcurrency) {
+          levels.push({ 
+            time: interval * stepIndex, 
+            maxConcurrent: Math.min(step, maxConcurrency) 
+          });
+          stepIndex++;
+        }
+      }
+      
+      // Add fractional steps (25%, 50%, 75%, 100%)
+      for (const fraction of fractions) {
+        const concurrent = Math.max(Math.ceil(maxConcurrency * fraction), 8); // Minimum 8
+        if (concurrent > levels[levels.length - 1].maxConcurrent) {
+          levels.push({ 
+            time: interval * stepIndex, 
+            maxConcurrent: concurrent 
+          });
+          stepIndex++;
+        }
+      }
+      
+      return levels;
+    };
+
+    const concurrencyLevels = generateConcurrencyLevels(config.maxConcurrency, config.rampUpInterval);
+    
+    // Log the ramp-up schedule
+    console.log(`🚀 Progressive Ramp-Up Schedule:`);
+    concurrencyLevels.forEach((level, index) => {
+      const timeStr = index === 0 ? 'Start' : `${level.time/1000}s`;
+      console.log(`   ${timeStr}: ${level.maxConcurrent} concurrent sessions`);
+    });
 
     let currentMaxConcurrent = concurrencyLevels[0].maxConcurrent;
     let startTime = Date.now();
