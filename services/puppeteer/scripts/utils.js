@@ -281,14 +281,24 @@ const selectProduct = async (page) => {
       const href = await productLink.evaluate(el => el.href);
       console.log(`Clicking product link: ${href}`);
       
-      await Promise.all([
-        productLink.click(),
-        page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 })
-      ]);
-      
-      const newTitle = await page.title();
-      const newUrl = await page.url();
-      console.log(`Selected product: "${newTitle}" at ${newUrl}`);
+      try {
+        await Promise.all([
+          productLink.click(),
+          page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 20000 })
+        ]);
+        
+        const newTitle = await page.title();
+        const newUrl = await page.url();
+        console.log(`Selected product: "${newTitle}" at ${newUrl}`);
+      } catch (navError) {
+        console.log('Navigation timeout, trying click without waiting for navigation');
+        await productLink.click();
+        await sleep(2000); // Give page time to load
+        
+        const newTitle = await page.title();
+        const newUrl = await page.url();
+        console.log(`Fallback click result: "${newTitle}" at ${newUrl}`);
+      }
       
       // Verify we're on a product page by checking for add-to-cart button
       try {
@@ -365,14 +375,24 @@ const selectProductsPageProduct = async (page) => {
     
     if (button) {
       console.log('Attempting navigation to products page...');
-      await Promise.all([
-        button.evaluate((b) => b.click()),
-        page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
-      ]);
-      
-      const newUrl = await page.url();
-      const newTitle = await page.title();
-      console.log(`Navigation successful: "${newTitle}" at ${newUrl}`);
+      try {
+        await Promise.all([
+          button.evaluate((b) => b.click()),
+          page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 20000 }),
+        ]);
+        
+        const newUrl = await page.url();
+        const newTitle = await page.title();
+        console.log(`Navigation successful: "${newTitle}" at ${newUrl}`);
+      } catch (navError) {
+        console.log('Navigation timeout, trying click without waiting for navigation');
+        await button.evaluate((b) => b.click());
+        await sleep(2000); // Give page time to load
+        
+        const newUrl = await page.url();
+        const newTitle = await page.title();
+        console.log(`Fallback navigation result: "${newTitle}" at ${newUrl}`);
+      }
 
       await selectProduct(page);
       return true;
@@ -381,7 +401,7 @@ const selectProductsPageProduct = async (page) => {
       // Fallback: try to navigate directly to products page
       const productsUrl = currentUrl.endsWith('/') ? `${currentUrl}products` : `${currentUrl}/products`;
       console.log(`Attempting direct navigation to: ${productsUrl}`);
-      await page.goto(productsUrl, { waitUntil: 'domcontentloaded', timeout: 10000 });
+      await page.goto(productsUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
       
       const finalUrl = await page.url();
       const finalTitle = await page.title();
