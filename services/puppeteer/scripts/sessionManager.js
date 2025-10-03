@@ -150,7 +150,7 @@ class SessionManager {
           
           const sessionPromise = (async () => {
             await sleep(sessionTask.delay);
-            console.log(`🚀 Starting session ${sessionTask.id}`);
+            console.log(`▶️ Starting session ${sessionTask.id}`);
             
             try {
               await sessionTask.session();
