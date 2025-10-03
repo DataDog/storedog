@@ -47,12 +47,12 @@ scripts/
 |----------|---------|-------------|
 | `STOREDOG_URL` | `http://service-proxy:80` | Target application URL |
 | `PUPPETEER_MAX_CONCURRENT` | `8` | Maximum concurrent sessions |
-| `PUPPETEER_BROWSER_POOL_SIZE` | `same as concurrent` | Number of browser instances in pool (6-18) |
+| `PUPPETEER_BROWSER_POOL_SIZE` | `same as concurrent` | Number of browser instances in pool (no hard limit) |
+| `PUPPETEER_SYSTEM_MEMORY` | `8GB` | System memory profile (`8GB`, `16GB`, `32GB`) |
 | `PUPPETEER_STARTUP_DELAY` | `10000` | Initial delay before starting sessions (ms) |
 | `PUPPETEER_RAMP_INTERVAL` | `30000` | Time between concurrency increases (ms) |
 | `PUPPETEER_BROWSER` | `chrome` | Browser engine (`chrome` or `firefox`) |
 | `PUPPETEER_ENABLE_CACHE` | `false` | Enable browser caching |
-| `SKIP_SESSION_CLOSE` | `false` | Skip RUM session closure |
 
 ### Memory Management
 
@@ -60,16 +60,18 @@ The script uses automatic memory optimization with browser-level memory limits a
 
 #### Current Memory Configuration
 
-| System Type | Recommended Concurrent | Browser Pool | Expected Memory |
-|-------------|----------------------|--------------|-----------------|
-| **n2-standard-2 (8GB)** | 12-18 sessions | 18 browsers | ~6-8GB total |
-| **n2-standard-4 (16GB)** | 20-32 sessions | 18 browsers | ~8-12GB total |
+| System Memory | Max Concurrent | Max Browsers | Memory Limit | Threshold |
+|---------------|----------------|--------------|--------------|-----------|
+| **8GB** | 20 sessions | 25 browsers | 6.5GB | 85% |
+| **16GB** | 80 sessions | 60 browsers | 13GB | 85% |
+| **32GB** | 100 sessions | 80 browsers | 26GB | 85% |
 
 #### Key Memory Features
 - **Chrome browser limit**: 256MB per browser process
 - **Automatic garbage collection**: After each session completion  
 - **Browser context clearing**: Fresh context for each session
-- **Safety limits**: 12GB max, 80% memory threshold
+- **Memory profiles**: Auto-configured based on `PUPPETEER_SYSTEM_MEMORY`
+- **No hard browser limits**: `PUPPETEER_BROWSER_POOL_SIZE` can override profile defaults
 
 ### Browser Pool Configuration
 
@@ -83,26 +85,38 @@ The `PUPPETEER_BROWSER_POOL_SIZE` controls how many browser instances are create
 
 #### Scaling Strategies
 
-**8GB Systems (n2-standard-2):**
+**8GB Systems:**
 ```bash
 # Recommended configuration
+export PUPPETEER_SYSTEM_MEMORY=8GB
 export PUPPETEER_MAX_CONCURRENT=18
 export PUPPETEER_BROWSER_POOL_SIZE=18   # 1:1 ratio
 
 # Memory conservation
+export PUPPETEER_SYSTEM_MEMORY=8GB
 export PUPPETEER_MAX_CONCURRENT=18
 export PUPPETEER_BROWSER_POOL_SIZE=12   # 1.5:1 ratio (sessions wait, less memory)
 ```
 
-**16GB Systems (n2-standard-4):**
+**16GB Systems:**
 ```bash
 # High performance
-export PUPPETEER_MAX_CONCURRENT=32
-export PUPPETEER_BROWSER_POOL_SIZE=18   # 1.8:1 ratio
+export PUPPETEER_SYSTEM_MEMORY=16GB
+export PUPPETEER_MAX_CONCURRENT=70
+export PUPPETEER_BROWSER_POOL_SIZE=60   # 1.2:1 ratio
 
 # Optimal balance
-export PUPPETEER_MAX_CONCURRENT=20
-export PUPPETEER_BROWSER_POOL_SIZE=18   # 1.1:1 ratio
+export PUPPETEER_SYSTEM_MEMORY=16GB
+export PUPPETEER_MAX_CONCURRENT=32
+export PUPPETEER_BROWSER_POOL_SIZE=32   # 1:1 ratio
+```
+
+**32GB Systems:**
+```bash
+# Maximum performance
+export PUPPETEER_SYSTEM_MEMORY=32GB
+export PUPPETEER_MAX_CONCURRENT=100
+export PUPPETEER_BROWSER_POOL_SIZE=80   # 1.25:1 ratio
 ```
 
 #### Browser Pool Limits and Memory Impact
@@ -115,7 +129,7 @@ export PUPPETEER_BROWSER_POOL_SIZE=18   # 1.1:1 ratio
 
 **Key Points:**
 - **Minimum**: 6 browsers (even with 1-2 concurrent sessions)
-- **Maximum**: 18 browsers (prevents excessive memory usage)
+- **No maximum**: `PUPPETEER_BROWSER_POOL_SIZE` can override profile defaults
 - **Memory per browser**: ~256MB (with --max_old_space_size limit)
 - **1:1 ratio**: Optimal performance (no session waiting)
 - **Higher ratios**: Memory conservation (sessions wait for available browsers)
@@ -136,13 +150,28 @@ export PUPPETEER_BROWSER_POOL_SIZE=18   # 1.1:1 ratio
 
 ### Memory Safety Limits (Internal)
 
-These are configured in `config.js` and should not need modification:
+These are configured in `config.js` based on `PUPPETEER_SYSTEM_MEMORY`:
 
 ```javascript
+// 8GB Profile
 safetyLimits: {
-  memoryThreshold: 0.80,    // 80% of available RAM
-  cpuThreshold: 0.85,       // 85% CPU usage  
-  maxMemoryMB: 12000        // 12GB absolute limit
+  memoryThreshold: 0.85,    // 85% of available RAM
+  cpuThreshold: 0.90,       // 90% CPU usage  
+  maxMemoryMB: 6500         // 6.5GB absolute limit
+}
+
+// 16GB Profile  
+safetyLimits: {
+  memoryThreshold: 0.85,    // 85% of available RAM
+  cpuThreshold: 0.90,       // 90% CPU usage  
+  maxMemoryMB: 13000        // 13GB absolute limit
+}
+
+// 32GB Profile
+safetyLimits: {
+  memoryThreshold: 0.85,    // 85% of available RAM
+  cpuThreshold: 0.90,       // 90% CPU usage  
+  maxMemoryMB: 26000        // 26GB absolute limit
 }
 ```
 
@@ -152,16 +181,25 @@ The script uses progressive concurrency ramping to prevent memory spikes at star
 
 #### Quick Start Recommendations
 
-**8GB Systems (n2-standard-2):**
+**8GB Systems:**
 ```bash
+export PUPPETEER_SYSTEM_MEMORY=8GB
 export PUPPETEER_MAX_CONCURRENT=18
 export PUPPETEER_BROWSER_POOL_SIZE=18
 ```
 
-**16GB Systems (n2-standard-4):**
+**16GB Systems:**
 ```bash
-export PUPPETEER_MAX_CONCURRENT=20
-export PUPPETEER_BROWSER_POOL_SIZE=18
+export PUPPETEER_SYSTEM_MEMORY=16GB
+export PUPPETEER_MAX_CONCURRENT=70
+export PUPPETEER_BROWSER_POOL_SIZE=60
+```
+
+**32GB Systems:**
+```bash
+export PUPPETEER_SYSTEM_MEMORY=32GB
+export PUPPETEER_MAX_CONCURRENT=100
+export PUPPETEER_BROWSER_POOL_SIZE=80
 ```
 
 #### Advanced Tuning
@@ -201,9 +239,10 @@ PUPPETEER_MAX_CONCURRENT=20 docker-compose up puppeteer
 
 # Or set in docker-compose.yml
 environment:
-  - PUPPETEER_MAX_CONCURRENT=20
-  - PUPPETEER_BROWSER_POOL_SIZE=18
-  - STOREDOG_URL=http://frontend:3000
+  - PUPPETEER_SYSTEM_MEMORY=16GB
+  - PUPPETEER_MAX_CONCURRENT=70
+  - PUPPETEER_BROWSER_POOL_SIZE=60
+  - STOREDOG_URL=http://service-proxy:80
 ```
 
 ### Kubernetes Usage
@@ -219,12 +258,14 @@ spec:
       - name: puppeteer
         image: storedog-puppeteer:latest
         env:
+        - name: PUPPETEER_SYSTEM_MEMORY
+          value: "16GB"
         - name: PUPPETEER_MAX_CONCURRENT
-          value: "20"
+          value: "70"
         - name: PUPPETEER_BROWSER_POOL_SIZE
-          value: "18"
+          value: "60"
         - name: STOREDOG_URL
-          value: "http://frontend-service:3000"
+          value: "http://service-proxy.storedog.svc.cluster.local"
         resources:
           limits:
             memory: "16Gi"
@@ -265,16 +306,34 @@ Edit `scripts/devices.json` and add new device objects:
 ## 🔄 Browser Pool & Session Management
 
 ### Browser Pool
-- **Pool Size**: Scales with `PUPPETEER_MAX_CONCURRENT` (6-20 browsers)
+- **Pool Size**: Configurable with `PUPPETEER_BROWSER_POOL_SIZE` (no hard limits)
 - **Browser Reuse**: Sessions share browser instances for efficiency
 - **Context Clearing**: Each session gets a clean browser context for unique RUM sessions
 - **Memory Optimization**: Automatic cleanup and garbage collection
 
 ### Session Management
-- **Progressive Ramp-Up**: Gradually increases concurrent sessions
+- **Progressive Ramp-Up**: Gradually increases concurrent sessions (4 → 8 → 25% → 50% → 75% → 100%)
 - **Balanced Distribution**: Ensures all session types run at least once
 - **Resource Monitoring**: Tracks memory usage with safety limits
 - **Graceful Shutdown**: Handles SIGINT/SIGTERM signals
+
+#### Progressive Ramp-Up Strategy
+
+The script uses a dynamic ramp-up strategy to prevent memory spikes:
+
+```
+Start: 4 concurrent sessions
+30s: 8 concurrent sessions  
+60s: 25% of max concurrent
+90s: 50% of max concurrent
+120s: 75% of max concurrent
+150s: 100% of max concurrent
+```
+
+**Ramp-Up Control:**
+- **`PUPPETEER_RAMP_INTERVAL=0`**: Skip ramp-up, go straight to max (⚠️ risky)
+- **`PUPPETEER_RAMP_INTERVAL=5000`**: Fast 5-second intervals
+- **`PUPPETEER_RAMP_INTERVAL=30000`**: Default 30-second intervals (recommended)
 
 ## 🛠️ Key Utility Functions
 
@@ -336,7 +395,7 @@ module.exports = CustomSession;
 ## 🔧 Features
 
 - **Dynamic Session Loading**: Automatically discovers session files
-- **Progressive Concurrency**: Ramps up from 2 to max sessions
+- **Progressive Concurrency**: Ramps up from 4 to max sessions
 - **Device Emulation**: 12 realistic device profiles
 - **Memory Management**: Automatic garbage collection and safety limits
 - **Error Handling**: Graceful failure recovery
