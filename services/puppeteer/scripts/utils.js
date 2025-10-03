@@ -175,7 +175,7 @@ const selectHomePageProduct = async (page) => {
         page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
         randomProduct.click()
       ]);
-      console.log('Successfully navigated to product page');
+                debugLog('Successfully navigated to product page');
     } catch (clickError) {
       console.log('Direct product click failed, trying parent Link element:', clickError.message);
       // Try clicking the parent Link element (Next.js wrapper)
@@ -188,7 +188,7 @@ const selectHomePageProduct = async (page) => {
               page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
               parentLink.click()
             ]);
-            console.log('Successfully navigated to product page via parent Link');
+                    debugLog('Successfully navigated to product page via parent Link');
           } else {
             throw new Error('Parent Link not found');
           }
@@ -206,7 +206,7 @@ const selectHomePageProduct = async (page) => {
             const absoluteUrl = href.startsWith('http') ? href : new URL(href, currentUrl).href;
             console.log(`Attempting direct navigation to: ${absoluteUrl}`);
             await page.goto(absoluteUrl, { waitUntil: 'domcontentloaded' });
-            console.log('Successfully navigated to product page via direct URL');
+                    debugLog('Successfully navigated to product page via direct URL');
           } catch (gotoError) {
             console.log('Direct URL navigation failed:', gotoError.message);
             throw new Error(`Invalid URL for navigation: ${href}`);
@@ -380,15 +380,15 @@ const selectProductsPageProduct = async (page) => {
         
         const newUrl = await page.url();
         const newTitle = await page.title();
-        console.log(`Navigation successful: "${newTitle}" at ${newUrl}`);
+        debugLog(`Navigation successful: "${newTitle}" at ${newUrl}`);
               } catch (navError) {
-                debugLog('Navigation timeout, trying click without waiting for navigation');
+                console.log('Navigation timeout, trying click without waiting for navigation');
                 await button.evaluate((b) => b.click());
         await sleep(2000); // Give page time to load
         
         const newUrl = await page.url();
         const newTitle = await page.title();
-        console.log(`Fallback navigation result: "${newTitle}" at ${newUrl}`);
+        debugLog(`Fallback navigation result: "${newTitle}" at ${newUrl}`);
       }
 
       await selectProduct(page);
