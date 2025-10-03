@@ -7,6 +7,9 @@ ENV STOREDOG_URL=http://service-proxy:80 \
 USER pptruser
 WORKDIR /home/pptruser
 
+# Install Firefox for Puppeteer
+RUN npx puppeteer browsers install firefox
+
 COPY ./scripts/ ./
 
 # Wait for Storedog to be ready, then start continuous traffic generation

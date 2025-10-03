@@ -54,7 +54,7 @@ All sessions run **continuously** with random selection to maintain realistic tr
 | `PUPPETEER_DEBUG` | `false` | Enable verbose logging (⚠️ increases memory usage) |
 | `PUPPETEER_STARTUP_DELAY` | `10000` | Initial delay before starting sessions (ms) |
 | `PUPPETEER_RAMP_INTERVAL` | `30000` | Time between concurrency increases (ms) |
-| `PUPPETEER_BROWSER` | `chrome` | Browser engine (`chrome` or `firefox`) |
+| `PUPPETEER_BROWSER` | `chrome` | Browser engine (`chrome` or `firefox`) - both included |
 | `PUPPETEER_ENABLE_CACHE` | `false` | Enable browser caching |
 
 ### Memory Management
