@@ -23,7 +23,12 @@ function loadSessionClasses() {
       const SessionClass = require(sessionPath);
       
       if (SessionClass && typeof SessionClass === 'function') {
-        sessionClasses.push(SessionClass);
+        sessionClasses.push({
+          name: file.replace('.js', ''),
+          class: SessionClass,
+          path: sessionPath
+        });
+        console.log(`📁 Loaded session: ${file}`);
       }
     }
     
@@ -60,9 +65,14 @@ async function main() {
     }
     
     // Create session functions from loaded classes
-    const sessionFunctions = sessionClasses.map(SessionClass => 
-      () => new SessionClass(sessionManager).run()
-    );
+    const sessionFunctions = sessionClasses.map(sessionInfo => {
+      return () => {
+        console.log(`🎭 Starting ${sessionInfo.name} session`);
+        return new sessionInfo.class(sessionManager).run();
+      };
+    });
+    
+    console.log(`🎯 Available session types: ${sessionClasses.map(s => s.name).join(', ')}`);
     
     // Run sessions with progressive concurrency
     await sessionManager.runSessions(sessionFunctions);
