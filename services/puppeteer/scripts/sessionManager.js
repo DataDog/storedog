@@ -46,9 +46,11 @@ class SessionManager {
     // Function to create a new random session
     const createRandomSession = () => {
       const randomIndex = Math.floor(Math.random() * sessionFunctions.length);
+      const selectedSession = sessionFunctions[randomIndex];
       return {
         id: sessionIdCounter++,
-        session: sessionFunctions[randomIndex],
+        session: selectedSession,
+        name: selectedSession.name || 'UnknownSession',
         delay: Math.random() * config.sessionDelay
       };
     };
@@ -128,19 +130,19 @@ class SessionManager {
       while (this.sessionPromises.length < currentMaxConcurrent && checkMemoryLimit()) {
         const sessionTask = createRandomSession();
         
-        console.log(`▶️ Starting session ${sessionTask.id} (${this.sessionPromises.length + 1}/${currentMaxConcurrent})`);
+        console.log(`▶️ Starting session ${sessionTask.id} (${sessionTask.name}) - ${this.sessionPromises.length + 1}/${currentMaxConcurrent}`);
         
         const sessionPromise = (async () => {
           await sleep(sessionTask.delay);
           
           try {
             await sessionTask.session();
-            console.log(`✅ Completed session ${sessionTask.id}`);
+            console.log(`✅ Completed session ${sessionTask.id} (${sessionTask.name})`);
             
             // CRITICAL: Force garbage collection after each session
             forceGC();
           } catch (error) {
-            console.error(`❌ Session ${sessionTask.id} failed:`, error.message);
+            console.error(`❌ Session ${sessionTask.id} (${sessionTask.name}) failed:`, error.message);
           }
         })();
         
@@ -149,7 +151,7 @@ class SessionManager {
           const index = this.sessionPromises.indexOf(sessionPromise);
           if (index > -1) {
             this.sessionPromises.splice(index, 1);
-            console.log(`🧹 Session ${sessionTask.id} cleaned up (${this.sessionPromises.length} running)`);
+            console.log(`🧹 Session ${sessionTask.id} (${sessionTask.name}) cleaned up (${this.sessionPromises.length} running)`);
           }
         });
         

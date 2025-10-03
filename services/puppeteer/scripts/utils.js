@@ -350,19 +350,19 @@ const selectProductsPageProduct = async (page) => {
           const links = await page.$$('nav a');
           for (const link of links) {
             const text = await link.evaluate(el => el.textContent?.trim().toLowerCase());
-            if (text && text.includes('products')) {
-              button = link;
-              console.log(`Found products navigation using text content: "${text}"`);
-              break;
-            }
+                    if (text && text.includes('products')) {
+                      button = link;
+                      debugLog(`Found products navigation using text content: "${text}"`);
+                      break;
+                    }
           }
         } else {
-          button = await page.$(selector);
-          if (button) {
-            const href = await button.evaluate(el => el.href);
-            console.log(`Found products navigation using selector: ${selector}, href: ${href}`);
-            break;
-          }
+                  button = await page.$(selector);
+                  if (button) {
+                    const href = await button.evaluate(el => el.href);
+                    debugLog(`Found products navigation using selector: ${selector}, href: ${href}`);
+                    break;
+                  }
         }
       } catch (selectorError) {
         console.log(`Selector ${selector} failed:`, selectorError.message);
@@ -370,9 +370,9 @@ const selectProductsPageProduct = async (page) => {
       }
     }
     
-    if (button) {
-      console.log('Attempting navigation to products page...');
-      try {
+            if (button) {
+              debugLog('Attempting navigation to products page...');
+              try {
         await Promise.all([
           button.evaluate((b) => b.click()),
           page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 20000 }),
@@ -381,9 +381,9 @@ const selectProductsPageProduct = async (page) => {
         const newUrl = await page.url();
         const newTitle = await page.title();
         console.log(`Navigation successful: "${newTitle}" at ${newUrl}`);
-      } catch (navError) {
-        console.log('Navigation timeout, trying click without waiting for navigation');
-        await button.evaluate((b) => b.click());
+              } catch (navError) {
+                debugLog('Navigation timeout, trying click without waiting for navigation');
+                await button.evaluate((b) => b.click());
         await sleep(2000); // Give page time to load
         
         const newUrl = await page.url();
