@@ -66,17 +66,17 @@ class SessionManager {
     
     console.log(`📋 Starting ${config.totalSessions} sessions (${sessionFunctions.length} guaranteed + ${remainingSessions} random)`);
 
-    // Progressive concurrency levels (fractional ramp-up)
-    const generateConcurrencyLevels = (maxConcurrency, interval) => {
-      const levels = [{ time: 0, maxConcurrent: 2 }]; // Always start with 2
-      
-      // Generate fractional steps: 2, 4, 8, then 25%, 50%, 75%, 100%
-      const fixedSteps = [4, 8];
+            // Progressive concurrency levels (fractional ramp-up)
+            const generateConcurrencyLevels = (maxConcurrency, interval) => {
+              const levels = [{ time: 0, maxConcurrent: 4 }]; // Always start with 4
+              
+              // Generate fractional steps: 4, 8, then 25%, 50%, 75%, 100%
+              const fixedSteps = [8];
       const fractions = [0.25, 0.50, 0.75, 1.0];
       
       let stepIndex = 1;
       
-      // Add fixed steps (4, 8) if they're less than max
+              // Add fixed steps (8) if they're less than max
       for (const step of fixedSteps) {
         if (step < maxConcurrency) {
           levels.push({ 
