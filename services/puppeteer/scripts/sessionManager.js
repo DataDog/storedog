@@ -119,6 +119,9 @@ class SessionManager {
               await sessionTask.session();
               console.log(`✅ Completed session ${sessionTask.id}`);
               sessionStats.completed++;
+              
+              // CRITICAL: Force garbage collection after each session (from working version)
+              forceGC();
             } catch (error) {
               console.error(`❌ Session ${sessionTask.id} failed:`, error.message);
               sessionStats.failed++;
@@ -131,12 +134,8 @@ class SessionManager {
         // Wait for at least one session to complete
         if (this.sessionPromises.length > 0) {
           await Promise.race(this.sessionPromises);
-          // Remove completed promises
-          this.sessionPromises = this.sessionPromises.filter(p => 
-            p.constructor.name === 'Promise' && 
-            p.then && 
-            typeof p.then === 'function'
-          );
+          // Clear completed promises (working version approach)
+          this.sessionPromises.splice(0, this.sessionPromises.length);
         }
       }
     };
