@@ -31,6 +31,9 @@ const config = {
   storedogUrl: process.env.STOREDOG_URL || 'http://service-proxy:80',
   puppeteerBrowser: process.env.PUPPETEER_BROWSER || 'chrome',
   
+  // Debug settings
+  debug: process.env.PUPPETEER_DEBUG === 'true',
+  
   // Concurrency settings (machine-aware)
   startupDelay: parseInt(process.env.PUPPETEER_STARTUP_DELAY) || 10000,
   rampUpInterval: parseInt(process.env.PUPPETEER_RAMP_INTERVAL) || 30000,

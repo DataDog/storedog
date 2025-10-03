@@ -2,19 +2,31 @@
 const config = require('./config');
 const { setTimeout: sleep } = require('node:timers/promises');
 
+// Debug logging utility
+const debugLog = (...args) => {
+  if (config.debug) {
+    console.log(...args);
+  }
+};
+
+// Critical logging (always shown)
+const criticalLog = (...args) => {
+  console.log(...args);
+};
+
 // Memory usage logging
 const logMemoryUsage = (context) => {
   const memUsage = process.memoryUsage();
   const memUsageMB = Math.round(memUsage.heapUsed / 1024 / 1024);
   const memUsageGB = (memUsageMB / 1024).toFixed(2);
-  console.log(`💾 Memory Usage (${context}): ${memUsageMB}MB (${memUsageGB}GB)`);
+  criticalLog(`💾 Memory Usage (${context}): ${memUsageMB}MB (${memUsageGB}GB)`);
 };
 
 // Force garbage collection
 const forceGC = () => {
   if (global.gc) {
     global.gc();
-    console.log('🗑️  Garbage collection triggered');
+    debugLog('🗑️  Garbage collection triggered');
   }
 };
 
@@ -99,7 +111,7 @@ const optimizePageResources = async (page) => {
 
 // Product selection and cart functions
 const selectHomePageProduct = async (page) => {
-  console.log('In selectHomePageProduct on page', await page.title());
+  debugLog('In selectHomePageProduct on page', await page.title());
   
   try {
     // Try multiple selectors for product items
@@ -244,7 +256,7 @@ const selectHomePageProduct = async (page) => {
 };
 
 const selectProduct = async (page) => {
-  console.log('Selecting product on page', await page.title());
+  debugLog('Selecting product on page', await page.title());
   
   try {
     await page.waitForSelector('a[href*="/products/"]', { 
@@ -584,7 +596,7 @@ const goToFooterPage = async (page) => {
 };
 
 const addToCart = async (page) => {
-  console.log('In addToCart on page', await page.title());
+  debugLog('In addToCart on page', await page.title());
 
   try {
     // First check if we're on a product page by looking for product-related elements
@@ -894,6 +906,8 @@ module.exports = {
   sleep,
   logMemoryUsage,
   forceGC,
+  debugLog,
+  criticalLog,
   setUtmParams,
   optimizePageResources,
   selectHomePageProduct,

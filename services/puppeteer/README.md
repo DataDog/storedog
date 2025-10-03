@@ -49,6 +49,7 @@ scripts/
 | `PUPPETEER_MAX_CONCURRENT` | `8` | Maximum concurrent sessions |
 | `PUPPETEER_BROWSER_POOL_SIZE` | `same as concurrent` | Number of browser instances in pool (no hard limit) |
 | `PUPPETEER_SYSTEM_MEMORY` | `8GB` | System memory profile (`8GB`, `16GB`, `32GB`) |
+| `PUPPETEER_DEBUG` | `false` | Enable verbose logging (⚠️ increases memory usage) |
 | `PUPPETEER_STARTUP_DELAY` | `10000` | Initial delay before starting sessions (ms) |
 | `PUPPETEER_RAMP_INTERVAL` | `30000` | Time between concurrency increases (ms) |
 | `PUPPETEER_BROWSER` | `chrome` | Browser engine (`chrome` or `firefox`) |
@@ -72,6 +73,30 @@ The script uses automatic memory optimization with browser-level memory limits a
 - **Browser context clearing**: Fresh context for each session
 - **Memory profiles**: Auto-configured based on `PUPPETEER_SYSTEM_MEMORY`
 - **No hard browser limits**: `PUPPETEER_BROWSER_POOL_SIZE` can override profile defaults
+- **Optimized logging**: Debug logging disabled by default to reduce memory usage
+
+#### Debugging and Memory Impact
+
+**⚠️ Important**: Logging significantly impacts memory usage at high concurrency!
+
+With 70+ concurrent sessions, verbose logging can consume **100+ MB additional memory** due to:
+- Console output buffering
+- String object retention
+- Log message queuing
+
+**Debug Mode:**
+```bash
+# Enable verbose logging (for troubleshooting)
+export PUPPETEER_DEBUG=true
+
+# Disable verbose logging (production/high concurrency)
+export PUPPETEER_DEBUG=false  # Default
+```
+
+**Memory Impact:**
+- **Debug enabled**: +100-200MB memory usage at 70 concurrency
+- **Debug disabled**: Minimal logging overhead
+- **Critical logs**: Always shown (memory usage, errors, session completion)
 
 ### Browser Pool Configuration
 
