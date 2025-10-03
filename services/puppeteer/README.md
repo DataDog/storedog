@@ -1,8 +1,8 @@
 # Puppeteer Continuous Traffic Generator
 
-A modular Puppeteer script for generating **continuous realistic traffic** to the Storedog application for RUM SDK testing and performance monitoring.
+A modular Puppeteer script for generating continuous realistic traffic to the Storedog application for RUM SDK testing and performance monitoring.
 
-## 📁 Project Structure
+## Project Structure
 
 The script uses a modular architecture for maintainability and extensibility:
 
@@ -32,28 +32,29 @@ scripts/
 - **Dynamic Discovery**: Sessions are automatically loaded at runtime
 - **Testability**: Individual modules can be tested in isolation
 
-## 🎯 Session Types
+## Session Types
 
 - **HomePageSession**: Home page browsing with product selection and cart operations
 - **FrustrationSession**: Generates all three types of frustration signals for RUM testing
 - **TaxonomySession**: Category browsing with Best Sellers navigation
 - **BrowsingSession**: General browsing patterns with navbar navigation
 
-All sessions run **continuously** with random selection to maintain realistic traffic patterns.
+All sessions run continuously with random selection to maintain realistic traffic patterns.
 
-## ⚙️ Configuration
+## Configuration
 
 ### Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `STOREDOG_URL` | `http://service-proxy:80` | Target application URL |
-| `PUPPETEER_MAX_CONCURRENT` | `16` | **Continuous concurrent sessions** always running |
+| `PUPPETEER_MAX_CONCURRENT` | `16` | Continuous concurrent sessions always running |
 | `PUPPETEER_BROWSER_POOL_SIZE` | `same as concurrent` | Number of browser instances in pool (no hard limit) |
 | `PUPPETEER_SYSTEM_MEMORY` | `8GB` | System memory profile (`8GB`, `16GB`, `32GB`) |
-| `PUPPETEER_DEBUG` | `false` | Enable verbose logging (⚠️ increases memory usage) |
+| `PUPPETEER_DEBUG` | `false` | Enable verbose logging (increases memory usage) |
 | `PUPPETEER_STARTUP_DELAY` | `10000` | Initial delay before starting sessions (ms) |
 | `PUPPETEER_RAMP_INTERVAL` | `30000` | Time between concurrency increases (ms) |
+| `PUPPETEER_TIMEOUT` | `30000` | Navigation timeout for page loads (ms) |
 | `PUPPETEER_ENABLE_CACHE` | `false` | Enable browser caching |
 
 ### Memory Management
@@ -75,17 +76,18 @@ The script uses automatic memory optimization with browser-level memory limits a
 - **Memory profiles**: Auto-configured based on `PUPPETEER_SYSTEM_MEMORY`
 - **No hard browser limits**: `PUPPETEER_BROWSER_POOL_SIZE` can override profile defaults
 - **Optimized logging**: Debug logging disabled by default to reduce memory usage
+- **Timeout resilience**: Graceful handling of session end navigation timeouts
 
 #### Debugging and Memory Impact
 
-**⚠️ Important**: Logging significantly impacts memory usage at high concurrency!
+Logging significantly impacts memory usage at high concurrency.
 
-With 70+ concurrent sessions, verbose logging can consume **100+ MB additional memory** due to:
+With 70+ concurrent sessions, verbose logging can consume 100+ MB additional memory due to:
 - Console output buffering
 - String object retention
 - Log message queuing
 
-**Debug Mode:**
+Debug Mode:
 ```bash
 # Enable verbose logging (for troubleshooting)
 export PUPPETEER_DEBUG=true
@@ -94,10 +96,10 @@ export PUPPETEER_DEBUG=true
 export PUPPETEER_DEBUG=false  # Default
 ```
 
-**Memory Impact:**
-- **Debug enabled**: +100-200MB memory usage at 70 concurrency
-- **Debug disabled**: Minimal logging overhead
-- **Critical logs**: Always shown (memory usage, errors, session completion)
+Memory Impact:
+- Debug enabled: +100-200MB memory usage at 70 concurrency
+- Debug disabled: Minimal logging overhead
+- Critical logs: Always shown (memory usage, errors, session completion)
 
 ### Browser Pool Configuration
 
@@ -242,7 +244,7 @@ export PUPPETEER_MAX_CONCURRENT=16     # Moderate concurrency
 export PUPPETEER_BROWSER_POOL_SIZE=16  # No session waiting
 ```
 
-## 🚀 Usage
+## Usage
 
 ### Docker Usage
 ```bash
@@ -284,15 +286,15 @@ spec:
             cpu: "8000m"
 ```
 
-## 📊 Device Emulation
+## Device Emulation
 
 The script includes 12 realistic device profiles with authentic user agents, viewports, and browser configurations.
 
 ### Device Categories
-- **Mobile**: iPhone and Android devices (6 devices)
-- **Tablet**: iPad Pro (1 device)
-- **Desktop**: MacBook and Windows PC (5 devices)
-- **Browsers**: Chrome engine with Safari, Chrome, Firefox, and Edge user agents for realistic emulation
+- Mobile: iPhone and Android devices (8 devices)
+- Tablet: iPad Pro (1 device)
+- Desktop: MacBook and Windows PC (3 devices)
+- Browsers: Chrome engine with Safari, Chrome, Firefox, and Edge user agents for realistic emulation
 
 ### Adding Custom Devices
 
@@ -315,31 +317,31 @@ Edit `scripts/devices.json` and add new device objects:
 }
 ```
 
-## 🔄 Browser Pool & Session Management
+## Browser Pool & Session Management
 
 ### Browser Pool
-- **Pool Size**: Configurable with `PUPPETEER_BROWSER_POOL_SIZE` (no hard limits)
-- **Browser Reuse**: Sessions share browser instances for efficiency
-- **Context Clearing**: Each session gets a clean browser context for unique RUM sessions
-- **Memory Optimization**: Automatic cleanup and garbage collection
+- Pool Size: Configurable with `PUPPETEER_BROWSER_POOL_SIZE` (no hard limits)
+- Browser Reuse: Sessions share browser instances for efficiency
+- Context Clearing: Each session gets a clean browser context for unique RUM sessions
+- Memory Optimization: Automatic cleanup and garbage collection
 
 ### Session Management
-- **Continuous Operation**: Maintains constant concurrent sessions indefinitely
-- **Progressive Ramp-Up**: Gradually increases concurrent sessions (4 → 8 → 25% → 50% → 75% → 100%)
-- **Immediate Replacement**: When a session completes, a new one starts immediately
-- **Random Session Selection**: Picks session types randomly for realistic traffic patterns
-- **Resource Monitoring**: Tracks memory usage with safety limits
-- **Graceful Shutdown**: Handles SIGINT/SIGTERM signals
+- Continuous Operation: Maintains constant concurrent sessions indefinitely
+- Progressive Ramp-Up: Gradually increases concurrent sessions (4 → 8 → 25% → 50% → 75% → 100%)
+- Immediate Replacement: When a session completes, a new one starts immediately
+- Random Session Selection: Picks session types randomly for realistic traffic patterns
+- Resource Monitoring: Tracks memory usage with safety limits
+- Graceful Shutdown: Handles SIGINT/SIGTERM signals
 
 #### Continuous Traffic Generation
 
-The script maintains **constant concurrent sessions** by:
+The script maintains constant concurrent sessions by:
 
-1. **Initial Ramp-Up**: Progressive increase to target concurrency
-2. **Steady State**: Maintains exact target concurrent sessions
-3. **Session Replacement**: Completed sessions → immediately replaced with new ones
-4. **Random Distribution**: Each new session randomly selects from available types
-5. **Infinite Operation**: Runs continuously until stopped
+1. Initial Ramp-Up: Progressive increase to target concurrency
+2. Steady State: Maintains exact target concurrent sessions
+3. Session Replacement: Completed sessions → immediately replaced with new ones
+4. Random Distribution: Each new session randomly selects from available types
+5. Infinite Operation: Runs continuously until stopped
 
 ```
 🔄 Starting continuous traffic generation with 4 session types
@@ -360,12 +362,12 @@ Steady State (Continuous):
 ... (runs forever)
 ```
 
-**Ramp-Up Control:**
-- **`PUPPETEER_RAMP_INTERVAL=0`**: Skip ramp-up, go straight to max (⚠️ risky)
-- **`PUPPETEER_RAMP_INTERVAL=5000`**: Fast 5-second intervals
-- **`PUPPETEER_RAMP_INTERVAL=30000`**: Default 30-second intervals (recommended)
+Ramp-Up Control:
+- `PUPPETEER_RAMP_INTERVAL=0`: Skip ramp-up, go straight to max (risky)
+- `PUPPETEER_RAMP_INTERVAL=5000`: Fast 5-second intervals
+- `PUPPETEER_RAMP_INTERVAL=30000`: Default 30-second intervals (recommended)
 
-## 🛠️ Key Utility Functions
+## Key Utility Functions
 
 ### Core Functions
 - `sleep(ms)` - Async delay using Node.js timers
@@ -390,14 +392,14 @@ Based on [Datadog RUM Frustration Signals](https://docs.datadoghq.com/real_user_
 - `generateErrorClicks(page)` - Clicks followed by JavaScript errors
 - `generateRandomFrustrationSignal(page)` - Random frustration signal
 
-## 🔧 Adding New Sessions
+## Adding New Sessions
 
 1. Create new file in `sessions/` directory
 2. Extend `BaseSession` class
 3. Implement `run()` method
 4. That's it! Sessions are automatically discovered
 
-**Example Session:**
+Example Session:
 ```javascript
 const BaseSession = require('./baseSession');
 const { selectProduct, addToCart } = require('../utils');
@@ -422,50 +424,50 @@ class CustomSession extends BaseSession {
 module.exports = CustomSession;
 ```
 
-## 🔧 Features
+## Features
 
-- **Continuous Traffic Generation**: Maintains constant concurrent sessions indefinitely
-- **Dynamic Session Loading**: Automatically discovers session files
-- **Progressive Ramp-Up**: Ramps up from 4 to max sessions, then maintains steady state
-- **Immediate Session Replacement**: Completed sessions instantly replaced with new ones
-- **Random Session Distribution**: Realistic traffic patterns with random session selection
-- **Device Emulation**: 12 realistic device profiles
-- **Memory Management**: Automatic garbage collection and safety limits
-- **Error Handling**: Graceful failure recovery with navigation fallbacks
-- **Browser Pooling**: Efficient browser reuse with context clearing
-- **RUM Integration**: Unique sessions with frustration signal generation
-- **UTM Tracking**: Random campaign parameters for analytics
-- **Debug Logging Control**: Configurable verbose logging to reduce memory usage
+- Continuous Traffic Generation: Maintains constant concurrent sessions indefinitely
+- Dynamic Session Loading: Automatically discovers session files
+- Progressive Ramp-Up: Ramps up from 4 to max sessions, then maintains steady state
+- Immediate Session Replacement: Completed sessions instantly replaced with new ones
+- Random Session Distribution: Realistic traffic patterns with random session selection
+- Device Emulation: 12 realistic device profiles
+- Memory Management: Automatic garbage collection and safety limits
+- Error Handling: Graceful failure recovery with navigation fallbacks
+- Browser Pooling: Efficient browser reuse with context clearing
+- RUM Integration: Unique sessions with frustration signal generation
+- UTM Tracking: Random campaign parameters for analytics
+- Debug Logging Control: Configurable verbose logging to reduce memory usage
 
-## 📊 Monitoring & Troubleshooting
+## Monitoring & Troubleshooting
 
 ### Health Check Commands
 
-**Quick Status Check:**
+Quick Status Check:
 ```bash
 # See current running sessions count
-docker logs <container> | grep "cleaned up" | tail -5
+docker compose logs puppeteer | grep "cleaned up" | tail -5
 
 # Check if sessions are starting continuously
-docker logs <container> | grep "▶️ Starting session" | tail -5
+docker compose logs puppeteer | grep "▶️ Starting session" | tail -5
 
 # Monitor session replacement activity
-docker logs <container> | grep -E "(✅ Completed|🧹.*cleaned up|▶️ Starting)" | tail -10
+docker compose logs puppeteer | grep -E "(✅ Completed|🧹.*cleaned up|▶️ Starting)" | tail -10
 ```
 
-**Problem Detection:**
+Problem Detection:
 ```bash
 # Check for stalls (no new sessions starting)
-docker logs <container> | grep "▶️ Starting session" | tail -1
+docker compose logs puppeteer | grep "▶️ Starting session" | tail -1
 
 # Check for memory issues
-docker logs <container> | grep "Memory limit exceeded"
+docker compose logs puppeteer | grep "Memory limit exceeded"
 
 # Check for session failures
-docker logs <container> | grep "❌.*failed" | tail -5
+docker compose logs puppeteer | grep "❌.*failed" | tail -5
 ```
 
-**Real-Time Monitoring:**
+Real-Time Monitoring:
 ```bash
 # Follow logs with key patterns
 docker logs -f <container> | grep -E "(Starting session|Completed|cleaned up|Concurrency)"
@@ -473,7 +475,7 @@ docker logs -f <container> | grep -E "(Starting session|Completed|cleaned up|Con
 
 ### Success Indicators
 
-**Healthy Continuous Operation:**
+Healthy Continuous Operation:
 ```
 ▶️ Starting session 45 (20/20)  ← Session numbers increasing
 ✅ Completed session 42
@@ -481,15 +483,15 @@ docker logs -f <container> | grep -E "(Starting session|Completed|cleaned up|Con
 ▶️ Starting session 46 (20/20)  ← Immediate replacement
 ```
 
-**Initial Ramp-Up (Normal):**
+Initial Ramp-Up (Normal):
 ```
 🚀 Concurrency: 4 sessions (0s elapsed)
 🚀 Concurrency: 8 sessions (30s elapsed)
 🚀 Concurrency: 20 sessions (90s elapsed)
 ```
 
-**Key Success Metrics:**
-- ✅ **Session numbers continuously increasing** (21, 22, 23...)
-- ✅ **Constant target concurrency** showing (X/20)
-- ✅ **Regular completion + cleanup messages**
-- ✅ **No memory limit exceeded warnings**
+Key Success Metrics:
+- Session numbers continuously increasing (21, 22, 23...)
+- Constant target concurrency showing (X/20)
+- Regular completion + cleanup messages
+- No memory limit exceeded warnings
