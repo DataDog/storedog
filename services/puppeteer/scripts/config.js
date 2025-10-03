@@ -72,7 +72,7 @@ const criticalLog = (...args) => {
 if (!config.debug) {
   const originalConsoleLog = console.log;
   console.log = (...args) => {
-    // Only allow critical messages (memory, errors, completion, session tracking)
+    // Only allow critical messages (memory, errors, completion, session tracking, DEBUG)
     const message = args.join(' ');
     if (message.includes('💾 Memory Usage') || 
         message.includes('✅ Completed') || 
@@ -83,6 +83,12 @@ if (!config.debug) {
         message.includes('📊 Sessions') ||
         message.includes('🔧') ||
         message.includes('⏳ Waiting') ||
+        message.includes('DEBUG:') ||
+        message.includes('Found products navigation') ||
+        message.includes('Attempting navigation') ||
+        message.includes('Navigation successful') ||
+        message.includes('Direct navigation result') ||
+        message.includes('Already on products page') ||
         message.includes('FATAL ERROR') ||
         message.includes('Error:') ||
         message.includes('Failed:') ||
