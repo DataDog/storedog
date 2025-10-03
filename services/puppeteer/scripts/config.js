@@ -56,9 +56,43 @@ const config = {
   sessionDelay: 2000 // Random delay up to 2 seconds
 };
 
+// Debug logging utility
+const debugLog = (...args) => {
+  if (config.debug) {
+    console.log(...args);
+  }
+};
+
+// Critical logging (always shown)
+const criticalLog = (...args) => {
+  console.log(...args);
+};
+
+// Override console.log globally if debug is disabled
+if (!config.debug) {
+  const originalConsoleLog = console.log;
+  console.log = (...args) => {
+    // Only allow critical messages (memory, errors, completion)
+    const message = args.join(' ');
+    if (message.includes('💾 Memory Usage') || 
+        message.includes('✅ Completed') || 
+        message.includes('❌') ||
+        message.includes('🚀') ||
+        message.includes('📋') ||
+        message.includes('🔧') ||
+        message.includes('FATAL ERROR') ||
+        message.includes('Error:') ||
+        message.includes('Failed:')) {
+      originalConsoleLog(...args);
+    }
+    // Suppress all other console.log calls
+  };
+}
+
 // Debug logging
 console.log(`🔧 System Memory: ${systemMemory}`);
 console.log(`🔧 Config loaded: ${config.storedogUrl} (${config.maxConcurrency} concurrent, ${config.browserPoolSize} browsers)`);
 console.log(`🔧 Safety Limits: ${profile.maxMemoryMB}MB max, ${Math.round(profile.memoryThreshold*100)}% threshold`);
+console.log(`🔧 Debug Mode: ${config.debug ? 'ENABLED (verbose logging)' : 'DISABLED (quiet mode)'}`);
 
 module.exports = config;

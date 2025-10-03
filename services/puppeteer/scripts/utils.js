@@ -640,7 +640,7 @@ const addToCart = async (page) => {
     }
 
     await page.click('#add-to-cart-button');
-    console.log('clicked add to cart');
+    debugLog('clicked add to cart');
 
     // Wait for sidebar to appear and close it
     try {
