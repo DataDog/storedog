@@ -48,7 +48,7 @@ All sessions run **continuously** with random selection to maintain realistic tr
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `STOREDOG_URL` | `http://service-proxy:80` | Target application URL |
-| `PUPPETEER_MAX_CONCURRENT` | `8` | **Continuous concurrent sessions** always running |
+| `PUPPETEER_MAX_CONCURRENT` | `16` | **Continuous concurrent sessions** always running |
 | `PUPPETEER_BROWSER_POOL_SIZE` | `same as concurrent` | Number of browser instances in pool (no hard limit) |
 | `PUPPETEER_SYSTEM_MEMORY` | `8GB` | System memory profile (`8GB`, `16GB`, `32GB`) |
 | `PUPPETEER_DEBUG` | `false` | Enable verbose logging (⚠️ increases memory usage) |
@@ -116,13 +116,13 @@ The `PUPPETEER_BROWSER_POOL_SIZE` controls how many browser instances are create
 ```bash
 # Recommended configuration
 export PUPPETEER_SYSTEM_MEMORY=8GB
-export PUPPETEER_MAX_CONCURRENT=18
-export PUPPETEER_BROWSER_POOL_SIZE=18   # 1:1 ratio
+export PUPPETEER_MAX_CONCURRENT=16
+export PUPPETEER_BROWSER_POOL_SIZE=16   # 1:1 ratio
 
 # Memory conservation
 export PUPPETEER_SYSTEM_MEMORY=8GB
-export PUPPETEER_MAX_CONCURRENT=18
-export PUPPETEER_BROWSER_POOL_SIZE=12   # 1.5:1 ratio (sessions wait, less memory)
+export PUPPETEER_MAX_CONCURRENT=16
+export PUPPETEER_BROWSER_POOL_SIZE=12   # 1.3:1 ratio (sessions wait, less memory)
 ```
 
 **16GB Systems:**
@@ -152,7 +152,7 @@ export PUPPETEER_BROWSER_POOL_SIZE=80   # 1.25:1 ratio
 |---------------|--------------|----------|
 | 6 browsers | ~1.5-3GB | Very low memory systems |
 | 12 browsers | ~3-6GB | Memory conservation |
-| 18 browsers | ~4.5-9GB | Balanced performance (recommended) |
+| 16 browsers | ~4-8GB | Balanced performance (recommended) |
 
 **Key Points:**
 - **Minimum**: 6 browsers (even with 1-2 concurrent sessions)
@@ -211,8 +211,8 @@ The script uses progressive concurrency ramping to prevent memory spikes at star
 **8GB Systems:**
 ```bash
 export PUPPETEER_SYSTEM_MEMORY=8GB
-export PUPPETEER_MAX_CONCURRENT=18
-export PUPPETEER_BROWSER_POOL_SIZE=18
+export PUPPETEER_MAX_CONCURRENT=16
+export PUPPETEER_BROWSER_POOL_SIZE=16
 ```
 
 **16GB Systems:**
@@ -233,7 +233,7 @@ export PUPPETEER_BROWSER_POOL_SIZE=80
 
 **Memory Pressure? Reduce browsers first:**
 ```bash
-export PUPPETEER_MAX_CONCURRENT=18     # Keep high concurrency
+export PUPPETEER_MAX_CONCURRENT=16     # Keep high concurrency
 export PUPPETEER_BROWSER_POOL_SIZE=12  # Reduce memory usage
 ```
 
