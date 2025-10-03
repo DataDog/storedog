@@ -141,6 +141,8 @@ class SessionManager {
       while (this.sessionQueue.length > 0 || this.sessionPromises.length > 0) {
         updateConcurrency();
         
+        console.log(`📊 Queue: ${this.sessionQueue.length} waiting, ${this.sessionPromises.length} running`);
+        
         // Start new sessions up to concurrency limit
         while (this.sessionPromises.length < currentMaxConcurrent && 
                this.sessionQueue.length > 0 && 
@@ -170,6 +172,7 @@ class SessionManager {
             const index = this.sessionPromises.indexOf(sessionPromise);
             if (index > -1) {
               this.sessionPromises.splice(index, 1);
+              console.log(`🧹 Cleaned up session promise (${this.sessionPromises.length} remaining)`);
             }
           });
           
@@ -178,8 +181,13 @@ class SessionManager {
         
         // Wait for at least one session to complete
         if (this.sessionPromises.length > 0) {
+          console.log(`⏳ Waiting for one of ${this.sessionPromises.length} sessions to complete...`);
           await Promise.race(this.sessionPromises);
-          // Promises automatically remove themselves via .finally()
+          // Small delay to allow .finally() cleanup to complete
+          await sleep(100);
+        } else {
+          console.log(`⚠️ No running sessions but queue has ${this.sessionQueue.length} items - breaking to prevent infinite loop`);
+          break;
         }
       }
     };

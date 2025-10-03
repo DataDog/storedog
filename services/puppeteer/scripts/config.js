@@ -88,7 +88,9 @@ if (!config.debug) {
         message.includes('Attempting navigation') ||
         message.includes('Navigation successful') ||
         message.includes('Direct navigation result') ||
-        message.includes('Already on products page') ||
+        message.includes('🧹 Cleaned up') ||
+        message.includes('⏳ Waiting for one of') ||
+        message.includes('⚠️ No running sessions') ||
         message.includes('FATAL ERROR') ||
         message.includes('Error:') ||
         message.includes('Failed:') ||
