@@ -54,7 +54,6 @@ All sessions run **continuously** with random selection to maintain realistic tr
 | `PUPPETEER_DEBUG` | `false` | Enable verbose logging (⚠️ increases memory usage) |
 | `PUPPETEER_STARTUP_DELAY` | `10000` | Initial delay before starting sessions (ms) |
 | `PUPPETEER_RAMP_INTERVAL` | `30000` | Time between concurrency increases (ms) |
-| `PUPPETEER_BROWSER` | `chrome` | Browser engine (Chrome only - deprecated setting) |
 | `PUPPETEER_ENABLE_CACHE` | `false` | Enable browser caching |
 
 ### Memory Management
@@ -293,7 +292,7 @@ The script includes 12 realistic device profiles with authentic user agents, vie
 - **Mobile**: iPhone and Android devices (6 devices)
 - **Tablet**: iPad Pro (1 device)
 - **Desktop**: MacBook and Windows PC (5 devices)
-- **Browsers**: Chrome (with Safari/Edge user agents for device emulation)
+- **Browsers**: Chrome engine with Safari, Chrome, Firefox, and Edge user agents for realistic emulation
 
 ### Adding Custom Devices
 

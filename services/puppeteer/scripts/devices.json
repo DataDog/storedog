@@ -57,20 +57,20 @@
       "browser": "Chrome"
     },
     {
-      "name": "OnePlus 12",
-      "userAgent": "Mozilla/5.0 (Linux; Android 14; CPH2581) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Mobile Safari/537.36",
+      "name": "OnePlus 12 (Firefox)",
+      "userAgent": "Mozilla/5.0 (Linux; Android 14; CPH2581) AppleWebKit/537.36 (KHTML, like Gecko) Firefox/121.0",
       "viewport": { "width": 412, "height": 915, "deviceScaleFactor": 3, "isMobile": true, "hasTouch": true },
       "category": "mobile",
       "os": "Android",
-      "browser": "Chrome"
+      "browser": "Firefox"
     },
     {
-      "name": "Xiaomi 14",
-      "userAgent": "Mozilla/5.0 (Linux; Android 14; 23127PN0CC) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Mobile Safari/537.36",
+      "name": "Xiaomi 14 (Firefox)",
+      "userAgent": "Mozilla/5.0 (Linux; Android 14; 23127PN0CC) AppleWebKit/537.36 (KHTML, like Gecko) Firefox/121.0",
       "viewport": { "width": 412, "height": 915, "deviceScaleFactor": 2.625, "isMobile": true, "hasTouch": true },
       "category": "mobile",
       "os": "Android",
-      "browser": "Chrome"
+      "browser": "Firefox"
     },
     {
       "name": "MacBook Pro (Safari)",
@@ -89,12 +89,12 @@
       "browser": "Chrome"
     },
     {
-      "name": "Windows PC (Edge)",
-      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0",
+      "name": "Windows PC (Firefox)",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/121.0",
       "viewport": { "width": 1920, "height": 1080, "deviceScaleFactor": 1, "isMobile": false, "hasTouch": false },
       "category": "desktop",
       "os": "Windows",
-      "browser": "Edge"
+      "browser": "Firefox"
     }
   ]
 }
