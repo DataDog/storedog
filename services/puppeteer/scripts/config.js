@@ -5,7 +5,7 @@ const memoryProfiles = {
   '8GB': {
     maxMemoryMB: 6500,      // 6.5GB limit (leave 1.5GB for system)
     memoryThreshold: 0.85,   // 85% threshold
-    maxConcurrency: 20,      // Allow testing beyond recommended 18
+    maxConcurrency: 20,      // Allow testing beyond recommended 16
     maxBrowsers: 25          // Allow more browsers for stress testing
   },
   '16GB': {
@@ -37,7 +37,7 @@ const config = {
   // Concurrency settings (machine-aware)
   startupDelay: parseInt(process.env.PUPPETEER_STARTUP_DELAY) || 10000,
   rampUpInterval: parseInt(process.env.PUPPETEER_RAMP_INTERVAL) || 30000,
-  maxConcurrency: Math.min(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 8, profile.maxConcurrency),
+  maxConcurrency: Math.min(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 16, profile.maxConcurrency),
   enableCache: process.env.PUPPETEER_ENABLE_CACHE === 'true',
   
   // Safety limits (machine-specific)
@@ -49,10 +49,10 @@ const config = {
   
   // Browser pool settings (machine-aware)
   browserPoolSize: parseInt(process.env.PUPPETEER_BROWSER_POOL_SIZE) || 
-                   Math.min(Math.max(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 8, 6), profile.maxBrowsers),
+                   Math.min(Math.max(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 16, 6), profile.maxBrowsers),
   
   // Session settings
-  totalSessions: Math.max(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 8, 16),
+  totalSessions: Math.max(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 16, 16),
   sessionDelay: 2000 // Random delay up to 2 seconds
 };
 

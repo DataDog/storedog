@@ -23,7 +23,7 @@ spec:
             - name: PUPPETEER_SYSTEM_MEMORY
               value: "8GB"
             - name: PUPPETEER_MAX_CONCURRENT
-              value: "8"
+              value: "16"
           resources:
             requests:
               memory: "1Gi"
