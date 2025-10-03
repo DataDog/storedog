@@ -56,11 +56,16 @@ class BrowsingSession extends BaseSession {
       
       // End session
       await sleep(1500); // Allow checkout to complete
-      const url = await page.url();
-      await page.goto(`${url}?end_session=true`, {
-        waitUntil: 'domcontentloaded',
-        timeout: 10000
-      });
+      try {
+        const url = await page.url();
+        await page.goto(`${url}?end_session=true`, {
+          waitUntil: 'domcontentloaded',
+          timeout: 20000
+        });
+        console.log('Session ended successfully');
+      } catch (endError) {
+        console.log('Session end navigation failed, but continuing to complete');
+      }
       
       console.log('Browsing session completed');
       

@@ -86,11 +86,16 @@ class HomePageSession extends BaseSession {
       
       // End session
       await sleep(1000);
-      const url = await page.url();
-      await page.goto(`${url}?end_session=true`, {
-        waitUntil: 'domcontentloaded',
-        timeout: 10000
-      });
+      try {
+        const url = await page.url();
+        await page.goto(`${url}?end_session=true`, {
+          waitUntil: 'domcontentloaded',
+          timeout: 20000
+        });
+        console.log('Session ended successfully');
+      } catch (endError) {
+        console.log('Session end navigation failed, but continuing to complete');
+      }
       
       console.log('Home page session completed');
       
