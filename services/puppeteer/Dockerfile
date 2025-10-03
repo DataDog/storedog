@@ -9,4 +9,5 @@ WORKDIR /home/pptruser
 
 COPY ./scripts/ ./
 
-CMD ["bash", "puppeteer.sh"]
+# Wait for Storedog to be ready, then start continuous traffic generation
+CMD ["bash", "-c", "until wget --quiet -O - $STOREDOG_URL | grep -qi storedog; do echo -n .; sleep 2; done && echo -e '\\nBrowser replay starting.\\n' && node puppeteer-modular.js $STOREDOG_URL"]
