@@ -165,14 +165,21 @@ class SessionManager {
             }
           })();
           
+          // Mark promise for removal when it completes
+          sessionPromise.finally(() => {
+            const index = this.sessionPromises.indexOf(sessionPromise);
+            if (index > -1) {
+              this.sessionPromises.splice(index, 1);
+            }
+          });
+          
           this.sessionPromises.push(sessionPromise);
         }
         
         // Wait for at least one session to complete
         if (this.sessionPromises.length > 0) {
           await Promise.race(this.sessionPromises);
-          // Clear completed promises (working version approach)
-          this.sessionPromises.splice(0, this.sessionPromises.length);
+          // Promises automatically remove themselves via .finally()
         }
       }
     };
