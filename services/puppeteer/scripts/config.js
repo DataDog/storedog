@@ -72,20 +72,27 @@ const criticalLog = (...args) => {
 if (!config.debug) {
   const originalConsoleLog = console.log;
   console.log = (...args) => {
-    // Only allow critical messages (memory, errors, completion)
+    // Only allow critical messages (memory, errors, completion, session tracking)
     const message = args.join(' ');
     if (message.includes('💾 Memory Usage') || 
         message.includes('✅ Completed') || 
         message.includes('❌') ||
+        message.includes('▶️ Starting') ||
         message.includes('🚀') ||
         message.includes('📋') ||
+        message.includes('📊 Sessions') ||
         message.includes('🔧') ||
+        message.includes('⏳ Waiting') ||
         message.includes('FATAL ERROR') ||
         message.includes('Error:') ||
-        message.includes('Failed:')) {
+        message.includes('Failed:') ||
+        message.includes('timeout') ||
+        message.includes('Navigation timeout') ||
+        message.includes('Protocol error') ||
+        message.includes('Runtime.callFunctionOn timed out')) {
       originalConsoleLog(...args);
     }
-    // Suppress all other console.log calls
+    // Suppress all other console.log calls (product selection, cart operations, etc.)
   };
 }
 
