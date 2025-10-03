@@ -90,7 +90,10 @@ if (!config.debug) {
         message.includes('Direct navigation result') ||
         message.includes('🧹 Cleaned up') ||
         message.includes('⏳ Waiting for one of') ||
-        message.includes('⚠️ No running sessions') ||
+        message.includes('🔄 Starting continuous') ||
+        message.includes('📋 Starting batch') ||
+        message.includes('📊 Batch completed') ||
+        message.includes('🔄 Starting next batch') ||
         message.includes('FATAL ERROR') ||
         message.includes('Error:') ||
         message.includes('Failed:') ||

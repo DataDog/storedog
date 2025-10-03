@@ -13,7 +13,5 @@ done
 
 printf "\nBrowser replay starting.\n\n"
 
-while :
-do
-  node puppeteer-modular.js $STOREDOG_URL
-done
+# Run the continuous traffic generator (no loop needed - script runs forever)
+node puppeteer-modular.js $STOREDOG_URL
