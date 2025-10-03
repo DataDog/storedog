@@ -70,8 +70,8 @@ async function main() {
         console.log(`🎭 Starting ${sessionInfo.name} session`);
         return new sessionInfo.class(sessionManager).run();
       };
-      // Add the name property to the function
-      sessionFunction.name = sessionInfo.name;
+      // Add the sessionName property to the function (since name is read-only)
+      sessionFunction.sessionName = sessionInfo.name;
       return sessionFunction;
     });
     

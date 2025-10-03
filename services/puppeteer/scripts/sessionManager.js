@@ -50,7 +50,7 @@ class SessionManager {
       return {
         id: sessionIdCounter++,
         session: selectedSession,
-        name: selectedSession.name || 'UnknownSession',
+        name: selectedSession.sessionName || 'UnknownSession',
         delay: Math.random() * config.sessionDelay
       };
     };
