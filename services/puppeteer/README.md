@@ -1,6 +1,6 @@
-# Puppeteer Traffic Generator
+# Puppeteer Continuous Traffic Generator
 
-A modular Puppeteer script for generating realistic traffic to the Storedog application for RUM SDK testing.
+A modular Puppeteer script for generating **continuous realistic traffic** to the Storedog application for RUM SDK testing and performance monitoring.
 
 ## 📁 Project Structure
 
@@ -39,14 +39,16 @@ scripts/
 - **TaxonomySession**: Category browsing with Best Sellers navigation
 - **BrowsingSession**: General browsing patterns with navbar navigation
 
+All sessions run **continuously** with random selection to maintain realistic traffic patterns.
+
 ## ⚙️ Configuration
 
 ### Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `STOREDOG_URL` | `http://frontend:3000` | Target application URL |
-| `PUPPETEER_MAX_CONCURRENT` | `8` | Maximum concurrent sessions |
+| `STOREDOG_URL` | `http://service-proxy:80` | Target application URL |
+| `PUPPETEER_MAX_CONCURRENT` | `8` | **Continuous concurrent sessions** always running |
 | `PUPPETEER_BROWSER_POOL_SIZE` | `same as concurrent` | Number of browser instances in pool (no hard limit) |
 | `PUPPETEER_SYSTEM_MEMORY` | `8GB` | System memory profile (`8GB`, `16GB`, `32GB`) |
 | `PUPPETEER_DEBUG` | `false` | Enable verbose logging (⚠️ increases memory usage) |
@@ -243,20 +245,6 @@ export PUPPETEER_BROWSER_POOL_SIZE=16  # No session waiting
 
 ## 🚀 Usage
 
-### Basic Usage
-```bash
-# Run with default settings (8GB system)
-node puppeteer-modular.js
-
-# Run with custom URL
-node puppeteer-modular.js http://localhost:3000
-
-# Run with specific concurrency
-export PUPPETEER_MAX_CONCURRENT=20
-export STOREDOG_URL=http://localhost:3000
-node puppeteer-modular.js
-```
-
 ### Docker Usage
 ```bash
 # Using docker-compose
@@ -337,22 +325,40 @@ Edit `scripts/devices.json` and add new device objects:
 - **Memory Optimization**: Automatic cleanup and garbage collection
 
 ### Session Management
+- **Continuous Operation**: Maintains constant concurrent sessions indefinitely
 - **Progressive Ramp-Up**: Gradually increases concurrent sessions (4 → 8 → 25% → 50% → 75% → 100%)
-- **Balanced Distribution**: Ensures all session types run at least once
+- **Immediate Replacement**: When a session completes, a new one starts immediately
+- **Random Session Selection**: Picks session types randomly for realistic traffic patterns
 - **Resource Monitoring**: Tracks memory usage with safety limits
 - **Graceful Shutdown**: Handles SIGINT/SIGTERM signals
 
-#### Progressive Ramp-Up Strategy
+#### Continuous Traffic Generation
 
-The script uses a dynamic ramp-up strategy to prevent memory spikes:
+The script maintains **constant concurrent sessions** by:
+
+1. **Initial Ramp-Up**: Progressive increase to target concurrency
+2. **Steady State**: Maintains exact target concurrent sessions
+3. **Session Replacement**: Completed sessions → immediately replaced with new ones
+4. **Random Distribution**: Each new session randomly selects from available types
+5. **Infinite Operation**: Runs continuously until stopped
 
 ```
+🔄 Starting continuous traffic generation with 4 session types
+🎯 Target: 20 concurrent sessions always running
+
+Initial Ramp-Up:
 Start: 4 concurrent sessions
 30s: 8 concurrent sessions  
-60s: 25% of max concurrent
-90s: 50% of max concurrent
-120s: 75% of max concurrent
-150s: 100% of max concurrent
+60s: 25% of max concurrent (5 sessions)
+90s: 50% of max concurrent (10 sessions)
+120s: 75% of max concurrent (15 sessions)
+150s: 100% of max concurrent (20 sessions)
+
+Steady State (Continuous):
+▶️ Starting session 21 (20/20)  ← Replaces completed session
+▶️ Starting session 22 (20/20)  ← Replaces completed session
+▶️ Starting session 23 (20/20)  ← Always maintains target
+... (runs forever)
 ```
 
 **Ramp-Up Control:**
@@ -419,11 +425,72 @@ module.exports = CustomSession;
 
 ## 🔧 Features
 
+- **Continuous Traffic Generation**: Maintains constant concurrent sessions indefinitely
 - **Dynamic Session Loading**: Automatically discovers session files
-- **Progressive Concurrency**: Ramps up from 4 to max sessions
+- **Progressive Ramp-Up**: Ramps up from 4 to max sessions, then maintains steady state
+- **Immediate Session Replacement**: Completed sessions instantly replaced with new ones
+- **Random Session Distribution**: Realistic traffic patterns with random session selection
 - **Device Emulation**: 12 realistic device profiles
 - **Memory Management**: Automatic garbage collection and safety limits
-- **Error Handling**: Graceful failure recovery
+- **Error Handling**: Graceful failure recovery with navigation fallbacks
 - **Browser Pooling**: Efficient browser reuse with context clearing
 - **RUM Integration**: Unique sessions with frustration signal generation
 - **UTM Tracking**: Random campaign parameters for analytics
+- **Debug Logging Control**: Configurable verbose logging to reduce memory usage
+
+## 📊 Monitoring & Troubleshooting
+
+### Health Check Commands
+
+**Quick Status Check:**
+```bash
+# See current running sessions count
+docker logs <container> | grep "cleaned up" | tail -5
+
+# Check if sessions are starting continuously
+docker logs <container> | grep "▶️ Starting session" | tail -5
+
+# Monitor session replacement activity
+docker logs <container> | grep -E "(✅ Completed|🧹.*cleaned up|▶️ Starting)" | tail -10
+```
+
+**Problem Detection:**
+```bash
+# Check for stalls (no new sessions starting)
+docker logs <container> | grep "▶️ Starting session" | tail -1
+
+# Check for memory issues
+docker logs <container> | grep "Memory limit exceeded"
+
+# Check for session failures
+docker logs <container> | grep "❌.*failed" | tail -5
+```
+
+**Real-Time Monitoring:**
+```bash
+# Follow logs with key patterns
+docker logs -f <container> | grep -E "(Starting session|Completed|cleaned up|Concurrency)"
+```
+
+### Success Indicators
+
+**Healthy Continuous Operation:**
+```
+▶️ Starting session 45 (20/20)  ← Session numbers increasing
+✅ Completed session 42
+🧹 Session 42 cleaned up (19 running)
+▶️ Starting session 46 (20/20)  ← Immediate replacement
+```
+
+**Initial Ramp-Up (Normal):**
+```
+🚀 Concurrency: 4 sessions (0s elapsed)
+🚀 Concurrency: 8 sessions (30s elapsed)
+🚀 Concurrency: 20 sessions (90s elapsed)
+```
+
+**Key Success Metrics:**
+- ✅ **Session numbers continuously increasing** (21, 22, 23...)
+- ✅ **Constant target concurrency** showing (X/20)
+- ✅ **Regular completion + cleanup messages**
+- ✅ **No memory limit exceeded warnings**
