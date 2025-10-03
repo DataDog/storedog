@@ -29,7 +29,7 @@ spec:
               memory: "1Gi"
               cpu: "250m"
             limits:
-              memory: "2Gi"
+              memory: "8Gi"
               cpu: "500m"
           securityContext:
             capabilities:
