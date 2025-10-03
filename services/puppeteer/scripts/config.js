@@ -11,16 +11,16 @@ const config = {
   maxConcurrency: parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 8,
   enableCache: process.env.PUPPETEER_ENABLE_CACHE === 'true',
   
-  // Safety limits (working values from 6pm yesterday)
+  // Safety limits (set high for stress testing)
   safetyLimits: {
-    memoryThreshold: 0.80, // 80%
-    cpuThreshold: 0.85, // 85%
-    maxMemoryMB: 12000 // 12GB
+    memoryThreshold: 0.95, // 95% (allow pushing to near failure)
+    cpuThreshold: 0.95, // 95%
+    maxMemoryMB: 50000 // 50GB (effectively unlimited for testing)
   },
   
-  // Browser pool settings (18 worked on 8GB yesterday, so 18 should work on 16GB)
+  // Browser pool settings (unlimited for stress testing)
   browserPoolSize: parseInt(process.env.PUPPETEER_BROWSER_POOL_SIZE) || 
-                   Math.min(Math.max(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 8, 6), 18),
+                   Math.max(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 8, 6),
   
   // Session settings
   totalSessions: Math.max(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 8, 16),
