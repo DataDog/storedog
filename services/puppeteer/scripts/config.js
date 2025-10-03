@@ -83,7 +83,6 @@ if (!config.debug) {
         message.includes('📊 Sessions') ||
         message.includes('🔧') ||
         message.includes('⏳ Waiting') ||
-        message.includes('DEBUG:') ||
         message.includes('Found products navigation') ||
         message.includes('Attempting navigation') ||
         message.includes('Navigation successful') ||

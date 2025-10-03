@@ -201,7 +201,11 @@ const selectHomePageProduct = async (page) => {
         const href = await randomProduct.evaluate(el => el.getAttribute('href'));
         if (href && href.trim() !== '' && href !== '#') {
           try {
-            await page.goto(href, { waitUntil: 'domcontentloaded' });
+            // Convert relative URLs to absolute URLs
+            const currentUrl = await page.url();
+            const absoluteUrl = href.startsWith('http') ? href : new URL(href, currentUrl).href;
+            console.log(`Attempting direct navigation to: ${absoluteUrl}`);
+            await page.goto(absoluteUrl, { waitUntil: 'domcontentloaded' });
             console.log('Successfully navigated to product page via direct URL');
           } catch (gotoError) {
             console.log('Direct URL navigation failed:', gotoError.message);
@@ -228,6 +232,11 @@ const selectHomePageProduct = async (page) => {
           const href = await randomElement.evaluate(el => el.getAttribute('href'));
           if (href && href.trim() !== '' && href !== '#' && !href.startsWith('javascript:')) {
             try {
+              // Convert relative URLs to absolute URLs for validation
+              const currentUrl = await page.url();
+              const absoluteUrl = href.startsWith('http') ? href : new URL(href, currentUrl).href;
+              console.log(`Trying fallback navigation to: ${absoluteUrl}`);
+              
               await Promise.all([
                 page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
                 randomElement.click()
@@ -261,17 +270,12 @@ const selectProduct = async (page) => {
   debugLog('Selecting product on page', await page.title());
   
   try {
-    const currentUrl = await page.url();
-    const pageTitle = await page.title();
-    console.log(`DEBUG: selectProduct on "${pageTitle}" at ${currentUrl}`);
-    
     await page.waitForSelector('a[href*="/products/"]', { 
       timeout: 5000,
       visible: true 
     });
     
     const productLinks = await page.$$('a[href*="/products/"]');
-    console.log(`DEBUG: Found ${productLinks.length} product links`);
     
     if (productLinks.length > 0) {
       const randomIndex = Math.floor(Math.random() * productLinks.length);
@@ -320,12 +324,8 @@ const selectProduct = async (page) => {
 
 const selectProductsPageProduct = async (page) => {
   try {
-    // First, let's see what's actually on the page
-    const currentUrl = await page.url();
-    const pageTitle = await page.title();
-    console.log(`DEBUG: Currently on "${pageTitle}" at ${currentUrl}`);
-    
     // Check if we're already on a products page
+    const currentUrl = await page.url();
     if (currentUrl.includes('/products') && !currentUrl.includes('/products/')) {
       console.log('Already on products page, selecting product directly');
       await selectProduct(page);
@@ -348,11 +348,8 @@ const selectProductsPageProduct = async (page) => {
         // Handle :contains() pseudo-selector manually since Puppeteer doesn't support it
         if (selector.includes(':contains("Products")')) {
           const links = await page.$$('nav a');
-          console.log(`DEBUG: Found ${links.length} nav links to check for "Products"`);
           for (const link of links) {
             const text = await link.evaluate(el => el.textContent?.trim().toLowerCase());
-            const href = await link.evaluate(el => el.href);
-            console.log(`DEBUG: Nav link text: "${text}", href: "${href}"`);
             if (text && text.includes('products')) {
               button = link;
               console.log(`Found products navigation using text content: "${text}"`);
