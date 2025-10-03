@@ -20,7 +20,8 @@ class BrowserPool {
       '--disable-renderer-backgrounding',
       '--disable-field-trial-config',
       '--disable-back-forward-cache',
-      '--disable-ipc-flooding-protection'
+      '--disable-ipc-flooding-protection',
+      '--max_old_space_size=256'
     ];
 
     // Add cache control based on config
