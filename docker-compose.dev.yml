@@ -245,7 +245,7 @@ services:
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":6379}]'
       com.datadoghq.ad.logs: '[{"source": "redis"}]'
 
-  # Browser automation for testing
+  # Browser automation for continuous traffic generation
   puppeteer:
     build:
       context: ./services/puppeteer
@@ -253,11 +253,14 @@ services:
     environment:
       - STOREDOG_URL=${STOREDOG_URL:-http://service-proxy:80}
       - PUPPETEER_TIMEOUT=${PUPPETEER_TIMEOUT:-30000}
-      - SKIP_SESSION_CLOSE=${SKIP_SESSION_CLOSE:-false}
       - PUPPETEER_ENABLE_CACHE=${PUPPETEER_ENABLE_CACHE:-false}
       - PUPPETEER_MAX_CONCURRENT=${PUPPETEER_MAX_CONCURRENT:-8}
+      - PUPPETEER_BROWSER_POOL_SIZE=${PUPPETEER_BROWSER_POOL_SIZE}
+      - PUPPETEER_SYSTEM_MEMORY=${PUPPETEER_SYSTEM_MEMORY:-8GB}
       - PUPPETEER_STARTUP_DELAY=${PUPPETEER_STARTUP_DELAY:-10000}
       - PUPPETEER_RAMP_INTERVAL=${PUPPETEER_RAMP_INTERVAL:-30000}
+      - PUPPETEER_BROWSER=${PUPPETEER_BROWSER:-chrome}
+      - PUPPETEER_DEBUG=${PUPPETEER_DEBUG:-false}
     networks:
       - storedog-network
     volumes:

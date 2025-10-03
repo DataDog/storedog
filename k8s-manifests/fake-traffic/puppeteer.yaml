@@ -20,10 +20,10 @@ spec:
             - name: STOREDOG_URL
               # Change namespace as needed
               value: "http://service-proxy.storedog.svc.cluster.local"
-            - name: PUPPETEER_TIMEOUT
-              value: "30000"
-            - name: SKIP_SESSION_CLOSE
-              value: "false"
+            - name: PUPPETEER_SYSTEM_MEMORY
+              value: "8GB"
+            - name: PUPPETEER_MAX_CONCURRENT
+              value: "8"
           resources:
             requests:
               memory: "1Gi"

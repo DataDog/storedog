@@ -188,7 +188,8 @@ services:
     platform: linux/amd64
     environment:
       - STOREDOG_URL=${STOREDOG_URL:-http://service-proxy:80}
-      - PUPPETEER_TIMEOUT=${PUPPETEER_TIMEOUT:-30000}
+      - PUPPETEER_SYSTEM_MEMORY=${PUPPETEER_SYSTEM_MEMORY:-8GB}
+      - PUPPETEER_MAX_CONCURRENT=${PUPPETEER_MAX_CONCURRENT:-8}
     networks:
       - storedog-network
     depends_on:
