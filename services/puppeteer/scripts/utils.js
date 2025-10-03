@@ -114,14 +114,16 @@ const selectHomePageProduct = async (page) => {
   debugLog('In selectHomePageProduct on page', await page.title());
   
   try {
-    // Try multiple selectors for product items
+    // Try multiple selectors for product items based on live site structure
     const productSelectors = [
-      '.product-item',
-      '[class*="product-item"]',
-      '[class*="ProductCard"]',
-      'a[aria-label]',
-      '.grid a',
-      'div[class*="product"] a'
+      'a[href*="/products/"]',                      // Product links (most likely)
+      '.product-item',                              // Product item containers
+      '[class*="product-item"]',                    // Variations of product-item class
+      '[class*="ProductCard"]',                     // Product card components
+      'a[aria-label]',                              // Links with aria-labels
+      '.grid a',                                    // Links in grid layouts
+      'div[class*="product"] a',                    // Product div links
+      'img[alt*="T-Shirt"] + a, img[alt*="Jeans"] + a, img[alt*="Sweatshirt"] + a' // Product image links
     ];
     
     let products = [];
@@ -302,21 +304,40 @@ const selectProduct = async (page) => {
 
 const selectProductsPageProduct = async (page) => {
   try {
-    // Try multiple navigation selectors for products page
+    // Try multiple navigation selectors for products page based on live site
     const navSelectors = [
-      'nav#main-navbar a[href*="/products"]',  // Direct products link
-      'nav#main-navbar a:first-child',         // First nav item
-      'a[href*="/products"]',                  // Any products link
-      'nav a[href="/products"]',               // Products in nav
-      'a[href="/products"]'                    // Direct products link
+      'nav a[href*="/products"]',                   // Any products link in nav
+      'nav a:contains("Products")',                 // Link with "Products" text
+      'a[href="/products"]',                        // Direct products link
+      'nav#main-navbar a:first-child',              // First nav item (fallback)
+      'nav a:first-child',                          // First nav link (broader)
+      'header nav a:first-child'                    // First header nav link
     ];
     
     let button = null;
     for (const selector of navSelectors) {
-      button = await page.$(selector);
-      if (button) {
-        console.log(`Found products navigation using selector: ${selector}`);
-        break;
+      try {
+        // Handle :contains() pseudo-selector manually since Puppeteer doesn't support it
+        if (selector.includes(':contains("Products")')) {
+          const links = await page.$$('nav a');
+          for (const link of links) {
+            const text = await link.evaluate(el => el.textContent?.trim().toLowerCase());
+            if (text && text.includes('products')) {
+              button = link;
+              console.log(`Found products navigation using text content: "${text}"`);
+              break;
+            }
+          }
+        } else {
+          button = await page.$(selector);
+          if (button) {
+            console.log(`Found products navigation using selector: ${selector}`);
+            break;
+          }
+        }
+      } catch (selectorError) {
+        console.log(`Selector ${selector} failed:`, selectorError.message);
+        continue;
       }
     }
     

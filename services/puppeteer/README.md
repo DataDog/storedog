@@ -45,7 +45,7 @@ scripts/
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `STOREDOG_URL` | `http://service-proxy:80` | Target application URL |
+| `STOREDOG_URL` | `http://frontend:3000` | Target application URL |
 | `PUPPETEER_MAX_CONCURRENT` | `8` | Maximum concurrent sessions |
 | `PUPPETEER_BROWSER_POOL_SIZE` | `same as concurrent` | Number of browser instances in pool (no hard limit) |
 | `PUPPETEER_SYSTEM_MEMORY` | `8GB` | System memory profile (`8GB`, `16GB`, `32GB`) |
