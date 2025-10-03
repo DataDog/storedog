@@ -261,12 +261,17 @@ const selectProduct = async (page) => {
   debugLog('Selecting product on page', await page.title());
   
   try {
+    const currentUrl = await page.url();
+    const pageTitle = await page.title();
+    console.log(`DEBUG: selectProduct on "${pageTitle}" at ${currentUrl}`);
+    
     await page.waitForSelector('a[href*="/products/"]', { 
       timeout: 5000,
       visible: true 
     });
     
     const productLinks = await page.$$('a[href*="/products/"]');
+    console.log(`DEBUG: Found ${productLinks.length} product links`);
     
     if (productLinks.length > 0) {
       const randomIndex = Math.floor(Math.random() * productLinks.length);
@@ -282,7 +287,8 @@ const selectProduct = async (page) => {
       ]);
       
       const newTitle = await page.title();
-      console.log('Selected product:', newTitle);
+      const newUrl = await page.url();
+      console.log(`Selected product: "${newTitle}" at ${newUrl}`);
       
       // Verify we're on a product page by checking for add-to-cart button
       try {
@@ -304,6 +310,18 @@ const selectProduct = async (page) => {
 
 const selectProductsPageProduct = async (page) => {
   try {
+    // First, let's see what's actually on the page
+    const currentUrl = await page.url();
+    const pageTitle = await page.title();
+    console.log(`DEBUG: Currently on "${pageTitle}" at ${currentUrl}`);
+    
+    // Check if we're already on a products page
+    if (currentUrl.includes('/products') && !currentUrl.includes('/products/')) {
+      console.log('Already on products page, selecting product directly');
+      await selectProduct(page);
+      return true;
+    }
+    
     // Try multiple navigation selectors for products page based on live site
     const navSelectors = [
       'nav a[href*="/products"]',                   // Any products link in nav
@@ -320,8 +338,11 @@ const selectProductsPageProduct = async (page) => {
         // Handle :contains() pseudo-selector manually since Puppeteer doesn't support it
         if (selector.includes(':contains("Products")')) {
           const links = await page.$$('nav a');
+          console.log(`DEBUG: Found ${links.length} nav links to check for "Products"`);
           for (const link of links) {
             const text = await link.evaluate(el => el.textContent?.trim().toLowerCase());
+            const href = await link.evaluate(el => el.href);
+            console.log(`DEBUG: Nav link text: "${text}", href: "${href}"`);
             if (text && text.includes('products')) {
               button = link;
               console.log(`Found products navigation using text content: "${text}"`);
@@ -331,7 +352,8 @@ const selectProductsPageProduct = async (page) => {
         } else {
           button = await page.$(selector);
           if (button) {
-            console.log(`Found products navigation using selector: ${selector}`);
+            const href = await button.evaluate(el => el.href);
+            console.log(`Found products navigation using selector: ${selector}, href: ${href}`);
             break;
           }
         }
@@ -342,19 +364,29 @@ const selectProductsPageProduct = async (page) => {
     }
     
     if (button) {
+      console.log('Attempting navigation to products page...');
       await Promise.all([
         button.evaluate((b) => b.click()),
         page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
       ]);
+      
+      const newUrl = await page.url();
+      const newTitle = await page.title();
+      console.log(`Navigation successful: "${newTitle}" at ${newUrl}`);
 
       await selectProduct(page);
       return true;
     } else {
       console.log('Products page navigation button not found, trying direct navigation');
       // Fallback: try to navigate directly to products page
-      const currentUrl = page.url();
       const productsUrl = currentUrl.endsWith('/') ? `${currentUrl}products` : `${currentUrl}/products`;
+      console.log(`Attempting direct navigation to: ${productsUrl}`);
       await page.goto(productsUrl, { waitUntil: 'domcontentloaded', timeout: 10000 });
+      
+      const finalUrl = await page.url();
+      const finalTitle = await page.title();
+      console.log(`Direct navigation result: "${finalTitle}" at ${finalUrl}`);
+      
       await selectProduct(page);
       return true;
     }
