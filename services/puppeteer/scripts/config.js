@@ -29,7 +29,6 @@ const profile = memoryProfiles[systemMemory] || memoryProfiles['8GB'];
 const config = {
   // Environment variables with defaults
   storedogUrl: process.env.STOREDOG_URL || 'http://service-proxy:80',
-  puppeteerBrowser: process.env.PUPPETEER_BROWSER || 'chrome',
   
   // Debug settings
   debug: process.env.PUPPETEER_DEBUG === 'true',
