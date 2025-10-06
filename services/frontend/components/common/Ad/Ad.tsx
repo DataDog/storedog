@@ -49,7 +49,11 @@ function Ad({ id }: { id: string }) {
     if (!data) fetchAd()
   }, [data, fetchAd])
 
-  if (isLoading || !data) return <div className="banner-ad-row"></div>
+  if (isLoading || !data) { 
+    return (
+      <div className="banner-ad-row"></div>
+    )
+  }
 
   return (
     <div className="banner-ad-row flex flex-col justify-center py-2 ">
