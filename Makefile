@@ -13,11 +13,13 @@ FOLLOW?=
 GREEN=\033[0;32m
 NC=\033[0m # No Color
 
-.PHONY: help up down restart ps logs clean build dev prod dd-dev dd-prod backup-db
+.PHONY: help up down restart stop ps logs clean build dev prod dd-dev dd-prod backup-db
 
 help: ## Show this help menu
 	@echo "Usage: make [TARGET] [ENV=prod|dev] [FOLLOW=f]"
 	@echo "For logs: make logs [service_name] [ENV=prod|dev] [FOLLOW=f]"
+	@echo "For build: make build [service_name] [ENV=prod|dev]"
+	@echo "For stop: make stop [service_name] [ENV=prod|dev]"
 	@echo ""
 	@echo "Targets:"
 	@awk '/^[a-zA-Z\-\_0-9]+:/ { \
@@ -52,6 +54,26 @@ down:
 
 ## Restart the containers
 restart: down up
+
+## Stop containers. Usage: make stop [service_name] [ENV=prod|dev]
+stop:
+	@if [ "$(ENV)" = "dev" ]; then \
+		if [ -n "$(word 2,$(MAKECMDGOALS))" ]; then \
+			echo "Stopping service $(word 2,$(MAKECMDGOALS)) in development environment..."; \
+			$(DC) -f $(COMPOSE_DEV_FILE) stop $(word 2,$(MAKECMDGOALS)); \
+		else \
+			echo "Stopping all services in development environment..."; \
+			$(DC) -f $(COMPOSE_DEV_FILE) stop; \
+		fi \
+	else \
+		if [ -n "$(word 2,$(MAKECMDGOALS))" ]; then \
+			echo "Stopping service $(word 2,$(MAKECMDGOALS)) in production environment..."; \
+			$(DC) -f $(COMPOSE_FILE) stop $(word 2,$(MAKECMDGOALS)); \
+		else \
+			echo "Stopping all services in production environment..."; \
+			$(DC) -f $(COMPOSE_FILE) stop; \
+		fi \
+	fi
 
 ## Show running containers
 ps:
@@ -89,19 +111,31 @@ clean:
 		$(DC) -f $(COMPOSE_FILE) down -v --remove-orphans; \
 	fi
 
-## Build or rebuild containers
+## Build or rebuild containers. Usage: make build [service_name] [ENV=prod|dev]
 build:
 	@if [ "$(ENV)" = "dev" ]; then \
-		$(DC) -f $(COMPOSE_DEV_FILE) build; \
+		if [ -n "$(word 2,$(MAKECMDGOALS))" ]; then \
+			echo "Building service $(word 2,$(MAKECMDGOALS)) in development environment..."; \
+			$(DC) -f $(COMPOSE_DEV_FILE) build $(word 2,$(MAKECMDGOALS)); \
+		else \
+			echo "Building all services in development environment..."; \
+			$(DC) -f $(COMPOSE_DEV_FILE) build; \
+		fi \
 	else \
-		$(DC) -f $(COMPOSE_FILE) build; \
+		if [ -n "$(word 2,$(MAKECMDGOALS))" ]; then \
+			echo "Building service $(word 2,$(MAKECMDGOALS)) in production environment..."; \
+			$(DC) -f $(COMPOSE_FILE) build $(word 2,$(MAKECMDGOALS)); \
+		else \
+			echo "Building all services in production environment..."; \
+			$(DC) -f $(COMPOSE_FILE) build; \
+		fi \
 	fi
 
-## Switch to development environment
+## Switch to development environment and run containers
 dev:
 	@make up ENV=dev FRONTEND_COMMAND="npm run dev"
 
-## Switch to production environment
+## Switch to production environment and run containers
 prod:
 	@make up ENV=prod FRONTEND_COMMAND="npm run prod"
 

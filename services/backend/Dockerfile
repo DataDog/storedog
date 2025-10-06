@@ -12,7 +12,6 @@ RUN apt-get update -yq \
     netcat-traditional \
     imagemagick \
     postgresql-client \
-    wait-for-it \
   # INSTALL NODE
   && curl -sL https://deb.nodesource.com/setup_20.x | bash - \
   && apt-get install -y --no-install-recommends nodejs \

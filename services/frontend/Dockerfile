@@ -1,13 +1,27 @@
 FROM node:20 AS builder
 
-# install wait-for-it
-RUN apt-get update && apt-get install -y wait-for-it
+RUN apt-get update && apt-get install -y netcat-openbsd
 
 # install datadog-ci 
 RUN npm install -g @datadog/datadog-ci
 
 ARG DD_GIT_REPOSITORY_URL
 ARG DD_GIT_COMMIT_SHA
+
+ARG DD_ENV=production
+ARG DD_VERSION=1.0.0
+ARG DD_SERVICE=store-frontend-ui
+
+ARG DD_SITE=datadoghq.com
+ARG NEXT_PUBLIC_DD_APPLICATION_ID=not-set-in-dockerfile
+ARG NEXT_PUBLIC_DD_CLIENT_TOKEN=not-set-in-dockerfile
+
+ENV NEXT_PUBLIC_DD_VERSION_FRONTEND=${DD_VERSION}
+ENV NEXT_PUBLIC_DD_SITE=${NEXT_PUBLIC_DD_SITE}
+ENV NEXT_PUBLIC_DD_ENV_FRONTEND=${NEXT_PUBLIC_DD_ENV}
+ENV NEXT_PUBLIC_DD_APPLICATION_ID=${NEXT_PUBLIC_DD_APPLICATION_ID}
+ENV NEXT_PUBLIC_DD_CLIENT_TOKEN=${NEXT_PUBLIC_DD_CLIENT_TOKEN}
+ENV NEXT_PUBLIC_DD_SERVICE_FRONTEND=${DD_SERVICE}
 
 # Set default environment variables
 ENV NEXT_TELEMETRY_DISABLED=1 \
