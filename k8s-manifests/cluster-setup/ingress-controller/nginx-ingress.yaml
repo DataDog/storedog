@@ -590,62 +590,63 @@ spec:
       restartPolicy: OnFailure
       serviceAccountName: ingress-nginx-admission
   ttlSecondsAfterFinished: 0
----
-apiVersion: batch/v1
-kind: Job
-metadata:
-  labels:
-    app.kubernetes.io/component: admission-webhook
-    app.kubernetes.io/instance: ingress-nginx
-    app.kubernetes.io/name: ingress-nginx
-    app.kubernetes.io/part-of: ingress-nginx
-    app.kubernetes.io/version: 1.13.2
-  name: ingress-nginx-admission-patch
-  namespace: ingress-nginx
-spec:
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/component: admission-webhook
-        app.kubernetes.io/instance: ingress-nginx
-        app.kubernetes.io/name: ingress-nginx
-        app.kubernetes.io/part-of: ingress-nginx
-        app.kubernetes.io/version: 1.13.2
-      name: ingress-nginx-admission-patch
-    spec:
-      automountServiceAccountToken: true
-      containers:
-      - args:
-        - patch
-        - --webhook-name=ingress-nginx-admission
-        - --namespace=$(POD_NAMESPACE)
-        - --patch-mutating=false
-        - --secret-name=ingress-nginx-admission
-        - --patch-failure-policy=Fail
-        env:
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        image: registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.2@sha256:050a34002d5bb4966849c880c56c91f5320372564245733b33d4b3461b4dbd24
-        imagePullPolicy: IfNotPresent
-        name: patch
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-          readOnlyRootFilesystem: true
-          runAsGroup: 65532
-          runAsNonRoot: true
-          runAsUser: 65532
-          seccompProfile:
-            type: RuntimeDefault
-      nodeSelector:
-        kubernetes.io/os: linux
-      restartPolicy: OnFailure
-      serviceAccountName: ingress-nginx-admission
-  ttlSecondsAfterFinished: 0
+### Commented out the admission webhook patch job to prevent errors in lab environments
+# ---
+# apiVersion: batch/v1
+# kind: Job
+# metadata:
+#   labels:
+#     app.kubernetes.io/component: admission-webhook
+#     app.kubernetes.io/instance: ingress-nginx
+#     app.kubernetes.io/name: ingress-nginx
+#     app.kubernetes.io/part-of: ingress-nginx
+#     app.kubernetes.io/version: 1.13.2
+#   name: ingress-nginx-admission-patch
+#   namespace: ingress-nginx
+# spec:
+#   template:
+#     metadata:
+#       labels:
+#         app.kubernetes.io/component: admission-webhook
+#         app.kubernetes.io/instance: ingress-nginx
+#         app.kubernetes.io/name: ingress-nginx
+#         app.kubernetes.io/part-of: ingress-nginx
+#         app.kubernetes.io/version: 1.13.2
+#       name: ingress-nginx-admission-patch
+#     spec:
+#       automountServiceAccountToken: true
+#       containers:
+#       - args:
+#         - patch
+#         - --webhook-name=ingress-nginx-admission
+#         - --namespace=$(POD_NAMESPACE)
+#         - --patch-mutating=false
+#         - --secret-name=ingress-nginx-admission
+#         - --patch-failure-policy=Fail
+#         env:
+#         - name: POD_NAMESPACE
+#           valueFrom:
+#             fieldRef:
+#               fieldPath: metadata.namespace
+#         image: registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.2@sha256:050a34002d5bb4966849c880c56c91f5320372564245733b33d4b3461b4dbd24
+#         imagePullPolicy: IfNotPresent
+#         name: patch
+#         securityContext:
+#           allowPrivilegeEscalation: false
+#           capabilities:
+#             drop:
+#             - ALL
+#           readOnlyRootFilesystem: true
+#           runAsGroup: 65532
+#           runAsNonRoot: true
+#           runAsUser: 65532
+#           seccompProfile:
+#             type: RuntimeDefault
+#       nodeSelector:
+#         kubernetes.io/os: linux
+#       restartPolicy: OnFailure
+#       serviceAccountName: ingress-nginx-admission
+#   ttlSecondsAfterFinished: 0
 ---
 apiVersion: networking.k8s.io/v1
 kind: IngressClass
