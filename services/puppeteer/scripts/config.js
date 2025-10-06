@@ -1,78 +1,108 @@
-// Configuration module for Puppeteer script
+// This file manages all configuration settings for the Puppeteer traffic generator.
+// Think of it as the "control panel" where all settings are defined and loaded.
 
-// Machine-specific safety profiles based on memory
+// Memory profiles define safe operating limits for different machine sizes.
+// Each profile specifies how much memory we can use, how many sessions we can run, etc.
+// We have three profiles: 8GB (small), 16GB (medium), 32GB (large machines)
 const memoryProfiles = {
   '8GB': {
-    maxMemoryMB: 6500,      // 6.5GB limit (leave 1.5GB for system)
-    memoryThreshold: 0.85,   // 85% threshold
-    maxConcurrency: 20,      // Allow testing beyond recommended 16
-    maxBrowsers: 25          // Allow more browsers for stress testing
+    maxMemoryMB: 6500,      // Maximum memory this script can use (in megabytes)
+                            // We leave 1.5GB free for the operating system
+    memoryThreshold: 0.85,   // When we hit 85% of max memory, slow down
+    maxConcurrency: 20,      // Maximum number of sessions running at the same time
+    maxBrowsers: 25          // Maximum number of browser instances we can open
   },
   '16GB': {
-    maxMemoryMB: 13000,      // 13GB limit (leave 3GB for system)
+    maxMemoryMB: 13000,      // 13GB max (leaving 3GB for the system)
     memoryThreshold: 0.85,   // 85% threshold
-    maxConcurrency: 80,      // Increased based on real testing (70 works well)
-    maxBrowsers: 60          // Reasonable browser pool for 80 sessions
+    maxConcurrency: 80,      // Can handle many more concurrent sessions
+    maxBrowsers: 60          // More browsers available for reuse
   },
   '32GB': {
-    maxMemoryMB: 26000,      // 26GB limit (leave 6GB for system)
+    maxMemoryMB: 26000,      // 26GB max (leaving 6GB for the system)
     memoryThreshold: 0.85,   // 85% threshold
-    maxConcurrency: 100,     // Very high concurrency testing
-    maxBrowsers: 80          // High browser count but not 1:1 ratio for efficiency
+    maxConcurrency: 100,     // Very high concurrency for large machines
+    maxBrowsers: 80          // Many browsers available
   }
 };
 
-// Detect system memory from environment or default to 8GB
+// Read the PUPPETEER_SYSTEM_MEMORY environment variable to determine machine size.
+// If not set, default to 8GB (the smallest/safest profile).
 const systemMemory = process.env.PUPPETEER_SYSTEM_MEMORY || '8GB';
+
+// Select the appropriate profile based on system memory.
+// The || operator provides a fallback: if systemMemory doesn't match a profile, use 8GB.
 const profile = memoryProfiles[systemMemory] || memoryProfiles['8GB'];
 
+// The main configuration object that gets exported and used by other scripts.
+// This object contains all the settings needed to run the traffic generator.
 const config = {
-  // Environment variables with defaults
+  // URL of the Storedog application we'll be testing
+  // The || operator means "use the environment variable if it exists, otherwise use the default"
   storedogUrl: process.env.STOREDOG_URL || 'http://service-proxy:80',
   
-  // Debug settings
+  // Debug mode controls how much logging we output to the console.
+  // When true, we log everything. When false, we only log important messages.
   debug: process.env.PUPPETEER_DEBUG === 'true',
   
-  // Concurrency settings (machine-aware)
-  startupDelay: parseInt(process.env.PUPPETEER_STARTUP_DELAY) || 10000,
-  rampUpInterval: parseInt(process.env.PUPPETEER_RAMP_INTERVAL) || 30000,
+  // Concurrency settings control how many sessions run at once
+  // parseInt() converts string values (from environment variables) to numbers
+  startupDelay: parseInt(process.env.PUPPETEER_STARTUP_DELAY) || 10000,  // Wait 10 seconds before starting (in milliseconds)
+  rampUpInterval: parseInt(process.env.PUPPETEER_RAMP_INTERVAL) || 30000, // Wait 30 seconds between increasing concurrency
+  
+  // Math.min() ensures we never exceed the profile's maximum, even if user sets it higher
   maxConcurrency: Math.min(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 16, profile.maxConcurrency),
+  
+  // Cache can be enabled for development to speed up page loads
   enableCache: process.env.PUPPETEER_ENABLE_CACHE === 'true',
   
-  // Safety limits (machine-specific)
+  // Safety limits prevent the script from using too many resources
+  // These values come from the selected memory profile above
   safetyLimits: {
-    memoryThreshold: profile.memoryThreshold,
-    cpuThreshold: 0.90, // 90% CPU threshold for both machines
-    maxMemoryMB: profile.maxMemoryMB
+    memoryThreshold: profile.memoryThreshold,  // Percentage of max memory before we slow down
+    cpuThreshold: 0.90,                        // 90% CPU usage is our limit
+    maxMemoryMB: profile.maxMemoryMB           // Absolute memory limit in megabytes
   },
   
-  // Browser pool settings (machine-aware)
+  // Browser pool size determines how many browser instances we keep open.
+  // We reuse browsers across sessions to save memory.
+  // This calculation ensures we have at least 6 browsers, but not more than the profile allows.
   browserPoolSize: parseInt(process.env.PUPPETEER_BROWSER_POOL_SIZE) || 
                    Math.min(Math.max(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 16, 6), profile.maxBrowsers),
   
   // Session settings
-  totalSessions: Math.max(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 16, 16),
-  sessionDelay: 2000 // Random delay up to 2 seconds
+  totalSessions: Math.max(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 16, 16), // Total sessions (minimum 16)
+  sessionDelay: 2000  // Maximum random delay before starting a session (2 seconds)
 };
 
-// Debug logging utility
+// Helper function for debug logging.
+// The ...args syntax is called "rest parameters" - it captures all arguments into an array.
+// This function only logs messages if debug mode is enabled.
 const debugLog = (...args) => {
   if (config.debug) {
     console.log(...args);
   }
 };
 
-// Critical logging (always shown)
+// Helper function for critical logging (always shown, even in quiet mode)
 const criticalLog = (...args) => {
   console.log(...args);
 };
 
-// Override console.log globally if debug is disabled
+// When debug mode is OFF, we override the global console.log function to filter messages.
+// This reduces memory usage by preventing unnecessary string operations and console output.
 if (!config.debug) {
+  // Save a reference to the original console.log function so we can still use it
   const originalConsoleLog = console.log;
+  
+  // Replace console.log with our filtered version
   console.log = (...args) => {
-    // Only allow critical messages (memory, errors, completion, session tracking, DEBUG)
+    // Join all arguments into a single string so we can search it
     const message = args.join(' ');
+    
+    // Check if the message contains any important keywords.
+    // If it does, allow it through. Otherwise, suppress it.
+    // This long if statement checks for emojis and keywords that indicate important messages.
     if (message.includes('💾 Memory Usage') || 
         message.includes('✅ Completed') || 
         message.includes('❌') ||
@@ -99,16 +129,18 @@ if (!config.debug) {
         message.includes('Navigation timeout') ||
         message.includes('Protocol error') ||
         message.includes('Runtime.callFunctionOn timed out')) {
+      // Message is important - use the original console.log to display it
       originalConsoleLog(...args);
     }
-    // Suppress all other console.log calls (product selection, cart operations, etc.)
+    // If the message doesn't match any keywords, it gets suppressed (not logged)
   };
 }
 
-// Debug logging
+// Log the configuration on startup so we can verify settings
 console.log(`🔧 System Memory: ${systemMemory}`);
 console.log(`🔧 Config loaded: ${config.storedogUrl} (${config.maxConcurrency} concurrent, ${config.browserPoolSize} browsers)`);
 console.log(`🔧 Safety Limits: ${profile.maxMemoryMB}MB max, ${Math.round(profile.memoryThreshold*100)}% threshold`);
 console.log(`🔧 Debug Mode: ${config.debug ? 'ENABLED (verbose logging)' : 'DISABLED (quiet mode)'}`);
 
+// Export the config object so other files can use it with require('./config')
 module.exports = config;

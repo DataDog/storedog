@@ -1,33 +1,46 @@
-// Utility functions for Puppeteer script
+// This file contains utility functions used by sessions for browser automation.
+// It includes helpers for navigation, product selection, cart operations, and more.
+
 const config = require('./config');
+// Import sleep from Node.js timers/promises module
 const { setTimeout: sleep } = require('node:timers/promises');
 
-// Debug logging utility
+// Helper function for debug logging (only logs if debug mode is enabled)
 const debugLog = (...args) => {
   if (config.debug) {
     console.log(...args);
   }
 };
 
-// Critical logging (always shown)
+// Helper function for critical logging (always shown, even in quiet mode)
 const criticalLog = (...args) => {
   console.log(...args);
 };
 
-// Memory usage logging
+// Log current memory usage with context label
 const logMemoryUsage = (context) => {
+  // Get detailed memory statistics from Node.js
   const memUsage = process.memoryUsage();
+  
+  // Convert heapUsed (bytes) to megabytes
+  // heapUsed = actual JavaScript memory in use
   const memUsageMB = Math.round(memUsage.heapUsed / 1024 / 1024);
+  
+  // Also convert to gigabytes for easier reading
   const memUsageGB = (memUsageMB / 1024).toFixed(2);
+  
+  // Log with context so we know where the measurement was taken
   criticalLog(`💾 Memory Usage (${context}): ${memUsageMB}MB (${memUsageGB}GB)`);
 };
 
-// Force garbage collection
+// Force JavaScript garbage collection to free up memory
 const forceGC = () => {
+  // global.gc() is only available if Node.js was started with --expose-gc flag
   if (global.gc) {
-    global.gc();
+    global.gc(); // Trigger garbage collection now
     debugLog('🗑️  Garbage collection triggered');
   }
+  // If global.gc doesn't exist, this silently does nothing (GC will happen automatically later)
 };
 
 // UTM parameter generation
