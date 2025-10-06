@@ -4,33 +4,57 @@ A modular Puppeteer script for generating continuous realistic traffic to the St
 
 ## Project Structure
 
-The script uses a modular architecture for maintainability and extensibility:
-
 ```
 scripts/
-├── puppeteer-modular.js     # Main entry point
-├── run.js                   # Simple wrapper
-├── config.js               # Configuration management
-├── deviceManager.js        # Device management
-├── utils.js                # Utility functions
-├── browserPool.js          # Browser pool management
-├── sessionManager.js       # Session orchestration
-├── devices.json           # Device configurations
-└── sessions/              # Session implementations
-    ├── baseSession.js     # Base session class
-    ├── homePageSession.js # Home page browsing
+├── browserPool.js            # Browser pool management
+├── config.js                 # Configuration management
+├── deviceManager.js          # Device management
+├── devices.json              # Device configurations
+├── puppeteer-modular.js      # Main entry point
+├── sessionManager.js         # Session orchestration
+├── utils.js                  # Utility functions
+└── sessions/                 # Session implementations
+    ├── baseSession.js        # Base session class
+    ├── browsingSession.js    # General browsing
     ├── frustrationSession.js # Frustration signals
-    ├── taxonomySession.js # Category browsing
-    └── browsingSession.js # General browsing
+    ├── homePageSession.js    # Home page browsing
+    └── taxonomySession.js    # Category browsing
 ```
 
-### Architecture Benefits
+### Core Scripts
 
-- **Separation of Concerns**: Each module has a specific responsibility
-- **Easy Maintenance**: Changes to one module don't affect others
-- **Extensibility**: Add new sessions without modifying core code
-- **Dynamic Discovery**: Sessions are automatically loaded at runtime
-- **Testability**: Individual modules can be tested in isolation
+**puppeteer-modular.js**
+- Entry point that loads session classes dynamically from the `sessions/` directory
+- Creates session functions and passes them to `SessionManager.runSessions()`
+- Example: `sessionClasses.map(sessionInfo => new sessionInfo.class(sessionManager).run())`
+
+**config.js**
+- Manages environment variables and memory profiles (8GB, 16GB, 32GB)
+- Defines safety limits: `memoryThreshold`, `maxMemoryMB`, `maxConcurrency`, `maxBrowsers`
+- Controls debug logging with global `console.log` override when `PUPPETEER_DEBUG=false`
+- Example: `const profile = memoryProfiles[systemMemory]` selects the appropriate memory configuration
+
+**sessionManager.js**
+- Orchestrates continuous session execution with progressive concurrency ramp-up
+- Maintains constant concurrent sessions by replacing completed ones immediately
+- Key function: `runSessions()` runs a `while (true)` loop that uses `Promise.race()` to detect completions and start new sessions
+- Uses `sessionPromise.finally()` to remove completed promises from tracking array
+
+**browserPool.js**
+- Manages a pool of Chrome browser instances for reuse across sessions
+- Sets critical Chrome arguments including `--max_old_space_size=256` to limit browser memory
+- Key functions: `getBrowser()` retrieves from pool or creates new instance, `releaseBrowser()` returns to pool
+
+**deviceManager.js**
+- Loads device profiles from `devices.json` and selects random devices for sessions
+- Provides device emulation configuration (viewport, user agent, touch support)
+- Key function: `getRandomDevice()` returns a device profile for session setup
+
+**utils.js**
+- Contains all page interaction functions (product selection, cart operations, navigation)
+- Implements frustration signal generators (rage clicks, dead clicks, error clicks)
+- Memory management: `logMemoryUsage()`, `forceGC()` for garbage collection
+- Navigation functions use 20-second timeouts with fallback strategies for resilience
 
 ## Session Types
 
@@ -87,13 +111,11 @@ With 70+ concurrent sessions, verbose logging can consume 100+ MB additional mem
 - String object retention
 - Log message queuing
 
-Debug Mode:
-```bash
-# Enable verbose logging (for troubleshooting)
-export PUPPETEER_DEBUG=true
-
-# Disable verbose logging (production/high concurrency)
-export PUPPETEER_DEBUG=false  # Default
+Debug Mode in Docker Compose:
+```yaml
+environment:
+  - PUPPETEER_DEBUG=true  # Enable verbose logging (for troubleshooting)
+  # - PUPPETEER_DEBUG=false  # Default: disabled for production/high concurrency
 ```
 
 Memory Impact:
@@ -113,38 +135,31 @@ The `PUPPETEER_BROWSER_POOL_SIZE` controls how many browser instances are create
 
 #### Scaling Strategies
 
-**8GB Systems:**
-```bash
-# Recommended configuration
-export PUPPETEER_SYSTEM_MEMORY=8GB
-export PUPPETEER_MAX_CONCURRENT=16
-export PUPPETEER_BROWSER_POOL_SIZE=16   # 1:1 ratio
-
-# Memory conservation
-export PUPPETEER_SYSTEM_MEMORY=8GB
-export PUPPETEER_MAX_CONCURRENT=16
-export PUPPETEER_BROWSER_POOL_SIZE=12   # 1.3:1 ratio (sessions wait, less memory)
+**8GB Systems (docker-compose.yml):**
+```yaml
+environment:
+  - PUPPETEER_SYSTEM_MEMORY=8GB
+  - PUPPETEER_MAX_CONCURRENT=16
+  - PUPPETEER_BROWSER_POOL_SIZE=16   # 1:1 ratio (recommended)
+  # - PUPPETEER_BROWSER_POOL_SIZE=12   # 1.3:1 ratio (memory conservation)
 ```
 
-**16GB Systems:**
-```bash
-# High performance
-export PUPPETEER_SYSTEM_MEMORY=16GB
-export PUPPETEER_MAX_CONCURRENT=70
-export PUPPETEER_BROWSER_POOL_SIZE=60   # 1.2:1 ratio
-
-# Optimal balance
-export PUPPETEER_SYSTEM_MEMORY=16GB
-export PUPPETEER_MAX_CONCURRENT=32
-export PUPPETEER_BROWSER_POOL_SIZE=32   # 1:1 ratio
+**16GB Systems (docker-compose.yml):**
+```yaml
+environment:
+  - PUPPETEER_SYSTEM_MEMORY=16GB
+  - PUPPETEER_MAX_CONCURRENT=70
+  - PUPPETEER_BROWSER_POOL_SIZE=60   # 1.2:1 ratio (high performance)
+  # - PUPPETEER_MAX_CONCURRENT=32
+  # - PUPPETEER_BROWSER_POOL_SIZE=32   # 1:1 ratio (optimal balance)
 ```
 
-**32GB Systems:**
-```bash
-# Maximum performance
-export PUPPETEER_SYSTEM_MEMORY=32GB
-export PUPPETEER_MAX_CONCURRENT=100
-export PUPPETEER_BROWSER_POOL_SIZE=80   # 1.25:1 ratio
+**32GB Systems (docker-compose.yml):**
+```yaml
+environment:
+  - PUPPETEER_SYSTEM_MEMORY=32GB
+  - PUPPETEER_MAX_CONCURRENT=100
+  - PUPPETEER_BROWSER_POOL_SIZE=80   # 1.25:1 ratio (maximum performance)
 ```
 
 #### Browser Pool Limits and Memory Impact
@@ -210,80 +225,92 @@ The script uses progressive concurrency ramping to prevent memory spikes at star
 #### Quick Start Recommendations
 
 **8GB Systems:**
-```bash
-export PUPPETEER_SYSTEM_MEMORY=8GB
-export PUPPETEER_MAX_CONCURRENT=16
-export PUPPETEER_BROWSER_POOL_SIZE=16
+```yaml
+environment:
+  - PUPPETEER_SYSTEM_MEMORY=8GB
+  - PUPPETEER_MAX_CONCURRENT=16
+  - PUPPETEER_BROWSER_POOL_SIZE=16
 ```
 
 **16GB Systems:**
-```bash
-export PUPPETEER_SYSTEM_MEMORY=16GB
-export PUPPETEER_MAX_CONCURRENT=70
-export PUPPETEER_BROWSER_POOL_SIZE=60
+```yaml
+environment:
+  - PUPPETEER_SYSTEM_MEMORY=16GB
+  - PUPPETEER_MAX_CONCURRENT=70
+  - PUPPETEER_BROWSER_POOL_SIZE=60
 ```
 
 **32GB Systems:**
-```bash
-export PUPPETEER_SYSTEM_MEMORY=32GB
-export PUPPETEER_MAX_CONCURRENT=100
-export PUPPETEER_BROWSER_POOL_SIZE=80
+```yaml
+environment:
+  - PUPPETEER_SYSTEM_MEMORY=32GB
+  - PUPPETEER_MAX_CONCURRENT=100
+  - PUPPETEER_BROWSER_POOL_SIZE=80
 ```
 
 #### Advanced Tuning
 
 **Memory Pressure? Reduce browsers first:**
-```bash
-export PUPPETEER_MAX_CONCURRENT=16     # Keep high concurrency
-export PUPPETEER_BROWSER_POOL_SIZE=12  # Reduce memory usage
+```yaml
+environment:
+  - PUPPETEER_MAX_CONCURRENT=16     # Keep high concurrency
+  - PUPPETEER_BROWSER_POOL_SIZE=12  # Reduce memory usage
 ```
 
 **Need faster session starts? Use 1:1 ratio:**
-```bash
-export PUPPETEER_MAX_CONCURRENT=16     # Moderate concurrency
-export PUPPETEER_BROWSER_POOL_SIZE=16  # No session waiting
+```yaml
+environment:
+  - PUPPETEER_MAX_CONCURRENT=16     # Moderate concurrency
+  - PUPPETEER_BROWSER_POOL_SIZE=16  # No session waiting
 ```
 
 ## Usage
 
-### Docker Usage
-```bash
-# Using docker-compose
-PUPPETEER_MAX_CONCURRENT=20 docker-compose up puppeteer
+### Docker Compose (Primary Deployment)
 
-# Or set in docker-compose.yml
-environment:
-  - PUPPETEER_SYSTEM_MEMORY=16GB
-  - PUPPETEER_MAX_CONCURRENT=70
-  - PUPPETEER_BROWSER_POOL_SIZE=60
-  - STOREDOG_URL=http://service-proxy:80
+Start the service:
+```bash
+docker compose up puppeteer
 ```
 
-### Kubernetes Usage
+Configure in `docker-compose.yml` or `docker-compose.dev.yml`:
 ```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: puppeteer-traffic
-spec:
-  template:
-    spec:
-      containers:
-      - name: puppeteer
-        image: storedog-puppeteer:latest
-        env:
-        - name: PUPPETEER_SYSTEM_MEMORY
-          value: "16GB"
-        - name: PUPPETEER_MAX_CONCURRENT
-          value: "70"
-        - name: PUPPETEER_BROWSER_POOL_SIZE
-          value: "60"
-        - name: STOREDOG_URL
-          value: "http://service-proxy.storedog.svc.cluster.local"
-        resources:
-          limits:
-            memory: "16Gi"
-            cpu: "8000m"
+services:
+  puppeteer:
+    environment:
+      - STOREDOG_URL=http://service-proxy:80
+      - PUPPETEER_SYSTEM_MEMORY=16GB
+      - PUPPETEER_MAX_CONCURRENT=70
+      - PUPPETEER_BROWSER_POOL_SIZE=60
+      - PUPPETEER_DEBUG=false
+```
+
+Rebuild after code changes:
+```bash
+docker compose build --no-cache puppeteer
+docker compose up puppeteer
+```
+
+### Kubernetes (Secondary Deployment)
+
+Edit `k8s-manifests/fake-traffic/puppeteer.yaml`:
+```yaml
+env:
+  - name: STOREDOG_URL
+    value: "http://service-proxy.storedog.svc.cluster.local"
+  - name: PUPPETEER_SYSTEM_MEMORY
+    value: "16GB"
+  - name: PUPPETEER_MAX_CONCURRENT
+    value: "70"
+resources:
+  limits:
+    memory: "16Gi"
+    cpu: "8000m"
+```
+
+Deploy:
+```bash
+kubectl apply -f k8s-manifests/fake-traffic/puppeteer.yaml
 ```
 
 ## Device Emulation
