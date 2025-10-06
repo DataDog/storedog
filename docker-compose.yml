@@ -40,6 +40,8 @@ services:
         condition: service_started
       backend:
         condition: service_healthy
+      worker:
+        condition: service_started
     volumes:
       # Mount only specific files that need to be edited during the lab
       - ./services/frontend/pages/_app.tsx:/app/pages/_app.tsx
@@ -176,7 +178,10 @@ services:
     build:
       context: ./services/ads/java
     depends_on:
-      - dd-agent
+      dd-agent:
+        condition: service_started
+      postgres: 
+        condition: service_started
     environment:
       - DD_AGENT_HOST=dd-agent
       - DD_SERVICE=store-ads
@@ -224,7 +229,8 @@ services:
       interval: 3s
     restart: always
     depends_on:
-      - dd-agent
+      dd-agent:
+        condition: service_started
     volumes:
       - postgres_logs:/var/log/pg_log:rw
     networks:
@@ -275,7 +281,8 @@ services:
     networks:
       - storedog-network
     depends_on:
-      - frontend
+      frontend:
+        condition: service_healthy
     shm_size: '4gb' # Increase shared memory size
     cap_add:
       - 'SYS_ADMIN' # Required for Puppeteer to run in Docker
