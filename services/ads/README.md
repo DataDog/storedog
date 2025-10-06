@@ -155,8 +155,10 @@ To use the Python ads service, replace the `ads` definition with the following i
     build: # Only used if building from source in development
       context: ./services/ads/python
     depends_on:
-      - postgres
-      - dd-agent
+      dd-agent:
+        condition: service_started
+      postgres:
+        condition: service_started
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
@@ -246,7 +248,7 @@ spec:
             - name: DD_SERVICE
               value: store-ads
             - name: DD_VERSION
-              value: ${DD_VERSION_ADS}
+              value: ${DD_VERSION_ADS_PYTHON}
             - name: DD_RUNTIME_METRICS_ENABLED
               value: "true"
             - name: DD_PROFILING_ENABLED

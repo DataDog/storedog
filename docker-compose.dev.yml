@@ -27,11 +27,18 @@ services:
   frontend:
     build:
       context: ./services/frontend
-    command: bash -c "wait-for-it backend:4000 -- ${FRONTEND_COMMAND:-npm run dev}"
+    command: ${FRONTEND_COMMAND:-npm run dev}
     depends_on:
-      - worker
-      - dd-agent
-      - backend
+      dd-agent:
+        condition: service_started
+      backend:
+        condition: service_healthy
+      worker:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "3000"]
+      interval: 3s
+      start_period: 60s
     volumes:
       - ./services/frontend:/app
       - /app/node_modules
@@ -40,72 +47,72 @@ services:
     environment:
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV:-development}
-      - DD_SERVICE=store-frontend-api # used for Next.js API routes
-      - DD_VERSION=${NEXT_PUBLIC_DD_VERSION_FRONTEND-1.0.0}
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
       - DD_PROFILING_TIMELINE_ENABLED=true
       - DD_PROFILING_ALLOCATION_ENABLED=true
-      - NEXT_PUBLIC_DD_APPLICATION_ID=${NEXT_PUBLIC_DD_APPLICATION_ID:-DD_APPLICATION_ID-not-set}
-      - NEXT_PUBLIC_DD_CLIENT_TOKEN=${NEXT_PUBLIC_DD_CLIENT_TOKEN:-DD_CLIENT_TOKEN-not-set}
+      - DD_SERVICE=store-frontend
+      - NEXT_PUBLIC_DD_VERSION_FRONTEND=${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}
       - NEXT_PUBLIC_DD_SITE=${NEXT_PUBLIC_DD_SITE:-datadoghq.com}
-      - NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend # used for client-side Next.js RUM configuration
-      - NEXT_PUBLIC_DD_ENV=${DD_ENV:-development}
-      - NEXT_PUBLIC_ADS_ROUTE=${NEXT_PUBLIC_ADS_ROUTE:-/services/ads}
-      - NEXT_PUBLIC_DISCOUNTS_ROUTE=${NEXT_PUBLIC_DISCOUNTS_ROUTE:-/services/discounts}
-      - NEXT_PUBLIC_DBM_ROUTE=${NEXT_PUBLIC_DBM_ROUTE:-/services/dbm}
-      - NEXT_PUBLIC_FRONTEND_API_ROUTE=${NEXT_PUBLIC_FRONTEND_API_ROUTE:-http://localhost:3000}
-      - NEXT_PUBLIC_SPREE_API_HOST=${NEXT_PUBLIC_SPREE_API_HOST:-http://service-proxy/services/backend}
-      - NEXT_PUBLIC_SPREE_CLIENT_HOST=${NEXT_PUBLIC_SPREE_CLIENT_HOST:-/services/backend}
-      - NEXT_PUBLIC_SPREE_IMAGE_HOST=${NEXT_PUBLIC_SPREE_IMAGE_HOST:-/services/backend}
-      - NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN=${NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN:-service-proxy}
+      - NEXT_PUBLIC_DD_APPLICATION_ID=${NEXT_PUBLIC_DD_APPLICATION_ID:-not-set-in-docker-compose}
+      - NEXT_PUBLIC_DD_CLIENT_TOKEN=${NEXT_PUBLIC_DD_CLIENT_TOKEN:-not-set-in-docker-compose}
     labels:
-      com.datadoghq.ad.logs: '[{"source": "nodejs", "auto_multi_line_detection": true }]'
+      com.datadoghq.ad.logs: '[{"source": "nodejs", "service": "store-frontend-server", "auto_multi_line_detection": true }]'
 
   # Backend service (Ruby on Rails/Spree)
   backend:
     build:
       context: ./services/backend
-    command: wait-for-it postgres:5432 -- bundle exec ddprofrb exec rails s -b 0.0.0.0 -p 4000 --pid /app/tmp/pids/server.pid
+    command: /bin/bash -c "rm -f /app/tmp/pids/server.pid && bundle exec ddprofrb exec rails s -b 0.0.0.0 -p 4000"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "4000"]
+      interval: 3s
+      start_period: 60s
     depends_on:
-      - 'postgres'
-      - 'redis'
-      - 'dd-agent'
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      dd-agent:
+        condition: service_started
     networks:
       - storedog-network
     volumes:
       - './services/backend:/app'
     environment:
-      - REDIS_URL=redis://redis:6379/0
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - POSTGRES_USER=${POSTGRES_USER-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD-postgres}
-      - DISABLE_SPRING=1
-      - RAILS_ENV=${RAILS_ENV:-production}
-      - DB_POOL=${DB_POOL:-25}
-      - MAX_THREADS=${MAX_THREADS:-5}
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV:-development}
       - DD_SERVICE=store-backend
       - DD_VERSION=${DD_VERSION_BACKEND:-1.0.0}
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
-      - DD_PROFILING_ALLOCATION_ENABLED=true
       - DD_PROFILING_TIMELINE_ENABLED=true
+      - DD_PROFILING_ALLOCATION_ENABLED=true
+      - RAILS_ENV=development
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_HOST=postgres
     labels:
-      com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection": true }]'
+      com.datadoghq.ad.logs: '[{"source": "ruby", "service": "store-backend", "auto_multi_line_detection": true }]'
 
   # Background job processor (Sidekiq)
   worker:
     build:
       context: ./services/backend
-    command: wait-for-it postgres:5432 -- bundle exec ddprofrb exec sidekiq -C config/sidekiq.yml
+    command: bundle exec ddprofrb exec sidekiq -C config/sidekiq.yml
     depends_on:
-      - 'postgres'
-      - 'redis'
-      - 'backend'
-      - 'dd-agent'
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      backend:
+        condition: service_started
+      dd-agent:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "sidekiq"]
+      interval: 3s
+      start_period: 60s
     networks:
       - storedog-network
     volumes:
@@ -113,14 +120,6 @@ services:
     environment:
       # this will never not be true
       - WORKER=true
-      - REDIS_URL=redis://redis:6379/0
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - DISABLE_SPRING=1
-      - DB_POOL=${DB_POOL:-25}
-      - MAX_THREADS=${MAX_THREADS:-5}
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV:-development}
       - DD_SERVICE=store-worker
@@ -129,21 +128,23 @@ services:
       - DD_PROFILING_ENABLED=true
       - DD_PROFILING_TIMELINE_ENABLED=true
       - DD_PROFILING_ALLOCATION_ENABLED=true
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_HOST=postgres
     labels:
-      com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection": true }]'
+      com.datadoghq.ad.logs: '[{"source": "ruby", "service": "store-worker", "auto_multi_line_detection": true }]'
 
   # Discounts service (Python/Flask)
   discounts:
     build:
       context: ./services/discounts
-    command: wait-for-it postgres:5432 -- ddtrace-run flask run --port=2814 --host=0.0.0.0
+    command: ddtrace-run flask run --port=2814 --host=0.0.0.0
     depends_on:
-      - postgres
-      - dd-agent
+      postgres:
+        condition: service_healthy
+      dd-agent:
+        condition: service_started
     environment:
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_HOST=postgres
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV:-development}
       - DD_SERVICE=store-discounts
@@ -157,19 +158,21 @@ services:
     networks:
       - storedog-network
     labels:
-      com.datadoghq.ad.logs: '[{"source": "python"}]'
+        com.datadoghq.ad.logs: '[{"source": "python", "service": "store-discounts"}]'
+        com.datadoghq.tags.env: '${DD_ENV}'
+        com.datadoghq.tags.service: 'store-discounts'
+        com.datadoghq.tags.version: '${DD_VERSION_DISCOUNTS:-1.0.0}'
 
   # Advertisement service (Java)
   ads:
     build:
       context: ./services/ads/java
     depends_on:
-      - postgres
-      - dd-agent
+      dd-agent:
+        condition: service_started
+      postgres:
+        condition: service_healthy
     environment:
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_HOST=postgres
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV:-development}
       - DD_SERVICE=store-ads
@@ -177,10 +180,15 @@ services:
       - DD_PROFILING_ENABLED=true
       - DD_PROFILING_TIMELINE_ENABLED=true
       - DD_PROFILING_ALLOCATION_ENABLED=true
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_HOST=postgres
     networks:
       - storedog-network
     labels:
-      com.datadoghq.ad.logs: '[{"source": "java"}]'
+      com.datadoghq.ad.logs: '[{"source": "java", "service": "store-ads"}]'
+      com.datadoghq.tags.service: 'store-ads'
+      com.datadoghq.tags.version: '${DD_VERSION_ADS:-1.0.0}'
 
   # Web server and reverse proxy
   service-proxy:
@@ -192,15 +200,19 @@ services:
     networks:
       - storedog-network
     depends_on:
-      - frontend
-      - dd-agent
+      dd-agent:
+        condition: service_started
+      discounts:
+        condition: service_started
+      backend:
+        condition: service_started
     environment:
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV:-development}
       - DD_SERVICE=service-proxy
       - DD_VERSION=${DD_VERSION_NGINX:-1.28.0}
     labels:
-      com.datadoghq.ad.logs: '[{"source": "nginx"}]'
+      com.datadoghq.ad.logs: '[{"source": "nginx", "service": "service-proxy"}]'
       com.datadoghq.ad.check_names: '["nginx"]'
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]'
@@ -211,7 +223,11 @@ services:
       context: ./services/postgres
     restart: always
     depends_on:
-      - dd-agent
+      dd-agent:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "nc", "-z", "postgres", "5432"]
+      interval: 3s
     volumes:
       - postgres_logs:/var/log/pg_log:rw
     networks:
