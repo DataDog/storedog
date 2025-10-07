@@ -321,6 +321,8 @@ const goToFooterPage = async (page) => {
 
     await page.waitForTimeout(5000);
 
+    let adElement = await page.$('#second-ad-container');
+
     // scroll to ad element again 
     await adElement.evaluate((el) => {
       el.parentNode.scrollTo(0, el.getBoundingClientRect().bottom);
