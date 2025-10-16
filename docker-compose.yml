@@ -9,7 +9,7 @@ services:
       - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
       - DD_CONTAINER_EXCLUDE=image:agent name:puppeteer
       - DD_CLOUD_PROVIDER_METADATA=[]
-      - DD_HOSTNAME=${DD_HOSTNAME:-production-host}
+      - DD_HOSTNAME=${DD_HOSTNAME-production-host}
       - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
     networks:
       - storedog-network
@@ -28,31 +28,30 @@ services:
       backend:
         condition: service_healthy
       worker:
-        condition: service_started
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "3000"]
       interval: 3s
       start_period: 60s
     networks:
       - storedog-network
-    ports:
-      - '3000:3000'
     environment:
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV:-production}
-      - DD_SERVICE=store-frontend
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
       - DD_PROFILING_TIMELINE_ENABLED=true
       - DD_PROFILING_ALLOCATION_ENABLED=true
-      - DD_SITE=${DD_SITE:-datadoghq.com}
-      - DD_VERSION=${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}
+      - DD_SERVICE=store-frontend
+      - NEXT_PUBLIC_DD_VERSION_FRONTEND=${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}
+      - NEXT_PUBLIC_DD_SITE=${NEXT_PUBLIC_DD_SITE:-datadoghq.com}
       - NEXT_PUBLIC_DD_APPLICATION_ID=${NEXT_PUBLIC_DD_APPLICATION_ID:-not-set-in-docker-compose}
       - NEXT_PUBLIC_DD_CLIENT_TOKEN=${NEXT_PUBLIC_DD_CLIENT_TOKEN:-not-set-in-docker-compose}
     labels:
-      com.datadoghq.ad.logs: '[{"source": "nodejs", "service": "store-frontend-server", "auto_multi_line_detection":true }]'
+      com.datadoghq.ad.logs: '[{"source": "nodejs", "service": "store-frontend-server", "auto_multi_line_detection": true }]'
   backend:
     image: ghcr.io/datadog/storedog/backend:${STOREDOG_IMAGE_VERSION:-latest}
+    command: /bin/bash -c "rm -f /app/tmp/pids/server.pid && bundle exec ddprofrb exec rails s -b 0.0.0.0 -p 4000"
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "4000"]
       interval: 3s
@@ -75,32 +74,37 @@ services:
       - DD_PROFILING_ENABLED=true
       - DD_PROFILING_TIMELINE_ENABLED=true
       - DD_PROFILING_ALLOCATION_ENABLED=true
+      - RAILS_ENV=production
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_HOST=postgres
     labels:
-      com.datadoghq.ad.logs: '[{"source": "ruby", "service": "store-backend",  "auto_multi_line_detection":true }]'
+      com.datadoghq.ad.logs: '[{"source": "ruby", "service": "store-backend", "auto_multi_line_detection": true }]'
   worker:
     image: ghcr.io/datadog/storedog/backend:${STOREDOG_IMAGE_VERSION:-latest}
     command: bundle exec ddprofrb exec sidekiq -C config/sidekiq.yml
     depends_on:
       postgres:
-        condition: service_started
+        condition: service_healthy
       redis:
         condition: service_started
       backend:
         condition: service_started
       dd-agent:
         condition: service_started
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "sidekiq"]
+      interval: 3s
+      start_period: 60s
     networks:
       - storedog-network
     environment:
+      # this will never not be true
       - WORKER=true
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV:-production}
       - DD_SERVICE=store-worker
       - DD_VERSION=${DD_VERSION_BACKEND:-1.0.0}
-      - DD_LOGS_INJECTION=true
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
       - DD_PROFILING_TIMELINE_ENABLED=true
@@ -109,47 +113,38 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_HOST=postgres
     labels:
-      com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection":true }]'
+      com.datadoghq.ad.logs: '[{"source": "ruby", "service": "store-worker", "auto_multi_line_detection": true }]'
   discounts:
     image: ghcr.io/datadog/storedog/discounts:${STOREDOG_IMAGE_VERSION:-latest}
     command: ddtrace-run flask run --port=2814 --host=0.0.0.0
-    healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "2814"]
-      interval: 3s
-      start_period: 60s
     depends_on:
       postgres:
-        condition: service_started
+        condition: service_healthy
       dd-agent:
         condition: service_started
     environment:
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV:-production}
-      - DD_VERSION=${DD_VERSION_DISCOUNTS:-1.0.0}
       - DD_SERVICE=store-discounts
-      - DD_LOGS_INJECTION=true
+      - DD_VERSION=${DD_VERSION_DISCOUNTS:-1.0.0}
+      - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
       - DD_PROFILING_TIMELINE_ENABLED=true
       - DD_PROFILING_ALLOCATION_ENABLED=true
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_HOST=postgres
-    volumes:
-      - ./services/discounts:/app
     networks:
       - storedog-network
     labels:
-      com.datadoghq.ad.logs: '[{"source": "python", "service": "store-discounts"}]'
-      com.datadoghq.tags.env: '${DD_ENV}'
-      com.datadoghq.tags.service: 'store-discounts'
-      com.datadoghq.tags.version: '${DD_VERSION_DISCOUNTS:-1.0.0}'
+        com.datadoghq.ad.logs: '[{"source": "python", "service": "store-discounts"}]'
+        com.datadoghq.tags.env: '${DD_ENV}'
+        com.datadoghq.tags.service: 'store-discounts'
+        com.datadoghq.tags.version: '${DD_VERSION_DISCOUNTS:-1.0.0}'
   ads:
-    image: ghcr.io/datadog/storedog/ads:${STOREDOG_IMAGE_VERSION:-latest}
+    image: ghcr.io/datadog/storedog/ads-java:${STOREDOG_IMAGE_VERSION:-latest}
     depends_on:
       dd-agent:
         condition: service_started
       postgres:
-        condition: service_started
+        condition: service_healthy
     environment:
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV:-production}
@@ -170,6 +165,10 @@ services:
   service-proxy:
     image: ghcr.io/datadog/storedog/nginx:${STOREDOG_IMAGE_VERSION:-latest}
     restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:81/nginx_status/"]
+      interval: 3s
+      start_period: 30s
     ports:
       - '80:80'
     networks:
@@ -180,7 +179,9 @@ services:
       discounts:
         condition: service_started
       backend:
-        condition: service_started
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
     environment:
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV:-production}
@@ -193,15 +194,16 @@ services:
       com.datadoghq.ad.instances: '[{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]'
   postgres:
     image: ghcr.io/datadog/storedog/postgres:${STOREDOG_IMAGE_VERSION:-latest}
-    healthcheck:
-      test: ["CMD", "nc", "-z", "postgres", "5432"]
-      interval: 3s
     restart: always
     depends_on:
       dd-agent:
         condition: service_started
-    volumes:
-      - postgres_logs:/var/log/pg_log:rw
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d postgres && psql -U ${POSTGRES_USER:-postgres} -d postgres -c 'SELECT 1;' > /dev/null 2>&1"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     networks:
       - storedog-network
     environment:
@@ -213,17 +215,11 @@ services:
       com.datadoghq.ad.check_names: '["postgres"]'
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":5432, "username":"datadog", "password":"datadog"}]'
-      com.datadoghq.ad.logs: '[{"source": "postgresql", "service": "store-db", "auto_multi_line_detection":true, "path": "/var/log/pg_log/postgresql*.json", "type": "file"}]'
+      com.datadoghq.ad.logs: '[{"source": "postgresql", "service":"store-db", "auto_multi_line_detection": true, "path": "/var/log/pg_log/postgresql*.json", "type": "file"}]'
   redis:
     image: redis:6.2-alpine
-    healthcheck:
-      test: ['CMD', 'redis-cli', '--raw', 'incr', 'ping']
-      interval: 3s
     depends_on:
-      dd-agent:
-        condition: service_started
-    volumes:
-      - 'redis:/data'
+      - dd-agent
     networks:
       - storedog-network
     labels:
@@ -232,29 +228,25 @@ services:
       com.datadoghq.ad.check_names: '["redisdb"]'
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":6379}]'
-      com.datadoghq.ad.logs: '[{"source": "redis", "service": "redis"}]'
+      com.datadoghq.ad.logs: '[{"source": "redis"}]'
   puppeteer:
     image: ghcr.io/datadog/storedog/puppeteer:${STOREDOG_IMAGE_VERSION:-latest}
     platform: linux/amd64
-    volumes: 
-    - ./services/puppeteer/scripts/puppeteer.js:/home/pptruser/puppeteer.js
-    - ./services/puppeteer/scripts/puppeteer.sh:/home/pptruser/puppeteer.sh
-    command: "bash puppeteer.sh"
     environment:
-      - STOREDOG_URL=${STOREDOG_URL-http://service-proxy:80}
+      - STOREDOG_URL=${STOREDOG_URL:-http://service-proxy:80}
       - PUPPETEER_TIMEOUT=${PUPPETEER_TIMEOUT:-30000}
+      - SKIP_SESSION_CLOSE=${SKIP_SESSION_CLOSE:-false}
     networks:
       - storedog-network
     depends_on:
-      frontend:
-        condition: service_healthy
+      - frontend
     shm_size: '4gb' # Increase shared memory size
     cap_add:
       - 'SYS_ADMIN' # Required for Puppeteer to run in Docker
 
 volumes:
-  redis:
-  postgres_logs:
+  redis: # Redis data persistence
+  postgres_logs: # PostgreSQL logs storage
 
 networks:
-  storedog-network:
+  storedog-network: # Main application network
