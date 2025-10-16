@@ -13,13 +13,20 @@ FOLLOW?=
 GREEN=\033[0;32m
 NC=\033[0m # No Color
 
-.PHONY: help up down restart stop ps logs clean build dev prod dd-dev dd-prod backup-db
+.PHONY: help prepare-release up down restart stop ps logs clean build dev prod dd-dev dd-prod backup-db
 
 help: ## Show this help menu
 	@echo "Usage: make [TARGET] [ENV=prod|dev] [FOLLOW=f]"
-	@echo "For logs: make logs [service_name] [ENV=prod|dev] [FOLLOW=f]"
-	@echo "For build: make build [service_name] [ENV=prod|dev]"
-	@echo "For stop: make stop [service_name] [ENV=prod|dev]"
+	@echo ""
+	@echo "Commands that support ENV parameter:"
+	@echo "  make up [ENV=prod|dev]           - Start containers"
+	@echo "  make down [ENV=prod|dev]         - Stop containers"
+	@echo "  make restart [ENV=prod|dev]      - Restart containers"
+	@echo "  make ps [ENV=prod|dev]           - Show running containers"
+	@echo "  make logs [service_name] [ENV=prod|dev] [FOLLOW=f] - View logs"
+	@echo "  make clean [ENV=prod|dev]        - Clean up containers, networks, volumes"
+	@echo "  make build [service_name] [ENV=prod|dev] - Build containers"
+	@echo "  make stop [service_name] [ENV=prod|dev]  - Stop specific service"
 	@echo ""
 	@echo "Targets:"
 	@awk '/^[a-zA-Z\-\_0-9]+:/ { \
@@ -31,6 +38,23 @@ help: ## Show this help menu
 		} \
 	} \
 	{ lastLine = $$0 }' $(MAKEFILE_LIST)
+
+## Generate production compose file for release
+prepare-release:
+	@echo "${GREEN}Transforming docker-compose.dev.yml to docker-compose.generated.yml...${NC}"
+	@python3 transform_compose.py docker-compose.dev.yml docker-compose.generated.yml
+	@echo "${GREEN}✓ Production compose file generated successfully!${NC}"
+	@echo ""
+	@echo "📄 Generated file: ${GREEN}docker-compose.generated.yml${NC}"
+	@echo "Please review the generated file in another terminal or editor before proceeding."
+	@echo ""
+	@read -p "Have you reviewed the file? Replace docker-compose.yml? [y/N]: " confirm; \
+	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
+		cp docker-compose.generated.yml docker-compose.yml; \
+		echo "${GREEN}✓ docker-compose.yml has been updated!${NC}"; \
+	else \
+		echo "Skipped replacing docker-compose.yml. Generated file saved as docker-compose.generated.yml"; \
+	fi
 
 ## Start the containers
 up:
@@ -53,7 +77,9 @@ down:
 	fi
 
 ## Restart the containers
-restart: down up
+restart:
+	@make down ENV=$(ENV)
+	@make up ENV=$(ENV)
 
 ## Stop containers. Usage: make stop [service_name] [ENV=prod|dev]
 stop:
