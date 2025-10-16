@@ -42,7 +42,8 @@ class ComposeTransformer:
     def replace_build_sections(self) -> 'ComposeTransformer':
         """Replace build sections with image sections for all configured services."""
         for service_name, image_name in SERVICE_TO_IMAGE_MAP.items():
-            pattern = rf'(\s+{re.escape(service_name)}:\s*\n(?:.*\n)*?)\s+build:\s*\n\s+context:\s+[^\n]+\n'
+            # Use a more precise pattern that stops at the next service or section
+            pattern = rf'(\s+{re.escape(service_name)}:\s*\n(?:(?!\s+[a-zA-Z0-9_-]+:).*\n)*?)\s+build:\s*\n\s+context:\s+[^\n]+\n'
             replacement = rf'\1    image: {image_name}\n'
             
             if re.search(pattern, self.content, flags=re.MULTILINE):
@@ -126,7 +127,23 @@ class ComposeTransformer:
         """Get list of transformations that were applied."""
         return self.transformations_applied
 
-def transform_compose_file(input_file: str, output_file: str = None) -> bool:
+def cleanup_generated_file(generated_file: str = "docker-compose.generated.yml") -> bool:
+    """
+    Delete the generated file if it exists.
+    """
+    try:
+        if os.path.exists(generated_file):
+            os.remove(generated_file)
+            print(f"Cleaned up generated file: {generated_file}")
+            return True
+        else:
+            print(f"Generated file '{generated_file}' not found, nothing to clean up")
+            return True
+    except Exception as e:
+        print(f"Error removing generated file: {e}")
+        return False
+
+def transform_compose_file(input_file: str, output_file: str = None, cleanup_generated: bool = True) -> bool:
     """
     Transform docker-compose.dev.yml file by making only the specified changes
     and preserving all other formatting and structure.
@@ -166,6 +183,11 @@ def transform_compose_file(input_file: str, output_file: str = None) -> bool:
         with open(output_file, 'w') as f:
             f.write(transformer.get_content())
         print(f"Transformation complete! Output written to: {output_file}")
+        
+        # Clean up generated file if requested and we're writing to docker-compose.yml
+        if cleanup_generated and output_file == "docker-compose.yml":
+            cleanup_generated_file()
+        
         return True
     except Exception as e:
         print(f"Error writing file: {e}")
