@@ -42,8 +42,8 @@ class ComposeTransformer:
     def replace_build_sections(self) -> 'ComposeTransformer':
         """Replace build sections with image sections for all configured services."""
         for service_name, image_name in SERVICE_TO_IMAGE_MAP.items():
-            # Use a more precise pattern that stops at the next service or section
-            pattern = rf'(\s+{re.escape(service_name)}:\s*\n(?:(?!\s+[a-zA-Z0-9_-]+:).*\n)*?)\s+build:\s*\n\s+context:\s+[^\n]+\n'
+            # Pattern to match the entire build section including context, dockerfile, target, and args
+            pattern = rf'(\s+{re.escape(service_name)}:\s*\n(?:(?!\s+[a-zA-Z0-9_-]+:).*\n)*?)\s+build:\s*\n(?:\s+(?:context|dockerfile|target|args):[^\n]*\n|\s+[A-Z_]+:[^\n]*\n)*'
             replacement = rf'\1    image: {image_name}\n'
             
             if re.search(pattern, self.content, flags=re.MULTILINE):
@@ -51,6 +51,7 @@ class ComposeTransformer:
                 self.transformations_applied.append(f"Transformed {service_name}: replaced build with image")
         
         return self
+    
     
     def update_frontend_command(self) -> 'ComposeTransformer':
         """Update frontend command from npm run dev to npm run prod."""
@@ -95,9 +96,9 @@ class ComposeTransformer:
     
     def remove_development_volumes(self) -> 'ComposeTransformer':
         """Remove development volume mounts from services (but keep essential volumes)."""
-        # Remove volumes sections from specific services, but preserve dd-agent and redis volumes
+        # Remove volumes sections from specific services, but preserve dd-agent, postgres, and redis volumes
         patterns_to_remove = [
-            # Frontend volumes (already handled by previous method name, but keeping for completeness)
+            # Frontend volumes
             r'(\s+frontend:\s*\n(?:.*\n)*?)\s+volumes:\s*\n(?:\s+-[^\n]*\n)+(?=\s+[a-zA-Z0-9_-]+:)',
             # Backend volumes  
             r'(\s+backend:\s*\n(?:.*\n)*?)\s+volumes:\s*\n(?:\s+-[^\n]*\n)+(?=\s+[a-zA-Z0-9_-]+:)',
@@ -119,6 +120,7 @@ class ComposeTransformer:
             self.transformations_applied.append(f"Removed development volumes from {removed_count} services")
         return self
     
+    
     def get_content(self) -> str:
         """Get the transformed content."""
         return self.content
@@ -127,23 +129,7 @@ class ComposeTransformer:
         """Get list of transformations that were applied."""
         return self.transformations_applied
 
-def cleanup_generated_file(generated_file: str = "docker-compose.generated.yml") -> bool:
-    """
-    Delete the generated file if it exists.
-    """
-    try:
-        if os.path.exists(generated_file):
-            os.remove(generated_file)
-            print(f"Cleaned up generated file: {generated_file}")
-            return True
-        else:
-            print(f"Generated file '{generated_file}' not found, nothing to clean up")
-            return True
-    except Exception as e:
-        print(f"Error removing generated file: {e}")
-        return False
-
-def transform_compose_file(input_file: str, output_file: str = None, cleanup_generated: bool = True) -> bool:
+def transform_compose_file(input_file: str, output_file: str = None) -> bool:
     """
     Transform docker-compose.dev.yml file by making only the specified changes
     and preserving all other formatting and structure.
@@ -183,10 +169,6 @@ def transform_compose_file(input_file: str, output_file: str = None, cleanup_gen
         with open(output_file, 'w') as f:
             f.write(transformer.get_content())
         print(f"Transformation complete! Output written to: {output_file}")
-        
-        # Clean up generated file if requested and we're writing to docker-compose.yml
-        if cleanup_generated and output_file == "docker-compose.yml":
-            cleanup_generated_file()
         
         return True
     except Exception as e:

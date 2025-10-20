@@ -33,6 +33,15 @@ services:
   frontend:
     build:
       context: ./services/frontend
+      dockerfile: Dockerfile
+      target: ${FRONTEND_BUILD_TARGET:-development}
+      args: 
+        DD_ENV: ${DD_ENV:-development}
+        DD_VERSION: ${DD_VERSION_FRONTEND:-1.0.0}
+        DD_SERVICE: ${DD_SERVICE_FRONTEND:-store-frontend}
+        DD_SITE: ${DD_SITE:-datadoghq.com}
+        RUM_APPLICATION_ID: ${RUM_APPLICATION_ID:-not-set-in-docker-compose}
+        RUM_CLIENT_TOKEN: ${RUM_CLIENT_TOKEN:-not-set-in-docker-compose}
     command: ${FRONTEND_COMMAND:-npm run dev}
     depends_on:
       dd-agent:
@@ -78,6 +87,9 @@ networks:
         # Check that build sections are removed
         self.assertNotIn('build:', content)
         self.assertNotIn('context:', content)
+        self.assertNotIn('dockerfile:', content)
+        self.assertNotIn('target:', content)
+        self.assertNotIn('args:', content)
         
         # Check that image sections are added
         self.assertIn('image: ghcr.io/datadog/storedog/frontend:${STOREDOG_IMAGE_VERSION:-latest}', content)
@@ -220,6 +232,8 @@ networks:
         
         # Check that all transformations were applied
         self.assertNotIn('build:', content)
+        self.assertNotIn('target:', content)
+        self.assertNotIn('args:', content)
         self.assertIn('image: ghcr.io/datadog/storedog/frontend:${STOREDOG_IMAGE_VERSION:-latest}', content)
         self.assertIn('${FRONTEND_COMMAND:-npm run prod}', content)
         self.assertIn('gcr.io/datadoghq/agent:${DD_AGENT_VERSION:-latest}', content)
@@ -262,6 +276,11 @@ services:
   frontend:
     build:
       context: ./services/frontend
+      dockerfile: Dockerfile
+      target: ${FRONTEND_BUILD_TARGET:-development}
+      args: 
+        DD_ENV: ${DD_ENV:-development}
+        DD_VERSION: ${DD_VERSION_FRONTEND:-1.0.0}
     command: ${FRONTEND_COMMAND:-npm run dev}
   dd-agent:
     image: gcr.io/datadoghq/agent:latest
