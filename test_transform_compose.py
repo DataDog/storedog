@@ -40,8 +40,8 @@ services:
         DD_VERSION: ${DD_VERSION_FRONTEND:-1.0.0}
         DD_SERVICE: ${DD_SERVICE_FRONTEND:-store-frontend}
         DD_SITE: ${DD_SITE:-datadoghq.com}
-        RUM_APPLICATION_ID: ${RUM_APPLICATION_ID:-not-set-in-docker-compose}
-        RUM_CLIENT_TOKEN: ${RUM_CLIENT_TOKEN:-not-set-in-docker-compose}
+        NEXT_PUBLIC_DD_APPLICATION_ID: ${NEXT_PUBLIC_DD_APPLICATION_ID:-not-set-in-docker-compose}
+        NEXT_PUBLIC_DD_CLIENT_TOKEN: ${NEXT_PUBLIC_DD_CLIENT_TOKEN:-not-set-in-docker-compose}
     command: ${FRONTEND_COMMAND:-npm run dev}
     depends_on:
       dd-agent:
