@@ -33,20 +33,18 @@ services:
       test: ["CMD", "nc", "-z", "localhost", "3000"]
       interval: 3s
       start_period: 60s
+    ports:
+      - '3000:3000'
     networks:
       - storedog-network
     environment:
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV:-production}
-      - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
       - DD_PROFILING_TIMELINE_ENABLED=true
       - DD_PROFILING_ALLOCATION_ENABLED=true
-      - DD_SERVICE=store-frontend
-      - NEXT_PUBLIC_DD_VERSION_FRONTEND=${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}
-      - NEXT_PUBLIC_DD_SITE=${NEXT_PUBLIC_DD_SITE:-datadoghq.com}
-      - NEXT_PUBLIC_DD_APPLICATION_ID=${NEXT_PUBLIC_DD_APPLICATION_ID:-not-set-in-docker-compose}
-      - NEXT_PUBLIC_DD_CLIENT_TOKEN=${NEXT_PUBLIC_DD_CLIENT_TOKEN:-not-set-in-docker-compose}
+      - DD_RUNTIME_METRICS_ENABLED=true
+      - DD_SERVICE=${DD_SERVICE_FRONTEND:-store-frontend}
     labels:
       com.datadoghq.ad.logs: '[{"source": "nodejs", "service": "store-frontend-server", "auto_multi_line_detection": true }]'
   backend:
@@ -134,10 +132,10 @@ services:
     networks:
       - storedog-network
     labels:
-        com.datadoghq.ad.logs: '[{"source": "python", "service": "store-discounts"}]'
-        com.datadoghq.tags.env: '${DD_ENV}'
-        com.datadoghq.tags.service: 'store-discounts'
-        com.datadoghq.tags.version: '${DD_VERSION_DISCOUNTS:-1.0.0}'
+      com.datadoghq.ad.logs: '[{"source": "python", "service": "store-discounts"}]'
+      com.datadoghq.tags.env: '${DD_ENV}'
+      com.datadoghq.tags.service: 'store-discounts'
+      com.datadoghq.tags.version: '${DD_VERSION_DISCOUNTS:-1.0.0}'
   ads:
     image: ghcr.io/datadog/storedog/ads-java:${STOREDOG_IMAGE_VERSION:-latest}
     depends_on:
