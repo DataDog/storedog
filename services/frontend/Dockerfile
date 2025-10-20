@@ -64,8 +64,8 @@ COPY . .
 ARG DD_VERSION=1.0.0
 ARG DD_SITE=datadoghq.com
 ARG DD_ENV=production
-ARG RUM_APPLICATION_ID=not-set-in-prod-dockerfile
-ARG RUM_CLIENT_TOKEN=not-set-in-prod-dockerfile
+ARG RUM_APPLICATION_ID=not-set-in-dockerfile
+ARG RUM_CLIENT_TOKEN=not-set-in-dockerfile
 ARG DD_SERVICE=store-frontend
 
 ENV NEXT_PUBLIC_DD_VERSION_FRONTEND=${DD_VERSION}
