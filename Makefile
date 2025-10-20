@@ -4,7 +4,7 @@ COMPOSE_FILE=docker-compose.yml
 COMPOSE_DEV_FILE=docker-compose.dev.yml
 
 # Default environment
-ENV=dev
+ENV=prod
 
 # Optional follow flag for logs
 FOLLOW?=
@@ -63,10 +63,16 @@ prepare-release:
 		echo "Skipped replacing docker-compose.yml. Generated file saved as docker-compose.generated.yml"; \
 	fi
 
-## Start the containers
+## Start the containers. Usage: make up [ENV=prod|dev] [NO_CACHE=1]
 up:
-	@echo "Starting $(ENV) environment..."; \
-	$(DC) -f $(call get_compose_file) up -d
+	@if [ "$(NO_CACHE)" = "1" ]; then \
+		echo "Building and starting $(ENV) environment without cache..."; \
+		$(DC) -f $(call get_compose_file) build --no-cache; \
+		$(DC) -f $(call get_compose_file) up -d; \
+	else \
+		echo "Starting $(ENV) environment..."; \
+		$(DC) -f $(call get_compose_file) up -d; \
+	fi
 
 ## Stop the containers
 ## Checks which compose file is being used and stops the containers accordingly.
@@ -115,15 +121,19 @@ logs:
 clean:
 	@$(DC) -f $(call get_compose_file) down -v --remove-orphans
 
-## Build or rebuild containers. Usage: make build [service_name] [ENV=prod|dev]
+## Build or rebuild containers. Usage: make build [service_name] [ENV=prod|dev] [NO_CACHE=1]
 build:
 	@SERVICE=$(word 2,$(MAKECMDGOALS)); \
+	CACHE_FLAG=""; \
+	if [ "$(NO_CACHE)" = "1" ]; then \
+		CACHE_FLAG="--no-cache"; \
+	fi; \
 	if [ -n "$$SERVICE" ]; then \
 		echo "Building service $$SERVICE in $(ENV) environment..."; \
-		$(DC) -f $(call get_compose_file) build $$SERVICE; \
+		$(DC) -f $(call get_compose_file) build $$CACHE_FLAG $$SERVICE; \
 	else \
 		echo "Building all services in $(ENV) environment..."; \
-		$(DC) -f $(call get_compose_file) build; \
+		$(DC) -f $(call get_compose_file) build $$CACHE_FLAG; \
 	fi
 
 ## Switch to development environment and run containers
