@@ -3,6 +3,7 @@
 Storedog is a Dockerized e-commerce site used primarily in labs run at [learn.datadoghq.com](https://learn.datadoghq.com). 
 
 **Table of contents**
+
 - [Services](#services)
 - [Optional features](#optional-features)
 - [Local development](#local-development)
