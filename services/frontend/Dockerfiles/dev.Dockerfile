@@ -1,0 +1,52 @@
+FROM node:20 AS builder
+
+RUN apt-get update && apt-get install -y netcat-openbsd
+
+# install datadog-ci 
+RUN npm install -g @datadog/datadog-ci
+
+ARG DD_GIT_REPOSITORY_URL
+ARG DD_GIT_COMMIT_SHA
+
+ARG DD_ENV=production
+ARG DD_SERVICE=store-frontend
+ARG DD_SITE=datadoghq.com
+ARG DD_VERSION=1.0.0
+ARG RUM_APPLICATION_ID=not-set-in-dockerfile
+ARG RUM_CLIENT_TOKEN=not-set-in-dockerfile
+
+ARG NEXT_PUBLIC_ADS_ROUTE=/services/ads
+ARG NEXT_PUBLIC_DISCOUNTS_ROUTE=/services/discounts
+ARG NEXT_PUBLIC_DBM_ROUTE=/services/dbm
+ARG NEXT_PUBLIC_FRONTEND_API_ROUTE=http://service-proxy:80
+ARG NEXT_PUBLIC_SPREE_API_HOST=http://service-proxy/services/backend
+ARG NEXT_PUBLIC_SPREE_CLIENT_HOST=/services/backend
+ARG NEXT_PUBLIC_SPREE_IMAGE_HOST=/services/backend
+ARG NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN=service-proxy
+
+ENV NEXT_PUBLIC_DD_ENV_FRONTEND=${DD_ENV}
+ENV NEXT_PUBLIC_DD_SERVICE_FRONTEND=${DD_SERVICE}
+ENV NEXT_PUBLIC_DD_SITE=${DD_SITE}
+ENV NEXT_PUBLIC_DD_VERSION_FRONTEND=${DD_VERSION}
+ENV NEXT_PUBLIC_DD_APPLICATION_ID=${RUM_APPLICATION_ID}
+ENV NEXT_PUBLIC_DD_CLIENT_TOKEN=${RUM_CLIENT_TOKEN}
+
+# Set default environment variables
+ENV NEXT_TELEMETRY_DISABLED=1 \
+  NEXT_PUBLIC_ADS_ROUTE=/services/ads \
+  NEXT_PUBLIC_DISCOUNTS_ROUTE=/services/discounts \
+  NEXT_PUBLIC_DBM_ROUTE=/services/dbm \
+  NEXT_PUBLIC_FRONTEND_API_ROUTE=http://service-proxy:80 \
+  NEXT_PUBLIC_SPREE_API_HOST=http://service-proxy/services/backend \
+  NEXT_PUBLIC_SPREE_CLIENT_HOST=/services/backend \
+  NEXT_PUBLIC_SPREE_IMAGE_HOST=/services/backend \
+  NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN=service-proxy \
+  DD_GIT_REPOSITORY_URL=${DD_GIT_REPOSITORY_URL} \
+  DD_GIT_COMMIT_SHA=${DD_GIT_COMMIT_SHA}
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+
+CMD ["npm", "run", "dev"]
