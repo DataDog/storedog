@@ -1,5 +1,7 @@
 # Advertisements Service
 
+There are two advertisement services, the default service is built in Java and there is another option available in Python. These services do the same thing, have the same endpoints, run on the same port (`3030`), and have the same failure modes. These ads are served through the `Ads.tsx` component in the frontend service.
+
 ## Description
 
 This service is responsible for managing the banner advertisements served to the frontend service of the application. There are two variations of this service, one uses Python and the other uses Java.
