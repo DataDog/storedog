@@ -4,7 +4,7 @@ COMPOSE_FILE=docker-compose.yml
 COMPOSE_DEV_FILE=docker-compose.dev.yml
 
 # Default environment
-ENV=prod
+ENV=dev
 
 # Optional follow flag for logs
 FOLLOW?=
@@ -12,6 +12,11 @@ FOLLOW?=
 # Colors for pretty output
 GREEN=\033[0;32m
 NC=\033[0m # No Color
+
+# Function to get the appropriate compose file based on ENV
+define get_compose_file
+$(if $(filter dev,$(ENV)),$(COMPOSE_DEV_FILE),$(COMPOSE_FILE))
+endef
 
 .PHONY: help prepare-release up down restart stop ps logs clean build dev prod dd-dev dd-prod backup-db
 
@@ -52,28 +57,27 @@ prepare-release:
 	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
 		cp docker-compose.generated.yml docker-compose.yml; \
 		echo "${GREEN}✓ docker-compose.yml has been updated!${NC}"; \
+		rm -f docker-compose.generated.yml; \
+		echo "${GREEN}✓ Cleaned up docker-compose.generated.yml${NC}"; \
 	else \
 		echo "Skipped replacing docker-compose.yml. Generated file saved as docker-compose.generated.yml"; \
 	fi
 
 ## Start the containers
 up:
-	@if [ "$(ENV)" = "dev" ]; then \
-		echo "Starting development environment..."; \
-		$(DC) -f $(COMPOSE_DEV_FILE) up -d; \
-	else \
-		echo "Starting production environment..."; \
-		$(DC) -f $(COMPOSE_FILE) up -d; \
-	fi
+	@echo "Starting $(ENV) environment..."; \
+	$(DC) -f $(call get_compose_file) up -d
 
 ## Stop the containers
+## Checks which compose file is being used and stops the containers accordingly.
 down:
-	@if [ "$(ENV)" = "dev" ]; then \
-		echo "Stopping development environment..."; \
-		$(DC) -f $(COMPOSE_DEV_FILE) down; \
+	@CONTAINER=$$(docker ps -a --format "{{.Names}}" | grep -E "^(storedog-|lab-)" | head -1); \
+	if [ -n "$$CONTAINER" ]; then \
+		COMPOSE_FILE_USED=$$(docker inspect $$CONTAINER --format '{{index .Config.Labels "com.docker.compose.project.config_files"}}'); \
+		echo "Detected compose file ($$COMPOSE_FILE_USED), stopping containers..."; \
+		$(DC) -f $$COMPOSE_FILE_USED down; \
 	else \
-		echo "Stopping production environment..."; \
-		$(DC) -f $(COMPOSE_FILE) down; \
+		echo "No containers found, containers may already be stopped."; \
 	fi
 
 ## Restart the containers
@@ -83,87 +87,52 @@ restart:
 
 ## Stop containers. Usage: make stop [service_name] [ENV=prod|dev]
 stop:
-	@if [ "$(ENV)" = "dev" ]; then \
-		if [ -n "$(word 2,$(MAKECMDGOALS))" ]; then \
-			echo "Stopping service $(word 2,$(MAKECMDGOALS)) in development environment..."; \
-			$(DC) -f $(COMPOSE_DEV_FILE) stop $(word 2,$(MAKECMDGOALS)); \
-		else \
-			echo "Stopping all services in development environment..."; \
-			$(DC) -f $(COMPOSE_DEV_FILE) stop; \
-		fi \
+	@SERVICE=$(word 2,$(MAKECMDGOALS)); \
+	if [ -n "$$SERVICE" ]; then \
+		echo "Stopping service $$SERVICE in $(ENV) environment..."; \
+		$(DC) -f $(call get_compose_file) stop $$SERVICE; \
 	else \
-		if [ -n "$(word 2,$(MAKECMDGOALS))" ]; then \
-			echo "Stopping service $(word 2,$(MAKECMDGOALS)) in production environment..."; \
-			$(DC) -f $(COMPOSE_FILE) stop $(word 2,$(MAKECMDGOALS)); \
-		else \
-			echo "Stopping all services in production environment..."; \
-			$(DC) -f $(COMPOSE_FILE) stop; \
-		fi \
+		echo "Stopping all services in $(ENV) environment..."; \
+		$(DC) -f $(call get_compose_file) stop; \
 	fi
 
 ## Show running containers
 ps:
-	@if [ "$(ENV)" = "dev" ]; then \
-		$(DC) -f $(COMPOSE_DEV_FILE) ps; \
-	else \
-		$(DC) -f $(COMPOSE_FILE) ps; \
-	fi
+	@$(DC) -f $(call get_compose_file) ps
 
 ## View container logs. Usage: make logs [service_name] [FOLLOW=f]
 logs:
-	@if [ "$(ENV)" = "dev" ]; then \
-		if [ -n "$(word 2,$(MAKECMDGOALS))" ]; then \
-			echo "Viewing logs for service $(word 2,$(MAKECMDGOALS)) in development environment..."; \
-			$(DC) -f $(COMPOSE_DEV_FILE) logs $(if $(FOLLOW),-f) $(word 2,$(MAKECMDGOALS)); \
-		else \
-			echo "Viewing all logs in development environment..."; \
-			$(DC) -f $(COMPOSE_DEV_FILE) logs $(if $(FOLLOW),-f); \
-		fi \
+	@SERVICE=$(word 2,$(MAKECMDGOALS)); \
+	if [ -n "$$SERVICE" ]; then \
+		echo "Viewing logs for service $$SERVICE in $(ENV) environment..."; \
+		$(DC) -f $(call get_compose_file) logs $(if $(FOLLOW),-f) $$SERVICE; \
 	else \
-		if [ -n "$(word 2,$(MAKECMDGOALS))" ]; then \
-			echo "Viewing logs for service $(word 2,$(MAKECMDGOALS)) in production environment..."; \
-			$(DC) -f $(COMPOSE_FILE) logs $(if $(FOLLOW),-f) $(word 2,$(MAKECMDGOALS)); \
-		else \
-			echo "Viewing all logs in production environment..."; \
-			$(DC) -f $(COMPOSE_FILE) logs $(if $(FOLLOW),-f); \
-		fi \
+		echo "Viewing all logs in $(ENV) environment..."; \
+		$(DC) -f $(call get_compose_file) logs $(if $(FOLLOW),-f); \
 	fi
 
 ## Clean up containers, networks, and volumes
 clean:
-	@if [ "$(ENV)" = "dev" ]; then \
-		$(DC) -f $(COMPOSE_DEV_FILE) down -v --remove-orphans; \
-	else \
-		$(DC) -f $(COMPOSE_FILE) down -v --remove-orphans; \
-	fi
+	@$(DC) -f $(call get_compose_file) down -v --remove-orphans
 
 ## Build or rebuild containers. Usage: make build [service_name] [ENV=prod|dev]
 build:
-	@if [ "$(ENV)" = "dev" ]; then \
-		if [ -n "$(word 2,$(MAKECMDGOALS))" ]; then \
-			echo "Building service $(word 2,$(MAKECMDGOALS)) in development environment..."; \
-			$(DC) -f $(COMPOSE_DEV_FILE) build $(word 2,$(MAKECMDGOALS)); \
-		else \
-			echo "Building all services in development environment..."; \
-			$(DC) -f $(COMPOSE_DEV_FILE) build; \
-		fi \
+	@SERVICE=$(word 2,$(MAKECMDGOALS)); \
+	if [ -n "$$SERVICE" ]; then \
+		echo "Building service $$SERVICE in $(ENV) environment..."; \
+		$(DC) -f $(call get_compose_file) build $$SERVICE; \
 	else \
-		if [ -n "$(word 2,$(MAKECMDGOALS))" ]; then \
-			echo "Building service $(word 2,$(MAKECMDGOALS)) in production environment..."; \
-			$(DC) -f $(COMPOSE_FILE) build $(word 2,$(MAKECMDGOALS)); \
-		else \
-			echo "Building all services in production environment..."; \
-			$(DC) -f $(COMPOSE_FILE) build; \
-		fi \
+		echo "Building all services in $(ENV) environment..."; \
+		$(DC) -f $(call get_compose_file) build; \
 	fi
 
 ## Switch to development environment and run containers
 dev:
-	@make up ENV=dev FRONTEND_COMMAND="npm run dev"
+	@make up ENV=dev
 
 ## Switch to production environment and run containers
 prod:
-	@make up ENV=prod FRONTEND_COMMAND="npm run prod"
+	@make up ENV=prod
 
 ## Create a database backup
 backup-db:
