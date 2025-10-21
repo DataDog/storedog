@@ -4,11 +4,7 @@ The frontend services is a JavaScript application that uses the Next.js React fr
 
 ## Environment variables
 
-
-
 Variables that Next.js uses are prefixed with `NEXT_PUBLIC_`. These variables must be set a build time.
-
-
 
 RUM SDK configuration:
 
@@ -33,10 +29,10 @@ URLs used by client components:
 - `NEXT_PUBLIC_DISCOUNTS_ROUTE`: base url for discounts service
 - `NEXT_PUBLIC_DBM_ROUTE`base url for dbm service
 
-You probably don't need to change any of these values:
+## The different build targets
 
-`FRONTEND_COMMAND`: Command to run the frontend service
+The `production` build target creates an optimized, standalone production build, which means that subsequent builds after the initial build are much faster.
 
+You need to rebuild when you change build args (like any `NEXT_PUBLIC_` variable) or any mounted volumes. There's no hot reloading. But don't worry, the builds are fast.
 
->
-> The ones without the `http://service-proxy` prefix are used in the frontend service's `fetch` calls, which are made from the browser and are caught by the nginx service, because it intercepts calls to Next.js API routes and routes them to the appropriate service. -->
+You probably don't need to use the `development` target except when developing/testing. 
