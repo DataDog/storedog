@@ -57,3 +57,5 @@ yarn-debug.log*
 .gradle/
 
 settings.json
+
+docker-compose.dev.frontend-prod.yml
