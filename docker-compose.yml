@@ -43,7 +43,14 @@ services:
       - DD_PROFILING_TIMELINE_ENABLED=true
       - DD_PROFILING_ALLOCATION_ENABLED=true
       - DD_RUNTIME_METRICS_ENABLED=true
-      - DD_SERVICE=${DD_SERVICE_FRONTEND:-store-frontend}
+      - DD_SERVICE=${NEXT_PUBLIC_DD_SERVICE_FRONTEND:-store-frontend}
+      - DD_VERSION=${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}
+      - NEXT_PUBLIC_DD_ENV=${NEXT_PUBLIC_DD_ENV:-production}
+      - NEXT_PUBLIC_DD_VERSION_FRONTEND=${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}
+      - NEXT_PUBLIC_DD_SERVICE_FRONTEND=${NEXT_PUBLIC_DD_SERVICE_FRONTEND:-store-frontend}
+      - NEXT_PUBLIC_DD_SITE=${NEXT_PUBLIC_DD_SITE:-datadoghq.com}
+      - NEXT_PUBLIC_DD_APPLICATION_ID=${NEXT_PUBLIC_DD_APPLICATION_ID:-not-set-in-docker-compose}
+      - NEXT_PUBLIC_DD_CLIENT_TOKEN=${NEXT_PUBLIC_DD_CLIENT_TOKEN:-not-set-in-docker-compose}
     labels:
       com.datadoghq.ad.logs: '[{"source": "nodejs", "service": "store-frontend-server", "auto_multi_line_detection": true }]'
   backend:

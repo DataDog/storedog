@@ -117,22 +117,36 @@ up:
 	fi
 	@echo "${GREEN}View the frontend at http://localhost${NC}"
 
-## Stop containers (auto-detects which compose file to use)
+## Stop containers (auto-detects which compose file to use, or uses ENV parameter)
 down:
-	@# Find any running Storedog containers to detect which compose file was used
+	@# If ENV is explicitly set, use the corresponding compose file
+	@if [ "$(ENV)" != "prod" ] && [ -n "$(ENV)" ]; then \
+		echo "Stopping containers using $(ENV) environment compose file..."; \
+		$(DC) -f $(call get_compose_file) down; \
+	else \
+		# Auto-detect which compose file to use based on running containers
+		CONTAINER=$$(docker ps -a --format "{{.Names}}" | grep -E "^(storedog-|lab-)" | head -1); \
+		if [ -n "$$CONTAINER" ]; then \
+			COMPOSE_FILE_USED=$$(docker inspect $$CONTAINER --format '{{index .Config.Labels "com.docker.compose.project.config_files"}}'); \
+			echo "Detected compose file ($$COMPOSE_FILE_USED), stopping containers..."; \
+			$(DC) -f $$COMPOSE_FILE_USED down; \
+		else \
+			echo "No containers found, containers may already be stopped."; \
+		fi; \
+	fi
+
+## Restart containers using the currently running compose file
+restart:
+	@# Find any running Storedog containers to detect which compose file is being used
 	@CONTAINER=$$(docker ps -a --format "{{.Names}}" | grep -E "^(storedog-|lab-)" | head -1); \
 	if [ -n "$$CONTAINER" ]; then \
 		COMPOSE_FILE_USED=$$(docker inspect $$CONTAINER --format '{{index .Config.Labels "com.docker.compose.project.config_files"}}'); \
-		echo "Detected compose file ($$COMPOSE_FILE_USED), stopping containers..."; \
+		echo "Restarting containers using detected compose file: $$COMPOSE_FILE_USED"; \
 		$(DC) -f $$COMPOSE_FILE_USED down; \
+		$(DC) -f $$COMPOSE_FILE_USED up -d; \
 	else \
-		echo "No containers found, containers may already be stopped."; \
+		echo "No containers found to restart. Use 'make dev' or 'make prod' to start fresh."; \
 	fi
-
-## Restart containers in specified environment
-restart:
-	@make down ENV=$(ENV)
-	@make up ENV=$(ENV)
 
 ## Stop specific service or all services in environment
 stop:
