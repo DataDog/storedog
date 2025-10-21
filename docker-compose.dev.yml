@@ -28,7 +28,7 @@ services:
     build:
       context: ./services/frontend
       dockerfile: Dockerfile
-      target: ${FRONTEND_BUILD_TARGET:-development}
+      target: development
       args: 
         DD_ENV: ${DD_ENV:-development}
         DD_VERSION: ${DD_VERSION_FRONTEND:-1.0.0}
@@ -36,7 +36,6 @@ services:
         DD_SITE: ${DD_SITE:-datadoghq.com}
         NEXT_PUBLIC_DD_APPLICATION_ID: ${NEXT_PUBLIC_DD_APPLICATION_ID:-not-set-in-docker-compose}
         NEXT_PUBLIC_DD_CLIENT_TOKEN: ${NEXT_PUBLIC_DD_CLIENT_TOKEN:-not-set-in-docker-compose}
-    command: ${FRONTEND_COMMAND:-npm run dev}
     depends_on:
       dd-agent:
         condition: service_started
@@ -166,7 +165,7 @@ services:
       - storedog-network
     labels:
       com.datadoghq.ad.logs: '[{"source": "python", "service": "store-discounts"}]'
-      com.datadoghq.tags.env: '${DD_ENV}'
+      com.datadoghq.tags.env: '${DD_ENV:-development}'
       com.datadoghq.tags.service: 'store-discounts'
       com.datadoghq.tags.version: '${DD_VERSION_DISCOUNTS:-1.0.0}'
 

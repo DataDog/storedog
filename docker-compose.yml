@@ -21,7 +21,6 @@ services:
       - postgres_logs:/var/log/pg_log:ro
   frontend:
     image: ghcr.io/datadog/storedog/frontend:${STOREDOG_IMAGE_VERSION:-latest}
-    command: ${FRONTEND_COMMAND:-npm run prod}
     depends_on:
       dd-agent:
         condition: service_started
@@ -133,7 +132,7 @@ services:
       - storedog-network
     labels:
       com.datadoghq.ad.logs: '[{"source": "python", "service": "store-discounts"}]'
-      com.datadoghq.tags.env: '${DD_ENV}'
+      com.datadoghq.tags.env: '${DD_ENV:-production}'
       com.datadoghq.tags.service: 'store-discounts'
       com.datadoghq.tags.version: '${DD_VERSION_DISCOUNTS:-1.0.0}'
   ads:
