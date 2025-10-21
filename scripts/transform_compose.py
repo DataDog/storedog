@@ -42,13 +42,18 @@ class ComposeTransformer:
     def replace_build_sections(self) -> 'ComposeTransformer':
         """Replace build sections with image sections for all configured services."""
         for service_name, image_name in SERVICE_TO_IMAGE_MAP.items():
-            # Pattern to match the entire build section including context, dockerfile, target, and args
-            pattern = rf'(\s+{re.escape(service_name)}:\s*\n(?:(?!\s+[a-zA-Z0-9_-]+:).*\n)*?)\s+build:\s*\n(?:\s+(?:context|dockerfile|target|args):[^\n]*\n|\s+[A-Z_]+:[^\n]*\n)*'
-            replacement = rf'\1    image: {image_name}\n'
+            # Simple and reliable approach: find service definition and replace its build section
+            # Match service at top level (2 spaces), then find its build section
+            service_pattern = rf'^  {re.escape(service_name)}:\s*$'
             
-            if re.search(pattern, self.content, flags=re.MULTILINE):
-                self.content = re.sub(pattern, replacement, self.content, flags=re.MULTILINE)
-                self.transformations_applied.append(f"Transformed {service_name}: replaced build with image")
+            if re.search(service_pattern, self.content, flags=re.MULTILINE):
+                # Find and replace the build section for this specific service
+                build_pattern = rf'^(  {re.escape(service_name)}:\s*\n(?:(?!^    build:).*\n)*?)    build:\s*\n(?:      .*\n)*?(?=^    [a-zA-Z0-9_-]+:|^  [a-zA-Z0-9_-]+:|^[a-zA-Z]|$)'
+                replacement = rf'\1    image: {image_name}\n'
+                
+                if re.search(build_pattern, self.content, flags=re.MULTILINE):
+                    self.content = re.sub(build_pattern, replacement, self.content, flags=re.MULTILINE)
+                    self.transformations_applied.append(f"Transformed {service_name}: replaced build with image")
         
         return self
     
@@ -87,11 +92,39 @@ class ComposeTransformer:
         return self
     
     def change_development_to_production(self) -> 'ComposeTransformer':
-        """Change all instances of 'development' to 'production'."""
-        development_matches = len(re.findall(r'development', self.content))
-        if development_matches > 0:
-            self.content = re.sub(r'development', 'production', self.content)
-            self.transformations_applied.append(f"Changed {development_matches} instances of 'development' to 'production'")
+        """Change default values from 'development' to 'production' but preserve variable names."""
+        total_changes = 0
+        
+        # Change 'development' when it appears as a default value (after :- )
+        pattern = r'(:-\s*)development(\s*[}\)])'
+        matches = len(re.findall(pattern, self.content))
+        if matches > 0:
+            self.content = re.sub(pattern, r'\1production\2', self.content)
+            total_changes += matches
+        
+        # Change RAILS_ENV=development to RAILS_ENV=production
+        rails_pattern = r'(RAILS_ENV=)development'
+        if re.search(rails_pattern, self.content):
+            self.content = re.sub(rails_pattern, r'\1production', self.content)
+            total_changes += 1
+            
+        # Change hostname default values like ${DD_HOSTNAME-development-host}
+        hostname_pattern = r'(\$\{DD_HOSTNAME-)development(-[^}]+\})'
+        hostname_matches = len(re.findall(hostname_pattern, self.content))
+        if hostname_matches > 0:
+            self.content = re.sub(hostname_pattern, r'\1production\2', self.content)
+            total_changes += hostname_matches
+            
+        # Change target: development to target: production (for build contexts)
+        target_pattern = r'(\s+target:\s+)development'
+        target_matches = len(re.findall(target_pattern, self.content))
+        if target_matches > 0:
+            self.content = re.sub(target_pattern, r'\1production', self.content)
+            total_changes += target_matches
+            
+        if total_changes > 0:
+            self.transformations_applied.append(f"Changed {total_changes} instances of 'development' to 'production'")
+            
         return self
     
     def remove_development_volumes(self) -> 'ComposeTransformer':

@@ -36,10 +36,10 @@ services:
       dockerfile: Dockerfile
       target: development
       args: 
-        DD_ENV: ${DD_ENV:-development}
-        DD_VERSION: ${DD_VERSION_FRONTEND:-1.0.0}
-        DD_SERVICE: ${DD_SERVICE_FRONTEND:-store-frontend}
-        DD_SITE: ${DD_SITE:-datadoghq.com}
+        NEXT_PUBLIC_DD_ENV: ${NEXT_PUBLIC_DD_ENV:-development}
+        NEXT_PUBLIC_DD_VERSION_FRONTEND: ${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}
+        NEXT_PUBLIC_DD_SERVICE_FRONTEND: ${NEXT_PUBLIC_DD_SERVICE_FRONTEND:-store-frontend}
+        NEXT_PUBLIC_DD_SITE: ${NEXT_PUBLIC_DD_SITE:-datadoghq.com}
         NEXT_PUBLIC_DD_APPLICATION_ID: ${NEXT_PUBLIC_DD_APPLICATION_ID:-not-set-in-docker-compose}
         NEXT_PUBLIC_DD_CLIENT_TOKEN: ${NEXT_PUBLIC_DD_CLIENT_TOKEN:-not-set-in-docker-compose}
     command: ${FRONTEND_COMMAND:-npm run dev}
@@ -173,11 +173,14 @@ networks:
         content = result.get_content()
         transformations = result.get_transformations()
         
-        # Check that development is replaced with production
-        self.assertNotIn('development', content)
+        # Check that specific development values are replaced with production
         self.assertIn('production', content)
         self.assertIn('DD_ENV=${DD_ENV:-production}', content)
         self.assertIn('DD_HOSTNAME=${DD_HOSTNAME-production-host}', content)
+        self.assertIn('target: production', content)
+        
+        # Check that development in comments is preserved (we don't change comments)
+        self.assertIn('# Storedog Development Environment', content)
         
         # Check transformation was tracked
         self.assertTrue(any('development\' to \'production' in t for t in transformations))
@@ -238,8 +241,9 @@ networks:
         self.assertIn('${FRONTEND_COMMAND:-npm run prod}', content)
         self.assertIn('gcr.io/datadoghq/agent:${DD_AGENT_VERSION:-latest}', content)
         self.assertTrue(content.strip().startswith('services:'))
-        self.assertNotIn('development', content)
         self.assertIn('production', content)
+        # Check specific transformations but allow development in comments
+        self.assertIn('DD_ENV=${DD_ENV:-production}', content)
         
         # Check that multiple transformations were tracked
         self.assertGreater(len(transformations), 5)
@@ -279,8 +283,8 @@ services:
       dockerfile: Dockerfile
       target: development
       args: 
-        DD_ENV: ${DD_ENV:-development}
-        DD_VERSION: ${DD_VERSION_FRONTEND:-1.0.0}
+        NEXT_PUBLIC_DD_ENV: ${NEXT_PUBLIC_DD_ENV:-development}
+        NEXT_PUBLIC_DD_VERSION_FRONTEND: ${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}
     command: ${FRONTEND_COMMAND:-npm run dev}
   dd-agent:
     image: gcr.io/datadoghq/agent:latest
