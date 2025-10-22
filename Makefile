@@ -1,222 +1,195 @@
 # =============================================================================
 # Storedog Application Makefile
 # =============================================================================
-# This Makefile provides convenient commands for managing the Storedog application
-# using Docker Compose. It supports both development and production environments.
+# This Makefile provides convenient commands for managing the Storedog app
+# using Docker Compose. 
 #
-# Quick Start:
-#   make help           - Show all available commands
-#   make dev            - Start development environment
-#   make prod           - Start production environment
-#   make frontend-prod  - Start with frontend in production mode
-#   make down           - Stop all containers
+# run `make help` to see all available commands. 
 #
+# Note: All commands use the ENV variable to determine which docker-compose.yml
+# file to use. Set your preferred environment below before running commands.
 # =============================================================================
 
-# Docker Compose Configuration
+# Environment settings: prod, dev, dev-frontend-prod
+ENV=dev
+
 DC=docker compose
 COMPOSE_FILE=docker-compose.yml              # Production compose file
 COMPOSE_DEV_FILE=docker-compose.dev.yml      # Development compose file
-
-# Default Environment Settings
-ENV=prod                                     # Default to production (options: prod, dev)
-
-# Optional Parameters
-FOLLOW?=                                     # Set to 'f' to follow logs in real-time
-NO_CACHE?=                                   # Set to '1' to build without cache
+COMPOSE_FRONTEND_PROD_FILE=docker-compose.dev.frontend-prod.yml # Frontend production compose file
 
 # Terminal Colors for Better UX
 GREEN=\033[0;32m
+HOT_PINK=\033[0;95m
 NC=\033[0m # No Color
 
 # Helper function to select the appropriate compose file based on environment
 define get_compose_file
-$(if $(filter dev,$(ENV)),$(COMPOSE_DEV_FILE),$(COMPOSE_FILE))
+$(if $(filter dev,$(ENV)),$(COMPOSE_DEV_FILE),$(if $(filter dev-frontend-prod,$(ENV)),$(COMPOSE_FRONTEND_PROD_FILE),$(COMPOSE_FILE)))
 endef
 
-.PHONY: help prepare-release up down restart stop ps logs clean build dev prod dd-dev dd-prod backup-db frontend-prod
+.PHONY: help prepare-release up down restart stop ps logs clean build dd-dev dd-prod backup-db prepare-frontend-prod
 
 help: ## Show this comprehensive help menu
 	@echo "${GREEN}===============================================================================${NC}"
 	@echo "${GREEN}                        Storedog Application Commands${NC}"
 	@echo "${GREEN}===============================================================================${NC}"
-	@echo ""
-	@echo "${GREEN}🚀 Quick Start Commands:${NC}"
-	@echo "  make dev                         - Start development environment"
-	@echo "  make prod                        - Start production environment"
-	@echo "  make frontend-prod               - Start with frontend in production mode"
-	@echo "  make down                        - Stop all containers"
-	@echo ""
-	@echo "${GREEN}📋 Environment Management:${NC}"
-	@echo "  make up [ENV=prod|dev]           - Start containers in specified environment"
-	@echo "  make down [ENV=prod|dev]         - Stop containers (auto-detects environment)"
-	@echo "  make restart [ENV=prod|dev]      - Restart containers"
-	@echo "  make ps [ENV=prod|dev]           - Show running containers"
-	@echo "  make clean [ENV=prod|dev]        - Clean up containers, networks, and volumes"
-	@echo ""
-	@echo "${GREEN}🔧 Build & Development:${NC}"
-	@echo "  make build [service] [ENV=prod|dev] [NO_CACHE=1] - Build containers"
-	@echo "  make stop [service] [ENV=prod|dev]               - Stop specific service"
-	@echo "  make logs [service] [ENV=prod|dev] [FOLLOW=f]    - View logs"
-	@echo ""
-	@echo "${GREEN}🎯 Special Operations:${NC}"
-	@echo "  make prepare-release             - Generate production compose file"
-	@echo "  make backup-db                   - Create database backup"
-	@echo ""
-	@echo "${GREEN}📖 Usage Examples:${NC}"
-	@echo "  make logs frontend FOLLOW=f      - Follow frontend logs in real-time"
-	@echo "  make build backend NO_CACHE=1    - Rebuild backend without cache"
-	@echo "  make up ENV=dev                  - Start development environment"
-	@echo ""
-	@echo "${GREEN}💡 Parameters:${NC}"
-	@echo "  ENV=prod|dev                     - Environment (default: prod)"
-	@echo "  FOLLOW=f                         - Follow logs in real-time"
-	@echo "  NO_CACHE=1                       - Build without Docker cache"
-	@echo ""
-	@echo "${GREEN}📚 Available Targets:${NC}"
+
 	@awk '/^[a-zA-Z\-\_0-9]+:/ { \
-		helpMessage = match(lastLine, /^## (.*)/); \
-		if (helpMessage) { \
-			helpCommand = substr($$1, 0, index($$1, ":")-1); \
-			helpMessage = substr(lastLine, RSTART + 3, RLENGTH); \
-			printf "  ${GREEN}%-15s${NC} %s\n", helpCommand, helpMessage; \
+		if (match(lastLine, /^## Usage: (.*)/)) { \
+			usageText = substr(lastLine, RSTART + 10, RLENGTH - 10); \
+		} \
+		if (match(secondLastLine, /^## (.*)/)) { \
+			descText = substr(secondLastLine, RSTART + 3, RLENGTH - 3); \
+		} \
+		if (usageText && descText) { \
+			printf "  ${HOT_PINK}%-32s${NC} %s\n", usageText, descText; \
+			usageText = ""; descText = ""; \
 		} \
 	} \
-	{ lastLine = $$0 }' $(MAKEFILE_LIST)
+	{ secondLastLine = lastLine; lastLine = $$0 }' $(MAKEFILE_LIST)
 	@echo ""
 	@echo "${GREEN}===============================================================================${NC}"
 
-## Generate production compose file for release (interactive)
+# =============================================================================
+# 🚀 Container Operations
+# =============================================================================
+
+## Start containers in specified environment
+## Usage: make up [clean]
+up:
+	@COMPOSE_FILE_PATH=$(call get_compose_file); \
+	echo "${GREEN}Using compose file: ${HOT_PINK}$$COMPOSE_FILE_PATH${NC}"; \
+	if echo "$(MAKECMDGOALS)" | grep -q "clean"; then \
+		echo "Building and starting ${HOT_PINK}$(ENV)${NC} environment without cache..."; \
+		$(DC) -f $$COMPOSE_FILE_PATH build --no-cache; \
+	else \
+		echo "Starting ${HOT_PINK}$(ENV)${NC} environment..."; \
+	fi; \
+	$(DC) -f $$COMPOSE_FILE_PATH up -d
+	@echo "${GREEN}View the frontend at http://localhost${NC}"
+
+## Stop all containers for this project
+## Usage: make down
+down:
+	@echo "Stopping all Storedog containers..."
+	@$(DC) down
+
+## Restart containers using current ENV setting
+## Usage: make restart
+restart:
+	@COMPOSE_FILE_PATH=$(call get_compose_file); \
+	echo "${GREEN}Restarting containers using: ${HOT_PINK}$$COMPOSE_FILE_PATH${NC}"; \
+	$(DC) -f $$COMPOSE_FILE_PATH down; \
+	$(DC) -f $$COMPOSE_FILE_PATH up -d
+	@echo "${GREEN}View the frontend at http://localhost${NC}"
+
+## Show running containers for current environment
+## Usage: make ps
+ps:
+	@echo "${GREEN}Current ENV: ${HOT_PINK}$(ENV)${NC}"
+	@$(DC) ps
+
+# =============================================================================
+# 🔧 Build & Development
+# =============================================================================
+
+## Build containers
+## Usage: make build [service] [clean]
+build:
+	@COMPOSE_FILE_PATH=$(call get_compose_file); \
+	echo "${GREEN}Using compose file: ${HOT_PINK}$$COMPOSE_FILE_PATH${NC}"; \
+	SERVICE=$(filter-out build clean,$(MAKECMDGOALS)); \
+	CACHE_FLAG="$$(if [ -n "$(filter clean,$(MAKECMDGOALS))" ]; then echo --no-cache; fi)"; \
+	if [ -n "$$SERVICE" ]; then \
+		echo "Building service ${HOT_PINK}$$SERVICE${NC} in ${HOT_PINK}$(ENV)${NC} environment..."; \
+		$(DC) -f $$COMPOSE_FILE_PATH build $$CACHE_FLAG $$SERVICE; \
+	else \
+		echo "Building all services in ${HOT_PINK}$(ENV)${NC} environment..."; \
+		$(DC) -f $$COMPOSE_FILE_PATH build $$CACHE_FLAG; \
+	fi
+
+## Stop specific service or all services
+## Usage: make stop [service]
+stop:
+	@echo "${GREEN}Current ENV: ${HOT_PINK}$(ENV)${NC}"
+	@SERVICE=$(word 2,$(MAKECMDGOALS)); \
+	if [ -n "$$SERVICE" ]; then \
+		echo "Stopping service ${HOT_PINK}$$SERVICE${NC}..."; \
+		$(DC) stop $$SERVICE; \
+	else \
+		echo "Stopping all services..."; \
+		$(DC) stop; \
+	fi
+
+## View container logs
+## Usage: make logs [service] [follow]
+logs:
+	@echo "${GREEN}Current ENV: ${HOT_PINK}$(ENV)${NC}"
+	@SERVICE=$(filter-out logs follow,$(MAKECMDGOALS)); \
+	if echo "$(MAKECMDGOALS)" | grep -q "follow"; then \
+		FOLLOW_FLAG="-f"; \
+	else \
+		FOLLOW_FLAG=""; \
+	fi; \
+	if [ -n "$$SERVICE" ]; then \
+		echo "Viewing logs for service ${HOT_PINK}$$SERVICE${NC}..."; \
+		$(DC) logs $$FOLLOW_FLAG $$SERVICE; \
+	else \
+		echo "Viewing all logs..."; \
+		$(DC) logs $$FOLLOW_FLAG; \
+	fi
+
+## Clean up containers, networks, and volumes (destructive)
+## Usage: make clean
+clean:
+	@COMPOSE_FILE_PATH=$(call get_compose_file); \
+	$(DC) -f $$COMPOSE_FILE_PATH down -v --remove-orphans
+
+# =============================================================================
+# ⚙️ Special Operations
+# =============================================================================
+
+## Generate production compose file for release
+## Usage: make prepare-release
 prepare-release:
-	@echo "${GREEN}Transforming docker-compose.dev.yml to docker-compose.generated.yml...${NC}"
+	@echo "${GREEN}Transforming ${HOT_PINK}docker-compose.dev.yml${GREEN} to ${HOT_PINK}docker-compose.generated.yml${GREEN}...${NC}"
 	@python3 scripts/transform_compose.py docker-compose.dev.yml docker-compose.generated.yml
 	@echo "${GREEN}✓ Production compose file generated successfully!${NC}"
 	@echo ""
-	@echo "📄 Generated file: ${GREEN}docker-compose.generated.yml${NC}"
+	@echo "📄 Generated file: ${HOT_PINK}docker-compose.generated.yml${NC}"
 	@echo "Please review the generated file in another terminal or editor before proceeding."
 	@echo ""
 	@read -p "Have you reviewed the file? Replace docker-compose.yml? [y/N]: " confirm; \
 	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
 		cp docker-compose.generated.yml docker-compose.yml; \
-		echo "${GREEN}✓ docker-compose.yml has been updated!${NC}"; \
+		echo "${GREEN}✓ ${HOT_PINK}docker-compose.yml${GREEN} has been updated!${NC}"; \
 		rm -f docker-compose.generated.yml; \
-		echo "${GREEN}✓ Cleaned up docker-compose.generated.yml${NC}"; \
+		echo "${GREEN}✓ Cleaned up ${HOT_PINK}docker-compose.generated.yml${NC}"; \
 	else \
-		echo "Skipped replacing docker-compose.yml. Generated file saved as docker-compose.generated.yml"; \
+		echo "Skipped replacing ${HOT_PINK}docker-compose.yml${NC}. Generated file saved as ${HOT_PINK}docker-compose.generated.yml${NC}"; \
 	fi
 
-## Start containers in specified environment (supports NO_CACHE=1)
-up:
-	@if [ "$(NO_CACHE)" = "1" ]; then \
-		echo "Building and starting $(ENV) environment without cache..."; \
-		$(DC) -f $(call get_compose_file) build --no-cache; \
-		$(DC) -f $(call get_compose_file) up -d; \
-	else \
-		echo "Starting $(ENV) environment..."; \
-		$(DC) -f $(call get_compose_file) up -d; \
-	fi
-	@echo "${GREEN}View the frontend at http://localhost${NC}"
-
-## Stop containers (auto-detects which compose file to use, or uses ENV parameter)
-down:
-	@# If ENV is explicitly set, use the corresponding compose file
-	@if [ "$(ENV)" != "prod" ] && [ -n "$(ENV)" ]; then \
-		echo "Stopping containers using $(ENV) environment compose file..."; \
-		$(DC) -f $(call get_compose_file) down; \
-	else \
-		# Auto-detect which compose file to use based on running containers
-		CONTAINER=$$(docker ps -a --format "{{.Names}}" | grep -E "^(storedog-|lab-)" | head -1); \
-		if [ -n "$$CONTAINER" ]; then \
-			COMPOSE_FILE_USED=$$(docker inspect $$CONTAINER --format '{{index .Config.Labels "com.docker.compose.project.config_files"}}'); \
-			echo "Detected compose file ($$COMPOSE_FILE_USED), stopping containers..."; \
-			$(DC) -f $$COMPOSE_FILE_USED down; \
-		else \
-			echo "No containers found, containers may already be stopped."; \
-		fi; \
-	fi
-
-## Restart containers using the currently running compose file
-restart:
-	@# Find any running Storedog containers to detect which compose file is being used
-	@CONTAINER=$$(docker ps -a --format "{{.Names}}" | grep -E "^(storedog-|lab-)" | head -1); \
-	if [ -n "$$CONTAINER" ]; then \
-		COMPOSE_FILE_USED=$$(docker inspect $$CONTAINER --format '{{index .Config.Labels "com.docker.compose.project.config_files"}}'); \
-		echo "Restarting containers using detected compose file: $$COMPOSE_FILE_USED"; \
-		$(DC) -f $$COMPOSE_FILE_USED down; \
-		$(DC) -f $$COMPOSE_FILE_USED up -d; \
-	else \
-		echo "No containers found to restart. Use 'make dev' or 'make prod' to start fresh."; \
-	fi
-
-## Stop specific service or all services in environment
-stop:
-	@SERVICE=$(word 2,$(MAKECMDGOALS)); \
-	if [ -n "$$SERVICE" ]; then \
-		echo "Stopping service $$SERVICE in $(ENV) environment..."; \
-		$(DC) -f $(call get_compose_file) stop $$SERVICE; \
-	else \
-		echo "Stopping all services in $(ENV) environment..."; \
-		$(DC) -f $(call get_compose_file) stop; \
-	fi
-
-## Show running containers for current environment
-ps:
-	@$(DC) -f $(call get_compose_file) ps
-
-## View container logs (supports service name and FOLLOW=f)
-logs:
-	@SERVICE=$(word 2,$(MAKECMDGOALS)); \
-	if [ -n "$$SERVICE" ]; then \
-		echo "Viewing logs for service $$SERVICE in $(ENV) environment..."; \
-		$(DC) -f $(call get_compose_file) logs $(if $(FOLLOW),-f) $$SERVICE; \
-	else \
-		echo "Viewing all logs in $(ENV) environment..."; \
-		$(DC) -f $(call get_compose_file) logs $(if $(FOLLOW),-f); \
-	fi
-
-## Clean up containers, networks, and volumes (destructive)
-clean:
-	@$(DC) -f $(call get_compose_file) down -v --remove-orphans
-
-## Build containers (supports service name, NO_CACHE=1)
-build:
-	@SERVICE=$(word 2,$(MAKECMDGOALS)); \
-	CACHE_FLAG=""; \
-	if [ "$(NO_CACHE)" = "1" ]; then \
-		CACHE_FLAG="--no-cache"; \
-	fi; \
-	if [ -n "$$SERVICE" ]; then \
-		echo "Building service $$SERVICE in $(ENV) environment..."; \
-		$(DC) -f $(call get_compose_file) build $$CACHE_FLAG $$SERVICE; \
-	else \
-		echo "Building all services in $(ENV) environment..."; \
-		$(DC) -f $(call get_compose_file) build $$CACHE_FLAG; \
-	fi
-
-## Quick start: development environment
-dev:
-	@make up ENV=dev
-
-## Quick start: production environment
-prod:
-	@make up ENV=prod
-
-## Create PostgreSQL database backup to services/postgres/db/
+## Create PostgreSQL database backup
+## Usage: make backup-db
 backup-db:
 	@echo "Creating database backup..."
 	@sh ./scripts/backup-db.sh
 	@echo "Backup completed. New restore.sql file created in services/postgres/db/"
 
-## Transform frontend to production mode and start all containers
+## Generate a dev compose with prod frontend target
+## Usage: make frontend-prod
 frontend-prod:
 	@echo "${GREEN}Transforming frontend service to production...${NC}"
 	@# Remove volumes and change target to production for frontend service only
 	@python3 scripts/transform_compose_frontend.py
 	@echo "${GREEN}✓ Frontend transformation completed!${NC}"
-	@echo "${GREEN}Starting containers with frontend in production mode...${NC}"
-	@# Use the generated compose file that has frontend in production mode
-	@$(DC) -f docker-compose.dev.frontend-prod.yml up -d
-	@echo "${GREEN}View the frontend at http://localhost${NC}"
+	@echo "${GREEN}Generated: ${HOT_PINK}docker-compose.dev.frontend-prod.yml${NC}"
+	@echo ""
+	@echo "${GREEN}Next steps:${NC}"
+	@echo "1. Update the ENV at the top of the Makefile to ${HOT_PINK}dev-frontend-prod${NC}"
+	@echo "2. Run ${HOT_PINK}make up${NC} to start containers with this configuration"
+	@echo "   Or use ${HOT_PINK}ENV=dev-frontend-prod make up${NC} for one-time override"
 
 # =============================================================================
 # Special Targets
