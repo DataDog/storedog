@@ -52,7 +52,7 @@ services:
       - NEXT_PUBLIC_DD_APPLICATION_ID=${NEXT_PUBLIC_DD_APPLICATION_ID:-not-set-in-docker-compose}
       - NEXT_PUBLIC_DD_CLIENT_TOKEN=${NEXT_PUBLIC_DD_CLIENT_TOKEN:-not-set-in-docker-compose}
     labels:
-      com.datadoghq.ad.logs: '[{"source": "nodejs", "service": "store-frontend-server", "auto_multi_line_detection": true }]'
+      com.datadoghq.ad.logs: '[{"source": "nodejs", "auto_multi_line_detection": true }]'
   backend:
     image: ghcr.io/datadog/storedog/backend:${STOREDOG_IMAGE_VERSION:-latest}
     command: /bin/bash -c "rm -f /app/tmp/pids/server.pid && bundle exec ddprofrb exec rails s -b 0.0.0.0 -p 4000"
@@ -83,7 +83,7 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_HOST=postgres
     labels:
-      com.datadoghq.ad.logs: '[{"source": "ruby", "service": "store-backend", "auto_multi_line_detection": true }]'
+      com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection": true }]'
   worker:
     image: ghcr.io/datadog/storedog/backend:${STOREDOG_IMAGE_VERSION:-latest}
     command: bundle exec ddprofrb exec sidekiq -C config/sidekiq.yml
@@ -117,7 +117,7 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_HOST=postgres
     labels:
-      com.datadoghq.ad.logs: '[{"source": "ruby", "service": "store-worker", "auto_multi_line_detection": true }]'
+      com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection": true }]'
   discounts:
     image: ghcr.io/datadog/storedog/discounts:${STOREDOG_IMAGE_VERSION:-latest}
     command: ddtrace-run flask run --port=2814 --host=0.0.0.0
@@ -138,7 +138,7 @@ services:
     networks:
       - storedog-network
     labels:
-      com.datadoghq.ad.logs: '[{"source": "python", "service": "store-discounts"}]'
+      com.datadoghq.ad.logs: '[{"source": "python"}]'
       com.datadoghq.tags.env: '${DD_ENV:-production}'
       com.datadoghq.tags.service: 'store-discounts'
       com.datadoghq.tags.version: '${DD_VERSION_DISCOUNTS:-1.0.0}'
@@ -163,7 +163,7 @@ services:
     networks:
       - storedog-network
     labels:
-      com.datadoghq.ad.logs: '[{"source": "java", "service": "store-ads"}]'
+      com.datadoghq.ad.logs: '[{"source": "java"}]'
       com.datadoghq.tags.service: 'store-ads'
       com.datadoghq.tags.version: '${DD_VERSION_ADS:-1.0.0}'
   service-proxy:
@@ -192,7 +192,7 @@ services:
       - DD_SERVICE=service-proxy
       - DD_VERSION=${DD_VERSION_NGINX:-1.28.0}
     labels:
-      com.datadoghq.ad.logs: '[{"source": "nginx", "service": "service-proxy"}]'
+      com.datadoghq.ad.logs: '[{"source": "nginx"}]'
       com.datadoghq.ad.check_names: '["nginx"]'
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]'
@@ -219,7 +219,7 @@ services:
       com.datadoghq.ad.check_names: '["postgres"]'
       com.datadoghq.ad.init_configs: '[{}]'
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":5432, "username":"datadog", "password":"datadog"}]'
-      com.datadoghq.ad.logs: '[{"source": "postgresql", "service":"store-db", "auto_multi_line_detection": true, "path": "/var/log/pg_log/postgresql*.json", "type": "file"}]'
+      com.datadoghq.ad.logs: '[{"source": "postgresql", "auto_multi_line_detection": true, "path": "/var/log/pg_log/postgresql*.json", "type": "file"}]'
   redis:
     image: redis:6.2-alpine
     depends_on:
