@@ -189,7 +189,6 @@ frontend-prod:
 	@echo "${GREEN}Next steps:${NC}"
 	@echo "1. Update the ENV at the top of the Makefile to ${HOT_PINK}dev-frontend-prod${NC}"
 	@echo "2. Run ${HOT_PINK}make up${NC} to start containers with this configuration"
-	@echo "   Or use ${HOT_PINK}ENV=dev-frontend-prod make up${NC} for one-time override"
 
 # =============================================================================
 # Special Targets
