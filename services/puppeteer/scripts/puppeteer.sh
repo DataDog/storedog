@@ -15,5 +15,6 @@ printf "\nBrowser replay starting.\n\n"
 
 while :
 do
-  node puppeteer.js $STOREDOG_URL
+  # node puppeteer.js $STOREDOG_URL
+  node puppeteer-modular.js $STOREDOG_URL
 done
