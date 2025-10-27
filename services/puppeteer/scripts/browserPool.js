@@ -5,11 +5,7 @@
 const puppeteer = require('puppeteer');  // The library that controls Chrome
 const config = require('./config');      // Our configuration settings
 
-// BrowserPool is a class - a blueprint for creating browser pool objects.
-// In JavaScript, classes are written in PascalCase (first letter capitalized).
 class BrowserPool {
-  // The constructor runs when you create a new BrowserPool with "new BrowserPool()".
-  // It sets up the initial state of the pool.
   constructor(poolSize = config.browserPoolSize) {
     this.pool = [];         // Array to store available browser instances (starts empty)
     this.poolSize = poolSize; // Maximum number of browsers to keep in the pool
