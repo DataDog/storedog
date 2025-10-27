@@ -5,6 +5,9 @@ const config = require('./config');
 // Import sleep from Node.js timers/promises module
 const { setTimeout: sleep } = require('node:timers/promises');
 
+// Load device profiles for emulation
+const devices = require('./devices.json').devices || [];
+
 // Helper function for debug logging (only logs if debug mode is enabled)
 const debugLog = (...args) => {
   if (config.debug) {
@@ -15,6 +18,14 @@ const debugLog = (...args) => {
 // Helper function for critical logging (always shown, even in quiet mode)
 const criticalLog = (...args) => {
   console.log(...args);
+};
+
+// Get a random device profile for emulation
+const getRandomDevice = () => {
+  if (devices.length === 0) {
+    throw new Error('No devices available for emulation');
+  }
+  return devices[Math.floor(Math.random() * devices.length)];
 };
 
 // Log current memory usage with context label
@@ -991,6 +1002,7 @@ module.exports = {
   forceGC,
   debugLog,
   criticalLog,
+  getRandomDevice,
   setUtmParams,
   optimizePageResources,
   selectHomePageProduct,
