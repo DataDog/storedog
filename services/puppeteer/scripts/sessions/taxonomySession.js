@@ -4,18 +4,18 @@ const { setUtmParams, selectProduct, addToCart, checkout, sleep } = require('../
 const BaseSession = require('./baseSession');
 
 class TaxonomySession extends BaseSession {
+  constructor(sessionManager, sessionId) {
+    super(sessionManager, sessionId);
+  }
   async run() {
-    const setup = await this.setupPage();
-    if (!setup) return;
-    
-    const { browser, page } = setup;
+    await this.setupPage();
     
     try {
       // Start from home page
       const urlWithUtm = Math.random() > 0.5 ? setUtmParams(config.storedogUrl) : config.storedogUrl;
       
-      await page.goto(urlWithUtm, { waitUntil: 'domcontentloaded', timeout: 20000 });
-      const pageTitle = await page.title();
+      await this.page.goto(urlWithUtm, { waitUntil: 'domcontentloaded', timeout: 20000 });
+      const pageTitle = await this.page.title();
       console.log(`"${pageTitle}" loaded`);
 
       // Navigate to Best Sellers using the actual navigation

@@ -4,6 +4,9 @@ const { setUtmParams, selectHomePageProduct, selectRelatedProduct, goToFooterPag
 const BaseSession = require('./baseSession');
 
 class HomePageSession extends BaseSession {
+  constructor(sessionManager, sessionId) {
+    super(sessionManager, sessionId);
+  }
   // Helper function for random chance (33% probability)
   randomChance() {
     return Math.floor(Math.random() * 3) === 0;

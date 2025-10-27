@@ -16,6 +16,9 @@ const {
 const BaseSession = require('./baseSession');
 
 class FrustrationSession extends BaseSession {
+  constructor(sessionManager, sessionId) {
+    super(sessionManager, sessionId);
+  }
   // Helper method to attempt product selection and generate frustration on failure
   async tryProductSelectionWithFrustration(page, description) {
     try {
