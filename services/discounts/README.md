@@ -1,8 +1,12 @@
-# Discounts service
+# Discounts service README
 
 ## Description
 
 This service is responsible for managing discounts written in Python using the Flask framework. It uses a PostgreSQL database to store the discounts.
+
+The discounts service is a Python service that provides an API for serving discount codes to the frontend that can be used to apply discounts to orders. The discounts are stored in a Postgres database and are served through the `Discounts.tsx` component in the frontend service.
+
+Currently, when applying a successful discount code, we it will automatically apply a "Free shipping" discount that exists in the backend service. This is to demonstrate the discount functionality in the frontend, but is a bit of a hack.
 
 ## Datadog configuration
 

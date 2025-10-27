@@ -1,4 +1,4 @@
-FROM ghcr.io/puppeteer/puppeteer:24.23.0
+FROM ghcr.io/puppeteer/puppeteer:20.0.0
 
 # Set default environment variables
 ENV STOREDOG_URL=http://service-proxy:80 \
@@ -7,7 +7,7 @@ ENV STOREDOG_URL=http://service-proxy:80 \
 USER pptruser
 WORKDIR /home/pptruser
 
-COPY ./scripts/ ./
+COPY ./scripts/puppeteer.sh .
+COPY ./scripts/puppeteer.js .
 
-# Wait for Storedog to be ready, then start continuous traffic generation
-CMD ["bash", "-c", "until wget --quiet -O - $STOREDOG_URL | grep -qi storedog; do echo -n .; sleep 2; done && echo -e '\\nBrowser replay starting.\\n' && node puppeteer-modular.js $STOREDOG_URL"]
+CMD ["bash", "puppeteer.sh"]
