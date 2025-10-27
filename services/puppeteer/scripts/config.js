@@ -1,6 +1,17 @@
 // This file manages all configuration settings for the Puppeteer traffic generator.
 // Think of it as the "control panel" where all settings are defined and loaded.
 
+// Import session classes
+const BrowsingSession = require('./sessions/browsingSession');
+const TaxonomySession = require('./sessions/taxonomySession');
+const CheckoutSession = require('./sessions/checkoutSession');
+const CartSession = require('./sessions/cartSession');
+const ProductSession = require('./sessions/productSession');
+const SearchSession = require('./sessions/searchSession');
+const NavigationSession = require('./sessions/navigationSession');
+const ErrorSession = require('./sessions/errorSession');
+const PerformanceSession = require('./sessions/performanceSession');
+
 // Memory profiles define safe operating limits for different machine sizes.
 // Each profile specifies how much memory we can use, how many sessions we can run, etc.
 // We have three profiles: 8GB (small), 16GB (medium), 32GB (large machines)
@@ -10,19 +21,22 @@ const memoryProfiles = {
                             // We leave 1.5GB free for the operating system
     memoryThreshold: 0.85,   // When we hit 85% of max memory, slow down
     maxConcurrency: 20,      // Maximum number of sessions running at the same time
-    maxBrowsers: 25          // Maximum number of browser instances we can open
+    maxBrowsers: 25,         // Maximum number of browser instances we can open
+    rampUpPercentages: [0.20, 0.40, 0.60, 1.0]  // Gradual ramp-up: 20% → 40% → 60% → 100%
   },
   '16GB': {
     maxMemoryMB: 13000,      // 13GB max (leaving 3GB for the system)
     memoryThreshold: 0.85,   // 85% threshold
     maxConcurrency: 80,      // Can handle many more concurrent sessions
-    maxBrowsers: 60          // More browsers available for reuse
+    maxBrowsers: 60,         // More browsers available for reuse
+    rampUpPercentages: [0.10, 0.25, 0.50, 0.75, 1.0]  // More steps for larger machine
   },
   '32GB': {
     maxMemoryMB: 26000,      // 26GB max (leaving 6GB for the system)
     memoryThreshold: 0.85,   // 85% threshold
     maxConcurrency: 100,     // Very high concurrency for large machines
-    maxBrowsers: 80          // Many browsers available
+    maxBrowsers: 80,         // Many browsers available
+    rampUpPercentages: [0.10, 0.30, 0.60, 1.0]  // Gradual ramp-up for very large machine
   }
 };
 
@@ -61,7 +75,8 @@ const config = {
   safetyLimits: {
     memoryThreshold: profile.memoryThreshold,  // Percentage of max memory before we slow down
     cpuThreshold: 0.90,                        // 90% CPU usage is our limit
-    maxMemoryMB: profile.maxMemoryMB           // Absolute memory limit in megabytes
+    maxMemoryMB: profile.maxMemoryMB,          // Absolute memory limit in megabytes
+    rampUpPercentages: profile.rampUpPercentages  // Gradual concurrency ramp-up schedule
   },
   
   // Browser pool size determines how many browser instances we keep open.
@@ -72,7 +87,20 @@ const config = {
   
   // Session settings
   totalSessions: Math.max(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || 16, 16), // Total sessions (minimum 16)
-  sessionDelay: 2000  // Maximum random delay before starting a session (2 seconds)
+  sessionDelay: 2000,  // Maximum random delay before starting a session (2 seconds)
+  
+  // Enabled session types - just comment out or remove the ones you don't want to run
+  Sessions: [
+    BrowsingSession,
+    // TaxonomySession,
+    // CheckoutSession,
+    // CartSession,
+    // ProductSession,
+    // SearchSession,
+    // NavigationSession,
+    // ErrorSession,
+    // PerformanceSession,
+  ]
 };
 
 // Helper function for debug logging.
