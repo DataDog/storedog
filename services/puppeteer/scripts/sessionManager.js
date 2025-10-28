@@ -72,7 +72,8 @@ class SessionManager {
     // process.memoryUsage().heapUsed is the amount of JavaScript memory in use (in bytes)
     // We divide by 1024 twice to convert bytes → KB → MB
     const memUsageMB = process.memoryUsage().heapUsed / 1024 / 1024;
-    
+    console.log(`🧠 Memory usage: ${memUsageMB}MB`);
+    console.log(`🧠 Safety limit: ${config.safetyLimits.maxMemoryMB}MB`);
     // Check if we've exceeded our safety limit
     if (memUsageMB > config.safetyLimits.maxMemoryMB) {
       // Convert to GB for the log message
@@ -82,7 +83,7 @@ class SessionManager {
       console.log(`🚨 Memory limit exceeded: ${Math.round(memUsageMB)}MB (${memUsageGB}GB) > ${maxMemoryGB}GB`);
       return false; // Memory limit exceeded
     }
-    
+    console.log(`🧠 Memory is okay: ${memUsageMB}MB < ${config.safetyLimits.maxMemoryMB}MB`);
     return true; // Memory is okay
   };
 
