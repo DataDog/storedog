@@ -1,0 +1,839 @@
+// Session actions - reusable actions for browser automation
+// These functions take a session instance to access page, logging, and config
+
+const { sleep } = require('../utils');
+
+// =============================================================================
+// UTM PARAMETERS
+// =============================================================================
+
+const setUtmParams = (url) => {
+  const utmCampaigns = ['blog_post', 'cool_bits_sale', 'paid_search', 'clothing_sale', 'social_media'];
+  const utmMediums = ['facebook', 'twitter', 'instagram', 'pinterest', 'linkedin', 'youtube', 'google'];
+  const utmSources = ['blog', 'social', 'search', 'email', 'direct'];
+
+  const campaign = utmCampaigns[Math.floor(Math.random() * utmCampaigns.length)];
+  const medium = utmMediums[Math.floor(Math.random() * utmMediums.length)];
+  const source = utmSources[Math.floor(Math.random() * utmSources.length)];
+
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}utm_campaign=${campaign}&utm_medium=${medium}&utm_source=${source}`;
+};
+
+// =============================================================================
+// PRODUCT SELECTION
+// =============================================================================
+
+const selectHomePageProduct = async (session) => {
+  session.log(`In selectHomePageProduct on page ${await session.page.title()}`);
+  
+  try {
+    const productSelectors = [
+      'a[href*="/products/"]',
+      '.product-item',
+      '[class*="product-item"]',
+      '[class*="ProductCard"]',
+      'a[aria-label]',
+      '.grid a',
+      'div[class*="product"] a',
+      'img[alt*="T-Shirt"] + a, img[alt*="Jeans"] + a, img[alt*="Sweatshirt"] + a'
+    ];
+    
+    let products = [];
+    let usedSelector = '';
+    
+    for (const selector of productSelectors) {
+      try {
+        session.log(`Trying selector: ${selector}`);
+        await session.page.waitForSelector(selector, { visible: true, timeout: 5000 });
+        products = await session.page.$$(selector);
+        if (products.length > 0) {
+          usedSelector = selector;
+          session.log(`Found ${products.length} products using selector: ${selector}`);
+          break;
+        }
+      } catch (error) {
+        session.log(`Selector ${selector} failed: ${error.message}`);
+        continue;
+      }
+    }
+    
+    if (products.length === 0) {
+      throw new Error('No products found with any selector');
+    }
+    
+    const randomProductIndex = Math.floor(Math.random() * products.length);
+    const randomProduct = products[randomProductIndex];
+    
+    let productAriaLabel = await randomProduct.evaluate((el) => el.getAttribute('aria-label'));
+    
+    if (!productAriaLabel) {
+      const href = await randomProduct.evaluate((el) => el.getAttribute('href'));
+      if (href) {
+        productAriaLabel = href.split('/').pop() || 'product';
+      } else {
+        productAriaLabel = await randomProduct.evaluate((el) => el.textContent?.trim()) || 'product';
+      }
+    }
+    
+    session.log(`Selected product: ${productAriaLabel}`);
+    
+    try {
+      await Promise.all([
+        session.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
+        randomProduct.click()
+      ]);
+      session.log('Successfully navigated to product page');
+    } catch (clickError) {
+      session.log(`Direct product click failed, trying parent Link element: ${clickError.message}`);
+      try {
+        const href = await randomProduct.evaluate(el => el.getAttribute('href'));
+        if (href) {
+          const parentLink = await session.page.$(`a[href="${href}"]`);
+          if (parentLink) {
+            await Promise.all([
+              session.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
+              parentLink.click()
+            ]);
+            session.log('Successfully navigated to product page via parent Link');
+          } else {
+            throw new Error('Parent Link not found');
+          }
+        } else {
+          throw new Error('No href found on product element');
+        }
+      } catch (parentError) {
+        session.log(`Parent Link click failed, using direct URL: ${parentError.message}`);
+        const href = await randomProduct.evaluate(el => el.getAttribute('href'));
+        if (href && href.trim() !== '' && href !== '#') {
+          try {
+            const currentUrl = await session.page.url();
+            const absoluteUrl = href.startsWith('http') ? href : new URL(href, currentUrl).href;
+            session.log(`Attempting direct navigation to: ${absoluteUrl}`);
+            await session.page.goto(absoluteUrl, { waitUntil: 'domcontentloaded' });
+            session.log('Successfully navigated to product page via direct URL');
+          } catch (gotoError) {
+            session.log(`Direct URL navigation failed: ${gotoError.message}`);
+            throw new Error(`Invalid URL for navigation: ${href}`);
+          }
+        } else {
+          throw new Error('No valid href available for direct navigation');
+        }
+      }
+    }
+    
+  } catch (error) {
+    session.log(`Error selecting home page product: ${error.message}`);
+    
+    try {
+      const fallbackSelectors = ['a[href*="/products/"]', 'a[href*="product"]', 'a'];
+      for (const selector of fallbackSelectors) {
+        const elements = await session.page.$$(selector);
+        if (elements.length > 0) {
+          const randomElement = elements[Math.floor(Math.random() * elements.length)];
+          const href = await randomElement.evaluate(el => el.getAttribute('href'));
+          if (href && href.trim() !== '' && href !== '#' && !href.startsWith('javascript:')) {
+            try {
+              const currentUrl = await session.page.url();
+              const absoluteUrl = href.startsWith('http') ? href : new URL(href, currentUrl).href;
+              session.log(`Trying fallback navigation to: ${absoluteUrl}`);
+              
+              await Promise.all([
+                session.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
+                randomElement.click()
+              ]);
+              session.log('Fallback navigation successful');
+              break;
+            } catch (clickError) {
+              session.log(`Fallback click failed, trying next element: ${clickError.message}`);
+              continue;
+            }
+          } else {
+            session.log(`Skipping element with invalid href: ${href}`);
+            continue;
+          }
+        }
+      }
+    } catch (fallbackError) {
+      session.log(`Fallback navigation also failed: ${fallbackError.message}`);
+      throw new Error('Unable to select any product from home page');
+    }
+  }
+  
+  await sleep(1000);
+  const pageTitle = await session.page.title();
+  session.log(`"${pageTitle}" loaded`);
+  return;
+};
+
+const selectProduct = async (session) => {
+  session.log(`Selecting product on page ${await session.page.title()}`);
+  
+  try {
+    await session.page.waitForSelector('a[href*="/products/"]', { 
+      timeout: 5000,
+      visible: true 
+    });
+    
+    const productLinks = await session.page.$$('a[href*="/products/"]');
+    
+    if (productLinks.length > 0) {
+      const randomIndex = Math.floor(Math.random() * productLinks.length);
+      const productLink = productLinks[randomIndex];
+      
+      const href = await productLink.evaluate(el => el.href);
+      session.log(`Clicking product link: ${href}`);
+      
+      try {
+        await Promise.all([
+          productLink.click(),
+          session.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 20000 })
+        ]);
+        
+        const newTitle = await session.page.title();
+        const newUrl = await session.page.url();
+        session.log(`Selected product: "${newTitle}" at ${newUrl}`);
+      } catch (navError) {
+        session.log('Navigation timeout, trying click without waiting for navigation');
+        await productLink.click();
+        await sleep(2000);
+        
+        const newTitle = await session.page.title();
+        const newUrl = await session.page.url();
+        session.log(`Fallback click result: "${newTitle}" at ${newUrl}`);
+      }
+      
+      try {
+        await session.page.waitForSelector('#add-to-cart-button', { timeout: 3000 });
+        session.log('Confirmed on product page - add-to-cart button found');
+      } catch (verifyError) {
+        session.log('Warning: Not on a product page - no add-to-cart button found');
+        throw new Error('Failed to navigate to product page');
+      }
+    } else {
+      session.log('No product links found on this page');
+      throw new Error('No product links available');
+    }
+  } catch (error) {
+    session.log(`Product selection failed: ${error.message}`);
+    throw error;
+  }
+};
+
+const selectProductsPageProduct = async (session) => {
+  try {
+    const currentUrl = await session.page.url();
+    if (currentUrl.includes('/products') && !currentUrl.includes('/products/')) {
+      session.log('Already on products page, selecting product directly');
+      await selectProduct(session);
+      return true;
+    }
+    
+    const navSelectors = [
+      'nav a[href*="/products"]',
+      'nav a:contains("Products")',
+      'a[href="/products"]',
+      'nav#main-navbar a:first-child',
+      'nav a:first-child',
+      'header nav a:first-child'
+    ];
+    
+    let button = null;
+    for (const selector of navSelectors) {
+      try {
+        if (selector.includes(':contains("Products")')) {
+          const links = await session.page.$$('nav a');
+          for (const link of links) {
+            const text = await link.evaluate(el => el.textContent?.trim().toLowerCase());
+            if (text && text.includes('products')) {
+              button = link;
+              session.log(`Found products navigation using text content: "${text}"`);
+              break;
+            }
+          }
+        } else {
+          button = await session.page.$(selector);
+          if (button) {
+            const href = await button.evaluate(el => el.href);
+            session.log(`Found products navigation using selector: ${selector}, href: ${href}`);
+            break;
+          }
+        }
+      } catch (selectorError) {
+        session.log(`Selector ${selector} failed: ${selectorError.message}`);
+        continue;
+      }
+    }
+    
+    if (button) {
+      session.log('Attempting navigation to products page...');
+      try {
+        await Promise.all([
+          button.evaluate((b) => b.click()),
+          session.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 20000 }),
+        ]);
+        
+        const newUrl = await session.page.url();
+        const newTitle = await session.page.title();
+        session.log(`Navigation successful: "${newTitle}" at ${newUrl}`);
+      } catch (navError) {
+        session.log('Navigation timeout, trying click without waiting for navigation');
+        await button.evaluate((b) => b.click());
+        await sleep(2000);
+        
+        const newUrl = await session.page.url();
+        const newTitle = await session.page.title();
+        session.log(`Fallback navigation result: "${newTitle}" at ${newUrl}`);
+      }
+
+      await selectProduct(session);
+      return true;
+    } else {
+      session.log('Products page navigation button not found, trying direct navigation');
+      const productsUrl = currentUrl.endsWith('/') ? `${currentUrl}products` : `${currentUrl}/products`;
+      session.log(`Attempting direct navigation to: ${productsUrl}`);
+      await session.page.goto(productsUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
+      
+      const finalUrl = await session.page.url();
+      const finalTitle = await session.page.title();
+      session.log(`Direct navigation result: "${finalTitle}" at ${finalUrl}`);
+      
+      await selectProduct(session);
+      return true;
+    }
+  } catch (error) {
+    session.log(`Failed to navigate to products page: ${error.message}`);
+    return false;
+  }
+};
+
+const selectRelatedProduct = async (session) => {
+  session.log(`In selectRelatedProduct on page ${await session.page.title()}`);
+  
+  try {
+    const selector = '[aria-label="Learning Bits"]';
+    session.log(`Looking for hardcoded selector: ${selector}`);
+    
+    const element = await session.page.$(selector);
+    if (element) {
+      session.log('Found Learning Bits product, clicking...');
+      await Promise.all([
+        session.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
+        session.page.click(selector)
+      ]);
+      const pageTitle = await session.page.title();
+      session.log(`"${pageTitle}" loaded`);
+    } else {
+      session.log('Learning Bits product not found - this creates frustration signals!');
+      throw new Error('Learning Bits product not found - intentional frustration signal');
+    }
+  } catch (error) {
+    session.log(`selectRelatedProduct failed (intentional frustration): ${error.message}`);
+    throw error;
+  }
+};
+
+// =============================================================================
+// NAVIGATION
+// =============================================================================
+
+const goToFooterPage = async (session) => {
+  session.log(`In goToFooterPage on page ${await session.page.title()}`);
+  
+  try {
+    await session.page.evaluate(() => {
+      document.documentElement.scrollTop = document.body.scrollHeight;
+    });
+    
+    await sleep(1000);
+    
+    const footerSelectors = [
+      'footer a',
+      '.footer a',
+      '#footer a',
+      'footer nav a',
+      '.footer-nav a',
+      'footer ul a',
+      'footer li a'
+    ];
+    
+    let footerLinks = [];
+    for (const selector of footerSelectors) {
+      try {
+        footerLinks = await session.page.$$(selector);
+        if (footerLinks.length > 0) {
+          session.log(`Found ${footerLinks.length} footer links using selector: ${selector}`);
+          break;
+        }
+      } catch (e) {
+        // Continue to next selector
+      }
+    }
+    
+    if (footerLinks.length > 0) {
+      const randomIndex = Math.floor(Math.random() * footerLinks.length);
+      const linkText = await footerLinks[randomIndex].evaluate(el => el.textContent?.trim());
+      session.log(`Clicking footer link: "${linkText}"`);
+      
+      const href = await footerLinks[randomIndex].evaluate(el => el.getAttribute('href'));
+      const currentPath = await session.page.evaluate(() => window.location.pathname);
+      const isNavigationLink = href && !href.startsWith('#') && href !== currentPath;
+      
+      if (isNavigationLink) {
+        try {
+          await Promise.all([
+            session.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
+            footerLinks[randomIndex].click()
+          ]);
+          session.log(`Navigated to footer page: ${await session.page.title()}`);
+        } catch (navError) {
+          session.log(`Navigation timeout, link might not cause navigation: ${navError.message}`);
+          await footerLinks[randomIndex].click();
+          await sleep(1000);
+        }
+      } else {
+        session.log('Footer link appears to be anchor/scroll link, clicking without navigation wait');
+        await footerLinks[randomIndex].click();
+        await sleep(1000);
+      }
+    } else {
+      session.log('No footer links found, staying on current page');
+    }
+  } catch (error) {
+    session.log(`Footer navigation failed: ${error.message}`);
+  }
+};
+
+// =============================================================================
+// CART OPERATIONS
+// =============================================================================
+
+const addToCart = async (session) => {
+  session.log(`In addToCart on page ${await session.page.title()}`);
+
+  try {
+    const pageUrl = await session.page.url();
+    const isProductPage = pageUrl.includes('/products/') || 
+                         await session.page.$('#add-to-cart-button') !== null ||
+                         await session.page.$('[class*="product"]') !== null;
+    
+    if (!isProductPage) {
+      throw new Error(`Not on a product page (URL: ${pageUrl}) - add-to-cart button not available`);
+    }
+
+    await session.page.waitForSelector('#add-to-cart-button', {
+      visible: true,
+      timeout: 10000
+    });
+
+    const variantSelector = 'select#variant-select';
+    const variantSelect = await session.page.$(variantSelector);
+    session.log(`variantSelect: ${variantSelect}`);
+    if (variantSelect) {
+      const variantOptions = await session.page.$$eval(
+        `${variantSelector} option`,
+        (options) => options.map((option) => option.value)
+      );
+
+      const randomVariantIndex = Math.floor(Math.random() * variantOptions.length);
+      const randomVariantValue = variantOptions[randomVariantIndex];
+
+      await session.page.select(variantSelector, randomVariantValue);
+      session.log(`selected variant: ${randomVariantValue}`);
+      await sleep(1000);
+    }
+
+    await session.page.click('#add-to-cart-button');
+    session.log('clicked add to cart');
+
+    try {
+      await session.page.waitForSelector('#close-sidebar', {
+        visible: true,
+        timeout: 5000
+      });
+      session.log('close sidebar is visible');
+      await session.page.click('#close-sidebar');
+    } catch (sidebarError) {
+      session.log(`Close sidebar not found or not visible: ${sidebarError.message}`);
+    }
+
+    return;
+  } catch (error) {
+    session.log(`Add to cart failed: ${error.message}`);
+    throw error;
+  }
+};
+
+const applyDiscountCode = async (session, discountCode) => {
+  try {
+    await session.page.waitForSelector('input[name="discount-code"]', {
+      visible: true,
+    });
+
+    await session.page.type('input[name="discount-code"]', discountCode, {
+      delay: Math.floor(Math.random() * 430) + 150,
+    });
+
+    session.log(`entered code: ${discountCode}`);
+
+    await session.page.waitForSelector('button[data-dd-action-name="Apply Discount"]', {
+      visible: true,
+    });
+
+    await session.page.click('button[data-dd-action-name="Apply Discount"]');
+    session.log('Clicked discount code button');
+  } catch (e) {
+    session.log(`Error: ${e}`);
+  }
+
+  await sleep(1000);
+};
+
+const useDiscountCode = async (session) => {
+  try {
+    session.log(`In useDiscountCode on page ${await session.page.title()}`);
+
+    let discountCode = null;
+    
+    try {
+      const selectors = [
+        '#discount-code',
+        '[id*="discount"]',
+        '[class*="discount"]',
+        'strong',
+        '.discount-wrapper strong',
+        '.discount-wrapper span strong'
+      ];
+      
+      for (const selector of selectors) {
+        try {
+          const element = await session.page.$(selector);
+          if (element) {
+            const text = await element.evaluate(el => el.textContent?.trim());
+            if (text && /^[A-Z0-9]{3,15}$/.test(text)) {
+              discountCode = text;
+              session.log(`Found discount code "${discountCode}" using selector: ${selector}`);
+              break;
+            }
+          }
+        } catch (e) {
+          // Continue to next selector
+        }
+      }
+      
+      if (discountCode) {
+        session.log(`Using dynamic discount code: ${discountCode}`);
+      } else {
+        session.log('No discount code found on page, using fallback');
+      }
+    } catch (e) {
+      session.log('Could not find discount code on page, using fallback');
+    }
+
+    if (!discountCode) {
+      const discountCodes = [
+        'DISCOUNT',
+        'COOLBITS', 
+        'LEARNINGBITS',
+        'BITS',
+        'COOL',
+        'STOREDOG',
+        'STOREDOG10',
+      ];
+      const randomIndex = Math.floor(Math.random() * discountCodes.length);
+      discountCode = discountCodes[randomIndex];
+      session.log(`Using fallback discount code: ${discountCode}`);
+    }
+
+    await session.page.waitForSelector('input[name="discount-code"]', {
+      visible: true,
+      timeout: 5000,
+    });
+
+    await sleep(1000);
+    await applyDiscountCode(session, discountCode);
+    await sleep(1000);
+
+    if (Math.floor(Math.random() * 10) + 1 < 7) {
+      session.log(`trying discount code ${discountCode} again...`);
+      await applyDiscountCode(session, discountCode);
+    }
+  } catch (e) {
+    session.log(`Discount code application failed: ${e.message}`);
+  }
+
+  await sleep(500);
+  return;
+};
+
+const checkout = async (session) => {
+  session.log(`In checkout on page ${await session.page.title()}`);
+
+  try {
+    await session.page.waitForSelector('button[data-dd-action-name="Toggle Cart"]', {
+      visible: true,
+      timeout: 10000,
+    });
+
+    session.log('Found cart toggle button, clicking...');
+    await Promise.all([
+      sleep(500),
+      session.page.click('button[data-dd-action-name="Toggle Cart"]'),
+    ]);
+
+    try {
+      await session.page.waitForSelector(
+        'button[data-dd-action-name="Proceed to Checkout"]',
+        {
+          visible: true,
+          timeout: 10000,
+        }
+      );
+      session.log('Found proceed to checkout button, cart sidebar opened');
+
+      const cartItems = await session.page.$$('li[class*="root"], .cart-item, [class*="cart-item"], .line-item, [class*="line-item"]');
+      session.log(`Found ${cartItems.length} items in cart`);
+
+      if (cartItems.length === 0) {
+        session.log('Cart is empty, cannot proceed to checkout');
+        return;
+      }
+
+      session.log('Clicking proceed to checkout button...');
+      await Promise.all([
+        sleep(2000),
+        session.page.click('button[data-dd-action-name="Proceed to Checkout"]'),
+      ]);
+    } catch (checkoutError) {
+      session.log(`Proceed to checkout button not found: ${checkoutError.message}`);
+      session.log('Cart might be empty or sidebar failed to open');
+      return;
+    }
+
+    await session.page.waitForSelector('button[data-dd-action-name="Confirm Purchase"]', {
+      visible: true,
+      timeout: 15000,
+    });
+
+  await sleep(2000);
+  session.log('getting sidebar...');
+  const sidebarSelector = '#sidebar';
+  const sidebarElement = await session.page.$(sidebarSelector);
+
+  await sidebarElement.evaluate((el) => {
+    el.parentNode.scrollTo(0, el.getBoundingClientRect().bottom);
+  });
+
+  if (Math.floor(Math.random() * 10 + 1) > 5) {
+    session.log('applying discount code...');
+    await useDiscountCode(session);
+
+    if (Math.floor(Math.random() * 10 + 1) <= 7) {
+      session.log('begrudgingly checking out even though discount code failed...');
+
+      await Promise.all([
+        sleep(1000),
+        session.page.click('button[data-dd-action-name="Confirm Purchase"]'),
+      ]);
+
+      await session.page.waitForSelector('.purchase-confirmed-msg', { visible: true });
+      session.log('purchase confirmed');
+      session.log('Checkout complete');
+      await sleep(3000);
+    }
+  } else {
+    session.log('proceeded to checkout...');
+
+    await Promise.all([
+      sleep(2000),
+      session.page.click('button[data-dd-action-name="Confirm Purchase"]'),
+    ]);
+
+    await session.page.waitForSelector('.purchase-confirmed-msg', { visible: true });
+    session.log('purchase confirmed');
+    session.log('Checkout complete');
+    await sleep(3000);
+  }
+  } catch (error) {
+    session.log(`Checkout failed: ${error.message}`);
+    session.log('Attempting simplified checkout...');
+    
+    try {
+      const checkoutButtons = await session.page.$$('button');
+      for (const button of checkoutButtons) {
+        const text = await button.evaluate(el => el.textContent?.toLowerCase());
+        if (text && (text.includes('checkout') || text.includes('purchase') || text.includes('buy'))) {
+          await button.click();
+          await sleep(2000);
+          session.log('Fallback checkout completed');
+          break;
+        }
+      }
+    } catch (fallbackError) {
+      session.log(`Fallback checkout also failed: ${fallbackError.message}`);
+    }
+  }
+};
+
+// =============================================================================
+// FRUSTRATION SIGNALS
+// =============================================================================
+
+const generateRageClicks = async (session) => {
+  session.log('Generating rage clicks (3+ clicks in 1 second)...');
+  
+  try {
+    const clickableSelectors = [
+      'button',
+      'a',
+      '[role="button"]',
+      '.btn',
+      'input[type="submit"]',
+      'input[type="button"]'
+    ];
+    
+    let targetElement = null;
+    for (const selector of clickableSelectors) {
+      targetElement = await session.page.$(selector);
+      if (targetElement) break;
+    }
+    
+    if (targetElement) {
+      for (let i = 0; i < 4; i++) {
+        await targetElement.click();
+        await sleep(100);
+      }
+      session.log('Rage clicks generated successfully');
+    } else {
+      session.log('No clickable element found for rage clicks');
+    }
+  } catch (error) {
+    session.log(`Rage clicks generation failed: ${error.message}`);
+  }
+};
+
+const generateDeadClicks = async (session) => {
+  session.log('Generating dead clicks (clicks on non-interactive elements)...');
+  
+  try {
+    const deadClickSelectors = [
+      'div', 'span', 'p',
+      'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'img', '.container', '.wrapper'
+    ];
+    
+    let targetElement = null;
+    for (const selector of deadClickSelectors) {
+      targetElement = await session.page.$(selector);
+      if (targetElement) break;
+    }
+    
+    if (targetElement) {
+      await targetElement.click();
+      session.log('Dead click generated successfully');
+    } else {
+      session.log('No suitable element found for dead clicks');
+    }
+  } catch (error) {
+    session.log(`Dead clicks generation failed: ${error.message}`);
+  }
+};
+
+const generateErrorClicks = async (session) => {
+  session.log('Generating error clicks (clicks that trigger JavaScript errors)...');
+  
+  try {
+    await session.page.evaluate(() => {
+      window.tempErrorHandler = (event) => {
+        console.error('Intentional error for frustration signal:', event.error);
+      };
+      window.addEventListener('error', window.tempErrorHandler);
+    });
+    
+    const errorProneSelectors = [
+      'button[onclick*="undefined"]',
+      'a[href="javascript:void(0)"]',
+      'button[data-action="nonexistent"]',
+      '[data-testid="broken-element"]'
+    ];
+    
+    let clicked = false;
+    for (const selector of errorProneSelectors) {
+      const element = await session.page.$(selector);
+      if (element) {
+        await element.click();
+        clicked = true;
+        break;
+      }
+    }
+    
+    if (!clicked) {
+      const randomElement = await session.page.$('body > *');
+      if (randomElement) {
+        await randomElement.click();
+      }
+    }
+    
+    await session.page.evaluate(() => {
+      try {
+        nonexistentFunction();
+      } catch (e) {
+        console.error('Intentional error for frustration signal:', e);
+      }
+    });
+    
+    session.log('Error clicks generated successfully');
+    
+    await session.page.evaluate(() => {
+      if (window.tempErrorHandler) {
+        window.removeEventListener('error', window.tempErrorHandler);
+        delete window.tempErrorHandler;
+      }
+    });
+    
+  } catch (error) {
+    session.log(`Error clicks generation failed: ${error.message}`);
+  }
+};
+
+const generateRandomFrustrationSignal = async (session) => {
+  const signalTypes = ['rage', 'dead', 'error'];
+  const randomType = signalTypes[Math.floor(Math.random() * signalTypes.length)];
+  
+  session.log(`Generating random frustration signal: ${randomType}`);
+  
+  switch (randomType) {
+    case 'rage':
+      await generateRageClicks(session);
+      break;
+    case 'dead':
+      await generateDeadClicks(session);
+      break;
+    case 'error':
+      await generateErrorClicks(session);
+      break;
+  }
+  
+  return randomType;
+};
+
+// =============================================================================
+// EXPORTS
+// =============================================================================
+
+module.exports = {
+  setUtmParams,
+  selectHomePageProduct,
+  selectProduct,
+  selectProductsPageProduct,
+  selectRelatedProduct,
+  goToFooterPage,
+  addToCart,
+  applyDiscountCode,
+  useDiscountCode,
+  checkout,
+  generateRageClicks,
+  generateDeadClicks,
+  generateErrorClicks,
+  generateRandomFrustrationSignal
+};

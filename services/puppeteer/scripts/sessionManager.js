@@ -12,9 +12,11 @@ const concurrencyLevels = config.safetyLimits.rampUpPercentages.map((percentage,
   maxConcurrent: Math.max(Math.ceil(config.maxConcurrency * percentage), 4)
 }));
 
+
+
 class SessionManager {
-  constructor() {
-    this.Sessions = config.Sessions;
+  constructor(sessionClasses) {
+    this.Sessions = sessionClasses;
     this.browserPool = new BrowserPool();
     // Array to track all currently running session promises
     this.sessionPromises = [];
@@ -23,18 +25,18 @@ class SessionManager {
   }
   
   log(message) {
-    console.log(`SessionManager -- ${message}`);
+    console.log(`[🕺 SessionManager] ${message}`);
   }
 
   // Clear all browser data (cookies, cache, storage) to create a "fresh" session.
   // This makes each session unique from RUM's perspective - they appear as different users.
-  async clearBrowserContext(page) {
+  async clearBrowserContext(session) {
     try {
-      if (page.isClosed()) return;
+      logMemoryUsage('🎬 before clearBrowserContext');
       
       // Create a Chrome DevTools Protocol (CDP) session to send low-level commands
       // CDP lets us control Chrome features that aren't available in the regular Puppeteer API
-      const client = await page.target().createCDPSession();
+      const client = await session.page.target().createCDPSession();
       
       // Send commands to clear network-level data
       await client.send('Network.clearBrowserCookies');  // Delete all cookies
@@ -56,6 +58,7 @@ class SessionManager {
       });
       
       this.log('Browser context cleared');
+      logMemoryUsage(`🏁 after clearBrowserContext for [${session.emoji} ${session.sessionName} ${session.sessionId}]`);
     } catch (error) {
       // If clearing fails, log it but don't crash - the session can still continue
       this.log('Error clearing browser context:', error.message);
@@ -106,7 +109,7 @@ class SessionManager {
   // It progressively ramps up concurrency, then maintains exactly config.maxConcurrency sessions.
   // When a session completes, it immediately starts a new one to keep the count constant.
   async run() {
-    this.log(`🔄 Starting continuous traffic generation with ${this.sessionClasses.length} session types`);
+    this.log(`🔄 Starting continuous traffic generation with ${this.Sessions.length} session types`);
     this.log(`🎯 Target: ${config.maxConcurrency} concurrent sessions always running`);
     
     let sessionIdCounter = 1;
@@ -115,7 +118,13 @@ class SessionManager {
     // This infinite loop is the heart of the traffic generator.
     // It maintains exactly currentMaxConcurrent sessions running at all times.
     // When a session completes, it immediately starts a new one.
-    while (true) { 
+
+
+    // Run a single loop or forever.
+    const maxLoops = config.loop === 'single' ? 1 : Infinity;
+    
+    for (let loopCount = 0; loopCount < maxLoops; loopCount++) { 
+      this.log(`🔄 Starting loop ${loopCount + 1} of ${maxLoops}`);
       // Check if it's time to increase concurrency based on elapsed time
       this.updateConcurrency();
       while (this.shouldAddNewSession()) {
@@ -128,6 +137,8 @@ class SessionManager {
           
           try {
             browser = await this.browserPool.getBrowser();
+            const version = await browser.version();
+            this.log(`Browser started: ${version}`);
             session = new SessionClass(browser, sessionId);
             await session.setupPage();
             await session.run();
@@ -135,21 +146,19 @@ class SessionManager {
             this.log(`Error creating session: ${error.message}`);
           } finally {
             try {
-              if (browser) {
-                const pages = await browser.pages();
-                const openPage = pages.find(p => !p.isClosed());
-                
-                if (openPage) {
-                  await this.clearBrowserContext(openPage);
+              if (session) {
+                if (!session.page.isClosed()) {
+                  await this.clearBrowserContext(session);
                 }
-                
-                await this.browserPool.releaseBrowser(browser);
+                this.log(`Releasing browser for [${session.emoji} ${session.sessionName} ${session.sessionId}]`);
+                await this.browserPool.releaseBrowser(session.browser);
               }
             } catch (cleanupError) {
               this.log(`Browser cleanup error: ${cleanupError.message}`);
             }
             
             // Force garbage collection
+            this.log(`🧹 Force garbage collection for [${session.emoji} ${session.sessionName} ${session.sessionId}]`);
             forceGC();
           }
         })();

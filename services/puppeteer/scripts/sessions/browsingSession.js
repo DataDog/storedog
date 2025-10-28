@@ -1,9 +1,14 @@
 // Browsing session - additional browsing and interaction patterns
 const config = require('../config');
-const { setUtmParams, selectProduct, addToCart, checkout, sleep } = require('../utils');
+const { setUtmParams, selectProduct, addToCart, checkout } = require('./sessionActions');
+const { sleep } = require('../utils');
 const BaseSession = require('./baseSession');
 
 class BrowsingSession extends BaseSession {
+  constructor(browser, sessionId) {
+    super(browser, sessionId);
+  }
+
   async execute() {
     const urlWithUtm = Math.random() > 0.5 ? setUtmParams(config.storedogUrl) : config.storedogUrl;
     
@@ -39,16 +44,16 @@ class BrowsingSession extends BaseSession {
     }
 
     // Select a product and add to cart
-    await selectProduct(this.page);
-    await addToCart(this.page);
+    await selectProduct(this);
+    await addToCart(this);
 
     // Proceed to checkout
     this.log('Moving to checkout');
-    await sleep(1500); // Allow UI to settle
-    await checkout(this.page);
+    await sleep(1500);
+    await checkout(this);
     
     // End session
-    await sleep(1500); // Allow checkout to complete
+    await sleep(1500);
     try {
       const url = await this.page.url();
       await this.page.goto(`${url}?end_session=true`, {

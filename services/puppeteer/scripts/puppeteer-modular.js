@@ -5,24 +5,49 @@
 
 const SessionManager = require('./sessionManager');
 const config = require('./config');
+const { sleep } = require('./utils');
+
+// Initialize logging based on debug mode
+if (!config.debug) {
+  const originalLog = console.log;
+  const importantPatterns = ['💾', '✅', '❌', '▶️', '🚀', '📋', '📊', '🔧', '⏳', '🧹', '🔄', 
+                            'Error:', 'Failed:', 'timeout', 'FATAL'];
+  
+  console.log = (...args) => {
+    const message = args.join(' ');
+    if (importantPatterns.some(pattern => message.includes(pattern))) {
+      originalLog(...args);
+    }
+  };
+}
 
 // The main function that runs when the script starts.
 async function main() {
   console.log('🚀 Starting Puppeteer Traffic Generator');
   console.log(`🌐 Target: ${config.storedogUrl}`);
+  console.log(`🔧 System Memory: ${config.systemMemory}`);
+  console.log(`🔧 Config: ${config.maxConcurrency} concurrent, ${config.browserPoolSize} browsers`);
+  console.log(`🔧 Safety: ${config.safetyLimits.maxMemoryMB}MB max`);
+  console.log(`🔧 Debug: ${config.debug ? 'ENABLED' : 'DISABLED'}`);
   
   try {
     if (config.sessionTypes.length === 0) {
       console.error('❌ No session types enabled in config.js!');
       process.exit(1);
     }
-    
+
+    // Load session classes based on string names from config
+    const sessionClasses = config.sessionTypes.map(sessionName => {
+      return require(`./sessions/${sessionName.charAt(0).toLowerCase() + sessionName.slice(1)}`);
+    });
+
     // Log enabled session types
-    const sessionNames = config.sessionTypes.map(S => S.name).join(', ');
-    console.log(`🎯 Enabled session types: ${sessionNames}`);
-    
+    console.log(`🎯 Session types: ${config.sessionTypes.join(', ')}`);
+
     // Create SessionManager and start running sessions
-    const sessionManager = new SessionManager(config.sessionTypes);
+    const sessionManager = new SessionManager(sessionClasses);
+    // Wait for Storedog frontend to load
+    await sleep(config.startupDelay);
     await sessionManager.run();    
   } catch (error) {
     console.error('❌ Script failed:', error);
