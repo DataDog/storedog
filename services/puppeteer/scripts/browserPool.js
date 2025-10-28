@@ -62,16 +62,7 @@ class BrowserPool {
       slowMo: 50,             // Slow down operations by 50ms (makes traffic more realistic)
       timeout: 15000          // Wait up to 15 seconds for the browser to start
     });
-    
-    // Try to log the browser version for debugging.
-    try {
-      const version = await browser.version();
-      console.log(`Browser started: ${version}`);
-    } catch (error) {
-      // If we can't get the version, that's okay - just log a generic message
-      console.log('Browser started (version unavailable)');
-    }
-    
+        
     // Return the browser object so the caller can use it
     return browser;
   }
