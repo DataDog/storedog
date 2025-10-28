@@ -290,6 +290,9 @@ services:
       - PUPPETEER_STARTUP_DELAY=${PUPPETEER_STARTUP_DELAY:-10000}
       - PUPPETEER_RAMP_INTERVAL=${PUPPETEER_RAMP_INTERVAL:-30000}
       - PUPPETEER_DEBUG=${PUPPETEER_DEBUG:-false}
+      - PUPPETEER_DEBUG_SESSIONS=${PUPPETEER_DEBUG_SESSIONS:-false}
+      - PUPPETEER_LOOP=${PUPPETEER_LOOP:-single}
+      - PUPPETEER_SESSION_TYPES=${PUPPETEER_SESSION_TYPES:-BrowsingSession,TaxonomySession,FrustrationSession,HomePageSession}
     networks:
       - storedog-network
     volumes:
