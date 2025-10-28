@@ -17,7 +17,7 @@ const config = {
   // Debug mode
   debug: process.env.PUPPETEER_DEBUG === 'true',
   debugSessions: process.env.PUPPETEER_DEBUG_SESSIONS === 'true',
-  loop: process.env.PUPPETEER_LOOP === 'single' ? false : true,
+  loop: process.env.PUPPETEER_LOOP,
   
   // Concurrency settings
   startupDelay: parseInt(process.env.PUPPETEER_STARTUP_DELAY),
