@@ -18,4 +18,4 @@ WORKDIR /home/pptruser
 
 COPY ./scripts/ ./
 
-CMD ["node", "index.js"]
+CMD ["node", "--expose-gc","index.js"]
