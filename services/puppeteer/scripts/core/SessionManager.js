@@ -12,11 +12,15 @@ const concurrencyLevels = config.safetyLimits.rampUpPercentages.map((percentage,
   maxConcurrent: Math.max(Math.ceil(config.maxConcurrency * percentage), 4)
 }));
 
-
-
 class SessionManager {
-  constructor(sessionClasses) {
-    this.Sessions = sessionClasses;
+
+  static getSessionClasses() {
+    return config.sessionTypes.map(sessionName => {
+      return require(`../sessions/${sessionName}`);
+    });
+  }
+  constructor() {
+    this.Sessions = SessionManager.getSessionClasses();
     this.browserPool = new BrowserPool();
     this.sessionPromises = [];
     this.startTime = Date.now();
@@ -56,8 +60,8 @@ class SessionManager {
         `
       });
       
-      this.log('Browser context cleared');
-      this.logMemoryUsage(`🏁 after clearBrowserContext for [${session.emoji} ${session.sessionName} ${session.sessionId}]`);
+      this.log(`Browser context cleared for ${session.browser.id}`);
+      this.logMemoryUsage(`after clearBrowserContext`);
     } catch (error) {
       // If clearing fails, log it but don't crash - the session can still continue
       this.log('Error clearing browser context:', error.message);
@@ -72,14 +76,14 @@ class SessionManager {
   };
 
   // Force JavaScript garbage collection to free up memory
-  forceGC = () => {
-    if (global.gc) {
+  tryGarbageCollection = () => {
+    const isGlobalGcAvailable = global.gc !== undefined;
+    if (isGlobalGcAvailable) {
       this.logMemoryUsage('before garbage collection');
       global.gc();
-      if (config.debug) {
-        this.logMemoryUsage('after garbage collection');
-        this.log('🗑️  Garbage collection triggered');
-      }
+      this.logMemoryUsage('after garbage collection');
+    } else {
+      this.log('global.gc is not available');
     }
   };
       // Helper function to check if we're using too much memory.
@@ -126,17 +130,9 @@ class SessionManager {
   // When a session completes, it immediately starts a new one to keep the count constant.
   async run() {
     this.log(`🔄 Starting continuous traffic generation with ${this.Sessions.length} session types`);
-    this.log(`🎯 Target: ${config.maxConcurrency} concurrent sessions always running`);
     
     let sessionIdCounter = 1;
     
-    // ===== THE CONTINUOUS SESSION LOOP =====
-    // This infinite loop is the heart of the traffic generator.
-    // It maintains exactly currentMaxConcurrent sessions running at all times.
-    // When a session completes, it immediately starts a new one.
-
-
-    // Run a single loop or forever.
     const maxLoops = config.loop === 'single' ? 1 : Infinity;
     
     for (let loopCount = 0; loopCount < maxLoops; loopCount++) { 
@@ -145,7 +141,7 @@ class SessionManager {
       this.updateConcurrency();
       while (this.shouldAddNewSession()) {
         const randomIndex = Math.floor(Math.random() * this.Sessions.length);
-        const SessionClass = this.Sessions[randomIndex];
+        const Session = this.Sessions[randomIndex];
         const sessionId = sessionIdCounter++;
         const sessionPromise = (async () => {
           let session;
@@ -153,34 +149,28 @@ class SessionManager {
           
           try {
             browser = await this.browserPool.getBrowser();
-            const version = await browser.version();
-            this.log(`Browser started: ${version}`);
-            session = new SessionClass(browser, sessionId);
-            await session.setupPage();
+            session = new Session(browser, sessionId);
             await session.run();
           } catch (error) {
             this.log(`Error creating session: ${error.message}`);
           } finally {
             try {
               if (session) {
+                console.log(`Is page closed? ${session.page.isClosed()}`);
                 if (!session.page.isClosed()) {
                   await this.clearBrowserContext(session);
                 }
-                this.log(`Releasing browser for [${session.emoji} ${session.sessionName} ${session.sessionId}]`);
                 await this.browserPool.releaseBrowser(session.browser);
               }
             } catch (cleanupError) {
               this.log(`Browser cleanup error: ${cleanupError.message}`);
             }
             
-            // Force garbage collection
-            this.log(`🧹 Force garbage collection for [${session.emoji} ${session.sessionName} ${session.sessionId}]`);
-            this.forceGC();
+            this.tryGarbageCollection();
           }
         })();
 
         this.sessionPromises.push(sessionPromise);
-          
         sessionPromise.finally(() => {
           this.sessionPromises.splice(this.sessionPromises.indexOf(sessionPromise), 1);
         });
@@ -193,6 +183,9 @@ class SessionManager {
         await setTimeout(1000);
       }
     }
+
+    this.log(`🔄 Finished all sessions. Exiting...`);
+    process.exit(0);
   }
 }
 
