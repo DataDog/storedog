@@ -19,7 +19,6 @@ class TaxonomySession extends BaseSession {
 
     // Navigate to Best Sellers using the actual navigation
     try {
-      // Look for "Best Sellers" link in navigation
       const navLinks = await this.page.$$('nav a, header a');
       let bestSellersLink = null;
       
