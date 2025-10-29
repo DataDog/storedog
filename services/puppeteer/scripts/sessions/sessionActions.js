@@ -1,7 +1,6 @@
 // Session actions - reusable actions for browser automation
-// These functions take a session instance to access page, logging, and config
-
-const { sleep } = require('../utils');
+const config = require('../config');
+const { setTimeout } = require('node:timers/promises');
 
 // =============================================================================
 // UTM PARAMETERS
@@ -337,6 +336,38 @@ const selectRelatedProduct = async (session) => {
 // NAVIGATION
 // =============================================================================
 
+const goToHomePage = async (session) => {    
+  const urlWithUtm = Math.random() > 0.5 ? setUtmParams(config.storedogUrl) : config.storedogUrl;
+  await session.page.goto(urlWithUtm, { waitUntil: 'domcontentloaded', timeout: 15000 });
+  const pageTitle = await session.page.title();
+  session.log(`"${pageTitle}" loaded`);
+};
+
+// Select and navigate to a random navbar link
+const randomNavbarLink = async (session) => {
+  const navLinks = await session.page.$$('#main-navbar a');
+  if (navLinks.length > 0) {
+    const randomIndex = Math.floor(Math.random() * navLinks.length);
+    const randomLink = navLinks[randomIndex];
+    
+    try {
+      await Promise.all([
+        session.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
+        randomLink.evaluate((el) => el.click()),
+      ]);
+      const pageTitle = await session.page.title();
+      session.log(`Navigated to "${pageTitle}"`);
+    } catch (navError) {
+      session.log('Navigation timeout, clicking without waiting');
+      await randomLink.evaluate((el) => el.click());
+      await setTimeout(1000);
+    }
+  } else {
+    session.log('No navigation links found, staying on current page');
+  }
+};
+
+
 const goToFooterPage = async (session) => {
   session.log(`In goToFooterPage on page ${await session.page.title()}`);
   
@@ -345,7 +376,7 @@ const goToFooterPage = async (session) => {
       document.documentElement.scrollTop = document.body.scrollHeight;
     });
     
-    await sleep(1000);
+    await setTimeout(1000);
     
     const footerSelectors = [
       'footer a',
@@ -367,6 +398,7 @@ const goToFooterPage = async (session) => {
         }
       } catch (e) {
         // Continue to next selector
+        session.log(`Selector ${selector} failed: ${e.message}. Continuing to next selector...`);
       }
     }
     
@@ -389,18 +421,31 @@ const goToFooterPage = async (session) => {
         } catch (navError) {
           session.log(`Navigation timeout, link might not cause navigation: ${navError.message}`);
           await footerLinks[randomIndex].click();
-          await sleep(1000);
+          await setTimeout(1000);
         }
       } else {
         session.log('Footer link appears to be anchor/scroll link, clicking without navigation wait');
         await footerLinks[randomIndex].click();
-        await sleep(1000);
+        await setTimeout(1000);
       }
     } else {
       session.log('No footer links found, staying on current page');
     }
   } catch (error) {
     session.log(`Footer navigation failed: ${error.message}`);
+  }
+};
+
+const endSession = async (session) => {
+  try {
+    const url = await session.page.url();
+    await session.page.goto(`${url}?end_session=true`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 20000
+    });
+    session.log('Session ended successfully');
+  } catch (error) {
+    session.log(`Session end navigation failed: ${error.message}`);
   }
 };
 
@@ -440,7 +485,7 @@ const addToCart = async (session) => {
 
       await session.page.select(variantSelector, randomVariantValue);
       session.log(`selected variant: ${randomVariantValue}`);
-      await sleep(1000);
+      await setTimeout(1000);
     }
 
     await session.page.click('#add-to-cart-button');
@@ -486,7 +531,7 @@ const applyDiscountCode = async (session, discountCode) => {
     session.log(`Error: ${e}`);
   }
 
-  await sleep(1000);
+  await setTimeout(1000);
 };
 
 const useDiscountCode = async (session) => {
@@ -550,9 +595,9 @@ const useDiscountCode = async (session) => {
       timeout: 5000,
     });
 
-    await sleep(1000);
+    await setTimeout(1000);
     await applyDiscountCode(session, discountCode);
-    await sleep(1000);
+    await setTimeout(1000);
 
     if (Math.floor(Math.random() * 10) + 1 < 7) {
       session.log(`trying discount code ${discountCode} again...`);
@@ -562,7 +607,7 @@ const useDiscountCode = async (session) => {
     session.log(`Discount code application failed: ${e.message}`);
   }
 
-  await sleep(500);
+  await setTimeout(500);
   return;
 };
 
@@ -577,7 +622,7 @@ const checkout = async (session) => {
 
     session.log('Found cart toggle button, clicking...');
     await Promise.all([
-      sleep(500),
+      setTimeout(500),
       session.page.click('button[data-dd-action-name="Toggle Cart"]'),
     ]);
 
@@ -601,7 +646,7 @@ const checkout = async (session) => {
 
       session.log('Clicking proceed to checkout button...');
       await Promise.all([
-        sleep(2000),
+        setTimeout(2000),
         session.page.click('button[data-dd-action-name="Proceed to Checkout"]'),
       ]);
     } catch (checkoutError) {
@@ -615,7 +660,7 @@ const checkout = async (session) => {
       timeout: 15000,
     });
 
-  await sleep(2000);
+  await setTimeout(2000);
   session.log('getting sidebar...');
   const sidebarSelector = '#sidebar';
   const sidebarElement = await session.page.$(sidebarSelector);
@@ -632,27 +677,27 @@ const checkout = async (session) => {
       session.log('begrudgingly checking out even though discount code failed...');
 
       await Promise.all([
-        sleep(1000),
+        setTimeout(1000),
         session.page.click('button[data-dd-action-name="Confirm Purchase"]'),
       ]);
 
       await session.page.waitForSelector('.purchase-confirmed-msg', { visible: true });
       session.log('purchase confirmed');
       session.log('Checkout complete');
-      await sleep(3000);
+      await setTimeout(3000);
     }
   } else {
     session.log('proceeded to checkout...');
 
     await Promise.all([
-      sleep(2000),
+      setTimeout(2000),
       session.page.click('button[data-dd-action-name="Confirm Purchase"]'),
     ]);
 
     await session.page.waitForSelector('.purchase-confirmed-msg', { visible: true });
     session.log('purchase confirmed');
     session.log('Checkout complete');
-    await sleep(3000);
+    await setTimeout(3000);
   }
   } catch (error) {
     session.log(`Checkout failed: ${error.message}`);
@@ -664,7 +709,7 @@ const checkout = async (session) => {
         const text = await button.evaluate(el => el.textContent?.toLowerCase());
         if (text && (text.includes('checkout') || text.includes('purchase') || text.includes('buy'))) {
           await button.click();
-          await sleep(2000);
+          await setTimeout(2000);
           session.log('Fallback checkout completed');
           break;
         }
@@ -701,7 +746,7 @@ const generateRageClicks = async (session) => {
     if (targetElement) {
       for (let i = 0; i < 4; i++) {
         await targetElement.click();
-        await sleep(100);
+        await setTimeout(100);
       }
       session.log('Rage clicks generated successfully');
     } else {
@@ -827,7 +872,10 @@ module.exports = {
   selectProduct,
   selectProductsPageProduct,
   selectRelatedProduct,
+  goToHomePage,
+  randomNavbarLink,
   goToFooterPage,
+  endSession,
   addToCart,
   applyDiscountCode,
   useDiscountCode,
