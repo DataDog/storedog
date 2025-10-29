@@ -343,6 +343,24 @@ const goToHomePage = async (session) => {
   session.log(`"${pageTitle}" loaded`);
 };
 
+const clickStoredogLogoToGoHome = async (session) => {
+  try {
+    const logo = await session.page.$('[href="/"]');
+    if (!logo) {
+      session.log('Storedog logo not found');
+      return;
+    }
+    await Promise.all([
+      session.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
+      logo.evaluate((el) => el.click())
+    ]);
+    session.log('Storedog logo clicked successfully');
+  } catch (error) {
+    session.log(`Storedog logo click failed: ${error.message}`);
+    throw error;
+  }
+};
+
 // Select and navigate to a random navbar link
 const randomNavbarLink = async (session) => {
   const navLinks = await session.page.$$('#main-navbar a');
@@ -446,6 +464,17 @@ const endSession = async (session) => {
     session.log('Session ended successfully');
   } catch (error) {
     session.log(`Session end navigation failed: ${error.message}`);
+  }
+};
+
+const returnToHomeAndAddToCart = async (session,sleepDuration = 1000) => {
+  try {
+    await clickStoredogLogoToGoHome(session);
+    await selectHomePageProduct(session);
+    await setTimeout(sleepDuration);
+    await addToCart(session);
+  } catch (error) {
+    session.log(`Returning to home page and adding to cart failed: ${error.message}`);
   }
 };
 
@@ -873,6 +902,7 @@ module.exports = {
   selectProductsPageProduct,
   selectRelatedProduct,
   goToHomePage,
+  clickStoredogLogoToGoHome,
   randomNavbarLink,
   goToFooterPage,
   endSession,
@@ -883,5 +913,6 @@ module.exports = {
   generateRageClicks,
   generateDeadClicks,
   generateErrorClicks,
-  generateRandomFrustrationSignal
+  generateRandomFrustrationSignal,
+  returnToHomeAndAddToCart
 };
