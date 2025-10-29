@@ -25,7 +25,8 @@ class BrowserPool {
   async getBrowser() {
     if (this.pool.length > 0) {
       const browser = this.pool.pop();
-      this.log(`Browser ${browser.id} provided by BrowserPool.`);
+      const version = await browser.version();
+      this.log(`Browser ${browser.id} provided by BrowserPool: ${version}`);
       return browser;
     }
     
@@ -53,6 +54,7 @@ class BrowserPool {
       }
     } catch (error) {
       this.log(`Error releasing browser: ${error.message}`);
+      throw error;
     }
   }
 
@@ -63,7 +65,7 @@ class BrowserPool {
         await browser.close();
       } catch (error) {
         this.log(`Error closing browser: ${error.message}`);
-      }
+      } 
     }
     this.log('All browsers closed');
     this.pool = [];
