@@ -86,7 +86,7 @@ class BaseSession {
   // Full session lifecycle with logging and cleanup
   async run() {
     this.log('▶️ Starting');
-    
+    this.setupPage();
     try {
       await this.execute();
       this.log('✅ Completed');
