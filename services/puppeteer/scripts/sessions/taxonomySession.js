@@ -2,7 +2,7 @@
 const config = require('../config');
 const { setUtmParams, selectProduct, addToCart, checkout } = require('./sessionActions');
 const { sleep } = require('../utils');
-const BaseSession = require('./baseSession');
+const BaseSession = require('./BaseSession');
 
 class TaxonomySession extends BaseSession {
   constructor(browser, sessionId) {

@@ -3,16 +3,15 @@
 // Specific sessions (like BrowsingSession, FrustrationSession) extend this class.
 
 const config = require('../config');
-const { EMOJIS } = require('../constants');
-const devices = require('../devices.json').devices || [];
+const { DEVICES, EMOJIS } = require('../constants');
 
 class BaseSession {
   // Get a random device profile for emulation
   static getRandomDevice() {
-    if (devices.length === 0) {
+    if (DEVICES.length === 0) {
       throw new Error('No devices available for emulation');
     }
-    return devices[Math.floor(Math.random() * devices.length)];
+    return DEVICES[Math.floor(Math.random() * DEVICES.length)];
   }
 
   // Get a random emoji for user identification

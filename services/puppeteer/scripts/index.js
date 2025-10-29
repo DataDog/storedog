@@ -3,7 +3,7 @@
 // This is the main entry point for the Puppeteer traffic generator.
 // It creates a SessionManager with enabled session types and starts the traffic generator.
 
-const SessionManager = require('./sessionManager');
+const SessionManager = require('./core/SessionManager');
 const config = require('./config');
 const { sleep } = require('./utils');
 
@@ -38,7 +38,7 @@ async function main() {
 
     // Load session classes based on string names from config
     const sessionClasses = config.sessionTypes.map(sessionName => {
-      return require(`./sessions/${sessionName.charAt(0).toLowerCase() + sessionName.slice(1)}`);
+      return require(`./sessions/${sessionName}`);
     });
 
     // Log enabled session types

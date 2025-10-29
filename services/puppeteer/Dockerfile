@@ -10,7 +10,7 @@ ENV STOREDOG_URL=http://service-proxy:80 \
   PUPPETEER_RAMP_INTERVAL=30000 \
   PUPPETEER_DEBUG=false \
   PUPPETEER_DEBUG_SESSIONS=false \
-  PUPPETEER_LOOP=single \
+  PUPPETEER_LOOP=infinite \
   PUPPETEER_SESSION_TYPES=BrowsingSession,TaxonomySession,FrustrationSession,HomePageSession
 
 USER pptruser
@@ -18,4 +18,4 @@ WORKDIR /home/pptruser
 
 COPY ./scripts/ ./
 
-CMD ["node", "puppeteer-modular.js", "$STOREDOG_URL"]
+CMD ["node", "index.js"]

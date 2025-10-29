@@ -1,6 +1,6 @@
 // Browser wrapper class - wraps Puppeteer browser instance with custom functionality
 
-let browserIdCounter = 0;
+let browserIdCounter = 1;
 
 class Browser {
   constructor(puppeteerBrowser) {

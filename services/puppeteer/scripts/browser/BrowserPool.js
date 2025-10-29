@@ -3,8 +3,8 @@
 // we create a pool of browsers that can be reused across sessions.
 
 const puppeteer = require('puppeteer');
-const config = require('./config');
-const { CHROME_ARGS } = require('./constants');
+const config = require('../config');
+const { CHROME_ARGS } = require('../constants');
 const Browser = require('./Browser');
 
 class BrowserPool {
@@ -25,7 +25,7 @@ class BrowserPool {
   async getBrowser() {
     if (this.pool.length > 0) {
       const browser = this.pool.pop();
-      this.log(`Browser ${browser.id} returned from pool`);
+      this.log(`Browser ${browser.id} provided by BrowserPool.`);
       return browser;
     }
     

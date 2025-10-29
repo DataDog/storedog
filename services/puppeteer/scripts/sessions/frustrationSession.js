@@ -1,5 +1,5 @@
 // Frustration session - generates all three types of frustration signals
-const config = require('../config');
+const config = require('../../config');
 const { 
   setUtmParams, 
   selectProductsPageProduct, 
@@ -13,7 +13,7 @@ const {
   generateRandomFrustrationSignal
 } = require('./sessionActions');
 const { sleep } = require('../utils');
-const BaseSession = require('./baseSession');
+const BaseSession = require('./BaseSession');
 
 class FrustrationSession extends BaseSession {
   constructor(browser, sessionId) {

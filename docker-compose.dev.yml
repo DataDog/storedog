@@ -291,14 +291,15 @@ services:
       - PUPPETEER_RAMP_INTERVAL=${PUPPETEER_RAMP_INTERVAL:-30000}
       - PUPPETEER_DEBUG=${PUPPETEER_DEBUG:-false}
       - PUPPETEER_DEBUG_SESSIONS=${PUPPETEER_DEBUG_SESSIONS:-false}
-      - PUPPETEER_LOOP=${PUPPETEER_LOOP:-single}
+      - PUPPETEER_LOOP=${PUPPETEER_LOOP:-infinite}
       - PUPPETEER_SESSION_TYPES=${PUPPETEER_SESSION_TYPES:-BrowsingSession,TaxonomySession,FrustrationSession,HomePageSession}
     networks:
       - storedog-network
     volumes:
       - ./services/puppeteer/scripts:/home/pptruser/scripts
     depends_on:
-      - frontend
+      frontend:
+        condition: service_healthy
     shm_size: '4gb' # Increase shared memory size
     cap_add:
       - 'SYS_ADMIN' # Required for Puppeteer to run in Docker

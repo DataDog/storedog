@@ -2,7 +2,7 @@
 const config = require('../config');
 const { setUtmParams, selectHomePageProduct, selectRelatedProduct, goToFooterPage, addToCart, checkout } = require('./sessionActions');
 const { sleep } = require('../utils');
-const BaseSession = require('./baseSession');
+const BaseSession = require('./BaseSession');
 
 class HomePageSession extends BaseSession {
   constructor(browser, sessionId) {

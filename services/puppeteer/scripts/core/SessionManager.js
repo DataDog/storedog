@@ -1,9 +1,9 @@
 // This file orchestrates the execution of all browser sessions.
 // It manages concurrency, memory safety, and maintains continuous traffic by replacing completed sessions with new ones.
 
-const config = require('./config');
-const { sleep, logMemoryUsage, forceGC } = require('./utils');
-const BrowserPool = require('./browserPool');
+const config = require('../config');
+const { setTimeout } = require('node:timers/promises');
+const BrowserPool = require('../browser/BrowserPool');
 
 // Build ramp-up schedule from the memory profile's percentages
 // Each percentage is applied to the configured maxConcurrency
@@ -18,7 +18,6 @@ class SessionManager {
   constructor(sessionClasses) {
     this.Sessions = sessionClasses;
     this.browserPool = new BrowserPool();
-    // Array to track all currently running session promises
     this.sessionPromises = [];
     this.startTime = Date.now();
     this.currentMaxConcurrent = concurrencyLevels[0].maxConcurrent;
@@ -32,7 +31,7 @@ class SessionManager {
   // This makes each session unique from RUM's perspective - they appear as different users.
   async clearBrowserContext(session) {
     try {
-      logMemoryUsage('🎬 before clearBrowserContext');
+      this.logMemoryUsage('🎬 before clearBrowserContext');
       
       // Create a Chrome DevTools Protocol (CDP) session to send low-level commands
       // CDP lets us control Chrome features that aren't available in the regular Puppeteer API
@@ -58,13 +57,31 @@ class SessionManager {
       });
       
       this.log('Browser context cleared');
-      logMemoryUsage(`🏁 after clearBrowserContext for [${session.emoji} ${session.sessionName} ${session.sessionId}]`);
+      this.logMemoryUsage(`🏁 after clearBrowserContext for [${session.emoji} ${session.sessionName} ${session.sessionId}]`);
     } catch (error) {
       // If clearing fails, log it but don't crash - the session can still continue
       this.log('Error clearing browser context:', error.message);
     }
   }
 
+  logMemoryUsage = (context) => {
+    const memUsage = process.memoryUsage();
+    const memUsageMB = Math.round(memUsage.heapUsed / 1024 / 1024);
+    const memUsageGB = (memUsageMB / 1024).toFixed(2);
+    this.log(`💾 Memory Usage (${context}): ${memUsageMB}MB (${memUsageGB}GB)`);
+  };
+
+  // Force JavaScript garbage collection to free up memory
+  forceGC = () => {
+    if (global.gc) {
+      this.logMemoryUsage('before garbage collection');
+      global.gc();
+      if (config.debug) {
+        this.logMemoryUsage('after garbage collection');
+        this.log('🗑️  Garbage collection triggered');
+      }
+    }
+  };
       // Helper function to check if we're using too much memory.
     // Returns true if memory is okay, false if we've exceeded the limit.
   checkMemoryLimit() {
@@ -72,18 +89,16 @@ class SessionManager {
     // process.memoryUsage().heapUsed is the amount of JavaScript memory in use (in bytes)
     // We divide by 1024 twice to convert bytes → KB → MB
     const memUsageMB = process.memoryUsage().heapUsed / 1024 / 1024;
-    console.log(`🧠 Memory usage: ${memUsageMB}MB`);
-    console.log(`🧠 Safety limit: ${config.safetyLimits.maxMemoryMB}MB`);
     // Check if we've exceeded our safety limit
     if (memUsageMB > config.safetyLimits.maxMemoryMB) {
       // Convert to GB for the log message
       // .toFixed(2) rounds to 2 decimal places and returns a string
       const memUsageGB = (memUsageMB / 1024).toFixed(2);
       const maxMemoryGB = (config.safetyLimits.maxMemoryMB / 1024).toFixed(2);
-      console.log(`🚨 Memory limit exceeded: ${Math.round(memUsageMB)}MB (${memUsageGB}GB) > ${maxMemoryGB}GB`);
+      this.log(`🚨 Memory limit exceeded: ${Math.round(memUsageMB)}MB (${memUsageGB}GB) > ${maxMemoryGB}GB`);
       return false; // Memory limit exceeded
     }
-    console.log(`🧠 Memory is okay: ${memUsageMB}MB < ${config.safetyLimits.maxMemoryMB}MB`);
+    this.log(`🧠 Memory is okay: ${memUsageMB}MB < ${config.safetyLimits.maxMemoryMB}MB`);
     return true; // Memory is okay
   };
 
@@ -160,7 +175,7 @@ class SessionManager {
             
             // Force garbage collection
             this.log(`🧹 Force garbage collection for [${session.emoji} ${session.sessionName} ${session.sessionId}]`);
-            forceGC();
+            this.forceGC();
           }
         })();
 
@@ -175,7 +190,7 @@ class SessionManager {
         await Promise.race(this.sessionPromises);
       } else {
         this.log(`⚠️ No sessions running, waiting 1 second before retrying...`);
-        await sleep(1000);
+        await setTimeout(1000);
       }
     }
   }
