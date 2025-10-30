@@ -35,8 +35,6 @@ class SessionManager {
   // This makes each session unique from RUM's perspective - they appear as different users.
   async clearBrowserContext(session) {
     try {
-      this.logMemoryUsage('🎬 before clearBrowserContext');
-      
       // Create a Chrome DevTools Protocol (CDP) session to send low-level commands
       // CDP lets us control Chrome features that aren't available in the regular Puppeteer API
       const client = await session.page.target().createCDPSession();
@@ -61,49 +59,57 @@ class SessionManager {
       });
       
       this.log(`Browser context cleared for ${session.browser.id}`);
-      this.logMemoryUsage(`after clearBrowserContext`);
     } catch (error) {
       // If clearing fails, log it but don't crash - the session can still continue
       this.log('Error clearing browser context:', error.message);
     }
   }
 
-  logMemoryUsage = (context) => {
+  getMemoryUsage = () => {
     const memUsage = process.memoryUsage();
-    const memUsageMB = Math.round(memUsage.heapUsed / 1024 / 1024);
-    const memUsageGB = (memUsageMB / 1024).toFixed(2);
-    this.log(`💾 Memory Usage (${context}): ${memUsageMB}MB (${memUsageGB}GB)`);
+    const memoryUsage = {
+      mb: Math.round(memUsage.heapUsed / 1024 / 1024),
+      gb: (memUsage.heapUsed / 1024 / 1024 / 1024).toFixed(2)
+    }
+    return memoryUsage;
   };
+
+  getMemoryUsageDiff = (before, after) => {
+    return {
+      mb: before.mb - after.mb,
+      gb: (before.gb - after.gb)
+    }
+  }
 
   // Force JavaScript garbage collection to free up memory
   tryGarbageCollection = () => {
     const isGlobalGcAvailable = global.gc !== undefined;
     if (isGlobalGcAvailable) {
-      this.logMemoryUsage('before garbage collection');
+      const memoryUsageBefore = this.getMemoryUsage();
       global.gc();
-      this.logMemoryUsage('after garbage collection');
+      const memoryUsageAfter = this.getMemoryUsage();
+      const memoryUsageDiff = this.getMemoryUsageDiff(memoryUsageBefore, memoryUsageAfter);
+      if (memoryUsageDiff.mb > 0) {
+      this.log(`🧠 Garbage collection freed up ${memoryUsageDiff.mb}MB (${memoryUsageDiff.gb}GB)`);
+      }
     } else {
-      this.log('global.gc is not available');
+      this.log('Garbage collection is not available');
     }
   };
-      // Helper function to check if we're using too much memory.
-    // Returns true if memory is okay, false if we've exceeded the limit.
+  
+  // Helper function to check if we're using too much memory.
+  // Returns true if memory is okay, false if we've exceeded the limit.
   checkMemoryLimit() {
+    const memoryUsage = this.getMemoryUsage();
     // Get current memory usage
     // process.memoryUsage().heapUsed is the amount of JavaScript memory in use (in bytes)
     // We divide by 1024 twice to convert bytes → KB → MB
-    const memUsageMB = process.memoryUsage().heapUsed / 1024 / 1024;
-    // Check if we've exceeded our safety limit
-    if (memUsageMB > config.safetyLimits.maxMemoryMB) {
-      // Convert to GB for the log message
-      // .toFixed(2) rounds to 2 decimal places and returns a string
-      const memUsageGB = (memUsageMB / 1024).toFixed(2);
-      const maxMemoryGB = (config.safetyLimits.maxMemoryMB / 1024).toFixed(2);
-      this.log(`🚨 Memory limit exceeded: ${Math.round(memUsageMB)}MB (${memUsageGB}GB) > ${maxMemoryGB}GB`);
-      return false; // Memory limit exceeded
+    if (memoryUsage.mb > config.safetyLimits.maxMemoryMB) {
+      this.log(`🚨 Memory limit exceeded: ${memoryUsage.mb}MB (${memoryUsage.gb}GB) > ${config.safetyLimits.maxMemoryMB}MB`);
+      return false;
     }
-    this.log(`🧠 Memory is okay: ${memUsageMB}MB < ${config.safetyLimits.maxMemoryMB}MB`);
-    return true; // Memory is okay
+    // this.log(`🧠 Memory is okay: ${memoryUsage.mb}MB < ${config.safetyLimits.maxMemoryMB}MB`);
+    return true;
   };
 
   // Helper function to check if we should increase concurrency based on elapsed time.
@@ -156,7 +162,6 @@ class SessionManager {
           } finally {
             try {
               if (session) {
-                console.log(`Is page closed? ${session.page.isClosed()}`);
                 if (!session.page.isClosed()) {
                   await this.clearBrowserContext(session);
                 }
@@ -177,15 +182,18 @@ class SessionManager {
       }
       
       if (this.sessionPromises.length > 0) {
-        await Promise.race(this.sessionPromises);
+        if (maxLoops === 1) {
+          await Promise.all(this.sessionPromises);
+          this.log(`🔄 All sessions completed. Exiting...`);
+          process.exit(0);
+        } else {
+          await Promise.race(this.sessionPromises);
+        }
       } else {
         this.log(`⚠️ No sessions running, waiting 1 second before retrying...`);
         await setTimeout(1000);
       }
     }
-
-    this.log(`🔄 Finished all sessions. Exiting...`);
-    process.exit(0);
   }
 }
 
