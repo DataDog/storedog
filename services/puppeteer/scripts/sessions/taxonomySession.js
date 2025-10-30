@@ -3,6 +3,10 @@ const { selectProduct, addToCart, checkout, goToHomePage, endSession } = require
 const { setTimeout } = require('node:timers/promises');
 const BaseSession = require('./BaseSession');
 
+const randomChance = (percentChance = 33) => {
+  return Math.floor(Math.random() * (100/percentChance)) === 0;
+}
+
 class TaxonomySession extends BaseSession {
   constructor(browser, sessionId) {
     super(browser, sessionId);
@@ -44,7 +48,7 @@ class TaxonomySession extends BaseSession {
     try {
       await selectProduct(this);
             // 50% chance to add to cart and checkout
-      if (Math.random() > 0.5) {
+      if (randomChance(50)) {
         await addToCart(this);
         await setTimeout(1500);
         await checkout(this);
@@ -52,7 +56,7 @@ class TaxonomySession extends BaseSession {
       } else {
         this.log('Just browsing, no purchase made');
       }
-    } catch (productError) {
+    } catch (error) {
       this.log('Product browsing failed, ending session');
     }
     

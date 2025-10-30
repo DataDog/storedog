@@ -159,7 +159,7 @@ const selectHomePageProduct = async (session) => {
     }
   }
   
-  await sleep(1000);
+  await setTimeout(1000);
   const pageTitle = await session.page.title();
   session.log(`"${pageTitle}" loaded`);
   return;
@@ -185,7 +185,7 @@ const selectProduct = async (session) => {
       
       try {
         await Promise.all([
-          productLink.click(),
+          productLink.evaluate(el => el.click()),
           session.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 20000 })
         ]);
         
@@ -194,8 +194,8 @@ const selectProduct = async (session) => {
         session.log(`Selected product: "${newTitle}" at ${newUrl}`);
       } catch (navError) {
         session.log('Navigation timeout, trying click without waiting for navigation');
-        await productLink.click();
-        await sleep(2000);
+        await productLink.evaluate(el => el.click());
+        await setTimeout(2000);
         
         const newTitle = await session.page.title();
         const newUrl = await session.page.url();
@@ -221,98 +221,20 @@ const selectProduct = async (session) => {
 
 const selectProductsPageProduct = async (session) => {
   try {
-    const currentUrl = await session.page.url();
-    if (currentUrl.includes('/products') && !currentUrl.includes('/products/')) {
-      session.log('Already on products page, selecting product directly');
-      await selectProduct(session);
-      return true;
-    }
-    
-    const navSelectors = [
-      'nav a[href*="/products"]',
-      'nav a:contains("Products")',
-      'a[href="/products"]',
-      'nav#main-navbar a:first-child',
-      'nav a:first-child',
-      'header nav a:first-child'
-    ];
-    
-    let button = null;
-    for (const selector of navSelectors) {
-      try {
-        if (selector.includes(':contains("Products")')) {
-          const links = await session.page.$$('nav a');
-          for (const link of links) {
-            const text = await link.evaluate(el => el.textContent?.trim().toLowerCase());
-            if (text && text.includes('products')) {
-              button = link;
-              session.log(`Found products navigation using text content: "${text}"`);
-              break;
-            }
-          }
-        } else {
-          button = await session.page.$(selector);
-          if (button) {
-            const href = await button.evaluate(el => el.href);
-            session.log(`Found products navigation using selector: ${selector}, href: ${href}`);
-            break;
-          }
-        }
-      } catch (selectorError) {
-        session.log(`Selector ${selector} failed: ${selectorError.message}`);
-        continue;
-      }
-    }
-    
-    if (button) {
-      session.log('Attempting navigation to products page...');
-      try {
-        await Promise.all([
-          button.evaluate((b) => b.click()),
-          session.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 20000 }),
-        ]);
-        
-        const newUrl = await session.page.url();
-        const newTitle = await session.page.title();
-        session.log(`Navigation successful: "${newTitle}" at ${newUrl}`);
-      } catch (navError) {
-        session.log('Navigation timeout, trying click without waiting for navigation');
-        await button.evaluate((b) => b.click());
-        await sleep(2000);
-        
-        const newUrl = await session.page.url();
-        const newTitle = await session.page.title();
-        session.log(`Fallback navigation result: "${newTitle}" at ${newUrl}`);
-      }
-
-      await selectProduct(session);
-      return true;
-    } else {
-      session.log('Products page navigation button not found, trying direct navigation');
-      const productsUrl = currentUrl.endsWith('/') ? `${currentUrl}products` : `${currentUrl}/products`;
-      session.log(`Attempting direct navigation to: ${productsUrl}`);
-      await session.page.goto(productsUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
-      
-      const finalUrl = await session.page.url();
-      const finalTitle = await session.page.title();
-      session.log(`Direct navigation result: "${finalTitle}" at ${finalUrl}`);
-      
-      await selectProduct(session);
-      return true;
-    }
+    await navigateToProductsPage(session);
+    await selectProduct(session);
   } catch (error) {
-    session.log(`Failed to navigate to products page: ${error.message}`);
-    return false;
+    session.log(`Failed to select product on products page: ${error.message}`);
+    throw new Error(`Failed to select product on products page: ${error.message}`);
   }
 };
 
-const selectRelatedProduct = async (session) => {
-  session.log(`In selectRelatedProduct on page ${await session.page.title()}`);
-  
+// This looks for a hardcoded selector for the Learning Bits product and clicks it
+// There isn't always a Learning Bits product on the page, so this will fail and create frustration signals
+const tryToSelectLearningBitsRelatedProduct = async (session) => {
   try {
     const selector = '[aria-label="Learning Bits"]';
     session.log(`Looking for hardcoded selector: ${selector}`);
-    
     const element = await session.page.$(selector);
     if (element) {
       session.log('Found Learning Bits product, clicking...');
@@ -322,13 +244,13 @@ const selectRelatedProduct = async (session) => {
       ]);
       const pageTitle = await session.page.title();
       session.log(`"${pageTitle}" loaded`);
+      await setTimeout(2000);
+      await addToCart(session);
     } else {
-      session.log('Learning Bits product not found - this creates frustration signals!');
-      throw new Error('Learning Bits product not found - intentional frustration signal');
+      generateErrorClicks(session);
     }
   } catch (error) {
-    session.log(`selectRelatedProduct failed (intentional frustration): ${error.message}`);
-    throw error;
+    throw new Error(`Error in tryToSelectLearningBitsRelatedProduct: ${error.message}`);
   }
 };
 
@@ -342,6 +264,54 @@ const goToHomePage = async (session) => {
   const pageTitle = await session.page.title();
   session.log(`"${pageTitle}" loaded`);
 };
+
+const navigateToProductsPage = async (session) => {
+  const logPageInfo = async (prefix) => {
+    const url = await session.page.url();
+    const title = await session.page.title();
+    session.log(`${prefix}: "${title}" at ${url}`);
+  };
+
+  try {
+    const currentUrl = await session.page.url();
+    if (currentUrl.includes('/products') && !currentUrl.includes('/products/')) {
+      session.log('Already on products page.');
+      return;
+    }
+    
+    // Try clicking the navigation link
+    const clicked = await session.page.evaluate(() => {
+      const link = document.querySelector('nav a[href*="/products"]') ||
+                   Array.from(document.querySelectorAll('nav a'))
+                     .find(l => l.textContent?.trim().toLowerCase().includes('products'));
+      if (link) {
+        link.click();
+        return true;
+      }
+      return false;
+    });
+    
+    if (clicked) {
+      try {
+        await session.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 20000 });
+        await logPageInfo('Navigation successful');
+        return;
+      } catch (navError) {
+        session.log('Click navigation failed, trying direct navigation');
+      }
+    }
+    
+    // Direct navigation fallback
+    const productsUrl = currentUrl.endsWith('/') ? `${currentUrl}products` : `${currentUrl}/products`;
+    session.log(`Direct navigation to: ${productsUrl}`);
+    await session.page.goto(productsUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
+    await logPageInfo('Direct navigation result');
+    
+  } catch (error) {
+    session.log(`Failed to navigate to products page: ${error.message}`);
+    throw error;
+  }
+}
 
 const clickStoredogLogoToGoHome = async (session) => {
   try {
@@ -370,8 +340,8 @@ const randomNavbarLink = async (session) => {
     
     try {
       await Promise.all([
-        session.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
         randomLink.evaluate((el) => el.click()),
+        session.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
       ]);
       const pageTitle = await session.page.title();
       session.log(`Navigated to "${pageTitle}"`);
@@ -781,6 +751,7 @@ const generateRageClicks = async (session) => {
     }
   } catch (error) {
     session.log(`Rage clicks generation failed: ${error.message}`);
+    console.log(await session.page.content());
   }
 };
 
@@ -872,7 +843,7 @@ const generateRandomFrustrationSignal = async (session) => {
   const signalTypes = ['rage', 'dead', 'error'];
   const randomType = signalTypes[Math.floor(Math.random() * signalTypes.length)];
   
-  session.log(`Generating random frustration signal: ${randomType}`);
+  session.log(`Generating random frustration signal: ${randomType} click(s)`);
   
   switch (randomType) {
     case 'rage':
@@ -898,7 +869,7 @@ module.exports = {
   selectHomePageProduct,
   selectProduct,
   selectProductsPageProduct,
-  selectRelatedProduct,
+  tryToSelectLearningBitsRelatedProduct,
   goToHomePage,
   clickStoredogLogoToGoHome,
   randomNavbarLink,
