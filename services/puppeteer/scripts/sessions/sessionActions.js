@@ -518,14 +518,14 @@ const addToCart = async (session) => {
     }
 
     await session.page.click('#add-to-cart-button');
-    session.log('clicked add to cart');
+    session.log('Clicked add to cart');
 
     try {
       await session.page.waitForSelector('#close-sidebar', {
         visible: true,
         timeout: 5000
       });
-      session.log('close sidebar is visible');
+      session.log('Close sidebar is visible');
       await session.page.click('#close-sidebar');
     } catch (sidebarError) {
       session.log(`Close sidebar not found or not visible: ${sidebarError.message}`);
@@ -548,14 +548,14 @@ const applyDiscountCode = async (session, discountCode) => {
       delay: Math.floor(Math.random() * 430) + 150,
     });
 
-    session.log(`entered code: ${discountCode}`);
+    session.log(`Entered code: ${discountCode}`);
 
     await session.page.waitForSelector('button[data-dd-action-name="Apply Discount"]', {
       visible: true,
     });
 
     await session.page.click('button[data-dd-action-name="Apply Discount"]');
-    session.log('Clicked discount code button');
+    session.log('Clicked apply discount code button');
   } catch (e) {
     session.log(`Error: ${e}`);
   }
@@ -565,7 +565,7 @@ const applyDiscountCode = async (session, discountCode) => {
 
 const useDiscountCode = async (session) => {
   try {
-    session.log(`In useDiscountCode on page ${await session.page.title()}`);
+    session.log(`Applying discount code on page ${await session.page.title()}`);
 
     let discountCode = null;
     
@@ -629,7 +629,7 @@ const useDiscountCode = async (session) => {
     await setTimeout(1000);
 
     if (Math.floor(Math.random() * 10) + 1 < 7) {
-      session.log(`trying discount code ${discountCode} again...`);
+      session.log(`Trying discount code ${discountCode} again...`);
       await applyDiscountCode(session, discountCode);
     }
   } catch (e) {
@@ -640,112 +640,110 @@ const useDiscountCode = async (session) => {
   return;
 };
 
-const checkout = async (session) => {
-  session.log(`In checkout on page ${await session.page.title()}`);
-
+const toggleCart = async (session) => {
   try {
     await session.page.waitForSelector('button[data-dd-action-name="Toggle Cart"]', {
+    visible: true,
+    timeout: 10000,
+  });
+
+  session.log('Clicking cart toggle button...');
+  await Promise.all([
+    setTimeout(500),
+    session.page.click('button[data-dd-action-name="Toggle Cart"]'),
+  ]);
+  } catch (e) {
+    session.log(`Cart toggle button not found: ${e.message}`);
+    throw e;
+  }
+};
+
+const proceedToCheckout = async (session) => {
+  try {
+    await session.page.waitForSelector('button[data-dd-action-name="Proceed to Checkout"]', {
       visible: true,
       timeout: 10000,
     });
-
-    session.log('Found cart toggle button, clicking...');
     await Promise.all([
-      setTimeout(500),
-      session.page.click('button[data-dd-action-name="Toggle Cart"]'),
+      setTimeout(2000),
+      session.page.click('button[data-dd-action-name="Proceed to Checkout"]'),
     ]);
-
-    try {
-      await session.page.waitForSelector(
-        'button[data-dd-action-name="Proceed to Checkout"]',
-        {
-          visible: true,
-          timeout: 10000,
-        }
-      );
-      session.log('Found proceed to checkout button, cart sidebar opened');
-
-      const cartItems = await session.page.$$('li[class*="root"], .cart-item, [class*="cart-item"], .line-item, [class*="line-item"]');
-      session.log(`Found ${cartItems.length} items in cart`);
-
-      if (cartItems.length === 0) {
-        session.log('Cart is empty, cannot proceed to checkout');
-        return;
-      }
-
-      session.log('Clicking proceed to checkout button...');
-      await Promise.all([
-        setTimeout(2000),
-        session.page.click('button[data-dd-action-name="Proceed to Checkout"]'),
-      ]);
-    } catch (checkoutError) {
-      session.log(`Proceed to checkout button not found: ${checkoutError.message}`);
-      session.log('Cart might be empty or sidebar failed to open');
-      return;
-    }
-
+    session.log('Proceed to checkout button clicked');
     await session.page.waitForSelector('button[data-dd-action-name="Confirm Purchase"]', {
       visible: true,
       timeout: 15000,
     });
+    session.log('Confirm purchase button found');
+  } catch (e) {
+    session.log(`Proceed to checkout button not found: ${e.message}`);
+    throw new Error(`Proceed to checkout button not found: ${e.message}`);
+  }
+};
 
-  await setTimeout(2000);
-  session.log('getting sidebar...');
-  const sidebarSelector = '#sidebar';
-  const sidebarElement = await session.page.$(sidebarSelector);
 
-  await sidebarElement.evaluate((el) => {
-    el.parentNode.scrollTo(0, el.getBoundingClientRect().bottom);
-  });
-
-  if (Math.floor(Math.random() * 10 + 1) > 5) {
-    session.log('applying discount code...');
-    await useDiscountCode(session);
-
-    if (Math.floor(Math.random() * 10 + 1) <= 7) {
-      session.log('begrudgingly checking out even though discount code failed...');
-
-      await Promise.all([
-        setTimeout(1000),
-        session.page.click('button[data-dd-action-name="Confirm Purchase"]'),
-      ]);
-
-      await session.page.waitForSelector('.purchase-confirmed-msg', { visible: true });
-      session.log('purchase confirmed');
-      session.log('Checkout complete');
-      await setTimeout(3000);
-    }
-  } else {
-    session.log('proceeded to checkout...');
-
+const confirmPurchase = async (session) => {
+  try {
+    await session.page.waitForSelector('button[data-dd-action-name="Confirm Purchase"]', {
+      visible: true,
+      timeout: 15000,
+    });
     await Promise.all([
       setTimeout(2000),
       session.page.click('button[data-dd-action-name="Confirm Purchase"]'),
     ]);
-
+    session.log('Confirm purchase button clicked');
     await session.page.waitForSelector('.purchase-confirmed-msg', { visible: true });
-    session.log('purchase confirmed');
-    session.log('Checkout complete');
-    await setTimeout(3000);
+    session.log('Purchase confirmed');
+  } catch (e) {
+    session.log(`Confirm purchase button not found: ${e.message}`);
+    throw new Error(`Confirm purchase button not found: ${e.message}`);
   }
-  } catch (error) {
-    session.log(`Checkout failed: ${error.message}`);
-    session.log('Attempting simplified checkout...');
-    
-    try {
-      const checkoutButtons = await session.page.$$('button');
-      for (const button of checkoutButtons) {
-        const text = await button.evaluate(el => el.textContent?.toLowerCase());
-        if (text && (text.includes('checkout') || text.includes('purchase') || text.includes('buy'))) {
-          await button.click();
-          await setTimeout(2000);
-          session.log('Fallback checkout completed');
-          break;
-        }
+};
+
+const maybeApplyDiscountCode = async (session) => {
+  if (Math.floor(Math.random() * 10 + 1) > 5) {
+    session.log('Applying discount code...');
+    await useDiscountCode(session);
+  }
+};
+
+const tryFallbackCheckout = async (session) => {
+  try {
+    const checkoutButtons = await session.page.$$('button');
+    for (const button of checkoutButtons) {
+      const text = await button.evaluate(el => el.textContent?.toLowerCase());
+      if (text && (text.includes('checkout') || text.includes('purchase') || text.includes('buy'))) {
+        await button.click();
+        await setTimeout(2000);
+        session.log('Fallback checkout completed');
+        break;
       }
-    } catch (fallbackError) {
-      session.log(`Fallback checkout also failed: ${fallbackError.message}`);
     }
+  } catch (e) {
+    session.log(`Fallback checkout failed: ${e.message}`);
+    throw new Error(`Fallback checkout failed: ${e.message}`);
+  }
+};
+
+const checkout = async (session) => {
+  session.log(`Checking out on page ${await session.page.title()}`);
+  try {
+    await toggleCart(session);
+    await proceedToCheckout(session);
+    await setTimeout(2000);
+
+    session.log('Getting sidebar and scrolling to bottom...');
+    const sidebarSelector = '#sidebar';
+    const sidebarElement = await session.page.$(sidebarSelector);
+    await sidebarElement.evaluate((el) => {
+      el.parentNode.scrollTo(0, el.getBoundingClientRect().bottom);
+    });
+    await maybeApplyDiscountCode(session);
+    await setTimeout(3000);
+    await confirmPurchase(session);
+  } catch (error) {
+    session.log(`Checkout failed: ${error.message}. Attempting simplified checkout...`);
+    await tryFallbackCheckout(session);
   }
 };
 
@@ -914,5 +912,10 @@ module.exports = {
   generateDeadClicks,
   generateErrorClicks,
   generateRandomFrustrationSignal,
-  returnToHomeAndAddToCart
+  returnToHomeAndAddToCart,
+  toggleCart,
+  proceedToCheckout,
+  confirmPurchase,
+  maybeApplyDiscountCode,
+  tryFallbackCheckout
 };
