@@ -33,12 +33,10 @@ class BaseSession {
     this.page = null;
     this.emoji = BaseSession.getRandomEmoji();
     this.device = BaseSession.getRandomDevice();
-    this.logs = [];
     this.debugSessions = BaseSession.getLogLevel();
   }
 
   log(message) {
-    this.logs.push(message);
     if (this.debugSessions) {
       console.log(`[${this.emoji} ${this.sessionName} ${this.sessionId}] ${message}`);
     }
@@ -111,15 +109,6 @@ class BaseSession {
       }
     } catch (error) {
       this.log(`Page close error: ${error.message}`);
-    }
-    // If debug is true, this will print the completed actions at the end of the session. 
-    if (config.debug && this.logs.length > 0) {
-      this.log(`Cleanup complete. Actions completed:`);
-      const actionsObject = this.logs.reduce((obj, action, index) => {
-        obj[`Action ${index + 1}`] = action;
-        return obj;
-      }, {});
-      this.log(JSON.stringify(actionsObject, null, 2));
     }
   }
 }
