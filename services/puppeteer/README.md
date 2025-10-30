@@ -6,15 +6,18 @@ A modular Puppeteer-based traffic generator for Storedog that simulates realisti
 
 ### Components
 
-- **SessionManager** - Orchestrates session execution, manages concurrency, and handles browser pool
-- **BrowserPool** - Manages reusable browser instances to save memory
-- **BaseSession** - Base class providing common session functionality (setup, logging, cleanup)
+- **SessionManager** (`core/SessionManager.js`) - Orchestrates session execution, manages concurrency, and handles browser pool
+- **BrowserPool** (`browser/BrowserPool.js`) - Manages reusable browser instances to save memory
+- **Browser** (`browser/Browser.js`) - Individual browser instance wrapper
+- **BaseSession** (`sessions/BaseSession.js`) - Base class providing common session functionality (setup, logging, cleanup)
 - **Session Classes** - Specific session types (BrowsingSession, TaxonomySession, etc.)
-- **Session Actions** - Reusable actions for product selection, cart operations, and checkout
+- **Session Actions** (`sessions/sessionActions.js`) - Reusable actions for product selection, cart operations, and checkout
+- **Config** (`config.js`) - Configuration loaded from environment variables
+- **Constants** (`constants.js`) - Static data (memory profiles, device emulation, Chrome args)
 
 ### Flow
 
-1. `puppeteer-modular.js` loads configuration and session types
+1. `index.js` loads environment variables (dotenv for local development) and configuration
 2. Creates SessionManager with enabled session classes
 3. SessionManager gets browsers from the pool and creates random sessions
 4. Each session sets up a page, executes its logic, and cleans up
@@ -38,12 +41,13 @@ A modular Puppeteer-based traffic generator for Storedog that simulates realisti
 
 - **`PUPPETEER_SESSION_TYPES`** - Comma-separated list of session types to run
   - Default: `BrowsingSession,TaxonomySession,FrustrationSession,HomePageSession`
-  - Example: `BrowsingSession,TaxonomySession`
+  - Example: `BrowsingSession,FrustrationSession`
   - Available types:
     - `BrowsingSession` - Browse products and checkout
     - `TaxonomySession` - Visit category pages
     - `FrustrationSession` - Generate frustration signals
     - `HomePageSession` - Multiple purchases from home page
+  - **Note**: Session type names must match the filename exactly (without `.js`) in `scripts/sessions/`
 
 ### Concurrency & Performance
 
@@ -90,6 +94,32 @@ A modular Puppeteer-based traffic generator for Storedog that simulates realisti
   - Default: `false`
 
 ## Usage
+
+### Local Development
+
+For local development, create a `.env` file in the `services/puppeteer/` directory:
+
+```bash
+STOREDOG_URL=http://localhost:3000
+PUPPETEER_SYSTEM_MEMORY=8GB
+PUPPETEER_DEBUG=true
+PUPPETEER_DEBUG_SESSIONS=true
+PUPPETEER_LOOP=single
+PUPPETEER_STARTUP_DELAY=1000
+PUPPETEER_RAMP_INTERVAL=500
+PUPPETEER_MAX_CONCURRENT=5
+PUPPETEER_ENABLE_CACHE=false
+PUPPETEER_BROWSER_POOL_SIZE=3
+PUPPETEER_SESSION_TYPES=BrowsingSession,FrustrationSession
+```
+
+Then run:
+
+```bash
+npm start
+# or
+node --expose-gc ./scripts/index.js
+```
 
 ### Basic Usage (Docker Compose)
 
@@ -143,8 +173,8 @@ environment:
 
 ### BrowsingSession
 - Navigates to home page with optional UTM parameters
-- Browses navigation links
-- Selects product and adds to cart
+- Browses to products page
+- Selects random product and adds to cart
 - Completes checkout
 - Ends session explicitly
 
@@ -155,7 +185,7 @@ environment:
 
 ### FrustrationSession
 - Generates rage clicks, dead clicks, and error clicks
-- Attempts product selections that may fail
+- Attempts to find hardcoded selectors that may not exist (Learning Bits product)
 - Creates intentional frustration signals for RUM
 
 ### HomePageSession
@@ -168,13 +198,14 @@ environment:
 1. Create a new file in `scripts/sessions/` (e.g., `customSession.js`)
 2. Extend `BaseSession` class
 3. Implement `execute()` method
-4. Add session name to `PUPPETEER_SESSION_TYPES` environment variable
+4. Add session filename (without `.js`) to `PUPPETEER_SESSION_TYPES` environment variable
 
 Example:
 
 ```javascript
-const BaseSession = require('./baseSession');
-const { sleep } = require('../utils');
+const BaseSession = require('./BaseSession');
+const config = require('../config');
+const { setTimeout } = require('node:timers/promises');
 
 class CustomSession extends BaseSession {
   constructor(browser, sessionId) {
@@ -185,13 +216,14 @@ class CustomSession extends BaseSession {
     // Your session logic here
     await this.page.goto(config.storedogUrl);
     this.log('Custom session logic executed');
+    await setTimeout(2000);
   }
 }
 
 module.exports = CustomSession;
 ```
 
-Then set: `PUPPETEER_SESSION_TYPES=CustomSession`
+Save as `scripts/sessions/CustomSession.js`, then set: `PUPPETEER_SESSION_TYPES=CustomSession`
 
 ## Memory Profiles
 
@@ -205,15 +237,24 @@ The system automatically selects appropriate limits based on `PUPPETEER_SYSTEM_M
 
 ## Files
 
-- `puppeteer-modular.js` - Entry point, loads sessions and starts SessionManager
-- `sessionManager.js` - Orchestrates sessions, manages concurrency and memory
-- `browserPool.js` - Manages reusable browser instances
-- `config.js` - Configuration loaded from environment variables
-- `constants.js` - Static data (memory profiles, emojis)
-- `utils.js` - Utility functions (sleep, logging, garbage collection)
-- `sessions/baseSession.js` - Base class for all sessions
-- `sessions/sessionActions.js` - Reusable session actions
-- `sessions/*.js` - Individual session implementations
+```
+scripts/
+├── index.js                    # Entry point, loads environment and starts SessionManager
+├── config.js                   # Configuration loaded from environment variables
+├── constants.js                # Static data (memory profiles, devices, Chrome args)
+├── core/
+│   └── SessionManager.js       # Orchestrates sessions, manages concurrency and memory
+├── browser/
+│   ├── Browser.js              # Individual browser instance wrapper
+│   └── BrowserPool.js          # Manages reusable browser instances
+└── sessions/
+    ├── BaseSession.js          # Base class for all sessions
+    ├── sessionActions.js       # Reusable session actions (navigation, cart, checkout)
+    ├── BrowsingSession.js      # Browse and checkout session
+    ├── TaxonomySession.js      # Category browsing session
+    ├── FrustrationSession.js   # Frustration signals session
+    └── HomePageSession.js      # Home page shopping session
+```
 
 ## Troubleshooting
 
