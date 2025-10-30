@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+// Load environment variables from .env file for local development
+require('dotenv').config();
+
 // This is the main entry point for the Puppeteer traffic generator.
 // It creates a SessionManager with enabled session types and starts the traffic generator.
 
@@ -32,7 +35,8 @@ async function main() {
     const sessionManager = new SessionManager();
     console.log(`Waiting for ${startupDelay}ms before starting sessions...`);
     await setTimeout(startupDelay);
-    await sessionManager.run();    
+    await sessionManager.run();
+    process.exit(0);    
   } catch (error) {
     console.error('❌ Puppeteer script failed:', error);
     process.exit(1);
