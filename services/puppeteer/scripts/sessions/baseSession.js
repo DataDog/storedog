@@ -3,7 +3,7 @@
 // Specific sessions (like BrowsingSession, FrustrationSession) extend this class.
 
 const config = require('../config');
-const { DEVICES, EMOJIS } = require('../constants');
+const { DEVICES, EMOJIS, VIP_USERS, USERS } = require('../constants');
 
 class BaseSession {
   // Get a random device profile for emulation
@@ -26,6 +26,21 @@ class BaseSession {
     return config.debugSessions;
   }
 
+  static getRandomUser(isVip = false) {
+    let userInfo = {};
+    if (isVip) {
+      userInfo = VIP_USERS[Math.floor(Math.random() * VIP_USERS.length)];
+    } else {
+      const user = USERS[Math.floor(Math.random() * USERS.length)];
+      userInfo = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      }
+    }
+    return userInfo;
+  }
+
   constructor(browser, sessionId) {
     this.sessionId = sessionId;
     this.sessionName = this.constructor.name;
@@ -34,6 +49,7 @@ class BaseSession {
     this.emoji = BaseSession.getRandomEmoji();
     this.device = BaseSession.getRandomDevice();
     this.debugSessions = BaseSession.getLogLevel();
+    this.isVip = false;
   }
 
   log(message) {
@@ -42,10 +58,22 @@ class BaseSession {
     }
   }
 
-  async setupPage() {
+  async setupPage(isVip = false) {
     // Create new page
     this.page = await this.browser.newPage();
     
+    const userInfo = BaseSession.getRandomUser(isVip);
+    const stringifiedUserInfo = JSON.stringify(userInfo);
+    this.log(`Setting user: ${stringifiedUserInfo}`);
+
+    // Set localStorage BEFORE page loads - this runs before any page JavaScript
+    // Only set if not already set (persists across navigations)
+    await this.page.evaluateOnNewDocument((userInfoString) => {
+      if (!localStorage.getItem('rum_user')) {
+        localStorage.setItem('rum_user', userInfoString);
+      }
+    }, stringifiedUserInfo);
+
     // Set device emulation (viewport and user agent)
     await this.page.setViewport(this.device.viewport);
     await this.page.setUserAgent(this.device.userAgent);
@@ -84,7 +112,7 @@ class BaseSession {
   // Full session lifecycle with logging and cleanup
   async run() {
     this.log('▶️ Starting');
-    await this.setupPage();
+    await this.setupPage(this.isVip);
     try {
       await this.execute();
       this.log('✅ Completed');

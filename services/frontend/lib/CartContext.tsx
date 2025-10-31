@@ -68,15 +68,8 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   }, [cartToken])
 
   useEffect(() => {
-    // if user exists in local storage, set user or create a new user
     if (localStorage.getItem('rum_user')) {
       const user = JSON.parse(localStorage.getItem('rum_user') || '')
-      datadogRum.setUser(user)
-      setCartUser(user)
-    } else {
-      const user = userData[Math.floor(Math.random() * userData.length)]
-      datadogRum.setUser(user)
-      localStorage.setItem('rum_user', JSON.stringify(user))
       setCartUser(user)
     }
   }, [])

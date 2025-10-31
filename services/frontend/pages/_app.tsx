@@ -90,6 +90,22 @@ export default function MyApp({ Component, pageProps }: AppProps) {
     }
   }, [])
 
+  useEffect(() => {
+    // if user exists in local storage, set user or create a new user
+  if (localStorage.getItem('rum_user')) {
+    const user = JSON.parse(localStorage.getItem('rum_user') || '')
+    datadogRum.setUser(user)
+  } else {
+    const anonymousUser = {
+      id: Math.random().toString(36).substring(2, 15),
+      name: 'Learning Center User',
+      email: 'learning-center-user@example.com',
+    }
+    localStorage.setItem('rum_user', JSON.stringify(anonymousUser))
+    datadogRum.setUser(anonymousUser)
+  }
+  }, [])
+
   return (
     <>
       <CartProvider>
