@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 
-// Load environment variables from .env file for local development
-require('dotenv').config();
+// Load environment variables from .env file for local development only
+// Skip in Docker (where env vars are passed via docker-compose)
+const fs = require('fs');
+if (!fs.existsSync('/.dockerenv')) {
+  require('dotenv').config();
+}
 
 // This is the main entry point for the Puppeteer traffic generator.
 // It creates a SessionManager with enabled session types and starts the traffic generator.
