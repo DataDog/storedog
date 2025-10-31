@@ -11,7 +11,7 @@ ENV STOREDOG_URL=http://service-proxy:80 \
   PUPPETEER_DEBUG=false \
   PUPPETEER_DEBUG_SESSIONS=false \
   PUPPETEER_LOOP=infinite \
-  PUPPETEER_SESSION_TYPES=BrowsingSession,TaxonomySession,FrustrationSession,HomePageSession
+  PUPPETEER_SESSION_TYPES=browsing,vip,frustration,homepage,short,taxonomy
 
 USER pptruser
 WORKDIR /home/pptruser
