@@ -11,7 +11,7 @@
 # =============================================================================
 
 # Environment settings: prod, dev, dev-frontend-prod
-ENV=dev
+ENV=prod
 
 DC=docker compose
 COMPOSE_FILE=docker-compose.yml              # Production compose file
