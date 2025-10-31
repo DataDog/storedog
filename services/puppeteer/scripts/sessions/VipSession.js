@@ -1,7 +1,6 @@
 const { selectProduct, addToCart, checkout, randomNavbarLink, goToHomePage, endSession } = require('./sessionActions');
 const { setTimeout } = require('node:timers/promises');
-const BaseSession = require('./BaseSession');
-const { VIP_USERS } = require('../constants');
+const BaseSession = require('./baseSession');
 
 class VipSession extends BaseSession {
   constructor(browser, sessionId) {

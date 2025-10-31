@@ -14,9 +14,33 @@ const concurrencyLevels = config.safetyLimits.rampUpPercentages.map((percentage,
 
 class SessionManager {
 
+  // Map simple session names to actual filenames
+  static normalizeSessionName(name) {
+    const normalized = name.trim().toLowerCase();
+    
+    switch (normalized) {
+      case 'browsing':
+        return 'browsingSession';
+      case 'taxonomy':
+        return 'taxonomySession';
+      case 'frustration':
+        return 'frustrationSession';
+      case 'homepage':
+        return 'homePageSession';
+      case 'short':
+        return 'shortSession';
+      case 'vip':
+        return 'vipSession';
+      default:
+        // If no match, assume they provided the exact filename
+        return name.trim();
+    }
+  }
+
   static getSessionClasses() {
     return config.sessionTypes.map(sessionName => {
-      return require(`../sessions/${sessionName}`);
+      const normalizedName = SessionManager.normalizeSessionName(sessionName);
+      return require(`../sessions/${normalizedName}`);
     });
   }
   constructor() {
@@ -45,10 +69,15 @@ class SessionManager {
       
       // Execute JavaScript in the browser to clear storage
       // localStorage, sessionStorage, and IndexedDB are where websites store data
+      // Wrapped in try-catch to handle SecurityErrors on special pages (about:blank, etc.)
       await client.send('Runtime.evaluate', {
         expression: `
-          localStorage.clear();      // Clear localStorage (key-value storage)
-          sessionStorage.clear();    // Clear sessionStorage (temporary storage)
+          try {
+            localStorage.clear();      // Clear localStorage (key-value storage)
+            sessionStorage.clear();    // Clear sessionStorage (temporary storage)
+          } catch (e) {
+            // Ignore SecurityError on special pages like about:blank
+          }
           if (window.indexedDB) {    // Check if IndexedDB is available
             indexedDB.databases().then(databases => {
               // Loop through all databases and delete them

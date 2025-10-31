@@ -1,6 +1,6 @@
 const { selectProduct, addToCart, checkout, randomNavbarLink, goToHomePage, endSession } = require('./sessionActions');
 const { setTimeout } = require('node:timers/promises');
-const BaseSession = require('./BaseSession');
+const BaseSession = require('./baseSession');
 
 class BrowsingSession extends BaseSession {
   constructor(browser, sessionId) {
