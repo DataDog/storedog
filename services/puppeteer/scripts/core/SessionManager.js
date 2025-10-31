@@ -4,6 +4,12 @@
 const config = require('../config');
 const { setTimeout } = require('node:timers/promises');
 const BrowserPool = require('../browser/BrowserPool');
+const VipSession = require('../sessions/vipSession');
+const BrowsingSession = require('../sessions/browsingSession');
+const TaxonomySession = require('../sessions/taxonomySession');
+const FrustrationSession = require('../sessions/frustrationSession');
+const HomePageSession = require('../sessions/homePageSession');
+const ShortSession = require('../sessions/shortSession');
 
 // Build ramp-up schedule from the memory profile's percentages
 // Each percentage is applied to the configured maxConcurrency
@@ -16,31 +22,27 @@ class SessionManager {
 
   // Map simple session names to actual filenames
   static normalizeSessionName(name) {
-    const normalized = name.trim().toLowerCase();
-    
-    switch (normalized) {
+    switch (name) {
       case 'browsing':
-        return 'browsingSession';
+        return BrowsingSession;
       case 'taxonomy':
-        return 'taxonomySession';
+        return TaxonomySession;
       case 'frustration':
-        return 'frustrationSession';
+        return FrustrationSession;
       case 'homepage':
-        return 'homePageSession';
+        return HomePageSession;
       case 'short':
-        return 'shortSession';
+        return ShortSession;
       case 'vip':
-        return 'vipSession';
+        return VipSession;
       default:
-        // If no match, assume they provided the exact filename
-        return name.trim();
+        return BrowsingSession;
     }
   }
 
   static getSessionClasses() {
     return config.sessionTypes.map(sessionName => {
-      const normalizedName = SessionManager.normalizeSessionName(sessionName);
-      return require(`../sessions/${normalizedName}`);
+      return SessionManager.normalizeSessionName(sessionName);
     });
   }
   constructor() {
