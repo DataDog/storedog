@@ -156,8 +156,6 @@ services:
         condition: service_started
       backend:
         condition: service_healthy
-      frontend:
-        condition: service_healthy
     environment:
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV:-production}
