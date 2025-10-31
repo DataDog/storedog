@@ -210,3 +210,5 @@ volumes:
   redis: # Redis data persistence
   postgres_logs: # PostgreSQL logs storage
 
+networks:
+  storedog-network: # Main application network
