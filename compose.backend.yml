@@ -182,14 +182,6 @@ services:
       - storedog-network
     environment:
       - POSTGRES_HOST_AUTH_METHOD=trust
-      - DD_ENV=${DD_ENV-dev}
-      - DD_SERVICE=database
-      - DD_VERSION=${DD_VERSION-7}
-      - DD_AGENT_HOST=dd-agent
-      - DD_DBM_PROPAGATION_MODE=full
-      - DD_LOGS_INJECTION=true
-      - DD_RUNTIME_METRICS_ENABLED=true
-      - DD_PROFILING_ENABLED=true
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
     labels:
