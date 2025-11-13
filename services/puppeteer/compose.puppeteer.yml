@@ -11,7 +11,7 @@
 services:
   puppeteer-app1:
     build:
-      context: ./services/puppeteer
+      context: .
       dockerfile: Dockerfile
     platform: linux/amd64
     env_file:
@@ -35,7 +35,7 @@ services:
 
   puppeteer-app2:
     build:
-      context: ./services/puppeteer
+      context: .
       dockerfile: Dockerfile
     platform: linux/amd64
     env_file:
@@ -58,7 +58,7 @@ services:
 
   puppeteer-app3:
     build:
-      context: ./services/puppeteer
+      context: .
       dockerfile: Dockerfile
     platform: linux/amd64
     env_file:
