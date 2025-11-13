@@ -66,6 +66,15 @@ class BaseSession {
     const stringifiedUserInfo = JSON.stringify(userInfo);
     this.log(`Setting user: ${stringifiedUserInfo}`);
 
+    // Set RUM Application ID from environment variable
+    const rumAppId = process.env.RUM_APP_ID;
+    if (rumAppId) {
+      this.log(`Setting RUM App ID: ${rumAppId}`);
+      await this.page.evaluateOnNewDocument((appId) => {
+        localStorage.setItem('rum_app_id', appId);
+      }, rumAppId);
+    }
+
     // Set localStorage BEFORE page loads - this runs before any page JavaScript
     // Only set if not already set (persists across navigations)
     await this.page.evaluateOnNewDocument((userInfoString) => {
