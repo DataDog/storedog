@@ -1,0 +1,84 @@
+# Docker Compose file for Puppeteer services on separate host
+# Used for RUM Retention Filters course
+# 
+# These puppeteer instances run on a dedicated host and connect to storedog
+# via external hostname (e.g., http://storedog-host in Instruqt)
+#
+# Each puppeteer instance sends traffic to a different RUM Application
+# by setting the RUM_APP_ID environment variable, which gets injected
+# into localStorage before page navigation
+
+services:
+  puppeteer-app1:
+    build:
+      context: ./services/puppeteer
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    env_file:
+      - puppeteer-app1.env
+    environment:
+      # Defaults (can be overridden in env file)
+      - PUPPETEER_TIMEOUT=30000
+      - PUPPETEER_ENABLE_CACHE=false
+      - PUPPETEER_MAX_CONCURRENT=12
+      - PUPPETEER_BROWSER_POOL_SIZE=3
+      - PUPPETEER_SYSTEM_MEMORY=8GB
+      - PUPPETEER_STARTUP_DELAY=15000
+      - PUPPETEER_RAMP_INTERVAL=30000
+      - PUPPETEER_DEBUG=false
+      - PUPPETEER_DEBUG_SESSIONS=false
+      - PUPPETEER_LOOP=infinite
+    shm_size: '4gb'
+    cap_add:
+      - 'SYS_ADMIN'
+    restart: unless-stopped
+
+  puppeteer-app2:
+    build:
+      context: ./services/puppeteer
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    env_file:
+      - puppeteer-app2.env
+    environment:
+      - PUPPETEER_TIMEOUT=30000
+      - PUPPETEER_ENABLE_CACHE=false
+      - PUPPETEER_MAX_CONCURRENT=12
+      - PUPPETEER_BROWSER_POOL_SIZE=3
+      - PUPPETEER_SYSTEM_MEMORY=8GB
+      - PUPPETEER_STARTUP_DELAY=25000  # Stagger by 10s
+      - PUPPETEER_RAMP_INTERVAL=30000
+      - PUPPETEER_DEBUG=false
+      - PUPPETEER_DEBUG_SESSIONS=false
+      - PUPPETEER_LOOP=infinite
+    shm_size: '4gb'
+    cap_add:
+      - 'SYS_ADMIN'
+    restart: unless-stopped
+
+  puppeteer-app3:
+    build:
+      context: ./services/puppeteer
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    env_file:
+      - puppeteer-app3.env
+    environment:
+      - PUPPETEER_TIMEOUT=30000
+      - PUPPETEER_ENABLE_CACHE=false
+      - PUPPETEER_MAX_CONCURRENT=12
+      - PUPPETEER_BROWSER_POOL_SIZE=3
+      - PUPPETEER_SYSTEM_MEMORY=8GB
+      - PUPPETEER_STARTUP_DELAY=35000  # Stagger by 20s more
+      - PUPPETEER_RAMP_INTERVAL=30000
+      - PUPPETEER_DEBUG=false
+      - PUPPETEER_DEBUG_SESSIONS=false
+      - PUPPETEER_LOOP=infinite
+    shm_size: '4gb'
+    cap_add:
+      - 'SYS_ADMIN'
+    restart: unless-stopped
+
+# No networks section needed - puppeteer connects via external URL
+# No volumes needed - puppeteer is stateless
+
