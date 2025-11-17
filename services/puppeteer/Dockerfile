@@ -16,6 +16,11 @@ ENV STOREDOG_URL=http://service-proxy:80 \
 USER pptruser
 WORKDIR /home/pptruser
 
-COPY ./scripts/ ./
+# Copy package files and install dependencies
+COPY --chown=pptruser:pptruser package*.json ./
+RUN npm ci --only=production
 
-CMD ["node", "--expose-gc","index.js"]
+# Copy all application files
+COPY --chown=pptruser:pptruser . .
+
+CMD ["node", "--expose-gc","./scripts/index.js"]
