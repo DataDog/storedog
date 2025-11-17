@@ -44,6 +44,7 @@ services:
         condition: service_started
     volumes:
       - ./services/frontend:/app
+      - /app/node_modules
       # Mount only specific files that need to be edited during the lab
       # - ./services/frontend/pages/_app.tsx:/app/pages/_app.tsx
       # - ./services/frontend/pages/about-us.tsx:/app/pages/about-us.tsx
