@@ -1,8 +1,8 @@
 FROM ruby:3.1.7
 
+# Install essential packages
 RUN apt-get update -yq \
   && apt-get upgrade -yq \
-  # ESSENTIALS
   && apt-get install -y -qq --no-install-recommends \
     build-essential \
     gcc \
@@ -12,14 +12,15 @@ RUN apt-get update -yq \
     netcat-traditional \
     imagemagick \
     postgresql-client \
-  # INSTALL NODE
-  && curl -sL https://deb.nodesource.com/setup_20.x | bash - \
-  && apt-get install -y --no-install-recommends nodejs \
-  # INSTALL YARN
-  && npm install -g yarn
+  && apt-get clean -qy \
+  && rm -rf /var/lib/apt/lists/*
 
-# Clean cache and temp files, fix permissions
-RUN apt-get clean -qy \
+# Install Node.js and Yarn (separate layer for better caching and debugging)
+RUN curl -sL https://deb.nodesource.com/setup_20.x | bash - \
+  && apt-get update -yq \
+  && apt-get install -y --no-install-recommends nodejs \
+  && npm install -g yarn \
+  && apt-get clean -qy \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
