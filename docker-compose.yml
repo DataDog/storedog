@@ -230,6 +230,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 3s
+      start_period: 30s
     restart: always
     depends_on:
       dd-agent:
