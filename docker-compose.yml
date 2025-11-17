@@ -224,7 +224,7 @@ services:
     build:
       context: ./services/postgres
     healthcheck:
-      test: ["CMD", "nc", "-z", "postgres", "5432"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 3s
     restart: always
     depends_on:
