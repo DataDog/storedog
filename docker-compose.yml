@@ -49,7 +49,7 @@ services:
       # - ./services/frontend/components/common/Ad/Ad.tsx:/app/components/common/Ad/Ad.tsx
       # - ./services/frontend/components/cart/CartSidebarView/CartSidebarView.tsx:/app/components/cart/CartSidebarView/CartSidebarView.tsx
       # Mount public assets that may be updated
-      - ./services/frontend/public:/app/public
+      # - ./services/frontend/public:/app/public
     networks:
       - storedog-network
     environment:
