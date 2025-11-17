@@ -13,7 +13,7 @@ const {
   generateRandomFrustrationSignal,
   endSession
 } = require('./sessionActions');
-const BaseSession = require('./BaseSession');
+const BaseSession = require('./baseSession');
 
 const randomChance = (percentChance) => {
   return Math.floor(Math.random() * (100/percentChance)) === 0;

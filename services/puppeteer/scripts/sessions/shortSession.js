@@ -1,7 +1,7 @@
 // Taxonomy session - visits category pages and browses products
 const { goToHomePage, endSession } = require('./sessionActions');
 const { setTimeout } = require('node:timers/promises');
-const BaseSession = require('./BaseSession');
+const BaseSession = require('./baseSession');
 
 class ShortSession extends BaseSession {
   constructor(browser, sessionId) {

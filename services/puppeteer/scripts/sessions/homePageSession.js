@@ -2,7 +2,7 @@
 const config = require('../config');
 const { selectHomePageProduct, tryToSelectLearningBitsRelatedProduct, goToFooterPage, addToCart, checkout, endSession, returnToHomeAndAddToCart, goToHomePage } = require('./sessionActions');
 const { setTimeout } = require('node:timers/promises');
-const BaseSession = require('./BaseSession');
+const BaseSession = require('./baseSession');
 
 const randomChance = (percentChance = 33) => {
   return Math.floor(Math.random() * (100/percentChance)) === 0;

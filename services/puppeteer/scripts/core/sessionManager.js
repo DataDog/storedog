@@ -3,7 +3,7 @@
 
 const config = require('../config');
 const { setTimeout } = require('node:timers/promises');
-const BrowserPool = require('../browser/BrowserPool');
+const BrowserPool = require('../browser/browserPool');
 const VipSession = require('../sessions/vipSession');
 const BrowsingSession = require('../sessions/browsingSession');
 const TaxonomySession = require('../sessions/taxonomySession');

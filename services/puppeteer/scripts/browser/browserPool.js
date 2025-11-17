@@ -5,7 +5,7 @@
 const puppeteer = require('puppeteer');
 const config = require('../config');
 const { CHROME_ARGS } = require('../constants');
-const Browser = require('./Browser');
+const Browser = require('./browser');
 
 class BrowserPool {
   constructor(poolSize = config.browserPoolSize) {

@@ -228,9 +228,11 @@ services:
     build:
       context: ./services/postgres
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 3s
-      start_period: 30s
+      test: ["CMD-SHELL", "pg_isready -U postgres && psql -U postgres -d postgres -c 'SELECT 1'"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
     restart: always
     depends_on:
       dd-agent:
