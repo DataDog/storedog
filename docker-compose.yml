@@ -42,8 +42,6 @@ services:
         condition: service_healthy
       worker:
         condition: service_started
-      service-proxy:
-        condition: service_started
     volumes:
       - ./services/frontend:/app
       - /app/node_modules
@@ -153,7 +151,7 @@ services:
       start_period: 60s
     depends_on:
       postgres:
-        condition: service_started
+        condition: service_healthy
       dd-agent:
         condition: service_started
     environment:
@@ -212,9 +210,11 @@ services:
       dd-agent:
         condition: service_started
       discounts:
-        condition: service_started
+        condition: service_healthy
       backend:
-        condition: service_started
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
     environment:
       - DD_AGENT_HOST=dd-agent
       - DD_SERVICE=service-proxy
