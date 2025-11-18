@@ -228,7 +228,7 @@ services:
     build:
       context: ./services/postgres
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres && psql -U postgres -d postgres -c 'SELECT 1'"]
+      test: ["CMD", "nc", "-z", "postgres", "5432"]
       interval: 5s
       timeout: 5s
       retries: 5
