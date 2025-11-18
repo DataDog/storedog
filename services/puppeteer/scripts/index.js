@@ -10,7 +10,7 @@ if (!fs.existsSync('/.dockerenv')) {
 // This is the main entry point for the Puppeteer traffic generator.
 // It creates a SessionManager with enabled session types and starts the traffic generator.
 
-const SessionManager = require('./core/SessionManager');
+const SessionManager = require('./core/sessionManager');
 const config = require('./config');
 const { setTimeout } = require('node:timers/promises');
 
