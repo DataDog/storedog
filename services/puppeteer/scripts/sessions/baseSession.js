@@ -66,13 +66,17 @@ class BaseSession {
     const stringifiedUserInfo = JSON.stringify(userInfo);
     this.log(`Setting user: ${stringifiedUserInfo}`);
 
-    // Set RUM Application ID from environment variable
+    // Set RUM configuration from environment variables
     const rumAppId = process.env.RUM_APP_ID;
-    if (rumAppId) {
-      this.log(`Setting RUM App ID: ${rumAppId}`);
-      await this.page.evaluateOnNewDocument((appId) => {
-        localStorage.setItem('rum_app_id', appId);
-      }, rumAppId);
+    const rumClientToken = process.env.RUM_CLIENT_TOKEN;
+    
+    if (rumAppId && rumClientToken) {
+      this.log(`Setting RUM config via headers: App ID=${rumAppId}`);
+      // Set custom headers on all requests to nginx
+      await this.page.setExtraHTTPHeaders({
+        'X-RUM-App-ID': rumAppId,
+        'X-RUM-Client-Token': rumClientToken
+      });
     }
 
     // Set localStorage BEFORE page loads - this runs before any page JavaScript

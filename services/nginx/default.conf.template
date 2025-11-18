@@ -70,6 +70,23 @@ server {
 
     # Reverse proxy for frontend (Next.js)
     location / {
+        # Handle RUM configuration routing
+        # Read from custom headers (puppeteer) or use defaults (learner browser)
+        set $rum_app_id $http_x_rum_app_id;
+        set $rum_client_token $http_x_rum_client_token;
+        
+        # If no headers present, use defaults from env vars
+        if ($rum_app_id = "") {
+            set $rum_app_id "${DEFAULT_RUM_APP_ID}";
+        }
+        
+        if ($rum_client_token = "") {
+            set $rum_client_token "${DEFAULT_RUM_CLIENT_TOKEN}";
+        }
+        
+        # Set cookies so frontend can read them
+        add_header Set-Cookie "rum_app_id=$rum_app_id; Path=/; SameSite=Lax" always;
+        add_header Set-Cookie "rum_client_token=$rum_client_token; Path=/; SameSite=Lax" always;
 
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;

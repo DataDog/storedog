@@ -11,13 +11,11 @@ import { ManagedUIContext } from '@components/ui/context'
 import { datadogRum, RumInitConfiguration } from '@datadog/browser-rum'
 import ErrorBoundary from '@components/ErrorBoundary'
 
-// RUM configuration factory - generates config with dynamic application ID
-function getRumConfig(applicationId: string): RumInitConfiguration {
+// RUM configuration factory - generates config with dynamic application ID and client token
+function getRumConfig(applicationId: string, clientToken: string): RumInitConfiguration {
   return {
     applicationId,
-    clientToken: `${
-      process.env.NEXT_PUBLIC_DD_CLIENT_TOKEN || 'DD_CLIENT_TOKEN_PLACEHOLDER'
-    }`,
+    clientToken,
     site: (process.env.NEXT_PUBLIC_DD_SITE || 'datadoghq.com') as
       | 'datadoghq.com'
       | 'datadoghq.eu'
@@ -64,7 +62,16 @@ function getRumConfig(applicationId: string): RumInitConfiguration {
   }
 }
 
-// Initialize RUM only on client-side with localStorage support
+// Helper to read cookie value
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null
+  const value = `; ${document.cookie}`
+  const parts = value.split(`; ${name}=`)
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null
+  return null
+}
+
+// Initialize RUM only on client-side with cookie/localStorage support
 function useInitializeRum() {
   useEffect(() => {
     // Only run in browser
@@ -77,16 +84,23 @@ function useInitializeRum() {
       return
     }
 
-    // Get app ID from localStorage (set by Puppeteer) or fallback to env var
+    // Priority: Cookie (set by nginx) > localStorage (legacy) > env var
     const appId = 
+      getCookie('rum_app_id') ||
       localStorage.getItem('rum_app_id') || 
       process.env.NEXT_PUBLIC_DD_APPLICATION_ID || 
       'DD_APPLICATION_ID_PLACEHOLDER'
 
+    const clientToken = 
+      getCookie('rum_client_token') ||
+      process.env.NEXT_PUBLIC_DD_CLIENT_TOKEN || 
+      'DD_CLIENT_TOKEN_PLACEHOLDER'
+
     console.log('[RUM Init] Using application ID:', appId)
+    console.log('[RUM Init] Using client token:', clientToken?.substring(0, 8) + '...')
 
     // Initialize RUM with dynamic config
-    datadogRum.init(getRumConfig(appId))
+    datadogRum.init(getRumConfig(appId, clientToken))
 
     // Mark as initialized
     ;(window as any).__DD_RUM_INITIALIZED__ = true
