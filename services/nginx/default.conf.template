@@ -84,9 +84,9 @@ server {
             set $rum_client_token "${DEFAULT_RUM_CLIENT_TOKEN}";
         }
         
-        # Set cookies so frontend can read them
-        add_header Set-Cookie "rum_app_id=$rum_app_id; Path=/; SameSite=Lax" always;
-        add_header Set-Cookie "rum_client_token=$rum_client_token; Path=/; SameSite=Lax" always;
+        # Pass RUM config to frontend via request headers (frontend middleware will convert to cookies)
+        proxy_set_header X-RUM-App-ID $rum_app_id;
+        proxy_set_header X-RUM-Client-Token $rum_client_token;
 
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
