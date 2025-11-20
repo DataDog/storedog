@@ -84,15 +84,15 @@ function useInitializeRum() {
       return
     }
 
-    // Priority: Cookie (set by nginx) > localStorage (legacy)
-    const appId = 
-      getCookie('rum_app_id') ||
-      localStorage.getItem('rum_app_id') || 
-      'DD_APPLICATION_ID_PLACEHOLDER'
+    // Only use cookie (set by nginx at runtime)
+    const appId = getCookie('rum_app_id')
+    const clientToken = getCookie('rum_client_token')
 
-    const clientToken = 
-      getCookie('rum_client_token') ||
-      'DD_CLIENT_TOKEN_PLACEHOLDER'
+    // Only initialize if we have real credentials from nginx
+    if (!appId || !clientToken) {
+      console.error('[RUM Init] Missing RUM credentials from nginx cookies. RUM will not be initialized.')
+      return
+    }
 
     console.log('[RUM Init] Using application ID:', appId)
     console.log('[RUM Init] Using client token:', clientToken?.substring(0, 8) + '...')
