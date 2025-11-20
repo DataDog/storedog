@@ -17,23 +17,33 @@ export function middleware(request: NextRequest) {
   const rumAppId = request.headers.get('x-rum-app-id')
   const rumClientToken = request.headers.get('x-rum-client-token')
 
+  console.log('[Middleware] Processing request:', request.url)
+  console.log('[Middleware] RUM App ID from header:', rumAppId)
+  console.log('[Middleware] RUM Client Token from header:', rumClientToken?.substring(0, 8) + '...')
+
   // Set cookies if headers are present
   if (rumAppId) {
+    console.log('[Middleware] Setting rum_app_id cookie:', rumAppId)
     response.cookies.set('rum_app_id', rumAppId, {
       path: '/',
       sameSite: 'lax',
       // Don't set httpOnly so JavaScript can read it
       httpOnly: false,
     })
+  } else {
+    console.warn('[Middleware] No x-rum-app-id header found, cookie not set')
   }
 
   if (rumClientToken) {
+    console.log('[Middleware] Setting rum_client_token cookie')
     response.cookies.set('rum_client_token', rumClientToken, {
       path: '/',
       sameSite: 'lax',
       // Don't set httpOnly so JavaScript can read it
       httpOnly: false,
     })
+  } else {
+    console.warn('[Middleware] No x-rum-client-token header found, cookie not set')
   }
 
   return response
