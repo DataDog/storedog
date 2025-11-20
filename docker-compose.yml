@@ -199,7 +199,8 @@ services:
       com.datadoghq.tags.service: 'store-ads'
       com.datadoghq.tags.version: '1.0.0'
   service-proxy:
-    image: ghcr.io/datadog/storedog/nginx:1.4.0
+    build:
+      context: ./services/nginx
     restart: always
     ports:
       - '80:80'
