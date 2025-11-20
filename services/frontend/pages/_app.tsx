@@ -84,16 +84,14 @@ function useInitializeRum() {
       return
     }
 
-    // Priority: Cookie (set by nginx) > localStorage (legacy) > env var
+    // Priority: Cookie (set by nginx) > localStorage (legacy)
     const appId = 
       getCookie('rum_app_id') ||
       localStorage.getItem('rum_app_id') || 
-      process.env.NEXT_PUBLIC_DD_APPLICATION_ID || 
       'DD_APPLICATION_ID_PLACEHOLDER'
 
     const clientToken = 
       getCookie('rum_client_token') ||
-      process.env.NEXT_PUBLIC_DD_CLIENT_TOKEN || 
       'DD_CLIENT_TOKEN_PLACEHOLDER'
 
     console.log('[RUM Init] Using application ID:', appId)
