@@ -4,6 +4,7 @@
 
 const config = require('../config');
 const { DEVICES, EMOJIS, VIP_USERS, USERS } = require('../constants');
+const { setTimeout: setTimeoutPromise } = require('node:timers/promises');
 
 class BaseSession {
   // Get a random device profile for emulation
@@ -136,11 +137,13 @@ class BaseSession {
     await this.setupPage(this.isVip);
     try {
       // Wrap execution in a timeout to prevent sessions from hanging indefinitely
+      const timeoutPromise = setTimeoutPromise(config.timeout).then(() => {
+        throw new Error('Session timeout exceeded');
+      });
+      
       await Promise.race([
         this.execute(),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Session timeout exceeded')), config.timeout)
-        )
+        timeoutPromise
       ]);
       this.log('✅ Completed');
     } catch (error) {
@@ -169,7 +172,7 @@ class BaseSession {
         // Close the page with a timeout to prevent hanging
         await Promise.race([
           this.page.close(),
-          new Promise((resolve) => setTimeout(resolve, 2000))
+          setTimeoutPromise(2000)
         ]);
       }
     } catch (error) {
