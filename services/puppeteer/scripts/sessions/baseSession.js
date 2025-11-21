@@ -135,7 +135,13 @@ class BaseSession {
     this.log('▶️ Starting');
     await this.setupPage(this.isVip);
     try {
-      await this.execute();
+      // Wrap execution in a timeout to prevent sessions from hanging indefinitely
+      await Promise.race([
+        this.execute(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Session timeout exceeded')), config.timeout)
+        )
+      ]);
       this.log('✅ Completed');
     } catch (error) {
       this.log(`❌ Failed: ${error.message}`);
@@ -154,7 +160,17 @@ class BaseSession {
   async cleanup() {
     try {
       if (this.page && !this.page.isClosed()) {
-        await this.page.close();
+        // Remove all event listeners before closing
+        this.page.removeAllListeners('request');
+        this.page.removeAllListeners('response');
+        this.page.removeAllListeners('console');
+        this.page.removeAllListeners('error');
+        
+        // Close the page with a timeout to prevent hanging
+        await Promise.race([
+          this.page.close(),
+          new Promise((resolve) => setTimeout(resolve, 2000))
+        ]);
       }
     } catch (error) {
       this.log(`Page close error: ${error.message}`);

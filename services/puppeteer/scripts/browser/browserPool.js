@@ -45,6 +45,19 @@ class BrowserPool {
   async releaseBrowser(browser) {
     try {
       if (browser.isConnected() && this.pool.length < this.poolSize) {
+        // Clean up any orphaned pages before returning to pool
+        try {
+          const pages = await browser.pages();
+          // Close all pages except the default about:blank page
+          for (const page of pages) {
+            if (page.url() !== 'about:blank') {
+              await page.close().catch(() => {});
+            }
+          }
+        } catch (pageCleanupError) {
+          this.log(`Error cleaning up pages: ${pageCleanupError.message}`);
+        }
+        
         this.pool.push(browser);
         this.log(`Browser ${browser.id} returned to pool`);
       } else {

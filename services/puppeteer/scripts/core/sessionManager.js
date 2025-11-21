@@ -192,11 +192,19 @@ class SessionManager {
             this.log(`Error creating session: ${error.message}`);
           } finally {
             try {
-              if (session) {
-                if (!session.page.isClosed()) {
-                  await this.clearBrowserContext(session);
+              if (session && browser) {
+                // Always try to clear browser context before releasing
+                // Even if page is closed, we can still clear cookies/cache at browser level
+                try {
+                  if (session.page && !session.page.isClosed()) {
+                    await this.clearBrowserContext(session);
+                  }
+                } catch (contextError) {
+                  this.log(`Context clear error: ${contextError.message}`);
                 }
-                await this.browserPool.releaseBrowser(session.browser);
+                
+                // Always release browser back to pool
+                await this.browserPool.releaseBrowser(browser);
               }
             } catch (cleanupError) {
               this.log(`Browser cleanup error: ${cleanupError.message}`);
