@@ -70,21 +70,37 @@ server {
 
     # Reverse proxy for frontend (Next.js)
     location / {
-        # Handle RUM configuration routing
-        # Read from custom headers (puppeteer) or use defaults (learner browser)
-        set $rum_app_id $http_x_rum_app_id;
-        set $rum_client_token $http_x_rum_client_token;
+        # Handle RUM configuration routing only for HTML page requests (not static assets)
+        # Initialize to empty
+        set $rum_app_id "";
+        set $rum_client_token "";
+        set $is_html "0";
         
-        # If no headers present, use defaults from env vars
-        if ($rum_app_id = "") {
+        # Check if this is an HTML request
+        if ($http_accept ~* "text/html") {
+            set $is_html "1";
+        }
+        
+        # For HTML requests: read from custom headers (puppeteer) or use defaults (learner browser)
+        # Use compound conditions with variable concatenation
+        set $html_check "${is_html}:${http_x_rum_app_id}";
+        if ($html_check ~* "^1:(.+)") {
+            set $rum_app_id $http_x_rum_app_id;
+        }
+        if ($html_check = "1:") {
             set $rum_app_id "${DEFAULT_RUM_APP_ID}";
         }
         
-        if ($rum_client_token = "") {
+        set $html_check "${is_html}:${http_x_rum_client_token}";
+        if ($html_check ~* "^1:(.+)") {
+            set $rum_client_token $http_x_rum_client_token;
+        }
+        if ($html_check = "1:") {
             set $rum_client_token "${DEFAULT_RUM_CLIENT_TOKEN}";
         }
         
         # Pass RUM config to frontend via request headers (frontend middleware will convert to cookies)
+        # These will be empty strings for non-HTML requests (static assets)
         proxy_set_header X-RUM-App-ID $rum_app_id;
         proxy_set_header X-RUM-Client-Token $rum_client_token;
 
