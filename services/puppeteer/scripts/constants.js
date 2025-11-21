@@ -17,7 +17,21 @@ const CHROME_ARGS = [
   '--disable-field-trial-config',
   '--disable-back-forward-cache',
   '--disable-ipc-flooding-protection',
-  '--max_old_space_size=256'
+  '--max_old_space_size=256',
+  // Additional performance optimizations
+  '--blink-settings=imagesEnabled=false', // Block all images
+  '--disable-remote-fonts', // Don't load web fonts
+  '--disable-smooth-scrolling', // Reduce animation overhead
+  '--disable-software-rasterizer',
+  '--disable-extensions',
+  '--disable-plugins',
+  '--disable-notifications',
+  '--disable-web-security', // Already added conditionally, but helps with CORS overhead
+  '--no-default-browser-check',
+  '--disable-hang-monitor',
+  '--disable-prompt-on-repost',
+  '--disable-sync',
+  '--disable-translate'
 ];
 
 // Device profiles for browser emulation

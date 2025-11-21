@@ -98,6 +98,14 @@ class BaseSession {
     await this.page.setRequestInterception(true);
     this.page.on('request', (request) => {
       const url = request.url();
+      const resourceType = request.resourceType();
+      
+      // Block resource-heavy content types to reduce CPU/memory usage
+      const blockedTypes = ['image', 'stylesheet', 'font', 'media'];
+      if (blockedTypes.includes(resourceType)) {
+        request.abort();
+        return;
+      }
       
       // Allow Next.js development files through
       if (url.includes('_devPagesManifest.json') || 

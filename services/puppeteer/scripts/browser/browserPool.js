@@ -34,7 +34,6 @@ class BrowserPool {
     const browser = await puppeteer.launch({
       headless: true,
       args: this.chromeArgs,
-      slowMo: 50,
       timeout: 15000
     });
 
