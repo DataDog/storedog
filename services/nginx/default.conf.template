@@ -13,18 +13,6 @@ upstream ads_upstream {
 server {
     listen 80;
 
-    # CORS configuration for custom RUM headers
-    # Required for Datadog Synthetics browser tests
-    add_header 'Access-Control-Allow-Origin' '*' always;
-    add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS, HEAD' always;
-    add_header 'Access-Control-Allow-Headers' 'X-RUM-App-ID, X-RUM-Client-Token, Content-Type, Authorization, Accept, Origin' always;
-    add_header 'Access-Control-Max-Age' '3600' always;
-
-    # Handle preflight OPTIONS requests
-    if ($request_method = 'OPTIONS') {
-        return 204;
-    }
-
     # Reverse proxy for ads
     location /services/ads {
         proxy_set_header Host $host;
@@ -82,6 +70,22 @@ server {
 
     # Reverse proxy for frontend (Next.js)
     location / {
+        # CORS configuration for custom RUM headers (Datadog Synthetics support)
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'X-RUM-App-ID, X-RUM-Client-Token, Content-Type, Accept, Origin' always;
+        add_header 'Access-Control-Max-Age' '3600' always;
+
+        # Handle OPTIONS preflight requests for CORS
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' '*';
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
+            add_header 'Access-Control-Allow-Headers' 'X-RUM-App-ID, X-RUM-Client-Token, Content-Type, Accept, Origin';
+            add_header 'Access-Control-Max-Age' '3600';
+            add_header 'Content-Length' '0';
+            return 204;
+        }
+
         # Handle RUM configuration routing only for HTML page requests (not static assets)
         # Initialize to empty
         set $rum_app_id "";
