@@ -136,15 +136,7 @@ class BaseSession {
     this.log('▶️ Starting');
     await this.setupPage(this.isVip);
     try {
-      // Wrap execution in a timeout to prevent sessions from hanging indefinitely
-      const timeoutPromise = setTimeoutPromise(config.timeout).then(() => {
-        throw new Error('Session timeout exceeded');
-      });
-      
-      await Promise.race([
-        this.execute(),
-        timeoutPromise
-      ]);
+      await this.execute();
       this.log('✅ Completed');
     } catch (error) {
       this.log(`❌ Failed: ${error.message}`);
