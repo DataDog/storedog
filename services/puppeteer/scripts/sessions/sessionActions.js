@@ -259,8 +259,9 @@ const tryToSelectLearningBitsRelatedProduct = async (session) => {
 // =============================================================================
 
 const goToHomePage = async (session) => {    
-  const urlWithUtm = Math.random() > 0.5 ? setUtmParams(config.storedogUrl) : config.storedogUrl;
-  await session.page.goto(urlWithUtm, { waitUntil: 'domcontentloaded', timeout: 15000 });
+  const storedogUrl = config.storedogUrl;
+  // const urlWithUtm = Math.random() > 0.5 ? setUtmParams(config.storedogUrl) : config.storedogUrl;
+  await session.page.goto(storedogUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
   const pageTitle = await session.page.title();
   session.log(`"${pageTitle}" loaded`);
 };
