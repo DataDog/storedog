@@ -76,7 +76,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build
 
-FROM base AS runner
+FROM base AS production
 
 WORKDIR /app
 
