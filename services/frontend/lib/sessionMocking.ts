@@ -138,7 +138,7 @@ export class ViewEvent extends BaseEventHandler {
       viewId,
       isUpdate,
       currentCount: session.getCounter('view'),
-      urlPath: event.view?.url_path,
+      url: event.view?.url,
     })
 
     if (viewId) {
@@ -176,14 +176,15 @@ export class ViewEvent extends BaseEventHandler {
     if (cartStatusChanged && currentCartStatus?.cartTotal) {
       updates.push(`@context.cart_status.cartTotal:${currentCartStatus.cartTotal}`)
     }
-    const viewPath = event.view?.url_path || event.view?.name || 'view'
+    const url = event.view?.url
+    const viewPath = url || event.view?.name || 'view'
     logger.logger.info(`RUM Event: view - ${viewPath} | Session: ${this.buildLogUpdates(updates)}`)
 
     // Dispatch to UI
     this.dispatchEvent({
       type: 'view',
       count: session.getCounter('view'),
-      data: { url_path: event.view?.url_path, name: event.view?.name },
+      data: { url, name: event.view?.name },
       sessionChange: {
         field: 'view.count',
         to: session.getCounter('view'),

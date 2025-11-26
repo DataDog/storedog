@@ -175,11 +175,23 @@ export default function SessionDebugPanel() {
                   >
                     {activity.type}{activity.type === 'view' && activity.isUpdate ? ' (updated)' : ''}
                   </span>
-                  {activity.count && (
+                  {activity.type === 'view' && activity.data?.url ? (
+                    <span style={{ 
+                      fontSize: '11px', 
+                      color: '#718096', 
+                      fontWeight: 600,
+                      maxWidth: '200px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {activity.data.url}
+                    </span>
+                  ) : activity.count ? (
                     <span style={{ fontSize: '11px', color: '#718096', fontWeight: 600 }}>
                       {activity.count} total
                     </span>
-                  )}
+                  ) : null}
                   <span style={{ fontSize: '11px', color: '#718096', marginLeft: 'auto' }}>
                     {activity.timestamp}
                   </span>
@@ -190,11 +202,6 @@ export default function SessionDebugPanel() {
                     {activity.data.message.length > 60 
                       ? activity.data.message.substring(0, 60) + '...' 
                       : activity.data.message}
-                  </div>
-                )}
-                {activity.data?.url_path && (
-                  <div style={{ color: '#2d3748', fontSize: '12px', marginBottom: '4px', fontFamily: 'monospace' }}>
-                    {activity.data.url_path}
                   </div>
                 )}
                 {activity.data?.name && (
