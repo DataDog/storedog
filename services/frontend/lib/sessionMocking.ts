@@ -209,14 +209,23 @@ export class ResourceEvent extends BaseEventHandler {
       session.getCounter('resource') === 1 ||
       session.getCounter('resource') - session.getLastResourceDispatch() >= 10
     ) {
-      const additionalChanges = []
+      const timeSpent = Math.round(session.getTimeSpent())
+      const additionalChanges = [
+        {
+          field: 'session.time_spent',
+          to: timeSpent,
+        },
+      ]
 
       if (cartStatusChanged && currentCartStatus) {
         additionalChanges.push(this.formatCartChange(currentCartStatus.cartTotal))
       }
 
       // Log to Datadog
-      const updates = [`@session.resource.count:${session.getCounter('resource')}`]
+      const updates = [
+        `@session.resource.count:${session.getCounter('resource')}`,
+        `@session.time_spent:${timeSpent}`,
+      ]
       if (cartStatusChanged && currentCartStatus?.cartTotal) {
         updates.push(`@context.cart_status.cartTotal:${currentCartStatus.cartTotal}`)
       }
@@ -230,7 +239,7 @@ export class ResourceEvent extends BaseEventHandler {
           field: 'resource.count',
           to: session.getCounter('resource'),
         },
-        additionalChanges: additionalChanges.length > 0 ? additionalChanges : undefined,
+        additionalChanges,
       })
 
       session.setLastResourceDispatch(session.getCounter('resource'))
@@ -247,14 +256,23 @@ export class ErrorEvent extends BaseEventHandler {
     const cartStatusChanged = session.checkCartStatusChange(event.context?.cart_status)
     const currentCartStatus = session.getCurrentCartStatus()
 
-    const additionalChanges = []
+    const timeSpent = Math.round(session.getTimeSpent())
+    const additionalChanges = [
+      {
+        field: 'session.time_spent',
+        to: timeSpent,
+      },
+    ]
 
     if (cartStatusChanged && currentCartStatus) {
       additionalChanges.push(this.formatCartChange(currentCartStatus.cartTotal))
     }
 
     // Log to Datadog
-    const updates = [`@session.error.count:${session.getCounter('error')}`]
+    const updates = [
+      `@session.error.count:${session.getCounter('error')}`,
+      `@session.time_spent:${timeSpent}`,
+    ]
     if (cartStatusChanged && currentCartStatus?.cartTotal) {
       updates.push(`@context.cart_status.cartTotal:${currentCartStatus.cartTotal}`)
     }
@@ -270,7 +288,7 @@ export class ErrorEvent extends BaseEventHandler {
         field: 'error.count',
         to: session.getCounter('error'),
       },
-      additionalChanges: additionalChanges.length > 0 ? additionalChanges : undefined,
+      additionalChanges,
     })
   }
 }
@@ -284,14 +302,23 @@ export class ActionEvent extends BaseEventHandler {
     const cartStatusChanged = session.checkCartStatusChange(event.context?.cart_status)
     const currentCartStatus = session.getCurrentCartStatus()
 
-    const additionalChanges = []
+    const timeSpent = Math.round(session.getTimeSpent())
+    const additionalChanges = [
+      {
+        field: 'session.time_spent',
+        to: timeSpent,
+      },
+    ]
 
     if (cartStatusChanged && currentCartStatus) {
       additionalChanges.push(this.formatCartChange(currentCartStatus.cartTotal))
     }
 
     // Log to Datadog
-    const updates = [`@session.action.count:${session.getCounter('action')}`]
+    const updates = [
+      `@session.action.count:${session.getCounter('action')}`,
+      `@session.time_spent:${timeSpent}`,
+    ]
     if (cartStatusChanged && currentCartStatus?.cartTotal) {
       updates.push(`@context.cart_status.cartTotal:${currentCartStatus.cartTotal}`)
     }
@@ -307,7 +334,7 @@ export class ActionEvent extends BaseEventHandler {
         field: 'action.count',
         to: session.getCounter('action'),
       },
-      additionalChanges: additionalChanges.length > 0 ? additionalChanges : undefined,
+      additionalChanges,
     })
   }
 }
@@ -321,14 +348,23 @@ export class LongTaskEvent extends BaseEventHandler {
     const cartStatusChanged = session.checkCartStatusChange(event.context?.cart_status)
     const currentCartStatus = session.getCurrentCartStatus()
 
-    const additionalChanges = []
+    const timeSpent = Math.round(session.getTimeSpent())
+    const additionalChanges = [
+      {
+        field: 'session.time_spent',
+        to: timeSpent,
+      },
+    ]
 
     if (cartStatusChanged && currentCartStatus) {
       additionalChanges.push(this.formatCartChange(currentCartStatus.cartTotal))
     }
 
     // Log to Datadog
-    const updates = [`@session.long_task.count:${session.getCounter('long_task')}`]
+    const updates = [
+      `@session.long_task.count:${session.getCounter('long_task')}`,
+      `@session.time_spent:${timeSpent}`,
+    ]
     if (cartStatusChanged && currentCartStatus?.cartTotal) {
       updates.push(`@context.cart_status.cartTotal:${currentCartStatus.cartTotal}`)
     }
@@ -341,7 +377,7 @@ export class LongTaskEvent extends BaseEventHandler {
         field: 'long_task.count',
         to: session.getCounter('long_task'),
       },
-      additionalChanges: additionalChanges.length > 0 ? additionalChanges : undefined,
+      additionalChanges,
     })
   }
 }
@@ -354,26 +390,30 @@ export class GenericEvent extends BaseEventHandler {
     const cartStatusChanged = session.checkCartStatusChange(event.context?.cart_status)
     const currentCartStatus = session.getCurrentCartStatus()
 
-    const additionalChanges = []
+    const timeSpent = Math.round(session.getTimeSpent())
+    const additionalChanges = [
+      {
+        field: 'session.time_spent',
+        to: timeSpent,
+      },
+    ]
 
     if (cartStatusChanged && currentCartStatus) {
       additionalChanges.push(this.formatCartChange(currentCartStatus.cartTotal))
     }
 
     // Log to Datadog
+    const updates = [`@session.time_spent:${timeSpent}`]
     if (cartStatusChanged && currentCartStatus?.cartTotal) {
-      logger.logger.info(
-        `RUM Event: ${event.type} | Session: @context.cart_status.cartTotal:${currentCartStatus.cartTotal}`
-      )
-    } else {
-      logger.logger.info(`RUM Event: ${event.type}`)
+      updates.push(`@context.cart_status.cartTotal:${currentCartStatus.cartTotal}`)
     }
+    logger.logger.info(`RUM Event: ${event.type} | Session: ${this.buildLogUpdates(updates)}`)
 
     // Dispatch to UI
     this.dispatchEvent({
       type: event.type,
       data: event,
-      additionalChanges: additionalChanges.length > 0 ? additionalChanges : undefined,
+      additionalChanges,
     })
   }
 }

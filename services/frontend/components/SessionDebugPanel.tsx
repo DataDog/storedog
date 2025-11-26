@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Activity, getEventTypeColor } from '@lib/sessionMocking'
+import styles from './SessionDebugPanel.module.css'
 
 export default function SessionDebugPanel() {
   const [activities, setActivities] = useState<Activity[]>([])
@@ -39,101 +40,24 @@ export default function SessionDebugPanel() {
 
   if (!isVisible) {
     return (
-      <button
-        onClick={() => setIsVisible(true)}
-        style={{
-          position: 'fixed',
-          bottom: '20px',
-          left: '20px',
-          padding: '10px 15px',
-          backgroundColor: '#6C2BD9',
-          color: 'white',
-          border: 'none',
-          borderRadius: '6px',
-          cursor: 'pointer',
-          fontSize: '14px',
-          fontWeight: 'bold',
-          zIndex: 10000,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-        }}
-      >
+      <button onClick={() => setIsVisible(true)} className={styles.toggleBtn}>
         Show Session Debug
       </button>
     )
   }
 
   return (
-    <>
-      <style>{`
-        @keyframes slideInFade {
-          from {
-            opacity: 0;
-            transform: translateX(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        .new-activity {
-          animation: slideInFade 0.3s ease-out;
-        }
-      `}</style>
-      <div
-        style={{
-          position: 'fixed',
-          bottom: '20px',
-          left: '20px',
-          width: '400px',
-          maxHeight: '500px',
-          backgroundColor: 'white',
-          border: '1px solid #e0e0e0',
-          borderRadius: '8px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          zIndex: 10000,
-          fontFamily: 'monospace',
-          fontSize: '12px',
-          display: 'flex',
-          flexDirection: 'column'
-        }}
-      >
-      <div
-        style={{
-          padding: '12px 16px',
-          backgroundColor: '#6C2BD9',
-          color: 'white',
-          borderTopLeftRadius: '8px',
-          borderTopRightRadius: '8px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}
-      >
+    <div className={styles.container}>
+      <div className={styles.header}>
         <strong>RUM Activity ({activities.length})</strong>
-        <button
-          onClick={() => setIsVisible(false)}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'white',
-            cursor: 'pointer',
-            fontSize: '18px',
-            padding: '0 4px'
-          }}
-        >
+        <button onClick={() => setIsVisible(false)} className={styles.closeBtn}>
           ×
         </button>
       </div>
-      
-      <div
-        style={{
-          padding: '12px',
-          overflowY: 'auto',
-          flexGrow: 1
-        }}
-      >
+    
+      <div className={styles.content}>
         {activities.length === 0 ? (
-          <div style={{ color: '#999', textAlign: 'center', padding: '20px' }}>
+          <div className={styles.empty}>
             Waiting for RUM activity...
           </div>
         ) : (
@@ -144,31 +68,13 @@ export default function SessionDebugPanel() {
             return (
               <div
                 key={idx}
-                className={isNewest ? 'new-activity' : ''}
-                style={{
-                  padding: '10px',
-                  marginBottom: '10px',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #e2e8f0',
-                  borderLeft: `4px solid ${colors.bg}`,
-                  borderRadius: '6px',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-                }}
+                className={`${styles.card} ${isNewest ? styles.newActivity : ''}`}
+                style={{ borderLeft: `4px solid ${colors.bg}` }}
               >
-                <div style={{ 
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '6px'
-                }}>
+                <div className={styles.cardHeader}>
                   <span
+                    className={styles.badge}
                     style={{
-                      padding: '4px 10px',
-                      borderRadius: '4px',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
                       backgroundColor: colors.bg,
                       color: colors.text
                     }}
@@ -176,66 +82,43 @@ export default function SessionDebugPanel() {
                     {activity.type}{activity.type === 'view' && activity.isUpdate ? ' (updated)' : ''}
                   </span>
                   {activity.type === 'view' && activity.data?.url ? (
-                    <span style={{ 
-                      fontSize: '11px', 
-                      color: '#718096', 
-                      fontWeight: 600,
-                      maxWidth: '200px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
-                    }}>
-                      {activity.data.url}
+                    <span className={styles.url}>
+                      {(() => {
+                        try {
+                          const url = new URL(activity.data.url)
+                          return url.pathname + url.search + url.hash
+                        } catch {
+                          return activity.data.url
+                        }
+                      })()}
                     </span>
                   ) : activity.count ? (
-                    <span style={{ fontSize: '11px', color: '#718096', fontWeight: 600 }}>
+                    <span className={styles.count}>
                       {activity.count} total
                     </span>
                   ) : null}
-                  <span style={{ fontSize: '11px', color: '#718096', marginLeft: 'auto' }}>
+                  <span className={styles.timestamp}>
                     {activity.timestamp}
                   </span>
                 </div>
                 
                 {activity.data?.message && (
-                  <div style={{ color: '#2d3748', fontSize: '12px', marginBottom: '4px' }}>
+                  <div className={styles.message}>
                     {activity.data.message.length > 60 
                       ? activity.data.message.substring(0, 60) + '...' 
                       : activity.data.message}
                   </div>
                 )}
                 {activity.data?.name && (
-                  <div style={{ 
-                    color: '#2d3748', 
-                    fontSize: '12px', 
-                    marginBottom: '4px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
-                  }}>
+                  <div className={styles.name}>
                     {activity.data.name}
                   </div>
                 )}
                 
                 {(activity.sessionChange || activity.additionalChanges) && (
-                  <div style={{ 
-                    marginTop: '8px',
-                    paddingTop: '8px',
-                    borderTop: '1px solid #e2e8f0'
-                  }}>
+                  <div className={styles.changes}>
                     {activity.sessionChange && (
-                      <span style={{ 
-                        display: 'inline-block',
-                        fontSize: '11px',
-                        color: '#4a5568',
-                        fontWeight: 600,
-                        fontFamily: 'monospace',
-                        backgroundColor: '#f3f4f6',
-                        padding: '4px 8px',
-                        borderRadius: '12px',
-                        marginRight: '6px',
-                        marginBottom: '4px'
-                      }}>
+                      <span className={styles.changeBadge}>
                         @session.{activity.sessionChange.field}:{typeof activity.sessionChange.to === 'object' ? JSON.stringify(activity.sessionChange.to) : activity.sessionChange.to}
                       </span>
                     )}
@@ -252,21 +135,7 @@ export default function SessionDebugPanel() {
                       }
                       
                       return (
-                        <span
-                          key={idx}
-                          style={{ 
-                            display: 'inline-block',
-                            fontSize: '11px',
-                            color: '#4a5568',
-                            fontWeight: 600,
-                            fontFamily: 'monospace',
-                            backgroundColor: '#f3f4f6',
-                            padding: '4px 8px',
-                            borderRadius: '12px',
-                            marginRight: '6px',
-                            marginBottom: '4px'
-                          }}
-                        >
+                        <span key={idx} className={styles.changeBadge}>
                           @{change.field}:{displayValue}
                         </span>
                       )
@@ -279,7 +148,6 @@ export default function SessionDebugPanel() {
         )}
       </div>
     </div>
-    </>
   )
 }
 
