@@ -83,13 +83,8 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
       const currentCartStatus = event.context?.cart_status
       const previousCartStatus = win.__PREVIOUS_CART_STATUS__
       
-      console.log('[Cart Status] Current:', currentCartStatus)
-      console.log('[Cart Status] Previous:', previousCartStatus)
-      
       const cartStatusChanged = currentCartStatus && 
         JSON.stringify(currentCartStatus) !== JSON.stringify(previousCartStatus)
-      
-      console.log('[Cart Status] Changed?', cartStatusChanged)
       
       if (currentCartStatus) {
         win.__PREVIOUS_CART_STATUS__ = currentCartStatus
@@ -307,7 +302,6 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
         event.error.message ===
           'The resource you were looking for could not be found.'
       ) {
-        console.log(event)
         return false
       }
       return true
@@ -349,9 +343,6 @@ function useInitializeRum() {
       // clientToken = "placeholder-client-token"
     }
 
-    console.log('[RUM Init] Using application ID:', appId)
-    console.log('[RUM Init] Using client token:', clientToken?.substring(0, 8) + '...')
-
     // Initialize RUM with dynamic config
     datadogRum.init(getRumConfig(appId, clientToken))
 
@@ -365,8 +356,6 @@ function useInitializeRum() {
       forwardErrorsToLogs: true,
       sessionSampleRate: 100,
     })
-
-    console.log('[Logs Init] Datadog Logs SDK initialized with same credentials as RUM')
 
     // Mark as initialized
     ;(window as any).__DD_RUM_INITIALIZED__ = true
