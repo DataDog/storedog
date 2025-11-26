@@ -115,6 +115,12 @@ export default function SessionDebugPanel() {
                   </div>
                 )}
                 
+                {activity.isUpdate && activity.updatedProperties && activity.updatedProperties.length > 0 && (
+                  <div className={styles.updateInfo}>
+                    Updated: {activity.updatedProperties.join(', ')}
+                  </div>
+                )}
+                
                 {(activity.sessionChange || activity.additionalChanges) && (
                   <div className={styles.changes}>
                     {activity.sessionChange && (

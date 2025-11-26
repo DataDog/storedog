@@ -70,7 +70,7 @@ server {
 
     # Reverse proxy for frontend (Next.js)
     location / {
-        # Handle RUM configuration routing - pass to Next.js middleware via headers
+        # Handle RUM configuration routing
         # Initialize to empty
         set $rum_app_id "";
         set $rum_client_token "";
@@ -88,9 +88,9 @@ server {
             set $rum_client_token "${DEFAULT_RUM_CLIENT_TOKEN}";
         }
         
-        # Pass RUM config to Next.js middleware via headers (middleware will set cookies)
-        proxy_set_header X-RUM-App-ID $rum_app_id;
-        proxy_set_header X-RUM-Client-Token $rum_client_token;
+        # Set cookies directly from nginx (no middleware needed)
+        add_header Set-Cookie "rum_app_id=$rum_app_id; Path=/; SameSite=Lax" always;
+        add_header Set-Cookie "rum_client_token=$rum_client_token; Path=/; SameSite=Lax" always;
 
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;

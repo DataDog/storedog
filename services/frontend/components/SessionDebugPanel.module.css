@@ -29,7 +29,7 @@
   position: fixed;
   bottom: 20px;
   left: 20px;
-  width: 400px;
+  width: 550px;
   max-height: 500px;
   background-color: white;
   border: 1px solid #e0e0e0;
@@ -107,7 +107,7 @@
   font-size: 11px;
   color: #718096;
   font-weight: 600;
-  max-width: 200px;
+  max-width: 300px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -138,6 +138,16 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.updateInfo {
+  color: #4a5568;
+  font-size: 11px;
+  font-style: italic;
+  margin-bottom: 4px;
+  padding: 4px 8px;
+  background-color: #f7fafc;
+  border-radius: 4px;
 }
 
 .changes {

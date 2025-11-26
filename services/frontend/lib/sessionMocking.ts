@@ -30,6 +30,7 @@ export interface Activity {
     to: any
   }>
   isUpdate?: boolean
+  updatedProperties?: string[]
 }
 
 // MockSession class - tracks all session state and counters
@@ -49,6 +50,7 @@ export class MockSession {
   private seenViewIds = new Set<string>()
   private firstEventTime: number | null = null
   private previousCartStatus: any = null
+  private viewStates = new Map<string, any>()
 
   // Initialize first event time if not already set
   recordEventTime() {
@@ -106,6 +108,15 @@ export class MockSession {
   getCurrentCartStatus() {
     return this.previousCartStatus
   }
+
+  // View state tracking for detecting updates
+  getPreviousViewState(viewId: string) {
+    return this.viewStates.get(viewId)
+  }
+
+  saveViewState(viewId: string, viewData: any) {
+    this.viewStates.set(viewId, viewData)
+  }
 }
 
 // Base event handler with common functionality
@@ -134,15 +145,27 @@ export class ViewEvent extends BaseEventHandler {
     const viewId = event.view?.id
     const isUpdate = viewId && session.hasSeenView(viewId)
 
+    // Detect what properties changed for view updates
+    let updatedProperties: string[] = []
+    if (isUpdate && viewId) {
+      const previousView = session.getPreviousViewState(viewId)
+      if (previousView) {
+        updatedProperties = this.detectViewChanges(previousView, event.view)
+      }
+    }
+
     console.log('[RUM beforeSend] View event:', {
       viewId,
       isUpdate,
       currentCount: session.getCounter('view'),
       url: event.view?.url,
+      updatedProperties,
     })
 
     if (viewId) {
       session.markViewAsSeen(viewId)
+      // Save current view state for future comparison
+      session.saveViewState(viewId, { ...event.view })
     }
 
     // Only increment view count for new views (not updates)
@@ -191,7 +214,33 @@ export class ViewEvent extends BaseEventHandler {
       },
       additionalChanges,
       isUpdate,
+      updatedProperties: updatedProperties.length > 0 ? updatedProperties : undefined,
     })
+  }
+
+  private static detectViewChanges(previousView: any, currentView: any): string[] {
+    const changes: string[] = []
+    const keysToCheck = [
+      'loading_time',
+      'cumulative_layout_shift',
+      'first_contentful_paint',
+      'largest_contentful_paint',
+      'first_input_delay',
+      'interaction_to_next_paint',
+      'time_spent',
+      'resource_count',
+      'error_count',
+      'action_count',
+      'long_task_count',
+    ]
+
+    for (const key of keysToCheck) {
+      if (previousView[key] !== currentView[key] && currentView[key] !== undefined) {
+        changes.push(key)
+      }
+    }
+
+    return changes
   }
 }
 
