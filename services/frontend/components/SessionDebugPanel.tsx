@@ -1,35 +1,5 @@
 import { useEffect, useState } from 'react'
-
-interface Activity {
-  timestamp: string
-  type: string
-  count?: number
-  data?: any
-  sessionChange?: {
-    field: string
-    to: any
-  }
-  additionalChanges?: Array<{
-    field: string
-    to: any
-  }>
-  isUpdate?: boolean
-}
-
-// Event type color mapping (matches interactive app)
-const EVENT_COLORS: Record<string, { bg: string, text: string }> = {
-  session: { bg: 'rgb(99, 44, 166)', text: '#ffffff' },
-  view: { bg: 'rgb(0, 107, 194)', text: '#ffffff' },
-  action: { bg: 'rgb(147, 100, 205)', text: '#ffffff' },
-  error: { bg: '#ef4444', text: '#ffffff' },
-  resource: { bg: '#60a5fa', text: '#ffffff' },
-  long_task: { bg: '#fcc028', text: '#000000' },
-  vitals: { bg: '#06b6d4', text: '#ffffff' }
-}
-
-function getEventTypeColor(type: string) {
-  return EVENT_COLORS[type] || { bg: '#64748b', text: '#ffffff' }
-}
+import { Activity, getEventTypeColor } from '@lib/sessionMocking'
 
 export default function SessionDebugPanel() {
   const [activities, setActivities] = useState<Activity[]>([])

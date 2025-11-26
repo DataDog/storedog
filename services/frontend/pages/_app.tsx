@@ -12,24 +12,18 @@ import { datadogRum, RumInitConfiguration } from '@datadog/browser-rum'
 import ErrorBoundary from '@components/ErrorBoundary'
 import SessionDebugPanel from '@components/SessionDebugPanel'
 import { datadogLogs } from '@datadog/browser-logs'
+import {
+  MockSession,
+  ViewEvent,
+  ResourceEvent,
+  ErrorEvent,
+  ActionEvent,
+  LongTaskEvent,
+  GenericEvent,
+} from '@lib/sessionMocking'
 
-// Track seen view IDs to detect view updates
-const seenViewIds = new Set<string>()
-
-// Session counters for tracking RUM events
-const sessionCounters = {
-  view: 0,
-  error: 0,
-  action: 0,
-  resource: 0,
-  long_task: 0,
-  frustration: 0,
-  last_resource_dispatch: 0,
-  first_event_time: null as number | null
-}
-
-// Track previous cart status for change detection
-let previousCartStatus: any = null
+// Initialize mock session
+const mockSession = new MockSession()
 
 // RUM configuration factory - generates config with dynamic application ID and client token
 function getRumConfig(applicationId: string, clientToken: string): RumInitConfiguration {
@@ -69,245 +63,25 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
     traceSampleRate: 100,
     allowUntrustedEvents: true,
     beforeSend: (event: any) => {
-      // Record first event time
-      if (!sessionCounters.first_event_time) {
-        sessionCounters.first_event_time = performance.now()
-      }
-      
-      // Track cart status changes
-      const currentCartStatus = event.context?.cart_status
-      
-      const cartStatusChanged = currentCartStatus && 
-        JSON.stringify(currentCartStatus) !== JSON.stringify(previousCartStatus)
-      
-      if (currentCartStatus) {
-        previousCartStatus = currentCartStatus
-      }
-      
-      // Dispatch events to UI and mock session attribute changes
-      if (event.type === 'resource') {
-        sessionCounters.resource++
-        
-        // Only dispatch every 10 resources
-        if (sessionCounters.resource === 1 || sessionCounters.resource - sessionCounters.last_resource_dispatch >= 10) {
-          const additionalChanges = []
-          
-          // Add cart status if it changed
-          if (cartStatusChanged && currentCartStatus) {
-            additionalChanges.push({
-              field: 'context.cart_status.cartTotal',
-              to: currentCartStatus.cartTotal
-            })
-          }
-          
-          // Log to Datadog
-          const updates = [`@session.resource.count:${sessionCounters.resource}`]
-          if (cartStatusChanged && currentCartStatus?.cartTotal) {
-            updates.push(`@context.cart_status.cartTotal:${currentCartStatus.cartTotal}`)
-          }
-          datadogLogs.logger.info(`RUM Event: resource | Session: ${updates.join(', ')}`)
-          
-          window.dispatchEvent(new CustomEvent('rum-event', {
-            detail: { 
-              type: 'resource',
-              count: sessionCounters.resource,
-              sessionChange: {
-                field: 'resource.count',
-                to: sessionCounters.resource
-              },
-              additionalChanges: additionalChanges.length > 0 ? additionalChanges : undefined
-            }
-          }))
-          sessionCounters.last_resource_dispatch = sessionCounters.resource
-        }
-      } else if (event.type === 'view') {
-        // Check if this view ID has been seen before (indicating an update)
-        const viewId = event.view?.id
-        const isUpdate = viewId && seenViewIds.has(viewId)
-        
-        console.log('[RUM beforeSend] View event:', {
-          viewId,
-          isUpdate,
-          currentCount: sessionCounters.view,
-          urlPath: event.view?.url_path,
-          seenViewIds: Array.from(seenViewIds)
-        })
-        
-        if (viewId) {
-          seenViewIds.add(viewId)
-        }
-        
-        // Only increment view count for new views (not updates)
-        if (!isUpdate) {
-          sessionCounters.view++
-          console.log('[RUM beforeSend] Incremented view count to:', sessionCounters.view)
-        } else {
-          console.log('[RUM beforeSend] Skipping increment - this is an update')
-        }
-        
-        // Mock time_spent as time since first RUM event (in milliseconds)
-        const timeSpent = performance.now() - sessionCounters.first_event_time
-        
-        const additionalChanges = [
-          {
-            field: 'session.time_spent',
-            to: Math.round(timeSpent)
-          }
-        ]
-        
-        // Add cart status if it changed
-        if (cartStatusChanged && currentCartStatus) {
-          additionalChanges.push({
-            field: 'context.cart_status.cartTotal',
-            to: currentCartStatus.cartTotal
-          })
-        }
-        
-        // Log to Datadog
-        const updates = [`@session.view.count:${sessionCounters.view}`, `@session.time_spent:${Math.round(timeSpent)}`]
-        if (cartStatusChanged && currentCartStatus?.cartTotal) {
-          updates.push(`@context.cart_status.cartTotal:${currentCartStatus.cartTotal}`)
-        }
-        const viewPath = event.view?.url_path || event.view?.name || 'view'
-        datadogLogs.logger.info(`RUM Event: view - ${viewPath} | Session: ${updates.join(', ')}`)
-        
-        window.dispatchEvent(new CustomEvent('rum-event', {
-          detail: { 
-            type: 'view',
-            count: sessionCounters.view,
-            data: { url_path: event.view?.url_path, name: event.view?.name },
-            sessionChange: {
-              field: 'view.count',
-              to: sessionCounters.view
-            },
-            additionalChanges,
-            isUpdate
-          }
-        }))
+      // Route to appropriate event handler
+      if (event.type === 'view') {
+        ViewEvent.handle(event, mockSession, datadogLogs)
+      } else if (event.type === 'resource') {
+        ResourceEvent.handle(event, mockSession, datadogLogs)
       } else if (event.type === 'error') {
-        sessionCounters.error++
-        
-        const additionalChanges = []
-        
-        // Add cart status if it changed
-        if (cartStatusChanged && currentCartStatus) {
-          additionalChanges.push({
-            field: 'context.cart_status.cartTotal',
-            to: currentCartStatus.cartTotal
-          })
-        }
-        
-        // Log to Datadog
-        const updates = [`@session.error.count:${sessionCounters.error}`]
-        if (cartStatusChanged && currentCartStatus?.cartTotal) {
-          updates.push(`@context.cart_status.cartTotal:${currentCartStatus.cartTotal}`)
-        }
-        datadogLogs.logger.info(`RUM Event: error - ${event.error?.message} | Session: ${updates.join(', ')}`)
-        
-        window.dispatchEvent(new CustomEvent('rum-event', {
-          detail: { 
-            type: 'error',
-            data: { message: event.error?.message },
-            sessionChange: {
-              field: 'error.count',
-              to: sessionCounters.error
-            },
-            additionalChanges: additionalChanges.length > 0 ? additionalChanges : undefined
-          }
-        }))
+        ErrorEvent.handle(event, mockSession, datadogLogs)
       } else if (event.type === 'action') {
-        sessionCounters.action++
-        
-        const additionalChanges = []
-        
-        // Add cart status if it changed
-        if (cartStatusChanged && currentCartStatus) {
-          additionalChanges.push({
-            field: 'context.cart_status.cartTotal',
-            to: currentCartStatus.cartTotal
-          })
-        }
-        
-        // Log to Datadog
-        const updates = [`@session.action.count:${sessionCounters.action}`]
-        if (cartStatusChanged && currentCartStatus?.cartTotal) {
-          updates.push(`@context.cart_status.cartTotal:${currentCartStatus.cartTotal}`)
-        }
-        datadogLogs.logger.info(`RUM Event: action - ${event.action?.target?.name} | Session: ${updates.join(', ')}`)
-        
-        window.dispatchEvent(new CustomEvent('rum-event', {
-          detail: { 
-            type: 'action',
-            data: { name: event.action?.target?.name },
-            sessionChange: {
-              field: 'action.count',
-              to: sessionCounters.action
-            },
-            additionalChanges: additionalChanges.length > 0 ? additionalChanges : undefined
-          }
-        }))
+        ActionEvent.handle(event, mockSession, datadogLogs)
       } else if (event.type === 'long_task') {
-        sessionCounters.long_task++
-        
-        const additionalChanges = []
-        
-        // Add cart status if it changed
-        if (cartStatusChanged && currentCartStatus) {
-          additionalChanges.push({
-            field: 'context.cart_status.cartTotal',
-            to: currentCartStatus.cartTotal
-          })
-        }
-        
-        // Log to Datadog
-        const updates = [`@session.long_task.count:${sessionCounters.long_task}`]
-        if (cartStatusChanged && currentCartStatus?.cartTotal) {
-          updates.push(`@context.cart_status.cartTotal:${currentCartStatus.cartTotal}`)
-        }
-        datadogLogs.logger.info(`RUM Event: long_task | Session: ${updates.join(', ')}`)
-        
-        window.dispatchEvent(new CustomEvent('rum-event', {
-          detail: { 
-            type: 'long_task',
-            sessionChange: {
-              field: 'long_task.count',
-              to: sessionCounters.long_task
-            },
-            additionalChanges: additionalChanges.length > 0 ? additionalChanges : undefined
-          }
-        }))
+        LongTaskEvent.handle(event, mockSession, datadogLogs)
       } else {
-        // Other event types
-        const additionalChanges = []
-        
-        // Add cart status if it changed
-        if (cartStatusChanged && currentCartStatus) {
-          additionalChanges.push({
-            field: 'context.cart_status.cartTotal',
-            to: currentCartStatus.cartTotal
-          })
-        }
-        
-        // Log to Datadog
-        if (cartStatusChanged && currentCartStatus?.cartTotal) {
-          datadogLogs.logger.info(`RUM Event: ${event.type} | Session: @context.cart_status.cartTotal:${currentCartStatus.cartTotal}`)
-        } else {
-          datadogLogs.logger.info(`RUM Event: ${event.type}`)
-        }
-        
-        window.dispatchEvent(new CustomEvent('rum-event', {
-          detail: { 
-            type: event.type,
-            data: event,
-            additionalChanges: additionalChanges.length > 0 ? additionalChanges : undefined
-          }
-        }))
+        GenericEvent.handle(event, mockSession, datadogLogs)
       }
-      
+
+      // Filter out specific errors
       if (
         event.type === 'error' &&
-        event.error.message ===
-          'The resource you were looking for could not be found.'
+        event.error.message === 'The resource you were looking for could not be found.'
       ) {
         return false
       }
