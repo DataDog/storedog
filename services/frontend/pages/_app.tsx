@@ -66,7 +66,13 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
         }
       }
       
+      // Track seen view paths to detect updates
+      if (typeof win.__SEEN_VIEW_PATHS__ === 'undefined') {
+        win.__SEEN_VIEW_PATHS__ = new Set()
+      }
+      
       const counters = win.__SESSION_COUNTERS__
+      const seenViewPaths = win.__SEEN_VIEW_PATHS__
       
       // Record first event time
       if (!counters.first_event_time) {
@@ -128,6 +134,11 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
       } else if (event.type === 'view') {
         counters.view++
         
+        // Check if this view path has been seen before
+        const viewPath = event.view?.url_path || event.view?.name || 'view'
+        const isUpdate = seenViewPaths.has(viewPath)
+        seenViewPaths.add(viewPath)
+        
         // Mock time_spent as time since first RUM event (in milliseconds)
         const timeSpent = performance.now() - counters.first_event_time
         
@@ -151,7 +162,6 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
         if (cartStatusChanged && currentCartStatus?.cartTotal) {
           updates.push(`@context.cart_status.cartTotal:${currentCartStatus.cartTotal}`)
         }
-        const viewPath = event.view?.url_path || event.view?.name || 'view'
         datadogLogs.logger.info(`RUM Event: view - ${viewPath} | Session: ${updates.join(', ')}`)
         
         window.dispatchEvent(new CustomEvent('rum-event', {
@@ -162,7 +172,8 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
               field: 'view.count',
               to: counters.view
             },
-            additionalChanges
+            additionalChanges,
+            isUpdate
           }
         }))
       } else if (event.type === 'error') {

@@ -13,6 +13,7 @@ interface Activity {
     field: string
     to: any
   }>
+  isUpdate?: boolean
 }
 
 // Event type color mapping (matches interactive app)
@@ -40,7 +41,7 @@ export default function SessionDebugPanel() {
     
     // Listen for RUM events
     const handleRumEvent = (event: any) => {
-      const { type, count, data, sessionChange, additionalChanges } = event.detail
+      const { type, count, data, sessionChange, additionalChanges, isUpdate } = event.detail
       
       const activityId = Date.now()
       const newActivity: Activity = {
@@ -49,7 +50,8 @@ export default function SessionDebugPanel() {
         count,
         data,
         sessionChange,
-        additionalChanges
+        additionalChanges,
+        isUpdate
       }
       
       setNewestActivityId(activityId)
@@ -201,7 +203,7 @@ export default function SessionDebugPanel() {
                       color: colors.text
                     }}
                   >
-                    {activity.type}
+                    {activity.type}{activity.type === 'view' && activity.isUpdate ? ' (updated)' : ''}
                   </span>
                   {activity.count && (
                     <span style={{ fontSize: '11px', color: '#718096', fontWeight: 600 }}>
