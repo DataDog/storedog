@@ -66,13 +66,13 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
         }
       }
       
-      // Track seen view paths to detect updates
-      if (typeof win.__SEEN_VIEW_PATHS__ === 'undefined') {
-        win.__SEEN_VIEW_PATHS__ = new Set()
+      // Track seen view IDs to detect updates
+      if (typeof win.__SEEN_VIEW_IDS__ === 'undefined') {
+        win.__SEEN_VIEW_IDS__ = new Set()
       }
       
       const counters = win.__SESSION_COUNTERS__
-      const seenViewPaths = win.__SEEN_VIEW_PATHS__
+      const seenViewIds = win.__SEEN_VIEW_IDS__
       
       // Record first event time
       if (!counters.first_event_time) {
@@ -132,12 +132,17 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
           counters.last_resource_dispatch = counters.resource
         }
       } else if (event.type === 'view') {
-        counters.view++
+        // Check if this view ID has been seen before (indicating an update)
+        const viewId = event.view?.id
+        const isUpdate = viewId && seenViewIds.has(viewId)
+        if (viewId) {
+          seenViewIds.add(viewId)
+        }
         
-        // Check if this view path has been seen before
-        const viewPath = event.view?.url_path || event.view?.name || 'view'
-        const isUpdate = seenViewPaths.has(viewPath)
-        seenViewPaths.add(viewPath)
+        // Only increment view count for new views (not updates)
+        if (!isUpdate) {
+          counters.view++
+        }
         
         // Mock time_spent as time since first RUM event (in milliseconds)
         const timeSpent = performance.now() - counters.first_event_time
@@ -162,6 +167,7 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
         if (cartStatusChanged && currentCartStatus?.cartTotal) {
           updates.push(`@context.cart_status.cartTotal:${currentCartStatus.cartTotal}`)
         }
+        const viewPath = event.view?.url_path || event.view?.name || 'view'
         datadogLogs.logger.info(`RUM Event: view - ${viewPath} | Session: ${updates.join(', ')}`)
         
         window.dispatchEvent(new CustomEvent('rum-event', {
