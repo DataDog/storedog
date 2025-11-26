@@ -70,55 +70,6 @@ server {
 
     # Reverse proxy for frontend (Next.js)
     location / {
-        # CORS configuration for custom RUM headers (Datadog Synthetics support)
-        add_header 'Access-Control-Allow-Origin' '*' always;
-        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
-        add_header 'Access-Control-Allow-Headers' 'X-RUM-App-ID, X-RUM-Client-Token, Content-Type, Accept, Origin' always;
-        add_header 'Access-Control-Max-Age' '3600' always;
-
-        # Handle OPTIONS preflight requests for CORS
-        if ($request_method = 'OPTIONS') {
-            add_header 'Access-Control-Allow-Origin' '*';
-            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
-            add_header 'Access-Control-Allow-Headers' 'X-RUM-App-ID, X-RUM-Client-Token, Content-Type, Accept, Origin';
-            add_header 'Access-Control-Max-Age' '3600';
-            add_header 'Content-Length' '0';
-            return 204;
-        }
-
-        # Handle RUM configuration routing only for HTML page requests (not static assets)
-        # Initialize to empty
-        set $rum_app_id "";
-        set $rum_client_token "";
-        set $is_html "0";
-        
-        # Check if this is an HTML request
-        if ($http_accept ~* "text/html") {
-            set $is_html "1";
-        }
-        
-        # For HTML requests: read from custom headers (puppeteer) or use defaults (learner browser)
-        # Use compound conditions with variable concatenation
-        set $html_check "${is_html}:${http_x_rum_app_id}";
-        if ($html_check ~* "^1:(.+)") {
-            set $rum_app_id $http_x_rum_app_id;
-        }
-        if ($html_check = "1:") {
-            set $rum_app_id "${DEFAULT_RUM_APP_ID}";
-        }
-        
-        set $html_check "${is_html}:${http_x_rum_client_token}";
-        if ($html_check ~* "^1:(.+)") {
-            set $rum_client_token $http_x_rum_client_token;
-        }
-        if ($html_check = "1:") {
-            set $rum_client_token "${DEFAULT_RUM_CLIENT_TOKEN}";
-        }
-        
-        # Pass RUM config to frontend via request headers (frontend middleware will convert to cookies)
-        # These will be empty strings for non-HTML requests (static assets)
-        proxy_set_header X-RUM-App-ID $rum_app_id;
-        proxy_set_header X-RUM-Client-Token $rum_client_token;
 
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;

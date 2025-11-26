@@ -8,7 +8,7 @@ FROM python:3.9.23-slim-bookworm
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     apt-get upgrade --yes && \
-    apt-get install --yes build-essential libpq-dev openssh-server sudo dumb-init rsyslog netcat-openbsd && \
+    apt-get install --yes build-essential libpq-dev openssh-server sudo dumb-init rsyslog wait-for-it netcat-openbsd && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -23,22 +23,24 @@ COPY . .
 
 USER root
 
-ARG DD_GIT_REPOSITORY_URL
-ARG DD_GIT_COMMIT_SHA
-
 # Default environment variables
 ENV FLASK_APP=discounts.py \
+    FLASK_DEBUG=0 \
     POSTGRES_HOST=postgres \
     POSTGRES_PORT=5432 \
     POSTGRES_PASSWORD=postgres \
-    POSTGRES_USER=postgres \
-    DD_GIT_REPOSITORY_URL=${DD_GIT_REPOSITORY_URL} \
-    DD_GIT_COMMIT_SHA=${DD_GIT_COMMIT_SHA}
+    POSTGRES_USER=postgres
 
 # Install dependencies via pip and avoid caching build artifacts
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Pass in Port mapping (default to 2814)
+ARG DISCOUNTS_PORT=2814
+# Because CMD is a runtime instruction, we have to create an additional ENV var that reads the ARG val
+# Only ENV vars are accessible via CMD
+ENV DISCOUNTS_PORT=${DISCOUNTS_PORT}
+
 # required to get logs out of the container
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
-CMD ["sh", "-c", "ddtrace-run flask run --port=2814 --host=0.0.0.0"]
+CMD ["sh", "-c", "ddtrace-run flask run --port=${DISCOUNTS_PORT} --host=0.0.0.0"]
