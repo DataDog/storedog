@@ -326,10 +326,10 @@ function useInitializeRum() {
 
     // Only initialize if we have real credentials from nginx
     if (!appId || !clientToken) {
-      // console.error('[RUM Init] Missing RUM credentials from nginx cookies. RUM will not be initialized.')
-      // return
-      appId = "placeholder-app-id"
-      clientToken = "placeholder-client-token"
+      console.error('[RUM Init] Missing RUM credentials from nginx cookies. RUM will not be initialized.')
+      return
+      // appId = "placeholder-app-id"
+      // clientToken = "placeholder-client-token"
     }
 
     console.log('[RUM Init] Using application ID:', appId)
