@@ -70,18 +70,14 @@ server {
 
     # Reverse proxy for frontend (Next.js)
     location / {
-        # Handle RUM configuration routing only for HTML page requests (not static assets)
+        # Handle RUM configuration routing - pass to Next.js middleware via headers
         # Initialize to empty
         set $rum_app_id "";
         set $rum_client_token "";
         
-        # Only process RUM headers for HTML pages (not Next.js static assets)
-        # Next.js serves static files under /_next/ which should not get RUM cookies
-        if ($request_uri !~* "^/_next/") {
-            # Read from custom headers (puppeteer) or use defaults (learner browser)
-            set $rum_app_id $http_x_rum_app_id;
-            set $rum_client_token $http_x_rum_client_token;
-        }
+        # Read from custom headers (puppeteer) or use defaults (learner browser)
+        set $rum_app_id $http_x_rum_app_id;
+        set $rum_client_token $http_x_rum_client_token;
         
         # If no headers present, use defaults from env vars
         if ($rum_app_id = "") {
@@ -92,9 +88,9 @@ server {
             set $rum_client_token "${DEFAULT_RUM_CLIENT_TOKEN}";
         }
         
-        # Set cookies so frontend can read them
-        add_header Set-Cookie "rum_app_id=$rum_app_id; Path=/; SameSite=Lax" always;
-        add_header Set-Cookie "rum_client_token=$rum_client_token; Path=/; SameSite=Lax" always;
+        # Pass RUM config to Next.js middleware via headers (middleware will set cookies)
+        proxy_set_header X-RUM-App-ID $rum_app_id;
+        proxy_set_header X-RUM-Client-Token $rum_client_token;
 
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
