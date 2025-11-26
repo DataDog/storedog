@@ -7,13 +7,44 @@ RUN apk add --no-cache netcat-openbsd && \
     npm install -g @datadog/datadog-ci
 
 
+FROM base AS development
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+
+ARG NEXT_PUBLIC_DD_VERSION_FRONTEND=1.0.0
+ARG NEXT_PUBLIC_DD_SITE=datadoghq.com
+ARG NEXT_PUBLIC_DD_ENV_FRONTEND=development
+ARG NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend
+
+ENV NEXT_PUBLIC_DD_VERSION_FRONTEND=${NEXT_PUBLIC_DD_VERSION_FRONTEND}
+ENV NEXT_PUBLIC_DD_SITE=${NEXT_PUBLIC_DD_SITE}
+ENV NEXT_PUBLIC_DD_ENV_FRONTEND=${NEXT_PUBLIC_DD_ENV_FRONTEND}
+ENV NEXT_PUBLIC_DD_SERVICE_FRONTEND=${NEXT_PUBLIC_DD_SERVICE_FRONTEND}
+
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    NEXT_PUBLIC_ADS_ROUTE=/services/ads \
+    NEXT_PUBLIC_DISCOUNTS_ROUTE=/services/discounts \
+    NEXT_PUBLIC_DBM_ROUTE=/services/dbm \
+    NEXT_PUBLIC_FRONTEND_API_ROUTE=http://service-proxy:80 \
+    NEXT_PUBLIC_SPREE_API_HOST=http://service-proxy/services/backend \
+    NEXT_PUBLIC_SPREE_CLIENT_HOST=/services/backend \
+    NEXT_PUBLIC_SPREE_IMAGE_HOST=/services/backend \
+    NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN=service-proxy
+
+CMD ["npm", "run", "dev"]
+
+
 FROM base AS builder
 
 WORKDIR /app
 
 COPY package*.json ./
 RUN npm ci
-RUN npm install sharp
 
 COPY . .
 
@@ -48,9 +79,6 @@ RUN npm run build
 FROM base AS runner
 
 WORKDIR /app
-
-# Install sharp for image optimization in standalone mode
-RUN npm install sharp
 
 # Don't run production as root
 RUN addgroup --system --gid 1001 nodejs
