@@ -124,6 +124,15 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
         // Check if this view ID has been seen before (indicating an update)
         const viewId = event.view?.id
         const isUpdate = viewId && seenViewIds.has(viewId)
+        
+        console.log('[RUM beforeSend] View event:', {
+          viewId,
+          isUpdate,
+          currentCount: sessionCounters.view,
+          urlPath: event.view?.url_path,
+          seenViewIds: Array.from(seenViewIds)
+        })
+        
         if (viewId) {
           seenViewIds.add(viewId)
         }
@@ -131,6 +140,9 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
         // Only increment view count for new views (not updates)
         if (!isUpdate) {
           sessionCounters.view++
+          console.log('[RUM beforeSend] Incremented view count to:', sessionCounters.view)
+        } else {
+          console.log('[RUM beforeSend] Skipping increment - this is an update')
         }
         
         // Mock time_spent as time since first RUM event (in milliseconds)
