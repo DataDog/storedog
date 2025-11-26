@@ -43,7 +43,7 @@ function Ad() {
       const now = new Date()
       const adIndex = Math.floor(now.getSeconds() / 5) % sortedAds.length // Change ad every 5 seconds
       const selectedAd = sortedAds[adIndex]
-      console.log('Selected ad:', selectedAd)
+      
       setData(selectedAd)
       setLoading(false)
     } catch (e) {
