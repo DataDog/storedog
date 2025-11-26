@@ -13,6 +13,24 @@ import ErrorBoundary from '@components/ErrorBoundary'
 import SessionDebugPanel from '@components/SessionDebugPanel'
 import { datadogLogs } from '@datadog/browser-logs'
 
+// Track seen view IDs to detect view updates
+const seenViewIds = new Set<string>()
+
+// Session counters for tracking RUM events
+const sessionCounters = {
+  view: 0,
+  error: 0,
+  action: 0,
+  resource: 0,
+  long_task: 0,
+  frustration: 0,
+  last_resource_dispatch: 0,
+  first_event_time: null as number | null
+}
+
+// Track previous cart status for change detection
+let previousCartStatus: any = null
+
 // RUM configuration factory - generates config with dynamic application ID and client token
 function getRumConfig(applicationId: string, clientToken: string): RumInitConfiguration {
   return {
@@ -51,51 +69,27 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
     traceSampleRate: 100,
     allowUntrustedEvents: true,
     beforeSend: (event: any) => {
-      // Track counters for mocking session changes
-      const win = window as any
-      if (typeof win.__SESSION_COUNTERS__ === 'undefined') {
-        win.__SESSION_COUNTERS__ = {
-          view: 0,
-          error: 0,
-          action: 0,
-          resource: 0,
-          long_task: 0,
-          frustration: 0,
-          last_resource_dispatch: 0,
-          first_event_time: null
-        }
-      }
-      
-      // Track seen view IDs to detect updates
-      if (typeof win.__SEEN_VIEW_IDS__ === 'undefined') {
-        win.__SEEN_VIEW_IDS__ = new Set()
-      }
-      
-      const counters = win.__SESSION_COUNTERS__
-      const seenViewIds = win.__SEEN_VIEW_IDS__
-      
       // Record first event time
-      if (!counters.first_event_time) {
-        counters.first_event_time = performance.now()
+      if (!sessionCounters.first_event_time) {
+        sessionCounters.first_event_time = performance.now()
       }
       
       // Track cart status changes
       const currentCartStatus = event.context?.cart_status
-      const previousCartStatus = win.__PREVIOUS_CART_STATUS__
       
       const cartStatusChanged = currentCartStatus && 
         JSON.stringify(currentCartStatus) !== JSON.stringify(previousCartStatus)
       
       if (currentCartStatus) {
-        win.__PREVIOUS_CART_STATUS__ = currentCartStatus
+        previousCartStatus = currentCartStatus
       }
       
       // Dispatch events to UI and mock session attribute changes
       if (event.type === 'resource') {
-        counters.resource++
+        sessionCounters.resource++
         
         // Only dispatch every 10 resources
-        if (counters.resource === 1 || counters.resource - counters.last_resource_dispatch >= 10) {
+        if (sessionCounters.resource === 1 || sessionCounters.resource - sessionCounters.last_resource_dispatch >= 10) {
           const additionalChanges = []
           
           // Add cart status if it changed
@@ -107,7 +101,7 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
           }
           
           // Log to Datadog
-          const updates = [`@session.resource.count:${counters.resource}`]
+          const updates = [`@session.resource.count:${sessionCounters.resource}`]
           if (cartStatusChanged && currentCartStatus?.cartTotal) {
             updates.push(`@context.cart_status.cartTotal:${currentCartStatus.cartTotal}`)
           }
@@ -116,15 +110,15 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
           window.dispatchEvent(new CustomEvent('rum-event', {
             detail: { 
               type: 'resource',
-              count: counters.resource,
+              count: sessionCounters.resource,
               sessionChange: {
                 field: 'resource.count',
-                to: counters.resource
+                to: sessionCounters.resource
               },
               additionalChanges: additionalChanges.length > 0 ? additionalChanges : undefined
             }
           }))
-          counters.last_resource_dispatch = counters.resource
+          sessionCounters.last_resource_dispatch = sessionCounters.resource
         }
       } else if (event.type === 'view') {
         // Check if this view ID has been seen before (indicating an update)
@@ -136,11 +130,11 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
         
         // Only increment view count for new views (not updates)
         if (!isUpdate) {
-          counters.view++
+          sessionCounters.view++
         }
         
         // Mock time_spent as time since first RUM event (in milliseconds)
-        const timeSpent = performance.now() - counters.first_event_time
+        const timeSpent = performance.now() - sessionCounters.first_event_time
         
         const additionalChanges = [
           {
@@ -158,7 +152,7 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
         }
         
         // Log to Datadog
-        const updates = [`@session.view.count:${counters.view}`, `@session.time_spent:${Math.round(timeSpent)}`]
+        const updates = [`@session.view.count:${sessionCounters.view}`, `@session.time_spent:${Math.round(timeSpent)}`]
         if (cartStatusChanged && currentCartStatus?.cartTotal) {
           updates.push(`@context.cart_status.cartTotal:${currentCartStatus.cartTotal}`)
         }
@@ -168,17 +162,18 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
         window.dispatchEvent(new CustomEvent('rum-event', {
           detail: { 
             type: 'view',
+            count: sessionCounters.view,
             data: { url_path: event.view?.url_path, name: event.view?.name },
             sessionChange: {
               field: 'view.count',
-              to: counters.view
+              to: sessionCounters.view
             },
             additionalChanges,
             isUpdate
           }
         }))
       } else if (event.type === 'error') {
-        counters.error++
+        sessionCounters.error++
         
         const additionalChanges = []
         
@@ -191,7 +186,7 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
         }
         
         // Log to Datadog
-        const updates = [`@session.error.count:${counters.error}`]
+        const updates = [`@session.error.count:${sessionCounters.error}`]
         if (cartStatusChanged && currentCartStatus?.cartTotal) {
           updates.push(`@context.cart_status.cartTotal:${currentCartStatus.cartTotal}`)
         }
@@ -203,13 +198,13 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
             data: { message: event.error?.message },
             sessionChange: {
               field: 'error.count',
-              to: counters.error
+              to: sessionCounters.error
             },
             additionalChanges: additionalChanges.length > 0 ? additionalChanges : undefined
           }
         }))
       } else if (event.type === 'action') {
-        counters.action++
+        sessionCounters.action++
         
         const additionalChanges = []
         
@@ -222,7 +217,7 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
         }
         
         // Log to Datadog
-        const updates = [`@session.action.count:${counters.action}`]
+        const updates = [`@session.action.count:${sessionCounters.action}`]
         if (cartStatusChanged && currentCartStatus?.cartTotal) {
           updates.push(`@context.cart_status.cartTotal:${currentCartStatus.cartTotal}`)
         }
@@ -234,13 +229,13 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
             data: { name: event.action?.target?.name },
             sessionChange: {
               field: 'action.count',
-              to: counters.action
+              to: sessionCounters.action
             },
             additionalChanges: additionalChanges.length > 0 ? additionalChanges : undefined
           }
         }))
       } else if (event.type === 'long_task') {
-        counters.long_task++
+        sessionCounters.long_task++
         
         const additionalChanges = []
         
@@ -253,7 +248,7 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
         }
         
         // Log to Datadog
-        const updates = [`@session.long_task.count:${counters.long_task}`]
+        const updates = [`@session.long_task.count:${sessionCounters.long_task}`]
         if (cartStatusChanged && currentCartStatus?.cartTotal) {
           updates.push(`@context.cart_status.cartTotal:${currentCartStatus.cartTotal}`)
         }
@@ -264,7 +259,7 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
             type: 'long_task',
             sessionChange: {
               field: 'long_task.count',
-              to: counters.long_task
+              to: sessionCounters.long_task
             },
             additionalChanges: additionalChanges.length > 0 ? additionalChanges : undefined
           }
