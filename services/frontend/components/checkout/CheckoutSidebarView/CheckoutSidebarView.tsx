@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { FC, useState } from 'react'
 import cn from 'clsx'
 import { datadogRum } from '@datadog/browser-rum'
@@ -21,13 +20,8 @@ const CheckoutSidebarView: FC = () => {
   const [checkoutError, setCheckoutError] = useState(null)
   const { setSidebarView, closeSidebar } = useUI()
   const { cart: cartData, cartEmpty, cartInit, applyDiscount } = useCart()
-  const {
-    shippingRate,
-    addressStatus,
-    paymentStatus,
-    clearCheckoutFields,
-    handleCompleteCheckout,
-  } = useCheckoutContext()
+  const { shippingRate, addressStatus, paymentStatus, handleCompleteCheckout } =
+    useCheckoutContext()
 
   const { price: subTotal } = usePrice(
     cartData && {
@@ -48,12 +42,9 @@ const CheckoutSidebarView: FC = () => {
       event.preventDefault()
 
       const res = await handleCompleteCheckout()
-      console.log('checkout response', res)
       if (res.error) {
         throw res.error
       }
-
-      console.log('cartData', cartData)
 
       datadogRum.addAction('Successful Checkout', {
         id: cartData.id,
@@ -74,7 +65,6 @@ const CheckoutSidebarView: FC = () => {
         })
       })
 
-      // clearCheckoutFields()
       setLoadingSubmit(false)
       await cartEmpty()
       await cartInit()
@@ -101,20 +91,13 @@ const CheckoutSidebarView: FC = () => {
       // call discounts service
       const res = await fetch(discountCodeUrl)
 
-      if (!res.ok) {
-        const error = await res.json()
-        throw error
-      }
-
       const discount = await res.json()
 
-      if (discount?.error) {
-        throw discount.error
+      if (discount.status === 0) {
+        console.log('Discount not found')
+        return
       }
 
-      console.log('discount accepted', discount)
-
-      // always hardcode this to FREESHIP because that's all that's set up in spree
       await applyDiscount('FREESHIP')
 
       setDiscountInput('')
@@ -179,7 +162,7 @@ const CheckoutSidebarView: FC = () => {
               width="100%"
               variant="ghost"
               className="!py-2 !border-1"
-              data-dd-action-name="Apply Discount"
+              data-dd-action-name="ApplyDiscount"
             >
               Apply Discount
             </Button>
@@ -219,7 +202,7 @@ const CheckoutSidebarView: FC = () => {
             width="100%"
             loading={loadingSubmit}
             className="confirm-purchase-btn"
-            data-dd-action-name="Confirm Purchase"
+            data-dd-action-name="ConfirmPurchase"
             disabled={addressStatus.ok && paymentStatus.ok ? false : true}
           >
             Confirm Purchase

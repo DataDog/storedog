@@ -1,19 +1,15 @@
 import { useState, useEffect, useCallback } from 'react'
-import { codeStash } from 'code-stash'
-import config from '../../../featureFlags.config.json'
 
-// Proper TypeScript interface for Advertisement object from Java service
-export interface Advertisement {
-  id: number
-  name: string
+export interface AdDataResults {
+  data: object | null
   path: string
-  clickUrl: string
+  name: string
 }
-
 // Advertisement banner
-function Ad() {
-  const [data, setData] = useState<Advertisement | null>(null)
+function Ad({ id }: { id: string }) {
+  const [data, setData] = useState<AdDataResults | null>(null)
   const [isLoading, setLoading] = useState(false)
+  const [adContainerId, setAdContainerId] = useState<string | null>(null)
   const adsPath = process.env.NEXT_PUBLIC_ADS_ROUTE || `/services/ads`
 
   const getRandomArbitrary = useCallback((min: number, max: number) => {
@@ -22,82 +18,58 @@ function Ad() {
 
   const fetchAd = useCallback(async () => {
     setLoading(true)
-    const flag = (await codeStash('error-tracking', { file: config })) || false
-    const headers = {
-      'X-Throw-Error': `${flag}`,
-      'X-Error-Rate': process.env.NEXT_PUBLIC_ADS_ERROR_RATE || '0.25',
+
+    switch (id) {
+      case 'first-ad':
+        setAdContainerId('first-ad-container')
+        break
+      case 'second-ad':
+        setAdContainerId('second-ad-container')
+        break
+      default:
+        setAdContainerId('bottom-ad-container')
     }
 
     try {
-      // Add cache-busting parameter to ensure fresh data
-      const timestamp = Date.now()
-      const res = await fetch(`${adsPath}/ads?t=${timestamp}`, { headers })
+      const res = await fetch(`${adsPath}/ads`)
       if (!res.ok) {
         throw new Error('Error fetching ad')
       }
-      const data: Advertisement[] = await res.json()
-      // Sort ads by ID to ensure consistent ordering
-      const sortedAds = data.sort((a, b) => a.id - b.id)
-      // Use a deterministic selection based on time to show different ads
-      // This ensures the visual ad matches the expected click behavior
-      const now = new Date()
-      const adIndex = Math.floor(now.getSeconds() / 5) % sortedAds.length // Change ad every 5 seconds
-      const selectedAd = sortedAds[adIndex]
-      
-      setData(selectedAd)
+      const ads = await res.json()
+      const index = getRandomArbitrary(0, ads.length)
+      setData(ads[index])
       setLoading(false)
     } catch (e) {
       console.error(e)
       setLoading(false)
     }
-  }, [adsPath, setData, setLoading])
-
-  const handleAdClick = useCallback(() => {
-    if (data?.id) {
-      console.log('Ad clicked!', {
-        adId: data.id,
-        adName: data.name,
-        clickUrl: data.clickUrl,
-        imagePath: data.path,
-        redirectUrl: `${adsPath}/click/${data.id}`
-      })
-      // Direct browser navigation to the click endpoint
-      // The Java service will handle the redirect to the appropriate URL
-      window.location.href = `${adsPath}/click/${data.id}`
-    }
-  }, [data, adsPath])
+  }, [adsPath, getRandomArbitrary, setData, setLoading])
 
   useEffect(() => {
     if (!data) fetchAd()
   }, [data, fetchAd])
 
-  if (isLoading)
+  if (isLoading || !data) { 
     return (
-      <div className="flex flex-row justify-center h-10 advertisement-wrapper">
-        AD HERE
-      </div>
+      <div className="banner-ad-row"></div>
     )
-  if (!data)
-    return (
-      <div className="flex flex-row justify-center h-10 advertisement-wrapper">
-        AD DIDN'T LOAD
-      </div>
-    )
+  }
 
   return (
-    <div className="flex flex-row justify-center py-4 advertisement-wrapper">
-      <picture 
-        className="advertisement-banner cursor-pointer" 
-        onClick={handleAdClick}
-        title={`Click to see ${data.name}`}
-      >
-        <source srcSet={`${adsPath}/banners/${data.path}`} type="image/webp" />
-        <img 
-          src={`${adsPath}/banners/${data.path}`} 
-          alt={data.name || "Advertisement"} 
-          className="cursor-pointer"
-        />
-      </picture>
+    <div className="banner-ad-row flex flex-col justify-center py-2 ">
+      <div className="banner-ad-container mx-auto my-auto" id={adContainerId}>
+        <a href="#">
+          <div className="h-auto w-full mx-auto hover:ring banner-ad-image-wrapper">
+            <picture className="advertisement-banner">
+              <img
+                src={`${adsPath}/banners/${data.path}`}
+                alt={`${data.name} Advertisement`}
+              />
+            </picture>
+          </div>
+        </a>
+        <p className="text-xs">Advertisement</p>
+      </div>
     </div>
   )
 }

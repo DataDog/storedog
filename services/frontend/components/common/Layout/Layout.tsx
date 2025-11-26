@@ -105,7 +105,8 @@ const Layout: React.FC<Props> = ({ children, pageProps: { ...pageProps } }) => {
       const pages: Page[] = await res.json()
 
       setPages(pages)
-    } catch (error) {
+    } catch (errorRes) {
+      const error = await errorRes.json()
       console.error(error)
     }
   }

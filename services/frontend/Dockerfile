@@ -1,71 +1,21 @@
-FROM node:lts-alpine AS base
+FROM node:20-alpine AS base
+
+# This comes form https://github.com/vercel/next.js/blob/canary/examples/with-docker-compose/next-app/prod.Dockerfile
 
 # Install system dependencies (this layer rarely changes)
 RUN apk add --no-cache netcat-openbsd && \
     npm install -g @datadog/datadog-ci
 
-WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-
-# Development stage
-FROM base AS development
-
-# Install all dependencies (including devDependencies)
-RUN npm install
-
-# Copy source code
-COPY . .
-
-# Set development environment variables
-ARG NEXT_PUBLIC_DD_ENV=development
-ARG NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend
-ARG NEXT_PUBLIC_DD_SITE=datadoghq.com
-ARG NEXT_PUBLIC_DD_VERSION_FRONTEND=1.0.0
-ARG DD_GIT_REPOSITORY_URL
-ARG DD_GIT_COMMIT_SHA
-
-ENV NEXT_PUBLIC_DD_ENV=${NEXT_PUBLIC_DD_ENV}
-ENV NEXT_PUBLIC_DD_SERVICE_FRONTEND=${NEXT_PUBLIC_DD_SERVICE_FRONTEND}
-ENV NEXT_PUBLIC_DD_SITE=${NEXT_PUBLIC_DD_SITE}
-ENV NEXT_PUBLIC_DD_VERSION_FRONTEND=${NEXT_PUBLIC_DD_VERSION_FRONTEND}
-
-# Set default environment variables
-ENV NEXT_TELEMETRY_DISABLED=1 \
-    NEXT_PUBLIC_ADS_ROUTE=/services/ads \
-    NEXT_PUBLIC_DISCOUNTS_ROUTE=/services/discounts \
-    NEXT_PUBLIC_DBM_ROUTE=/services/dbm \
-    NEXT_PUBLIC_FRONTEND_API_ROUTE=http://service-proxy:80 \
-    NEXT_PUBLIC_SPREE_API_HOST=http://service-proxy/services/backend \
-    NEXT_PUBLIC_SPREE_CLIENT_HOST=/services/backend \
-    NEXT_PUBLIC_SPREE_IMAGE_HOST=/services/backend \
-    NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN=service-proxy \
-    DD_GIT_REPOSITORY_URL=${DD_GIT_REPOSITORY_URL} \
-    DD_GIT_COMMIT_SHA=${DD_GIT_COMMIT_SHA}
-
-CMD ["npm", "run", "dev"]
-
-# Builder stage for production
 FROM base AS builder
 
-# Install production dependencies only
-RUN npm ci --only=production && npm cache clean --force
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
 RUN npm install sharp
 
-# Copy source code
 COPY . .
-
-# Set build-time environment variables
-ARG NEXT_PUBLIC_DD_VERSION_FRONTEND=1.0.0
-ARG NEXT_PUBLIC_DD_SITE=datadoghq.com
-ARG NEXT_PUBLIC_DD_ENV=production
-ARG DD_SERVICE=store-frontend
-
-ENV NEXT_PUBLIC_DD_VERSION_FRONTEND=${NEXT_PUBLIC_DD_VERSION_FRONTEND}
-ENV NEXT_PUBLIC_DD_SITE=${NEXT_PUBLIC_DD_SITE}
-ENV NEXT_PUBLIC_DD_ENV=${NEXT_PUBLIC_DD_ENV}
-ENV DD_SERVICE=${DD_SERVICE}
 
 ENV NEXT_TELEMETRY_DISABLED=1 \
     NEXT_PUBLIC_ADS_ROUTE=/services/ads \
@@ -77,11 +27,27 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
     NEXT_PUBLIC_SPREE_IMAGE_HOST=/services/backend \
     NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN=service-proxy
 
-# Build the application
+ARG NEXT_PUBLIC_DD_VERSION_FRONTEND=1.0.0
+ARG NEXT_PUBLIC_DD_SITE=datadoghq.com
+ARG NEXT_PUBLIC_DD_ENV_FRONTEND=development
+ARG NEXT_PUBLIC_DD_APPLICATION_ID=DD_APPLICATION_ID_PLACEHOLDER
+ARG NEXT_PUBLIC_DD_CLIENT_TOKEN=DD_CLIENT_TOKEN_PLACEHOLDER
+ARG NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend
+
+ENV NEXT_PUBLIC_DD_VERSION_FRONTEND=${NEXT_PUBLIC_DD_VERSION_FRONTEND}
+ENV NEXT_PUBLIC_DD_SITE=${NEXT_PUBLIC_DD_SITE}
+ENV NEXT_PUBLIC_DD_ENV_FRONTEND=${NEXT_PUBLIC_DD_ENV_FRONTEND}
+ENV NEXT_PUBLIC_DD_APPLICATION_ID=${NEXT_PUBLIC_DD_APPLICATION_ID}
+ENV NEXT_PUBLIC_DD_CLIENT_TOKEN=${NEXT_PUBLIC_DD_CLIENT_TOKEN}
+ENV NEXT_PUBLIC_DD_SERVICE_FRONTEND=${NEXT_PUBLIC_DD_SERVICE_FRONTEND}
+
+ENV NEXT_TELEMETRY_DISABLED=1
+
 RUN npm run build
 
-# Production runner stage
-FROM base AS production
+FROM base AS runner
+
+WORKDIR /app
 
 # Install sharp for image optimization in standalone mode
 RUN npm install sharp
@@ -89,17 +55,15 @@ RUN npm install sharp
 # Don't run production as root
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
-USER nextjs
-
-
-COPY --from=builder /app/public ./public
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-# Set runtime environment variables
+USER nextjs
+
 ENV NEXT_TELEMETRY_DISABLED=1 \
     NEXT_PUBLIC_ADS_ROUTE=/services/ads \
     NEXT_PUBLIC_DISCOUNTS_ROUTE=/services/discounts \
@@ -112,12 +76,18 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
 
 ARG NEXT_PUBLIC_DD_VERSION_FRONTEND=1.0.0
 ARG NEXT_PUBLIC_DD_SITE=datadoghq.com
-ARG NEXT_PUBLIC_DD_ENV=production
+ARG NEXT_PUBLIC_DD_ENV_FRONTEND=development
+ARG NEXT_PUBLIC_DD_APPLICATION_ID=DD_APPLICATION_ID_PLACEHOLDER
+ARG NEXT_PUBLIC_DD_CLIENT_TOKEN=DD_CLIENT_TOKEN_PLACEHOLDER
 ARG NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend
 
 ENV NEXT_PUBLIC_DD_VERSION_FRONTEND=${NEXT_PUBLIC_DD_VERSION_FRONTEND}
 ENV NEXT_PUBLIC_DD_SITE=${NEXT_PUBLIC_DD_SITE}
-ENV NEXT_PUBLIC_DD_ENV=${NEXT_PUBLIC_DD_ENV}
+ENV NEXT_PUBLIC_DD_ENV_FRONTEND=${NEXT_PUBLIC_DD_ENV_FRONTEND}
+ENV NEXT_PUBLIC_DD_APPLICATION_ID=${NEXT_PUBLIC_DD_APPLICATION_ID}
+ENV NEXT_PUBLIC_DD_CLIENT_TOKEN=${NEXT_PUBLIC_DD_CLIENT_TOKEN}
 ENV NEXT_PUBLIC_DD_SERVICE_FRONTEND=${NEXT_PUBLIC_DD_SERVICE_FRONTEND}
+
+ENV NEXT_TELEMETRY_DISABLED=1
 
 CMD ["node", "server.js"]

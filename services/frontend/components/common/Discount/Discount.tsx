@@ -45,20 +45,42 @@ function Discount() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  return (
-    <div className="flex flex-row justify-center py-4 bg-primary-2 text-white discount-wrapper">
-      {isLoading ? (
-        <span>GET FREE SHIPPING WITH DISCOUNT CODE</span>
-      ) : !data ? (
-        <span>
+  if (isLoading && !data) {
+    return (
+      <div className="flex flex-row justify-center py-4 bg-primary-2 min-h-[56px] h-[56px] text-white discount-wrapper">
+        <div className="h-[24px] shrink-0">
+          <p></p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isLoading && !data) {
+    ;<div className="flex flex-row justify-center py-4 bg-primary-2 h-[56px] text-white discount-wrapper">
+      <div className="h-[24px] shrink-0">
+        <p>
           GET FREE SHIPPING WITH DISCOUNT CODE <strong>STOREDOG</strong>
-        </span>
-      ) : (
-        <span>
-          GET FREE SHIPPING WITH DISCOUNT CODE &nbsp;{' '}
-          <strong id="discount-code">{data}</strong>
-        </span>
-      )}
+        </p>
+      </div>
+    </div>
+  }
+
+  if (!isLoading && data) {
+    return (
+      <div className="flex flex-row justify-center py-4 bg-primary-2 h-[56px] text-white discount-wrapper">
+        <div className="h-[24px] shrink-0">
+          <p>
+            GET FREE SHIPPING WITH DISCOUNT CODE &nbsp;{' '}
+            <strong id="discount-code">{data}</strong>
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-row justify-center py-4 shrink-0 bg-primary-2 h-[56px] text-white discount-wrapper">
+      <div className="h-[24px] shrink-0"></div>
     </div>
   )
 }
