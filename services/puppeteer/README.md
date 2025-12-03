@@ -36,10 +36,11 @@ A modular Puppeteer-based traffic generator for Storedog that simulates realisti
   - Default: `http://service-proxy:80`
   - Example: `http://localhost:3000`
 
-- **`PUPPETEER_SYSTEM_MEMORY`** - System memory size (determines concurrency limits)
+- **`PUPPETEER_SYSTEM_MEMORY`** - System memory size (sets intelligent defaults from memory profile)
   - Default: `8GB`
   - Options: `8GB`, `16GB`, `32GB`
-  - Selects appropriate memory profile with safety limits
+  - Sets default values for `maxConcurrency`, `maxBrowsers`, `rampUpPercentages`, and memory thresholds
+  - Individual environment variables can override these defaults (see below)
 
 ### Session Configuration
 
@@ -58,11 +59,13 @@ A modular Puppeteer-based traffic generator for Storedog that simulates realisti
 ### Concurrency & Performance
 
 - **`PUPPETEER_MAX_CONCURRENT`** - Maximum concurrent sessions
-  - Default: `16`
-  - Capped by memory profile limits (20 for 8GB, 80 for 16GB, 100 for 32GB)
+  - Default: Set by memory profile (20 for 8GB, 80 for 16GB, 100 for 32GB)
+  - Can be overridden to any value (no longer capped by profile limits)
+  - Use profile defaults for optimal performance, or set custom values as needed
 
 - **`PUPPETEER_BROWSER_POOL_SIZE`** - Number of browser instances to keep in pool
-  - Default: Auto-calculated based on `PUPPETEER_MAX_CONCURRENT` (min 6, max based on profile)
+  - Default: Auto-calculated from memory profile or `PUPPETEER_MAX_CONCURRENT` (minimum 6)
+  - Can be overridden to any value as needed
   - Example: `20`
 
 - **`PUPPETEER_STARTUP_DELAY`** - Delay in milliseconds before starting sessions
@@ -136,7 +139,7 @@ puppeteer:
   environment:
     - STOREDOG_URL=http://service-proxy:80
     - PUPPETEER_SESSION_TYPES=browsing
-    - PUPPETEER_MAX_CONCURRENT=16
+    - PUPPETEER_SYSTEM_MEMORY=8GB  # Sets intelligent defaults
 ```
 
 ### Development with Volume Mount
@@ -166,12 +169,20 @@ environment:
 
 ### High Volume Traffic
 
-For larger machines:
+For larger machines (using profile defaults):
 
 ```yaml
 environment:
   - PUPPETEER_SYSTEM_MEMORY=16GB
-  - PUPPETEER_MAX_CONCURRENT=60
+  - PUPPETEER_SESSION_TYPES=browsing,taxonomy,frustration,homePage
+```
+
+Or with custom overrides:
+
+```yaml
+environment:
+  - PUPPETEER_SYSTEM_MEMORY=16GB  # Sets intelligent defaults
+  - PUPPETEER_MAX_CONCURRENT=60   # Override profile default (80 for 16GB)
   - PUPPETEER_SESSION_TYPES=browsing,taxonomy,frustration,homePage
 ```
 

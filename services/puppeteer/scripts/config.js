@@ -22,12 +22,12 @@ const config = {
   // Concurrency settings
   startupDelay: parseInt(process.env.PUPPETEER_STARTUP_DELAY),
   rampUpInterval: parseInt(process.env.PUPPETEER_RAMP_INTERVAL),
-  maxConcurrency: Math.min(parseInt(process.env.PUPPETEER_MAX_CONCURRENT), profile.maxConcurrency),
+  maxConcurrency: parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || profile.maxConcurrency,
   
   // Browser settings
   enableCache: process.env.PUPPETEER_ENABLE_CACHE === 'true',
   browserPoolSize: parseInt(process.env.PUPPETEER_BROWSER_POOL_SIZE) || 
-                   Math.min(Math.max(parseInt(process.env.PUPPETEER_MAX_CONCURRENT), 6), profile.maxBrowsers),
+                   Math.max(parseInt(process.env.PUPPETEER_MAX_CONCURRENT) || profile.maxConcurrency, 6),
   
   // Session settings
   sessionDelay: 2000,
