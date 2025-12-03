@@ -12,7 +12,7 @@ export default function SessionDebugPanel() {
     
     // Listen for RUM events
     const handleRumEvent = (event: any) => {
-      const { type, count, data, sessionChange, additionalChanges, isUpdate } = event.detail
+      const { type, count, data, sessionChange, additionalChanges, isUpdate, updatedProperties } = event.detail
       
       const activityId = Date.now()
       const newActivity: Activity = {
@@ -22,7 +22,8 @@ export default function SessionDebugPanel() {
         data,
         sessionChange,
         additionalChanges,
-        isUpdate
+        isUpdate,
+        updatedProperties
       }
       
       setNewestActivityId(activityId)

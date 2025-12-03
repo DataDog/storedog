@@ -149,6 +149,11 @@ export class ViewEvent extends BaseEventHandler {
     let updatedProperties: string[] = []
     if (isUpdate && viewId) {
       const previousView = session.getPreviousViewState(viewId)
+      console.log('[RUM beforeSend] Comparing views for update:', {
+        hasPreviousView: !!previousView,
+        previousViewKeys: previousView ? Object.keys(previousView) : [],
+        currentViewKeys: event.view ? Object.keys(event.view) : [],
+      })
       if (previousView) {
         updatedProperties = this.detectViewChanges(previousView, event.view)
       }
@@ -208,10 +213,11 @@ export class ViewEvent extends BaseEventHandler {
       type: 'view',
       count: session.getCounter('view'),
       data: { url, name: event.view?.name },
-      sessionChange: {
+      // Only show sessionChange for new views (when count actually changes)
+      sessionChange: !isUpdate ? {
         field: 'view.count',
         to: session.getCounter('view'),
-      },
+      } : undefined,
       additionalChanges,
       isUpdate,
       updatedProperties: updatedProperties.length > 0 ? updatedProperties : undefined,
@@ -234,11 +240,16 @@ export class ViewEvent extends BaseEventHandler {
       'long_task_count',
     ]
 
+    console.log('[ViewEvent] Checking for changes in properties:', keysToCheck)
     for (const key of keysToCheck) {
-      if (previousView[key] !== currentView[key] && currentView[key] !== undefined) {
+      const prevValue = previousView[key]
+      const currValue = currentView[key]
+      if (prevValue !== currValue && currValue !== undefined) {
+        console.log(`[ViewEvent] Change detected in ${key}:`, { from: prevValue, to: currValue })
         changes.push(key)
       }
     }
+    console.log('[ViewEvent] Total changes detected:', changes)
 
     return changes
   }
