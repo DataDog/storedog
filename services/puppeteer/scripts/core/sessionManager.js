@@ -10,6 +10,10 @@ const TaxonomySession = require('../sessions/taxonomySession');
 const FrustrationSession = require('../sessions/frustrationSession');
 const HomePageSession = require('../sessions/homePageSession');
 const ShortSession = require('../sessions/shortSession');
+const EarlyErrorSession = require('../sessions/earlyErrorSession');
+const LateErrorSession = require('../sessions/lateErrorSession');
+const CartAbandonmentSession = require('../sessions/cartAbandonmentSession');
+const BotSession = require('../sessions/botSession');
 
 // Build ramp-up schedule from the memory profile's percentages
 // Each percentage is applied to the configured maxConcurrency
@@ -35,6 +39,14 @@ class SessionManager {
         return ShortSession;
       case 'vip':
         return VipSession;
+      case 'earlyerror':
+        return EarlyErrorSession;
+      case 'lateerror':
+        return LateErrorSession;
+      case 'cartabandonment':
+        return CartAbandonmentSession;
+      case 'bot':
+        return BotSession;
       default:
         return BrowsingSession;
     }
