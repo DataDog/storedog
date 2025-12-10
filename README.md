@@ -20,13 +20,14 @@ This branch implements dynamic RUM application routing that allows different tra
 
 ### Puppeteer Sessions
 
-Puppeteer sessions use custom HTTP headers to specify which RUM application to send data to. Nginx reads these headers and sets cookies in the response. This allows multiple puppeteer services to run simultaneously, each sending data to a different RUM application.
+Puppeteer sessions use custom HTTP headers to specify which RUM application to send data to. Nginx forwards these headers to Next.js, where middleware sets cookies in the response. This allows multiple puppeteer services to run simultaneously, each sending data to a different RUM application.
 
 ```mermaid
 sequenceDiagram
     participant Puppeteer as Puppeteer Service
     participant Nginx as Nginx (service-proxy)
     participant NextJS as Next.js Frontend
+    participant Middleware as Next.js Middleware
     participant Browser as Browser
 
     Note over Puppeteer: Environment variables:<br/>RUM_APP_ID, RUM_CLIENT_TOKEN
@@ -34,36 +35,41 @@ sequenceDiagram
     Puppeteer->>Puppeteer: Set HTTP headers:<br/>X-RUM-App-ID<br/>X-RUM-Client-Token
     Puppeteer->>Nginx: HTTP Request with custom headers
     
-    Note over Nginx: Read custom headers
+    Note over Nginx: Read custom headers,<br/>forward to Next.js
     
-    Nginx->>NextJS: Proxy request to frontend
-    NextJS->>Nginx: HTML response
+    Nginx->>NextJS: Proxy headers:<br/>X-RUM-App-ID<br/>X-RUM-Client-Token
+    NextJS->>Middleware: Request passes through middleware
     
-    Nginx->>Browser: Add Set-Cookie headers<br/>and forward response
+    Note over Middleware: Read proxy headers,<br/>set cookies in response
+    
+    Middleware->>Browser: HTML + Set-Cookie headers
     
     Note over Browser: Cookies stored, RUM SDK<br/>initializes with credentials
 ```
 
 ### Learner Sessions
 
-Learner browser sessions (real users accessing Storedog through their browser) don't send custom headers. Nginx uses default RUM credentials from environment variables and sets cookies in the response.
+Learner browser sessions (real users accessing Storedog through their browser) don't send custom headers. Nginx uses default RUM credentials from environment variables and forwards them to Next.js, where middleware sets cookies in the response.
 
 ```mermaid
 sequenceDiagram
     participant Browser as Learner Browser
     participant Nginx as Nginx (service-proxy)
     participant NextJS as Next.js Frontend
+    participant Middleware as Next.js Middleware
 
     Note over Nginx: Environment variables:<br/>DEFAULT_RUM_APP_ID<br/>DEFAULT_RUM_CLIENT_TOKEN
     
     Browser->>Nginx: HTTP Request (no custom headers)
     
-    Note over Nginx: No X-RUM-* headers present,<br/>use default values
+    Note over Nginx: No X-RUM-* headers present,<br/>use default values,<br/>forward to Next.js
     
-    Nginx->>NextJS: Proxy request to frontend
-    NextJS->>Nginx: HTML response
+    Nginx->>NextJS: Proxy headers:<br/>X-RUM-App-ID (default)<br/>X-RUM-Client-Token (default)
+    NextJS->>Middleware: Request passes through middleware
     
-    Nginx->>Browser: Add Set-Cookie headers<br/>and forward response
+    Note over Middleware: Read proxy headers,<br/>set cookies in response
+    
+    Middleware->>Browser: HTML + Set-Cookie headers
     
     Note over Browser: Cookies stored, RUM SDK<br/>initializes with credentials
 ```
@@ -86,14 +92,21 @@ Has an extra endpoint for the about-us page. This is to illustrate poor Largest 
 
 ### Nginx
 
-Manages RUM credential routing by reading custom headers from puppeteer (or using defaults for learners) and setting cookies in the response.
+Reads custom headers from puppeteer (or uses defaults for learners) and forwards them as proxy headers to Next.js. The headers are:
+- `X-RUM-App-ID` - RUM application ID
+- `X-RUM-Client-Token` - RUM client token
+
+Configuration is in `services/nginx/default.conf.template`.
 
 
 ### Frontend
 
-RUM Config is handled at runtime and is not baked into the image. 
+RUM configuration is handled at runtime via Next.js middleware (`middleware.ts`), which:
+1. Reads `X-RUM-App-ID` and `X-RUM-Client-Token` headers forwarded by nginx
+2. Sets `rum_app_id` and `rum_client_token` cookies in the response
+3. Browser JavaScript reads these cookies to initialize the RUM SDK
 
-There is a RUM Debug popover in Storedog that displays when a learner visits Storedog. The popover displays live RUM Events and updates to help illustrate how often new RUM Events/updates are generated and indicate how often they will be evaluated against the RUM Applicaton's Retention filters.
+There is a RUM Debug popover in Storedog that displays when a learner visits Storedog. The popover displays live RUM Events and updates to help illustrate how often new RUM Events/updates are generated and indicate how often they will be evaluated against the RUM Application's Retention filters.
 
 ### Puppeteer
 
