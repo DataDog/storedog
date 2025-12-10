@@ -264,6 +264,11 @@ const goToHomePage = async (session) => {
   await session.page.goto(storedogUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
   const pageTitle = await session.page.title();
   session.log(`"${pageTitle}" loaded`);
+  
+  // Verify RUM cookies and initialization after first page load
+  if (session.verifyRumCookies) {
+    await session.verifyRumCookies();
+  }
 };
 
 const navigateToProductsPage = async (session) => {

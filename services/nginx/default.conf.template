@@ -88,10 +88,11 @@ server {
             set $rum_client_token "${DEFAULT_RUM_CLIENT_TOKEN}";
         }
         
-        # Set cookies directly from nginx (no middleware needed)
-        add_header Set-Cookie "rum_app_id=$rum_app_id; Path=/; SameSite=Lax" always;
-        add_header Set-Cookie "rum_client_token=$rum_client_token; Path=/; SameSite=Lax" always;
-
+        # Forward RUM credentials to Next.js as request headers
+        # Next.js middleware will set them as cookies in the response
+        proxy_set_header X-RUM-App-ID $rum_app_id;
+        proxy_set_header X-RUM-Client-Token $rum_client_token;
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

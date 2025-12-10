@@ -116,6 +116,11 @@ function useInitializeRum() {
     let appId = getCookie('rum_app_id')
     let clientToken = getCookie('rum_client_token')
 
+    // Debug: Log all cookies
+    console.log('[RUM Init] All cookies:', document.cookie)
+    console.log('[RUM Init] rum_app_id cookie:', appId)
+    console.log('[RUM Init] rum_client_token cookie:', clientToken)
+
     // Only initialize if we have real credentials from nginx
     if (!appId || !clientToken) {
       console.error('[RUM Init] Missing RUM credentials from nginx cookies. RUM will not be initialized.')
@@ -125,7 +130,9 @@ function useInitializeRum() {
     }
 
     // Initialize RUM with dynamic config
+    console.log('[RUM Init] Initializing with App ID:', appId, 'Token:', clientToken.substring(0, 8) + '...')
     datadogRum.init(getRumConfig(appId, clientToken))
+    console.log('[RUM Init] ✅ SDK initialized successfully')
 
     // Initialize Logs SDK with same credentials
     datadogLogs.init({
@@ -170,7 +177,18 @@ export default function MyApp({ Component, pageProps }: AppProps) {
   useEffect(() => {
     document.body.classList?.remove('loading')
     if (window?.location.search.includes('end_session=true')) {
-      datadogRum.stopSession()
+      console.log('[RUM] Attempting to stop session...')
+      // Wait for RUM to be initialized before stopping session
+      const stopSession = () => {
+        if ((window as any).__DD_RUM_INITIALIZED__) {
+          console.log('[RUM] Stopping session')
+          datadogRum.stopSession()
+        } else {
+          console.log('[RUM] SDK not initialized yet, waiting...')
+          setTimeout(stopSession, 100)
+        }
+      }
+      stopSession()
     }
   }, [])
 

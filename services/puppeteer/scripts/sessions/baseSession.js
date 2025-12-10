@@ -59,6 +59,33 @@ class BaseSession {
     }
   }
 
+  async verifyRumCookies() {
+    try {
+      const cookies = await this.page.cookies();
+      const rumAppIdCookie = cookies.find(c => c.name === 'rum_app_id');
+      const rumTokenCookie = cookies.find(c => c.name === 'rum_client_token');
+      
+      if (rumAppIdCookie && rumTokenCookie) {
+        this.log(`✅ RUM cookies set: App ID=${rumAppIdCookie.value}, Token=${rumTokenCookie.value.substring(0, 8)}...`);
+        
+        // Also check if RUM SDK initialized
+        const rumInitialized = await this.page.evaluate(() => {
+          return !!window.__DD_RUM_INITIALIZED__;
+        });
+        
+        if (rumInitialized) {
+          this.log('✅ RUM SDK initialized in browser');
+        } else {
+          this.log('⚠️  RUM SDK not yet initialized in browser');
+        }
+      } else {
+        this.log(`❌ RUM cookies NOT set! Found: ${cookies.map(c => c.name).join(', ')}`);
+      }
+    } catch (error) {
+      this.log(`Error checking RUM cookies: ${error.message}`);
+    }
+  }
+
   async setupPage(isVip = false) {
     // Create new page
     this.page = await this.browser.newPage();
@@ -72,12 +99,14 @@ class BaseSession {
     const rumClientToken = process.env.RUM_CLIENT_TOKEN;
     
     if (rumAppId && rumClientToken) {
-      this.log(`Setting RUM config via headers: App ID=${rumAppId}`);
+      this.log(`Setting RUM config via headers: App ID=${rumAppId}, Token=${rumClientToken.substring(0, 8)}...`);
       // Set custom headers on all requests to nginx
       await this.page.setExtraHTTPHeaders({
         'X-RUM-App-ID': rumAppId,
         'X-RUM-Client-Token': rumClientToken
       });
+    } else {
+      this.log(`⚠️  WARNING: RUM credentials not set! App ID=${rumAppId}, Token=${rumClientToken ? 'set' : 'missing'}`);
     }
 
     // Set localStorage BEFORE page loads - this runs before any page JavaScript
@@ -129,6 +158,16 @@ class BaseSession {
       Object.defineProperty(document, 'hidden', { value: false });
       Object.defineProperty(document, 'visibilityState', { value: 'visible' });
     });
+    
+    // Listen to console messages for RUM debugging
+    if (config.debugSessions) {
+      this.page.on('console', async (msg) => {
+        const text = msg.text();
+        if (text.includes('RUM') || text.includes('DD_RUM') || text.includes('datadogRum')) {
+          this.log(`[Browser Console] ${text}`);
+        }
+      });
+    }
   }
 
   // Full session lifecycle with logging and cleanup
