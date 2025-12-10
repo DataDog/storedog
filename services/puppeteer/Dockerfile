@@ -1,6 +1,6 @@
 FROM ghcr.io/puppeteer/puppeteer:24.23.0
 
-ARG RUM_APPLICATION_ID
+ARG RUM_APP_ID
 ARG RUM_CLIENT_TOKEN
 # Set default environment variables
 ENV STOREDOG_URL=http://service-proxy:80 \
@@ -13,7 +13,7 @@ ENV STOREDOG_URL=http://service-proxy:80 \
   PUPPETEER_DEBUG_SESSIONS=false \
   PUPPETEER_LOOP=infinite \
   PUPPETEER_SESSION_TYPES=browsing,vip,frustration,homepage,short,taxonomy \
-  RUM_APPLICATION_ID=${RUM_APPLICATION_ID} \
+  RUM_APP_ID=${RUM_APP_ID} \
   RUM_CLIENT_TOKEN=${RUM_CLIENT_TOKEN}
 
 USER pptruser
