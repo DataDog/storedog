@@ -107,6 +107,12 @@ function useInitializeRum() {
       return
     }
 
+    // Force new session by clearing RUM session cookie before initialization
+    if (window.location.search.includes('new_session=true')) {
+      document.cookie = '_dd_s=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+      console.log('[RUM Init] Cleared session cookie for new session')
+    }
+
     // Check if already initialized
     if ((window as any).__DD_RUM_INITIALIZED__) {
       return
