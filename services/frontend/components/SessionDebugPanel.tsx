@@ -1,11 +1,17 @@
 import { useEffect, useState } from 'react'
 import { Activity, getEventTypeColor } from '@lib/sessionMocking'
+import { datadogRum } from '@datadog/browser-rum'
 import styles from './SessionDebugPanel.module.css'
 
 export default function SessionDebugPanel() {
   const [activities, setActivities] = useState<Activity[]>([])
   const [isVisible, setIsVisible] = useState(true)
   const [newestActivityId, setNewestActivityId] = useState<number>(0)
+
+  const handleStopSession = () => {
+    console.log('[SessionDebugPanel] Stopping RUM session')
+    datadogRum.stopSession()
+  }
 
   useEffect(() => {
     console.log('[SessionDebugPanel] Component mounted, setting up event listener')
@@ -51,9 +57,14 @@ export default function SessionDebugPanel() {
     <div className={styles.container}>
       <div className={styles.header}>
         <strong>RUM Activity ({activities.length})</strong>
-        <button onClick={() => setIsVisible(false)} className={styles.closeBtn}>
-          ×
-        </button>
+        <div className={styles.headerButtons}>
+          <button onClick={handleStopSession} className={styles.stopBtn}>
+            Stop Session
+          </button>
+          <button onClick={() => setIsVisible(false)} className={styles.closeBtn}>
+            ×
+          </button>
+        </div>
       </div>
     
       <div className={styles.content}>

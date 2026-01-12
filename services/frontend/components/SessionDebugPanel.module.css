@@ -53,6 +53,28 @@
   align-items: center;
 }
 
+.headerButtons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stopBtn {
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.stopBtn:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
 .closeBtn {
   background: none;
   border: none;
