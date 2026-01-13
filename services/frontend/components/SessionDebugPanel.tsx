@@ -1,171 +1,118 @@
-import { useEffect, useState } from 'react'
-import { Activity, getEventTypeColor } from '@lib/sessionMocking'
+import { useEffect, useState, useRef } from 'react'
+import type { RumEvent } from '@lib/sessionMocking.types'
 import { datadogRum } from '@datadog/browser-rum'
+import { MAX_EVENTS } from '@lib/sessionMocking.constants'
+import EventCard from './EventCard'
 import styles from './SessionDebugPanel.module.css'
 
 export default function SessionDebugPanel() {
-  const [activities, setActivities] = useState<Activity[]>([])
+  const [events, setEvents] = useState<RumEvent[]>([])
   const [isVisible, setIsVisible] = useState(true)
-  const [newestActivityId, setNewestActivityId] = useState<number>(0)
+  const [newestEventId, setNewestEventId] = useState<string>('')
+  const panelRef = useRef<HTMLDivElement>(null)
+  const toggleButtonRef = useRef<HTMLButtonElement>(null)
 
   const handleStopSession = () => {
-    console.log('[SessionDebugPanel] Stopping RUM session')
     datadogRum.stopSession()
   }
 
-  useEffect(() => {
-    console.log('[SessionDebugPanel] Component mounted, setting up event listener')
-    
-    // Listen for RUM events
-    const handleRumEvent = (event: any) => {
-      const { type, count, data, sessionChange, additionalChanges, isUpdate, updatedProperties } = event.detail
-      
-      const activityId = Date.now()
-      const newActivity: Activity = {
-        timestamp: new Date().toLocaleTimeString(),
-        type,
-        count,
-        data,
-        sessionChange,
-        additionalChanges,
-        isUpdate,
-        updatedProperties
+  const handleToggleVisibility = (show: boolean) => {
+    setIsVisible(show)
+    setTimeout(() => {
+      if (show && panelRef.current) {
+        panelRef.current.focus()
+      } else if (!show && toggleButtonRef.current) {
+        toggleButtonRef.current.focus()
       }
+    }, 0)
+  }
+
+  useEffect(() => {
+    const handleRumEvent = (domEvent: CustomEvent) => {
+      const eventDetail = domEvent.detail as RumEvent
       
-      setNewestActivityId(activityId)
-      setActivities(prev => [newActivity, ...prev].slice(0, 100))
+      setNewestEventId(eventDetail.id)
+      setEvents(prev => [eventDetail, ...prev].slice(0, MAX_EVENTS))
     }
 
-    window.addEventListener('rum-event', handleRumEvent)
-    console.log('[SessionDebugPanel] Event listener added')
+    window.addEventListener('rum-event', handleRumEvent as EventListener)
     
     return () => {
-      console.log('[SessionDebugPanel] Component unmounting, removing event listener')
-      window.removeEventListener('rum-event', handleRumEvent)
+      window.removeEventListener('rum-event', handleRumEvent as EventListener)
     }
   }, [])
 
   if (!isVisible) {
     return (
-      <button onClick={() => setIsVisible(true)} className={styles.toggleBtn}>
+      <button 
+        ref={toggleButtonRef}
+        onClick={() => handleToggleVisibility(true)} 
+        className={styles.toggleBtn}
+        aria-label="Show RUM event debug panel"
+        aria-expanded="false"
+      >
         Show Session Debug
       </button>
     )
   }
 
   return (
-    <div className={styles.container}>
+    <aside 
+      ref={panelRef}
+      className={styles.container}
+      role="complementary"
+      aria-label="RUM Event Debug Panel"
+      tabIndex={-1}
+    >
       <div className={styles.header}>
-        <strong>RUM Activity ({activities.length})</strong>
+        <h2 id="rum-panel-title" className={styles.title}>
+          <span className="sr-only">Real User Monitoring </span>
+          RUM Events
+          <span aria-live="polite" aria-atomic="true" className="sr-only">
+            {events.length} events
+          </span>
+          <span aria-hidden="true"> ({events.length})</span>
+        </h2>
         <div className={styles.headerButtons}>
-          <button onClick={handleStopSession} className={styles.stopBtn}>
+          <button 
+            onClick={handleStopSession} 
+            className={styles.stopBtn}
+            aria-label="Stop current RUM session"
+          >
             Stop Session
           </button>
-          <button onClick={() => setIsVisible(false)} className={styles.closeBtn}>
-            ×
+          <button 
+            onClick={() => handleToggleVisibility(false)} 
+            className={styles.closeBtn}
+            aria-label="Hide RUM event debug panel"
+            aria-expanded="true"
+          >
+            <span aria-hidden="true">×</span>
           </button>
         </div>
       </div>
     
-      <div className={styles.content}>
-        {activities.length === 0 ? (
-          <div className={styles.empty}>
-            Waiting for RUM activity...
+      <div 
+        className={styles.content}
+        role="log"
+        aria-live="polite"
+        aria-label="RUM event log"
+      >
+        {events.length === 0 ? (
+          <div className={styles.empty} role="status">
+            Waiting for RUM events...
           </div>
         ) : (
-          activities.map((activity, idx) => {
-            const colors = getEventTypeColor(activity.type)
-            const isNewest = idx === 0
-            
-            return (
-              <div
-                key={idx}
-                className={`${styles.card} ${isNewest ? styles.newActivity : ''}`}
-                style={{ borderLeft: `4px solid ${colors.bg}` }}
-              >
-                <div className={styles.cardHeader}>
-                  <span
-                    className={styles.badge}
-                    style={{
-                      backgroundColor: colors.bg,
-                      color: colors.text
-                    }}
-                  >
-                    {activity.type}{activity.type === 'view' && activity.isUpdate ? ' (updated)' : ''}
-                  </span>
-                  {activity.type === 'view' && activity.data?.url ? (
-                    <span className={styles.url}>
-                      {(() => {
-                        try {
-                          const url = new URL(activity.data.url)
-                          return url.pathname + url.search + url.hash
-                        } catch {
-                          return activity.data.url
-                        }
-                      })()}
-                    </span>
-                  ) : activity.count ? (
-                    <span className={styles.count}>
-                      {activity.count} total
-                    </span>
-                  ) : null}
-                  <span className={styles.timestamp}>
-                    {activity.timestamp}
-                  </span>
-                </div>
-                
-                {activity.data?.message && (
-                  <div className={styles.message}>
-                    {activity.data.message.length > 60 
-                      ? activity.data.message.substring(0, 60) + '...' 
-                      : activity.data.message}
-                  </div>
-                )}
-                {activity.data?.name && (
-                  <div className={styles.name}>
-                    {activity.data.name}
-                  </div>
-                )}
-                
-                {activity.isUpdate && activity.updatedProperties && activity.updatedProperties.length > 0 && (
-                  <div className={styles.updateInfo}>
-                    Updated: {activity.updatedProperties.join(', ')}
-                  </div>
-                )}
-                
-                {(activity.sessionChange || activity.additionalChanges) && (
-                  <div className={styles.changes}>
-                    {activity.sessionChange && (
-                      <span className={styles.changeBadge}>
-                        @session.{activity.sessionChange.field}:{typeof activity.sessionChange.to === 'object' ? JSON.stringify(activity.sessionChange.to) : activity.sessionChange.to}
-                      </span>
-                    )}
-                    {activity.additionalChanges?.map((change, idx) => {
-                      // Format values for better readability
-                      let displayValue
-                      if (change.field === 'session.time_spent' || change.field === 'time_spent') {
-                        // Show in nanoseconds (raw value from performance.now() is milliseconds, multiply by 1M)
-                        displayValue = Math.round(change.to * 1000000)
-                      } else if (typeof change.to === 'object') {
-                        displayValue = JSON.stringify(change.to)
-                      } else {
-                        displayValue = change.to
-                      }
-                      
-                      return (
-                        <span key={idx} className={styles.changeBadge}>
-                          @{change.field}:{displayValue}
-                        </span>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            )
-          })
+          events.map((event) => (
+            <EventCard 
+              key={event.id}
+              event={event}
+              isNewest={event.id === newestEventId}
+            />
+          ))
         )}
       </div>
-    </div>
+    </aside>
   )
 }
 

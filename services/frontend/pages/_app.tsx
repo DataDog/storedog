@@ -19,7 +19,7 @@ import {
   ErrorEvent,
   ActionEvent,
   LongTaskEvent,
-  GenericEvent,
+  VitalsEvent,
 } from '@lib/sessionMocking'
 
 // Initialize mock session
@@ -65,17 +65,17 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
     beforeSend: (event: any) => {
       // Route to appropriate event handler
       if (event.type === 'view') {
-        ViewEvent.handle(event, mockSession, datadogLogs)
+        ViewEvent.handle(event, mockSession)
       } else if (event.type === 'resource') {
-        ResourceEvent.handle(event, mockSession, datadogLogs)
+        ResourceEvent.handle(event, mockSession)
       } else if (event.type === 'error') {
-        ErrorEvent.handle(event, mockSession, datadogLogs)
+        ErrorEvent.handle(event, mockSession)
       } else if (event.type === 'action') {
-        ActionEvent.handle(event, mockSession, datadogLogs)
+        ActionEvent.handle(event, mockSession)
       } else if (event.type === 'long_task') {
-        LongTaskEvent.handle(event, mockSession, datadogLogs)
-      } else {
-        GenericEvent.handle(event, mockSession, datadogLogs)
+        LongTaskEvent.handle(event, mockSession)
+      } else if (event.type === 'vital') {
+        VitalsEvent.handle(event, mockSession)
       }
 
       // Filter out specific errors
