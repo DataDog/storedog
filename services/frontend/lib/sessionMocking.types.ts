@@ -101,6 +101,7 @@ export interface DatadogViewEvent {
     error_count?: number
     action_count?: number
     long_task_count?: number
+    is_active?: boolean
   }
 }
 

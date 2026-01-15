@@ -15,6 +15,7 @@ export const VIEW_TRACKED_PROPERTIES = [
   'error_count',
   'action_count',
   'long_task_count',
+  'is_active',
 ] as const
 
 export const TIME_SPENT_FIELDS = ['session.time_spent', 'time_spent'] as const
