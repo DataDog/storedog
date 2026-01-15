@@ -25,6 +25,8 @@ spec:
       labels:
         app: service-proxy
     spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: service-proxy
           image: ${REGISTRY_URL}/nginx:${SD_TAG}
