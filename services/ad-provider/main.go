@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"log"
-	"math/rand"
+	"math/rand/v2"
 	"net/http"
 	"os"
 	"strconv"
@@ -26,8 +26,6 @@ type BatchResponse struct {
 var baseLatencyMs int
 
 func init() {
-	rand.Seed(time.Now().UnixNano())
-
 	// Default latency of 100ms, configurable via env
 	baseLatencyMs = 100
 	if val := os.Getenv("AD_PROVIDER_LATENCY_MS"); val != "" {
@@ -39,7 +37,7 @@ func init() {
 
 // simulateLatency adds realistic latency with some jitter
 func simulateLatency() {
-	jitter := rand.Intn(50) - 25 // +/- 25ms jitter
+	jitter := rand.IntN(50) - 25 // +/- 25ms jitter
 	latency := baseLatencyMs + jitter
 	if latency < 10 {
 		latency = 10
@@ -62,7 +60,7 @@ func enrichHandler(w http.ResponseWriter, r *http.Request) {
 	response := EnrichmentResponse{
 		AdID:        adID,
 		BidPrice:    rand.Float64() * 2.0,
-		Impressions: rand.Intn(10000),
+		Impressions: rand.IntN(10000),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -89,7 +87,7 @@ func batchEnrichHandler(w http.ResponseWriter, r *http.Request) {
 		enrichments[i] = EnrichmentResponse{
 			AdID:        strings.TrimSpace(adID),
 			BidPrice:    rand.Float64() * 2.0,
-			Impressions: rand.Intn(10000),
+			Impressions: rand.IntN(10000),
 		}
 	}
 
