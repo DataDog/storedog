@@ -55,6 +55,7 @@ services:
     depends_on:
       - 'postgres'
       - 'redis'
+      - 'pricing'
     ports:
       - '4000:4000'
     networks:
@@ -69,6 +70,8 @@ services:
       - RAILS_ENV=${RAILS_ENV:-production}
       - DB_POOL=${DB_POOL:-25}
       - MAX_THREADS=${MAX_THREADS:-5}
+      - PRICING_SERVICE_URL=${PRICING_SERVICE_URL:-http://pricing:5001}
+      - PRICING_SERVICE_ENABLED=${PRICING_SERVICE_ENABLED:-true}
       - DD_APM_INSTRUMENTATION_DEBUG=true
 
   # Background job processor (Sidekiq)
@@ -151,6 +154,16 @@ services:
       - DD_APM_INSTRUMENTATION_DEBUG=true
     networks:
       - storedog-network
+
+  # Pricing service (Go)
+  pricing:
+    image: ${REGISTRY_URL-localhost:5000}/pricing:${SD_TAG-latest}
+    build:
+      context: ./services/pricing
+    networks:
+      - storedog-network
+    environment:
+      - PORT=5001
 
   # Web server and reverse proxy
   service-proxy:

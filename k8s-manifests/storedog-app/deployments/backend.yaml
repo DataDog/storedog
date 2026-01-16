@@ -74,6 +74,10 @@ spec:
                 configMapKeyRef:
                   name: storedog-config
                   key: MAX_THREADS
+            - name: PRICING_SERVICE_URL
+              value: "http://pricing:5001"
+            - name: PRICING_SERVICE_ENABLED
+              value: "true"
           resources:
             requests:
               memory: "512Mi"

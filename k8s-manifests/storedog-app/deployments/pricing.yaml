@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: pricing
+spec:
+  ports:
+    - port: 5001
+      targetPort: 5001
+      name: http
+  selector:
+    app: pricing
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pricing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pricing
+  template:
+    metadata:
+      labels:
+        app: pricing
+    spec:
+      containers:
+        - name: pricing
+          image: ${REGISTRY_URL}/pricing:${SD_TAG}
+          ports:
+            - containerPort: 5001
+          env:
+            - name: PORT
+              value: "5001"
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+            initialDelaySeconds: 5
+            periodSeconds: 5
