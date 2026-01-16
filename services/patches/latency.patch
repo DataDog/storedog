@@ -1,6 +1,6 @@
 --- discounts/discounts.py.orig
 +++ discounts/discounts.py
-@@ -1,6 +1,5 @@
+@@ -1,7 +1,6 @@
  import json_log_formatter
  import traceback
  import logging

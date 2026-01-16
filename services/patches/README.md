@@ -70,36 +70,33 @@ Affected endpoints:
 ## Build Workflow
 
 ```bash
-cd /path/to/storedog/services
+cd /path/to/storedog
 
 # 1. Build all services (good version - 1.5.3)
-find . -name Dockerfile | while read dockerfile; do
+find ./services -name Dockerfile | while read dockerfile; do
   context_dir=$(dirname "$dockerfile")
-  image_name=$(echo "$context_dir" | sed 's|^\./||; s|/|-|g')
+  image_name=$(echo "$context_dir" | sed 's|^\./services/||; s|/|-|g')
   docker build -t "$REGISTRY_URL/$image_name:1.5.3" "$context_dir"
   docker push "$REGISTRY_URL/$image_name:1.5.3"
 done
 
 # 2. Apply latency patch and build affected services (1.5.2)
-patch -p0 < patches/latency.patch
+patch -p0 -d services < services/patches/latency.patch
 
-docker build -t "$REGISTRY_URL/discounts:1.5.2" ./discounts
-docker build -t "$REGISTRY_URL/ads-java:1.5.2" ./ads/java
-docker push "$REGISTRY_URL/discounts:1.5.2"
-docker push "$REGISTRY_URL/ads-java:1.5.2"
+docker build -t "$REGISTRY_URL/discounts:1.5.2" ./services/discounts
+docker build -t "$REGISTRY_URL/ads-java:1.5.2" ./services/ads/java
+docker push "$REGISTRY_URL/discounts:1.5.2" && docker push "$REGISTRY_URL/ads-java:1.5.2"
 
 # 3. Apply errors patch (on top of latency) and build (1.5.1)
-patch -p0 < patches/errors.patch
+patch -p0 -d services < services/patches/errors.patch
 
-docker build -t "$REGISTRY_URL/discounts:1.5.1" ./discounts
-docker build -t "$REGISTRY_URL/ads-java:1.5.1" ./ads/java
-docker build -t "$REGISTRY_URL/ads-python3:1.5.1" ./ads/python3
-docker push "$REGISTRY_URL/discounts:1.5.1"
-docker push "$REGISTRY_URL/ads-java:1.5.1"
-docker push "$REGISTRY_URL/ads-python3:1.5.1"
+docker build -t "$REGISTRY_URL/discounts:1.5.1" ./services/discounts
+docker build -t "$REGISTRY_URL/ads-java:1.5.1" ./services/ads/java
+docker build -t "$REGISTRY_URL/ads-python3:1.5.1" ./services/ads/python3
+docker push "$REGISTRY_URL/discounts:1.5.1" && docker push "$REGISTRY_URL/ads-java:1.5.1" && docker push "$REGISTRY_URL/ads-python3:1.5.1"
 
 # 4. Restore to good state
-git checkout -- discounts/discounts.py ads/java/src/main/java/adsjava/AdsJavaApplication.java ads/python3/ads.py
+git checkout -- services/discounts/discounts.py services/ads/java/src/main/java/adsjava/AdsJavaApplication.java services/ads/python3/ads.py
 ```
 
 ## Learner Flow

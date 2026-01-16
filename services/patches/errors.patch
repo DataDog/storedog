@@ -1,7 +1,6 @@
 --- discounts/discounts.py.orig
 +++ discounts/discounts.py
-@@ -54,6 +54,15 @@ logger.addFilter(remove_color_filter)
- @app.route('/')
+@@ -56,6 +56,15 @@ logger.addFilter(remove_color_filter)
  def hello():
      return Response({'Hello from Discounts!': 'world'}, mimetype='application/json')
 
@@ -18,7 +17,7 @@
  @app.route('/discount', methods=['GET', 'POST'])
  def status():
      if flask_request.method == 'GET':
-@@ -66,14 +75,19 @@ def status():
+@@ -68,12 +77,17 @@ def status():
 
              influencer_count = 0
              for discount in discounts:
@@ -36,10 +35,8 @@
 +            # Use the buggy helper function
 +            return jsonify([get_discount_metadata(b) for b in discounts])
 
--        except Exception:
-+        except Exception:
+         except Exception:
              logger.error("An error occurred while getting discounts.", exc_info=True)
-             return jsonify({'error': 'Internal Server Error'}), 500
 --- ads/python3/ads.py.orig
 +++ ads/python3/ads.py
 @@ -58,10 +58,19 @@ def banner_image(banner):
