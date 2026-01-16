@@ -1,6 +1,6 @@
 --- discounts/discounts.py.orig
 +++ discounts/discounts.py
-@@ -55,6 +55,15 @@ remove_color_filter = NoEscape()
+@@ -55,6 +55,15 @@ logger.addFilter(remove_color_filter)
  @app.route('/')
  def hello():
      return Response({'Hello from Discounts!': 'world'}, mimetype='application/json')
@@ -18,7 +18,7 @@
  @app.route('/discount', methods=['GET', 'POST'])
  def status():
      if flask_request.method == 'GET':
-@@ -66,12 +75,17 @@ def status():
+@@ -67,12 +76,17 @@ def status():
 
              influencer_count = 0
              for discount in discounts:

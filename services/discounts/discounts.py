@@ -1,6 +1,7 @@
 import json_log_formatter
 import traceback
 import logging
+from sqlalchemy.orm import joinedload
 from models import Discount, DiscountType, db
 from bootstrap import create_app
 from flask_cors import CORS
@@ -62,7 +63,7 @@ def status():
     if flask_request.method == 'GET':
 
         try:
-            discounts = Discount.query.all()
+            discounts = Discount.query.options(joinedload(Discount.discount_type)).all()
             logger.info(f"Discounts available: {len(discounts)}")
 
             influencer_count = 0
@@ -95,7 +96,7 @@ def status():
             logger.info(f"Adding discount {new_discount}")
             db.session.add(new_discount)
             db.session.commit()
-            discounts = Discount.query.all()
+            discounts = Discount.query.options(joinedload(Discount.discount_type)).all()
 
             return jsonify([b.serialize() for b in discounts])
 
