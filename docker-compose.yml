@@ -138,6 +138,16 @@ services:
     networks:
       - storedog-network
 
+  # Pricing service (Go)
+  pricing:
+    image: ${REGISTRY_URL-localhost:5000}/pricing:${SD_TAG-latest}
+    build:
+      context: ./services/pricing
+    networks:
+      - storedog-network
+    environment:
+      - PORT=5001
+
   # Web server and reverse proxy
   service-proxy:
     image: ${REGISTRY_URL-localhost:5000}/nginx:${SD_TAG-latest}

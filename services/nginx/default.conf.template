@@ -25,7 +25,7 @@ server {
         proxy_pass http://ads_upstream/;
     }
 
-    # Reverse proxy for discounts 
+    # Reverse proxy for discounts
     location /services/discounts {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -34,6 +34,17 @@ server {
 
         # Proxy to discounts service
         proxy_pass http://discounts:2814/;
+    }
+
+    # Reverse proxy for pricing
+    location /services/pricing {
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Proxy to pricing service
+        proxy_pass http://pricing:5001/;
     }
 
     # Reverse proxy for backend
