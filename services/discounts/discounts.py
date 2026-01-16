@@ -77,9 +77,7 @@ def status():
 
         except:
             logger.error("An error occurred while getting discounts.")
-            err = jsonify({'error': 'Internal Server Error'})
-            err.status_code = 500
-            return err
+            return jsonify({'error': 'Internal Server Error'}), 500
 
     elif flask_request.method == 'POST':
 
@@ -102,14 +100,10 @@ def status():
 
         except:
             logger.error("An error occurred while creating a new discount.")
-            err = jsonify({'error': 'Internal Server Error'})
-            err.status_code = 500
-            return err
+            return jsonify({'error': 'Internal Server Error'}), 500
 
     else:
-        err = jsonify({'error': 'Invalid request method'})
-        err.status_code = 405
-        return err
+        return jsonify({'error': 'Invalid request method'}), 405
 
 
 @app.route("/discount-code", methods=["GET"])
@@ -131,9 +125,7 @@ def getDiscount():
                 response.update({"status": 1})
                 return jsonify(response)
             else:
-                err = jsonify({"error": "Discount not found", "status": 0})
-                err.status_code = 404
-                return err
+                return jsonify({"error": "Discount not found", "status": 0}), 404
         except Exception as e:
             # Log the error details with exception type, message, and stack trace
             logger.error(
@@ -145,14 +137,10 @@ def getDiscount():
             logger.debug(f"Stack trace: {stack_trace}")
 
             # Add error details to the response for debugging
-            err = jsonify({
+            return jsonify({
                 'error': str(e),
                 'message': 'Internal Server Error',
                 'stack_trace': stack_trace  # Optional: Include only for debugging purposes
-            })
-            err.status_code = 500
-            return err
+            }), 500
     else:
-        err = jsonify({"error": "Invalid request method"})
-        err.status_code = 405
-        return err
+        return jsonify({"error": "Invalid request method"}), 405

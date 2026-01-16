@@ -84,9 +84,7 @@ def status():
             except ValueError:
                 logger.error('Request failed', exc_info=True)
 
-            err = jsonify({'error': 'Internal Server Error'})
-            err.status_code = 500
-            return err
+            return jsonify({'error': 'Internal Server Error'}), 500
 
         else:
 
@@ -98,9 +96,7 @@ def status():
 
             except:
                 logger.error("An error occurred while getting ad.")
-                err = jsonify({'error': 'Internal Server Error'})
-                err.status_code = 500
-                return err
+                return jsonify({'error': 'Internal Server Error'}), 500
 
     elif flask_request.method == 'POST':
 
@@ -118,13 +114,8 @@ def status():
             return jsonify([b.serialize() for b in advertisements])
 
         except:
-
             logger.error("An error occurred while creating a new ad.")
-            err = jsonify({'error': 'Internal Server Error'})
-            err.status_code = 500
-            return err
+            return jsonify({'error': 'Internal Server Error'}), 500
 
     else:
-        err = jsonify({'error': 'Invalid request method'})
-        err.status_code = 405
-        return err
+        return jsonify({'error': 'Invalid request method'}), 405
