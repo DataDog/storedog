@@ -8,14 +8,23 @@ Patches are **additive** and applied in order:
 
 | Version | Tag | Contains | Description |
 |---------|-----|----------|-------------|
-| Errors | `:1.5.1` | + latency.patch + errors.patch | N+1 AND runtime errors |
-| Latency | `:1.5.2` | + latency.patch | N+1 query issues |
-| Good | `:1.5.3` | Base code | Working version with eager loading |
+| Errors | `:1.5.1` | + latency.patch + errors.patch | Latency issues AND runtime errors |
+| Latency | `:1.5.2` | + latency.patch | Latency issues only |
+| Good | `:1.5.3` | Base code | Working version |
 
 ## Services Modified
 
 - **discounts** - Python/Flask discount service (latency + errors)
+- **ads/java** - Java/Spring Boot advertisement service (latency only)
 - **ads/python3** - Python/Flask advertisement service (errors only)
+
+## New Service: ad-provider
+
+A Go service that simulates an external ad enrichment API. Always deployed with ~100ms response time.
+
+- **Endpoint**: `GET /enrich?ad_id=123` - single ad enrichment
+- **Endpoint**: `GET /enrich/batch?ad_ids=1,2,3` - batch enrichment
+- **Latency**: Configurable via `AD_PROVIDER_LATENCY_MS` env var (default: 100ms)
 
 ## Latency Introduced (latency.patch)
 
@@ -30,6 +39,16 @@ Affected endpoints:
 - `GET /discount` - lists all discounts
 - `POST /discount` - returns all discounts after creating new one
 
+### ads-java service - Per-Item External Calls
+
+Changes batch API call to per-item calls, causing N HTTP requests to ad-provider.
+
+- **Good version**: `adEnrichmentService.enrichBatch(adIds)` (1 HTTP call)
+- **Latency version**: Loop calling `adEnrichmentService.enrichSingle(ad.getId())` (N HTTP calls)
+
+Affected endpoints:
+- `GET /ads` - lists all advertisements
+
 ## Errors Introduced (errors.patch)
 
 ### discounts service (2 errors)
@@ -42,7 +61,7 @@ Affected endpoints:
    - Accessing non-existent `['metadata']['version']` key in serialized data
    - Stack trace: `KeyError: 'metadata'`
 
-### ads service (1 error)
+### ads-python3 service (1 error)
 
 1. **IndexError** in `/weighted-banners/<weight>` endpoint
    - Accessing `[0]` on empty list when no ads match weight criteria
@@ -65,24 +84,30 @@ done
 patch -p0 < patches/latency.patch
 
 docker build -t "$REGISTRY_URL/discounts:1.5.2" ./discounts
+docker build -t "$REGISTRY_URL/ads-java:1.5.2" ./ads/java
 docker push "$REGISTRY_URL/discounts:1.5.2"
+docker push "$REGISTRY_URL/ads-java:1.5.2"
 
 # 3. Apply errors patch (on top of latency) and build (1.5.1)
 patch -p0 < patches/errors.patch
 
 docker build -t "$REGISTRY_URL/discounts:1.5.1" ./discounts
+docker build -t "$REGISTRY_URL/ads-java:1.5.1" ./ads/java
 docker build -t "$REGISTRY_URL/ads-python3:1.5.1" ./ads/python3
 docker push "$REGISTRY_URL/discounts:1.5.1"
+docker push "$REGISTRY_URL/ads-java:1.5.1"
 docker push "$REGISTRY_URL/ads-python3:1.5.1"
 
 # 4. Restore to good state
-git checkout -- discounts/discounts.py ads/python3/ads.py
+git checkout -- discounts/discounts.py ads/java/src/main/java/adsjava/AdsJavaApplication.java ads/python3/ads.py
 ```
 
 ## Learner Flow
 
-1. Lab starts with `:1.5.1` deployed (has errors + N+1 latency)
+1. Lab starts with `:1.5.1` deployed (has errors + latency issues)
 1. Learner discovers errors via stack traces in logs/APM
-1. Learner updates deployment to `:1.5.2` (errors fixed, still has N+1)
-1. Learner discovers latency via APM traces showing many DB queries
-1. Learner updates deployment to `:1.5.3` (fully working with eager loading)
+1. Learner updates deployment to `:1.5.2` (errors fixed, still has latency)
+1. Learner discovers latency via APM traces showing:
+   - Many DB queries (discounts N+1)
+   - Many HTTP calls to ad-provider (ads-java per-item calls)
+1. Learner updates deployment to `:1.5.3` (fully working)

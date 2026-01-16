@@ -26,3 +26,28 @@
 
              return jsonify([b.serialize() for b in discounts])
 
+--- ads/java/src/main/java/adsjava/AdsJavaApplication.java.orig
++++ ads/java/src/main/java/adsjava/AdsJavaApplication.java
+@@ -17,7 +17,6 @@ import java.util.concurrent.TimeoutException;
+ import org.springframework.web.bind.annotation.RequestHeader;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import java.util.List;
+-import java.util.stream.Collectors;
+
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+@@ -85,9 +84,10 @@ public class AdsJavaApplication {
+         } else {
+             List<Advertisement> ads = advertisementRepository.findAll();
+             logger.info("Total ads available: " + ads.size());
+
+-            // Enrich ads with bid data from ad-provider (batch call - single HTTP request)
+-            List<Long> adIds = ads.stream().map(Advertisement::getId).collect(Collectors.toList());
+-            adEnrichmentService.enrichBatch(adIds);
++            // Enrich ads with bid data from ad-provider (per-item calls - N HTTP requests)
++            for (Advertisement ad : ads) {
++                adEnrichmentService.enrichSingle(ad.getId());
++            }
+
+             return ads;
+         }

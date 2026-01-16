@@ -17,6 +17,7 @@ import java.util.concurrent.TimeoutException;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.beans.factory.annotation.Autowired;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,9 @@ public class AdsJavaApplication {
 
     @Autowired
     private AdvertisementRepository advertisementRepository;
+
+    @Autowired
+    private AdEnrichmentService adEnrichmentService;
 
 	@RequestMapping("/")
 	public String home() {
@@ -81,6 +85,11 @@ public class AdsJavaApplication {
         } else {
             List<Advertisement> ads = advertisementRepository.findAll();
             logger.info("Total ads available: " + ads.size());
+
+            // Enrich ads with bid data from ad-provider (batch call - single HTTP request)
+            List<Long> adIds = ads.stream().map(Advertisement::getId).collect(Collectors.toList());
+            adEnrichmentService.enrichBatch(adIds);
+
             return ads;
         }
     }

@@ -10,3 +10,7 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+
+ad:
+  provider:
+    url: ${AD_PROVIDER_URL:http://ad-provider:8081}
