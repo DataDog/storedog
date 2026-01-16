@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ad-provider
+  namespace: external
+spec:
+  ports:
+    - port: 8081
+      targetPort: 8081
+      name: http
+  selector:
+    app: ad-provider
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ad-provider
+  namespace: external
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ad-provider
+  template:
+    metadata:
+      labels:
+        app: ad-provider
+    spec:
+      containers:
+        - name: ad-provider
+          image: ${REGISTRY_URL}/ad-provider:${SD_TAG}
+          ports:
+            - containerPort: 8081
+          env:
+            - name: PORT
+              value: "8081"
+            - name: AD_PROVIDER_LATENCY_MS
+              value: "100"
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "50m"
+            limits:
+              memory: "64Mi"
+              cpu: "100m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 3
+            periodSeconds: 5

@@ -29,6 +29,9 @@ spec:
           image: ${REGISTRY_URL}/ads-java:${SD_TAG}
           ports:
             - containerPort: 3030
+          env:
+            - name: AD_PROVIDER_URL
+              value: "http://ad-provider.external.svc.cluster.local:8081"
           resources:
             requests:
               memory: "256Mi"
