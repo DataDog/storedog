@@ -39,7 +39,7 @@ class NoEscape(logging.Filter):
     def strip_esc(self, s):
         try:  # string-like
             return self.regex.sub('', s)
-        except:  # non-string-like
+        except TypeError:  # non-string-like
             return s
 
     def filter(self, record):
@@ -75,8 +75,8 @@ def status():
 
             return jsonify([b.serialize() for b in discounts])
 
-        except:
-            logger.error("An error occurred while getting discounts.")
+        except Exception:
+            logger.error("An error occurred while getting discounts.", exc_info=True)
             return jsonify({'error': 'Internal Server Error'}), 500
 
     elif flask_request.method == 'POST':
@@ -98,8 +98,8 @@ def status():
 
             return jsonify([b.serialize() for b in discounts])
 
-        except:
-            logger.error("An error occurred while creating a new discount.")
+        except Exception:
+            logger.error("An error occurred while creating a new discount.", exc_info=True)
             return jsonify({'error': 'Internal Server Error'}), 500
 
     else:
