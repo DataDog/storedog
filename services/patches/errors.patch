@@ -1,9 +1,9 @@
 --- discounts/discounts.py.orig
 +++ discounts/discounts.py
-@@ -53,12 +53,34 @@ remove_color_filter = NoEscape()
+@@ -52,6 +52,28 @@ remove_color_filter = NoEscape()
  logger.addFilter(remove_color_filter)
-
-
+ 
+ 
 +def fetch_metadata_version(config_data):
 +    """Inner function to add stack depth"""
 +    # BUG: KeyError - 'metadata' key does not exist
@@ -26,8 +26,8 @@
  @app.route('/')
  def hello():
      return Response({'Hello from Discounts!': 'world'}, mimetype='application/json')
-
-
+@@ -59,6 +81,11 @@ def hello():
+ 
  @app.route('/discount', methods=['GET', 'POST'])
  def status():
 +    # BUG: This runs BEFORE the try block, so exception is unhandled
@@ -36,14 +36,14 @@
 +        get_discount_config()
 +
      if flask_request.method == 'GET':
-
+ 
          try:
 --- ads/python3/ads.py.orig
 +++ ads/python3/ads.py
-@@ -43,6 +43,24 @@ remove_color_filter = NoEscape()
+@@ -40,6 +40,24 @@ remove_color_filter = NoEscape()
  logger.addFilter(remove_color_filter)
-
-
+ 
+ 
 +def get_advertisement_id(ad_object):
 +    """Inner function to add stack depth"""
 +    # BUG: AttributeError - ad_object is None
@@ -66,7 +66,7 @@
  @app.route('/')
  def hello():
      logger.info("home url for ads called")
-@@ -67,6 +85,11 @@ def weighted_image(weight):
+@@ -64,6 +82,11 @@ def weighted_image(weight):
  @app.route('/ads', methods=['GET', 'POST'])
  def status():
      if flask_request.method == 'GET':
@@ -74,6 +74,6 @@
 +        # Randomly trigger the error (50% of requests)
 +        if random.random() < 0.5:
 +            validate_ad_request()
-
+ 
          # determine if should throw error and save to variable
          throw_error = False
