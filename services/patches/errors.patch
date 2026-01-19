@@ -1,62 +1,58 @@
 --- discounts/discounts.py.orig
 +++ discounts/discounts.py
-@@ -56,6 +56,15 @@ logger.addFilter(remove_color_filter)
+@@ -53,12 +53,25 @@ remove_color_filter = NoEscape()
+ logger.addFilter(remove_color_filter)
+
+
++def get_discount_config():
++    """Get discount configuration - BUG: accesses non-existent key"""
++    config = {"enabled": True, "max_value": 100}
++    # BUG: KeyError - 'metadata' key does not exist
++    # This will raise: KeyError: 'metadata'
++    return config['metadata']['version']
++
++
+ @app.route('/')
  def hello():
      return Response({'Hello from Discounts!': 'world'}, mimetype='application/json')
 
 
-+def get_discount_metadata(discount):
-+    """Helper function to extract discount metadata"""
-+    data = discount.serialize()
-+    # BUG: KeyError - 'metadata' key does not exist in serialized discount
-+    # This will raise: KeyError: 'metadata'
-+    version = data['metadata']['version']
-+    return data
-+
-+
  @app.route('/discount', methods=['GET', 'POST'])
  def status():
++    # BUG: This runs BEFORE the try block, so exception is unhandled
++    # Randomly trigger the error (50% of requests)
++    if random.random() < 0.5:
++        get_discount_config()
++
      if flask_request.method == 'GET':
-@@ -68,12 +77,17 @@ def status():
 
-             influencer_count = 0
-             for discount in discounts:
--                if discount.discount_type.influencer:
-+                # BUG: AttributeError when discount_type is None
-+                # This will raise: AttributeError: 'NoneType' object has no attribute 'influencer'
-+                discount_type_ref = discount.discount_type
-+                has_influencer = discount_type_ref.influencer
-+                if has_influencer:
-                     influencer_count += 1
-             logger.info(
-                 f"Total of {influencer_count} influencer specific discounts as of this request")
-
--            return jsonify([b.serialize() for b in discounts])
-+            # Use the buggy helper function
-+            return jsonify([get_discount_metadata(b) for b in discounts])
-
-         except Exception:
-             logger.error("An error occurred while getting discounts.", exc_info=True)
+         try:
 --- ads/python3/ads.py.orig
 +++ ads/python3/ads.py
-@@ -58,10 +58,19 @@ def banner_image(banner):
- @app.route('/weighted-banners/<float:weight>')
- def weighted_image(weight):
-     logger.info(f"attempting to grab banner weight of less than {weight}")
-     advertisements = Advertisement.query.all()
-+
-+    # BUG: IndexError - accessing index 0 on potentially empty list
-+    # When no advertisements match the weight criteria, matching_ads will be empty
-+    # This will raise: IndexError: list index out of range
-+    matching_ads = []
-     for ad in advertisements:
-         if ad.weight < weight:
--            return jsonify(ad.serialize())
-+            matching_ads.append(ad)
-+
-+    # This line causes the IndexError when matching_ads is empty
-+    selected_ad = matching_ads[0]
-+    return jsonify(selected_ad.serialize())
+@@ -43,6 +43,15 @@ remove_color_filter = NoEscape()
+ logger.addFilter(remove_color_filter)
 
 
++def validate_ad_request():
++    """Validate ad request - BUG: calls method on None"""
++    # BUG: AttributeError - filter returns None, then we call .id on it
++    # This will raise: AttributeError: 'NoneType' object has no attribute 'id'
++    ad = Advertisement.query.filter_by(id=-999).first()
++    ad_id = ad.id
++    return ad_id
++
++
+ @app.route('/')
+ def hello():
+     logger.info("home url for ads called")
+@@ -67,6 +76,11 @@ def weighted_image(weight):
  @app.route('/ads', methods=['GET', 'POST'])
+ def status():
+     if flask_request.method == 'GET':
++        # BUG: This runs BEFORE the try block, so exception is unhandled
++        # Randomly trigger the error (50% of requests)
++        if random.random() < 0.5:
++            validate_ad_request()
+
+         # determine if should throw error and save to variable
+         throw_error = False

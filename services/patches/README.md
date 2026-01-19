@@ -51,21 +51,21 @@ Affected endpoints:
 
 ## Errors Introduced (errors.patch)
 
-### discounts service (2 errors)
+Errors are placed **outside try/except blocks** so they are unhandled and visible in Datadog APM.
 
-1. **AttributeError** in `/discount` GET endpoint
-   - Accessing `.influencer` on a potentially None `discount_type`
-   - Stack trace: `AttributeError: 'NoneType' object has no attribute 'influencer'`
+### discounts service (1 error - 50% of requests)
 
-1. **KeyError** in `/discount` GET endpoint
-   - Accessing non-existent `['metadata']['version']` key in serialized data
+1. **KeyError** in `/discount` endpoint
+   - Triggers on ~50% of requests (before try block)
+   - Accessing non-existent `config['metadata']['version']` key
    - Stack trace: `KeyError: 'metadata'`
 
-### ads-python3 service (1 error)
+### ads-python3 service (1 error - 50% of requests)
 
-1. **IndexError** in `/weighted-banners/<weight>` endpoint
-   - Accessing `[0]` on empty list when no ads match weight criteria
-   - Stack trace: `IndexError: list index out of range`
+1. **AttributeError** in `/ads` GET endpoint
+   - Triggers on ~50% of requests (before try block)
+   - Calling `.id` on None (from failed query)
+   - Stack trace: `AttributeError: 'NoneType' object has no attribute 'id'`
 
 ## Build Workflow
 
