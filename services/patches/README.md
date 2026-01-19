@@ -9,9 +9,10 @@ This directory contains additive patches to create different versions of service
 | frontend | - | - | 3.2.3 | None |
 | backend | - | - | 4.0.10 | None |
 | discounts | 1.4.1 | 1.4.2 | 1.4.3 | Latency + Errors |
-| ads-python3 | 2.1.0 | - | 2.1.2 | Errors only |
+| ads-python3 | 2.1.0 | - | 2.1.1 | Errors only |
 | ads-java | - | 1.8.6 | 1.8.7 | Latency only |
-| nginx | - | - | 1.0.3 | None |
+| pricing | - | - | 1.2.0 | None |
+| nginx | - | - | 1.28.0 | None |
 | ad-provider | - | - | 0.3.1 | None (external) |
 
 ## Patch Strategy
@@ -88,18 +89,18 @@ cd /path/to/storedog
 docker build -t "$REGISTRY_URL/frontend:3.2.3" ./services/frontend
 docker build -t "$REGISTRY_URL/backend:4.0.10" ./services/backend
 docker build -t "$REGISTRY_URL/discounts:1.4.3" ./services/discounts
-docker build -t "$REGISTRY_URL/ads-python3:2.1.2" ./services/ads/python3
+docker build -t "$REGISTRY_URL/ads-python3:2.1.1" ./services/ads/python3
 docker build -t "$REGISTRY_URL/ads-java:1.8.7" ./services/ads/java
-docker build -t "$REGISTRY_URL/nginx:1.0.3" ./services/nginx
+docker build -t "$REGISTRY_URL/nginx:1.28.0" ./services/nginx
 docker build -t "$REGISTRY_URL/ad-provider:0.3.1" ./services/ad-provider
 
 # Push good versions
 docker push "$REGISTRY_URL/frontend:3.2.3"
 docker push "$REGISTRY_URL/backend:4.0.10"
 docker push "$REGISTRY_URL/discounts:1.4.3"
-docker push "$REGISTRY_URL/ads-python3:2.1.2"
+docker push "$REGISTRY_URL/ads-python3:2.1.1"
 docker push "$REGISTRY_URL/ads-java:1.8.7"
-docker push "$REGISTRY_URL/nginx:1.0.3"
+docker push "$REGISTRY_URL/nginx:1.28.0"
 docker push "$REGISTRY_URL/ad-provider:0.3.1"
 
 # 2. Apply latency patch and build affected services
