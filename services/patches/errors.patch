@@ -1,15 +1,26 @@
 --- discounts/discounts.py.orig
 +++ discounts/discounts.py
-@@ -53,12 +53,25 @@ remove_color_filter = NoEscape()
+@@ -53,12 +53,34 @@ remove_color_filter = NoEscape()
  logger.addFilter(remove_color_filter)
 
 
++def fetch_metadata_version(config_data):
++    """Inner function to add stack depth"""
++    # BUG: KeyError - 'metadata' key does not exist
++    return config_data['metadata']['version']
++
++
++def validate_config_structure(config_data):
++    """Middle function to add stack depth"""
++    version = fetch_metadata_version(config_data)
++    return version
++
++
 +def get_discount_config():
 +    """Get discount configuration - BUG: accesses non-existent key"""
 +    config = {"enabled": True, "max_value": 100}
-+    # BUG: KeyError - 'metadata' key does not exist
-+    # This will raise: KeyError: 'metadata'
-+    return config['metadata']['version']
++    # This creates a 3-level deep stack trace
++    return validate_config_structure(config)
 +
 +
  @app.route('/')
@@ -29,23 +40,33 @@
          try:
 --- ads/python3/ads.py.orig
 +++ ads/python3/ads.py
-@@ -43,6 +43,15 @@ remove_color_filter = NoEscape()
+@@ -43,6 +43,24 @@ remove_color_filter = NoEscape()
  logger.addFilter(remove_color_filter)
 
 
++def get_advertisement_id(ad_object):
++    """Inner function to add stack depth"""
++    # BUG: AttributeError - ad_object is None
++    return ad_object.id
++
++
++def process_ad_validation(ad_object):
++    """Middle function to add stack depth"""
++    ad_id = get_advertisement_id(ad_object)
++    return ad_id
++
++
 +def validate_ad_request():
 +    """Validate ad request - BUG: calls method on None"""
-+    # BUG: AttributeError - filter returns None, then we call .id on it
-+    # This will raise: AttributeError: 'NoneType' object has no attribute 'id'
 +    ad = Advertisement.query.filter_by(id=-999).first()
-+    ad_id = ad.id
-+    return ad_id
++    # This creates a 3-level deep stack trace
++    return process_ad_validation(ad)
 +
 +
  @app.route('/')
  def hello():
      logger.info("home url for ads called")
-@@ -67,6 +76,11 @@ def weighted_image(weight):
+@@ -67,6 +85,11 @@ def weighted_image(weight):
  @app.route('/ads', methods=['GET', 'POST'])
  def status():
      if flask_request.method == 'GET':
