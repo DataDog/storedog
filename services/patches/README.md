@@ -91,6 +91,7 @@ docker build -t "$REGISTRY_URL/backend:4.0.10" ./services/backend
 docker build -t "$REGISTRY_URL/discounts:1.4.3" ./services/discounts
 docker build -t "$REGISTRY_URL/ads-python3:2.1.1" ./services/ads/python3
 docker build -t "$REGISTRY_URL/ads-java:1.8.7" ./services/ads/java
+docker build -t "$REGISTRY_URL/pricing:1.2.0" ./services/pricing
 docker build -t "$REGISTRY_URL/nginx:1.28.0" ./services/nginx
 docker build -t "$REGISTRY_URL/ad-provider:0.3.1" ./services/ad-provider
 
@@ -100,6 +101,7 @@ docker push "$REGISTRY_URL/backend:4.0.10"
 docker push "$REGISTRY_URL/discounts:1.4.3"
 docker push "$REGISTRY_URL/ads-python3:2.1.1"
 docker push "$REGISTRY_URL/ads-java:1.8.7"
+docker push "$REGISTRY_URL/pricing:1.2.0"
 docker push "$REGISTRY_URL/nginx:1.28.0"
 docker push "$REGISTRY_URL/ad-provider:0.3.1"
 
