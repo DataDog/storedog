@@ -18,5 +18,13 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
+
+# Install Datadog CI for source map uploads
+RUN npm install -g @datadog/datadog-ci
+
 COPY . .
+
+# Build the Next.js application
+RUN npm run build
+
 EXPOSE 3000
