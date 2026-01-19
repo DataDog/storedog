@@ -24,7 +24,7 @@ datadogRum.init({
     | 'us3.datadoghq.com'
     | 'us5.datadoghq.com'
     | 'ap1.datadoghq.com',
-  service: `${process.env.NEXT_PUBLIC_DD_SERVICE_FRONTEND || 'frontend-api'}`,
+  service: `${process.env.NEXT_PUBLIC_DD_SERVICE_FRONTEND || 'storedog-web'}`,
   version: `${process.env.NEXT_PUBLIC_DD_VERSION_FRONTEND || 'main-a7f3e2b'}`,
   env: `${process.env.NEXT_PUBLIC_DD_ENV || 'development'}`,
   trackUserInteractions: true,
