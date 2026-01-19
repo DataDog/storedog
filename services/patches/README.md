@@ -2,15 +2,27 @@
 
 This directory contains additive patches to create different versions of services for lab exercises.
 
+## Service Versions
+
+| Service | Errors | Latency | Good | Issues |
+|---------|--------|---------|------|--------|
+| frontend | - | - | 3.2.3 | None |
+| backend | - | - | 4.0.10 | None |
+| discounts | 1.4.1 | 1.4.2 | 1.4.3 | Latency + Errors |
+| ads-python3 | 2.1.0 | - | 2.1.2 | Errors only |
+| ads-java | - | 1.8.6 | 1.8.7 | Latency only |
+| nginx | - | - | 1.0.3 | None |
+| ad-provider | - | - | 0.3.1 | None (external) |
+
 ## Patch Strategy
 
 Patches are **additive** and applied in order:
 
-| Version | Tag | Contains | Description |
-|---------|-----|----------|-------------|
-| Errors | `:1.5.1` | + latency.patch + errors.patch | Latency issues AND runtime errors |
-| Latency | `:1.5.2` | + latency.patch | Latency issues only |
-| Good | `:1.5.3` | Base code | Working version |
+| State | Contains | Description |
+|-------|----------|-------------|
+| Errors | + latency.patch + errors.patch | Latency issues AND runtime errors |
+| Latency | + latency.patch | Latency issues only |
+| Good | Base code | Working version |
 
 ## Services Modified
 
@@ -72,28 +84,37 @@ Errors are placed **outside try/except blocks** so they are unhandled and visibl
 ```bash
 cd /path/to/storedog
 
-# 1. Build all services (good version - 1.5.3)
-find ./services -name Dockerfile | while read dockerfile; do
-  context_dir=$(dirname "$dockerfile")
-  image_name=$(echo "$context_dir" | sed 's|^\./services/||; s|/|-|g')
-  docker build -t "$REGISTRY_URL/$image_name:1.5.3" "$context_dir"
-  docker push "$REGISTRY_URL/$image_name:1.5.3"
-done
+# 1. Build all services (good versions)
+docker build -t "$REGISTRY_URL/frontend:3.2.3" ./services/frontend
+docker build -t "$REGISTRY_URL/backend:4.0.10" ./services/backend
+docker build -t "$REGISTRY_URL/discounts:1.4.3" ./services/discounts
+docker build -t "$REGISTRY_URL/ads-python3:2.1.2" ./services/ads/python3
+docker build -t "$REGISTRY_URL/ads-java:1.8.7" ./services/ads/java
+docker build -t "$REGISTRY_URL/nginx:1.0.3" ./services/nginx
+docker build -t "$REGISTRY_URL/ad-provider:0.3.1" ./services/ad-provider
 
-# 2. Apply latency patch and build affected services (1.5.2)
+# Push good versions
+docker push "$REGISTRY_URL/frontend:3.2.3"
+docker push "$REGISTRY_URL/backend:4.0.10"
+docker push "$REGISTRY_URL/discounts:1.4.3"
+docker push "$REGISTRY_URL/ads-python3:2.1.2"
+docker push "$REGISTRY_URL/ads-java:1.8.7"
+docker push "$REGISTRY_URL/nginx:1.0.3"
+docker push "$REGISTRY_URL/ad-provider:0.3.1"
+
+# 2. Apply latency patch and build affected services
 patch -p0 -d services < services/patches/latency.patch
 
-docker build -t "$REGISTRY_URL/discounts:1.5.2" ./services/discounts
-docker build -t "$REGISTRY_URL/ads-java:1.5.2" ./services/ads/java
-docker push "$REGISTRY_URL/discounts:1.5.2" && docker push "$REGISTRY_URL/ads-java:1.5.2"
+docker build -t "$REGISTRY_URL/discounts:1.4.2" ./services/discounts
+docker build -t "$REGISTRY_URL/ads-java:1.8.6" ./services/ads/java
+docker push "$REGISTRY_URL/discounts:1.4.2" && docker push "$REGISTRY_URL/ads-java:1.8.6"
 
-# 3. Apply errors patch (on top of latency) and build (1.5.1)
+# 3. Apply errors patch (on top of latency) and build
 patch -p0 -d services < services/patches/errors.patch
 
-docker build -t "$REGISTRY_URL/discounts:1.5.1" ./services/discounts
-docker build -t "$REGISTRY_URL/ads-java:1.5.1" ./services/ads/java
-docker build -t "$REGISTRY_URL/ads-python3:1.5.1" ./services/ads/python3
-docker push "$REGISTRY_URL/discounts:1.5.1" && docker push "$REGISTRY_URL/ads-java:1.5.1" && docker push "$REGISTRY_URL/ads-python3:1.5.1"
+docker build -t "$REGISTRY_URL/discounts:1.4.1" ./services/discounts
+docker build -t "$REGISTRY_URL/ads-python3:2.1.0" ./services/ads/python3
+docker push "$REGISTRY_URL/discounts:1.4.1" && docker push "$REGISTRY_URL/ads-python3:2.1.0"
 
 # 4. Restore to good state
 git checkout -- services/discounts/discounts.py services/ads/java/src/main/java/adsjava/AdsJavaApplication.java services/ads/python3/ads.py
@@ -101,10 +122,13 @@ git checkout -- services/discounts/discounts.py services/ads/java/src/main/java/
 
 ## Learner Flow
 
-1. Lab starts with `:1.5.1` deployed (has errors + latency issues)
-1. Learner discovers errors via stack traces in logs/APM
-1. Learner updates deployment to `:1.5.2` (errors fixed, still has latency)
-1. Learner discovers latency via APM traces showing:
+1. Lab starts with error/latency versions deployed:
+   - discounts:1.4.1, ads-python3:2.1.0, ads-java:1.8.6
+2. Learner discovers errors via stack traces in logs/APM
+3. Learner updates deployments to fix errors:
+   - discounts:1.4.2, ads-python3:2.1.2
+4. Learner discovers latency via APM traces showing:
    - Many DB queries (discounts N+1)
    - Many HTTP calls to ad-provider (ads-java per-item calls)
-1. Learner updates deployment to `:1.5.3` (fully working)
+5. Learner updates deployments to fix latency:
+   - discounts:1.4.3, ads-java:1.8.7
