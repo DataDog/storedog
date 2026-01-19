@@ -8,21 +8,21 @@ spec:
       targetPort: 3000
       name: http
   selector:
-    app: frontend
+    app: frontend-api
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend
+  name: frontend-api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: frontend
+      app: frontend-api
   template:
     metadata:
       labels:
-        app: frontend
+        app: frontend-api
     spec:
       volumes:
         - name: feature-flags-config
@@ -89,6 +89,8 @@ spec:
                 secretKeyRef:
                   name: datadog-secret
                   key: dd_client_token
+            - name: NEXT_TELEMETRY_DISABLED
+              value: "1"
           resources:
             requests:
               memory: "256Mi"
