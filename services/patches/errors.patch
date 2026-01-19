@@ -1,6 +1,6 @@
 --- discounts/discounts.py.orig
 +++ discounts/discounts.py
-@@ -52,6 +52,28 @@ logger.addFilter(remove_color_filter)
+@@ -52,12 +52,39 @@ remove_color_filter = NoEscape()
  logger.addFilter(remove_color_filter)
  
  
@@ -26,7 +26,8 @@
  @app.route('/')
  def hello():
      return Response({'Hello from Discounts!': 'world'}, mimetype='application/json')
-@@ -60,6 +82,11 @@ def status():
+ 
+ 
  @app.route('/discount', methods=['GET', 'POST'])
  def status():
 +    # BUG: This runs BEFORE the try block, so exception is unhandled
@@ -39,7 +40,7 @@
          try:
 --- ads/python3/ads.py.orig
 +++ ads/python3/ads.py
-@@ -40,6 +40,24 @@ logger.addFilter(remove_color_filter)
+@@ -40,12 +40,35 @@ remove_color_filter = NoEscape()
  logger.addFilter(remove_color_filter)
  
  
@@ -65,7 +66,24 @@
  @app.route('/')
  def hello():
      logger.info("home url for ads called")
-@@ -64,6 +82,11 @@ def status():
+     return Response({'Hello from Advertisements!': 'world'}, mimetype='application/json')
+ 
+ 
+ @app.route('/banners/<path:banner>')
+ def banner_image(banner):
+     logger.info(f"attempting to grab banner at {banner}")
+     return send_from_directory('ads', banner)
+ 
+ 
+ @app.route('/weighted-banners/<float:weight>')
+ def weighted_image(weight):
+     logger.info(f"attempting to grab banner weight of less than {weight}")
+     advertisements = Advertisement.query.all()
+     for ad in advertisements:
+         if ad.weight < weight:
+             return jsonify(ad.serialize())
+ 
+ 
  @app.route('/ads', methods=['GET', 'POST'])
  def status():
      if flask_request.method == 'GET':
