@@ -14,6 +14,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ads
+  labels:
+    app: ads
+    team: advertisements
 spec:
   replicas: 1
   selector:
@@ -23,10 +26,17 @@ spec:
     metadata:
       labels:
         app: ads
+        team: advertisements
+      annotations:
+        ad.datadoghq.com/ads.logs: '[{"source": "python"}]'
     spec:
+      initContainers:
+        - name: wait-for-db
+          image: busybox:1.37.0
+          command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done;']
       containers:
         - name: ads
-          image: ${REGISTRY_URL}/ads-python3:${SD_TAG}
+          image: localhost:5000/ads-python3:2.1.0
           ports:
             - containerPort: 3030
           resources:

@@ -6,7 +6,7 @@ metadata:
     app: frontend
     managed-by: storedog
     purpose: feature-flags
-    environment: development
+    environment: apm-workshop
     tier: application
 data:
   featureFlags.config.json: |

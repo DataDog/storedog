@@ -14,6 +14,9 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: postgres
+  labels:
+    app: postgres
+    team: database
 spec:
   serviceName: postgres
   replicas: 1
@@ -24,10 +27,13 @@ spec:
     metadata:
       labels:
         app: postgres
+        team: database
+      annotations:
+        ad.datadoghq.com/postgres.logs: '[{"source": "postgresql", "auto_multi_line_detection": true, "path": "/var/log/pg_log/postgresql*.json", "type": "file"}]'
     spec:
       containers:
         - name: postgres
-          image: ${REGISTRY_URL}/postgres:${SD_TAG}
+          image: ghcr.io/datadog/storedog/postgres:1.5.0
           ports:
             - containerPort: 5432
               name: postgres

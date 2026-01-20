@@ -14,6 +14,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pricing
+  labels:
+    app: pricing
+    team: pricing
 spec:
   replicas: 1
   selector:
@@ -23,10 +26,11 @@ spec:
     metadata:
       labels:
         app: pricing
+        team: pricing
     spec:
       containers:
         - name: pricing
-          image: ${REGISTRY_URL}/pricing:${SD_TAG}
+          image: localhost:5000/pricing:1.2.0
           ports:
             - containerPort: 5001
           env:

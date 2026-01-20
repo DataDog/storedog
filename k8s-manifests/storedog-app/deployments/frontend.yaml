@@ -14,6 +14,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend-api
+  labels:
+    app: frontend-api
+    team: frontend
 spec:
   replicas: 1
   selector:
@@ -23,6 +26,9 @@ spec:
     metadata:
       labels:
         app: frontend-api
+        team: frontend
+      annotations:
+        ad.datadoghq.com/frontend.logs: '[{"source": "nodejs", "auto_multi_line_detection": true}]'
     spec:
       volumes:
         - name: feature-flags-config
@@ -30,15 +36,16 @@ spec:
             name: feature-flags-config
       initContainers:
         - name: wait-for-backend
-          image: busybox
+          image: busybox:1.37.0
           command: ['sh', '-c', 'until nc -z backend 4000; do echo waiting for backend; sleep 2; done;']
       containers:
-        - name: frontend
-          image: ${REGISTRY_URL}/frontend:${SD_TAG}
+        - name: frontend-api
+          image: localhost:5000/frontend:3.2.3
           ports:
             - containerPort: 3000
-          # Entrypoint in Dockerfile handles RUM config injection then runs npm start
           env:
+            - name: NEXT_TELEMETRY_DISABLED
+              value: "1"
             - name: NEXT_PUBLIC_ADS_ROUTE
               valueFrom:
                 configMapKeyRef:
@@ -79,6 +86,11 @@ spec:
                 configMapKeyRef:
                   name: storedog-config
                   key: NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN
+            - name: NEXT_PUBLIC_DD_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: NEXT_PUBLIC_DD_ENV
             - name: NEXT_PUBLIC_DD_APPLICATION_ID
               valueFrom:
                 secretKeyRef:
@@ -89,23 +101,22 @@ spec:
                 secretKeyRef:
                   name: datadog-secret
                   key: dd_client_token
-            - name: NEXT_PUBLIC_DD_ENV
+            - name: NEXT_PUBLIC_DD_SERVICE_FRONTEND
               valueFrom:
                 configMapKeyRef:
                   name: storedog-config
-                  key: NEXT_PUBLIC_DD_ENV
-            - name: NEXT_TELEMETRY_DISABLED
-              value: "1"
-            - name: NEXT_PUBLIC_DD_SERVICE_FRONTEND
-              value: "storedog-web"
+                  key: NEXT_PUBLIC_DD_SERVICE_FRONTEND
             - name: NEXT_PUBLIC_DD_VERSION_FRONTEND
-              value: "main-a7f3e2b"
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: NEXT_PUBLIC_DD_VERSION_FRONTEND
           resources:
             requests:
               memory: "256Mi"
               cpu: "100m"
             limits:
-              memory: "2Gi"
+              memory: "3Gi"
           volumeMounts:
             - name: feature-flags-config
               mountPath: /app/featureFlags.config.json

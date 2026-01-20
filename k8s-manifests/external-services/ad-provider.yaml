@@ -28,14 +28,14 @@ spec:
     spec:
       containers:
         - name: ad-provider
-          image: ${REGISTRY_URL}/ad-provider:${SD_TAG}
+          image: localhost:5000/ad-provider:0.3.1
           ports:
             - containerPort: 8081
           env:
             - name: PORT
               value: "8081"
             - name: AD_PROVIDER_LATENCY_MS
-              value: "100"
+              value: "550"
           resources:
             requests:
               memory: "32Mi"

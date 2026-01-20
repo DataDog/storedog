@@ -14,6 +14,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: discounts
+  labels:
+    app: discounts
+    team: discounts
 spec:
   replicas: 1
   selector:
@@ -23,14 +26,17 @@ spec:
     metadata:
       labels:
         app: discounts
+        team: discounts
+      annotations:
+        ad.datadoghq.com/discounts.logs: '[{"source": "python"}]'
     spec:
       initContainers:
         - name: wait-for-db
-          image: busybox
+          image: busybox:1.37.0
           command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done;']
       containers:
         - name: discounts
-          image: ${REGISTRY_URL}/discounts:${SD_TAG}
+          image: localhost:5000/discounts:1.4.1
           ports:
             - containerPort: 2814
           env:

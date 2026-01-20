@@ -15,18 +15,16 @@ spec:
       appSecret:
         secretName: datadog-secret
         keyName: app-key
+    tags:
+      - "env:apm-workshop"
+  override:
+    nodeAgent:
+      image:
+        tag: 7.74.1
+    clusterAgent:
+      image:
+        tag: 7.74.1
   features:
     logCollection: # Logs
       enabled: true
       containerCollectAll: true
-    apm:
-      instrumentation: # Single Step Instrumentation
-        enabled: true
-        targets:
-          - name: "default-target"
-            ddTraceVersions:
-              java: "1"
-              python: "3"
-              js: "5"
-              php: "1"
-              dotnet: "3"

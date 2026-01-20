@@ -1,30 +1,39 @@
 # Job to upload frontend source maps to Datadog
-# Run this after the frontend deployment is ready
 # kubectl apply -f upload-sourcemaps.yaml
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: upload-frontend-sourcemaps
 spec:
-  ttlSecondsAfterFinished: 300  # Clean up job after 5 minutes
+  ttlSecondsAfterFinished: 60  # Clean up job after 1 minute
   backoffLimit: 3
   template:
     spec:
       restartPolicy: Never
       containers:
         - name: upload-sourcemaps
-          image: ${REGISTRY_URL}/frontend:${SD_TAG}
+          image: localhost:5000/frontend:3.2.3
           command:
             - /bin/sh
             - -c
             - |
               echo "Uploading source maps to Datadog..."
               datadog-ci sourcemaps upload /app/.next/static \
-                --service=storedog-web \
-                --release-version=${SD_TAG:-latest} \
+                --service=$DD_SERVICE \
+                --release-version=$DD_VERSION \
                 --minified-path-prefix=/_next/static
               echo "Source map upload complete."
           env:
+            - name: DD_SERVICE
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: NEXT_PUBLIC_DD_SERVICE_FRONTEND
+            - name: DD_VERSION
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: NEXT_PUBLIC_DD_VERSION_FRONTEND
             - name: DATADOG_API_KEY
               valueFrom:
                 secretKeyRef:

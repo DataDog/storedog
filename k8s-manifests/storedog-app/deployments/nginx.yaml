@@ -15,6 +15,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: service-proxy
+  labels:
+    app: service-proxy
+    team: frontend
 spec:
   replicas: 1
   selector:
@@ -24,17 +27,30 @@ spec:
     metadata:
       labels:
         app: service-proxy
+        team: frontend
+      annotations:
+        ad.datadoghq.com/service-proxy.logs: '[{"source": "nginx"}]'
     spec:
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
+      initContainers:
+        - name: wait-for-frontend
+          image: busybox:1.37.0
+          command: ['sh', '-c', 'until nc -z frontend 3000; do echo waiting for frontend; sleep 2; done;']
       containers:
         - name: service-proxy
-          image: ${REGISTRY_URL}/nginx:${SD_TAG}
+          image: localhost:5000/nginx:1.28.0
           ports:
             - containerPort: 80
           env:
             - name: NGINX_RESOLVER
               value: "kube-dns.kube-system.svc.cluster.local"
+            - name: ADS_A_UPSTREAM
+              value: "ads:3030"
+            - name: ADS_B_UPSTREAM
+              value: "ads-java:3030"
+            - name: ADS_B_PERCENT
+              value: "50"
           resources:
             requests:
               memory: "128Mi"

@@ -2,6 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: puppeteer
+  labels:
+    app: puppeteer
+    team: frontend
 spec:
   replicas: 1
   selector:
@@ -11,10 +14,11 @@ spec:
     metadata:
       labels:
         app: puppeteer
+        team: frontend
     spec:
       containers:
         - name: puppeteer
-          image: ${REGISTRY_URL}/puppeteer:${SD_TAG}
+          image: ghcr.io/datadog/storedog/puppeteer:1.5.0
           env:
             - name: STOREDOG_URL
               value: "http://service-proxy.storedog.svc.cluster.local"
@@ -32,7 +36,7 @@ spec:
           securityContext:
             capabilities:
               add:
-                - SYS_ADMIN  # Required for Puppeteer to run in Docker
+                - SYS_ADMIN
           volumeMounts:
             - name: dshm
               mountPath: /dev/shm
@@ -40,4 +44,4 @@ spec:
         - name: dshm
           emptyDir:
             medium: Memory
-            sizeLimit: 4Gi  # Equivalent to shm_size: '4gb' in docker-compose
+            sizeLimit: 4Gi
