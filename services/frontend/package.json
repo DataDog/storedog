@@ -1,6 +1,6 @@
 {
   "name": "storedog-frontend",
-  "version": "1.4.0",
+  "version": "3.2.3",
   "license": "MIT",
   "scripts": {
     "dev": "NODE_OPTIONS='--require next-logger' next dev",

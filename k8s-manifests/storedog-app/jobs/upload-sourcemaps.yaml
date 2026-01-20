@@ -22,7 +22,14 @@ spec:
                 --service=$DD_SERVICE \
                 --release-version=$DD_VERSION \
                 --minified-path-prefix=/_next/static
-              echo "Source map upload complete."
+              echo "First upload complete."
+
+              echo "Uploading source maps for frontend-api..."
+              datadog-ci sourcemaps upload /app/.next/static \
+                --service=frontend-api \
+                --release-version=3.2.3 \
+                --minified-path-prefix=/_next/static
+              echo "All source map uploads complete."
           env:
             - name: DD_SERVICE
               valueFrom:
