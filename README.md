@@ -1,4 +1,4 @@
-# Storedog
+# KFM Fork - Storedog
 
 Storedog is a Dockerized e-commerce site used primarily in labs run at [learn.datadoghq.com](https://learn.datadoghq.com). It consists of multiple services:
 
