@@ -52,8 +52,10 @@ RUN bundle install || exit 1
 RUN npm install
 RUN npm run build
 
-# Precompile assets - use dummy secret key base for precompilation
-RUN SECRET_KEY_BASE=precompile_placeholder bundle exec rails assets:precompile
+# Precompile assets - use dummy secret key base and nulldb adapter to avoid database connection
+RUN SECRET_KEY_BASE=precompile_placeholder \
+    DATABASE_URL="nulldb://localhost/precompile" \
+    bundle exec rails assets:precompile
 
 EXPOSE 4000
 
