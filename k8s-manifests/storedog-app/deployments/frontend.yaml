@@ -37,7 +37,7 @@ spec:
           image: ${REGISTRY_URL}/frontend:${SD_TAG}
           ports:
             - containerPort: 3000
-          command: ["npm", "run", "start"]
+          # Entrypoint in Dockerfile handles RUM config injection then runs npm start
           env:
             - name: NEXT_PUBLIC_ADS_ROUTE
               valueFrom:
@@ -89,8 +89,17 @@ spec:
                 secretKeyRef:
                   name: datadog-secret
                   key: dd_client_token
+            - name: NEXT_PUBLIC_DD_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: NEXT_PUBLIC_DD_ENV
             - name: NEXT_TELEMETRY_DISABLED
               value: "1"
+            - name: NEXT_PUBLIC_DD_SERVICE_FRONTEND
+              value: "storedog-web"
+            - name: NEXT_PUBLIC_DD_VERSION_FRONTEND
+              value: "main-a7f3e2b"
           resources:
             requests:
               memory: "256Mi"

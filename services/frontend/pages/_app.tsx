@@ -18,15 +18,10 @@ datadogRum.init({
   clientToken: `${
     process.env.NEXT_PUBLIC_DD_CLIENT_TOKEN || 'DD_CLIENT_TOKEN_PLACEHOLDER'
   }`,
-  site: (process.env.NEXT_PUBLIC_DD_SITE || 'datadoghq.com') as
-    | 'datadoghq.com'
-    | 'datadoghq.eu'
-    | 'us3.datadoghq.com'
-    | 'us5.datadoghq.com'
-    | 'ap1.datadoghq.com',
-  service: `${process.env.NEXT_PUBLIC_DD_SERVICE_FRONTEND || 'storedog-web'}`,
-  version: `${process.env.NEXT_PUBLIC_DD_VERSION_FRONTEND || 'main-a7f3e2b'}`,
-  env: `${process.env.NEXT_PUBLIC_DD_ENV || 'development'}`,
+  site: 'datadoghq.com',
+  service: `${process.env.NEXT_PUBLIC_DD_SERVICE_FRONTEND || 'DD_SERVICE_PLACEHOLDER'}`,
+  version: `${process.env.NEXT_PUBLIC_DD_VERSION_FRONTEND || 'DD_VERSION_PLACEHOLDER'}`,
+  env: `${process.env.NEXT_PUBLIC_DD_ENV || 'DD_ENV_PLACEHOLDER'}`,
   trackUserInteractions: true,
   trackResources: true,
   trackLongTasks: true,

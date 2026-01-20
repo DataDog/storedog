@@ -24,7 +24,14 @@ RUN npm install -g @datadog/datadog-ci
 
 COPY . .
 
-# Build the Next.js application
+# Build the Next.js application (RUM placeholders will be replaced at runtime)
 RUN npm run build
 
+# Add entrypoint script for runtime config injection
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 EXPOSE 3000
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["npm", "run", "start"]
