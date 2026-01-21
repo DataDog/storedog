@@ -20,10 +20,10 @@ spec:
   override:
     nodeAgent:
       image:
-        tag: 7.74.1
+        tag: 7.75.0
     clusterAgent:
       image:
-        tag: 7.74.1
+        tag: 7.75.0
   features:
     logCollection: # Logs
       enabled: true
