@@ -11,11 +11,11 @@ module.exports = {
   images: {
     domains: [process.env.NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN],
   },
-  // Rewrites to support dynamic taxonomy routes without special characters in filenames
+  // Rewrites to support dynamic routes without special characters in filenames
   // This maintains Windows file system compatibility
   async rewrites() {
     return [
-      // API routes
+      // API routes - taxonomies
       {
         source: '/api/taxonomies/:taxonomy/:slug+',
         destination: '/api/taxonomies/taxonomy-slug-api?taxonomy=:taxonomy&slug=:slug*',
@@ -24,7 +24,17 @@ module.exports = {
         source: '/api/taxonomies/:taxonomy',
         destination: '/api/taxonomies/taxonomy-api?taxonomy=:taxonomy',
       },
-      // Page routes
+      // API routes - pages
+      {
+        source: '/api/pages/:slug',
+        destination: '/api/pages/page-by-slug?slug=:slug',
+      },
+      // API routes - products
+      {
+        source: '/api/products/:slug',
+        destination: '/api/products/product-by-slug?slug=:slug',
+      },
+      // Page routes - taxonomies
       {
         source: '/taxonomies/:taxonomy/:slug+',
         destination: '/taxonomies/taxonomy-slug-page?taxonomy=:taxonomy&slug=:slug*',
@@ -32,6 +42,16 @@ module.exports = {
       {
         source: '/taxonomies/:taxonomy',
         destination: '/taxonomies/taxonomy-page?taxonomy=:taxonomy',
+      },
+      // Page routes - products
+      {
+        source: '/products/:slug',
+        destination: '/products/product-page?slug=:slug',
+      },
+      // Page routes - catch-all pages
+      {
+        source: '/:pages+',
+        destination: '/catch-all-pages?pages=:pages*',
       },
     ]
   },
