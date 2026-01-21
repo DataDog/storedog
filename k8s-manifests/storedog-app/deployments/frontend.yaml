@@ -34,10 +34,6 @@ spec:
         - name: feature-flags-config
           configMap:
             name: feature-flags-config
-      initContainers:
-        - name: wait-for-backend
-          image: busybox:1.37.0
-          command: ['sh', '-c', 'until nc -z backend 4000; do echo waiting for backend; sleep 2; done;']
       containers:
         - name: frontend-api
           image: localhost:5000/frontend:3.2.3
