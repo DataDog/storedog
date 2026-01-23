@@ -11,19 +11,21 @@ module.exports = {
   images: {
     domains: [process.env.NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN],
   },
-  // Rewrites to support dynamic routes without special characters in filenames
-  // The [...] spread pattern is not allowed by push protection rules
+  // Rewrites to support dynamic routes without special characters in filenames.
+  // The [...] spread pattern is not allowed by push protection rules, so we use
+  // rewrites to map the original URL patterns to renamed files.
+  // See: dynamic-page.tsx (was [...pages].tsx) and taxonomies/child-taxon.tsx (was [...slug].tsx)
   async rewrites() {
     return [
-      // Page routes - catch-all taxonomies (was [...slug].tsx)
+      // Catch-all for nested taxonomy paths like /taxonomies/categories/clothing/shirts
       {
         source: '/taxonomies/:taxonomy/:slug+',
-        destination: '/taxonomies/taxonomy-slug-page?taxonomy=:taxonomy&slug=:slug*',
+        destination: '/taxonomies/child-taxon?taxonomy=:taxonomy&slug=:slug*',
       },
-      // Page routes - catch-all pages (was [...pages].tsx)
+      // Catch-all for dynamic pages like /about, /contact, etc.
       {
         source: '/:pages+',
-        destination: '/catch-all-pages?pages=:pages*',
+        destination: '/dynamic-page?pages=:pages*',
       },
     ]
   },

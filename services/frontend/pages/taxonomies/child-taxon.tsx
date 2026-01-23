@@ -1,3 +1,13 @@
+/**
+ * Dynamic handler for nested taxonomy paths.
+ *
+ * This file was renamed from [...slug].tsx because the [...] spread pattern
+ * is not allowed by push protection rules. The original URL routing is preserved
+ * via a rewrite rule in next.config.js:
+ *   source: '/taxonomies/:taxonomy/:slug+' -> destination: '/taxonomies/child-taxon?taxonomy=:taxonomy&slug=:slug*'
+ *
+ * The 'taxonomy' and 'slug' query parameters contain the dynamic path segments.
+ */
 import { Page } from '@customTypes/page'
 import { Taxon } from '@customTypes/taxons'
 import { ProductList } from '@components/product'

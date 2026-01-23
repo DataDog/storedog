@@ -1,3 +1,13 @@
+/**
+ * Dynamic page handler for catch-all routes.
+ *
+ * This file was renamed from [...pages].tsx because the [...] spread pattern
+ * is not allowed by push protection rules. The original URL routing is preserved
+ * via a rewrite rule in next.config.js:
+ *   source: '/:pages+' -> destination: '/dynamic-page?pages=:pages*'
+ *
+ * The 'pages' query parameter contains the dynamic path segments.
+ */
 import type { GetServerSidePropsContext } from 'next'
 import { Text } from '@components/ui'
 import { Layout } from '@components/common'
