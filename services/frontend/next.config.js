@@ -12,43 +12,15 @@ module.exports = {
     domains: [process.env.NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN],
   },
   // Rewrites to support dynamic routes without special characters in filenames
-  // This maintains Windows file system compatibility
+  // The [...] spread pattern is not allowed by push protection rules
   async rewrites() {
     return [
-      // API routes - taxonomies
-      {
-        source: '/api/taxonomies/:taxonomy/:slug+',
-        destination: '/api/taxonomies/taxonomy-slug-api?taxonomy=:taxonomy&slug=:slug*',
-      },
-      {
-        source: '/api/taxonomies/:taxonomy',
-        destination: '/api/taxonomies/taxonomy-api?taxonomy=:taxonomy',
-      },
-      // API routes - pages
-      {
-        source: '/api/pages/:slug',
-        destination: '/api/pages/page-by-slug?slug=:slug',
-      },
-      // API routes - products
-      {
-        source: '/api/products/:slug',
-        destination: '/api/products/product-by-slug?slug=:slug',
-      },
-      // Page routes - taxonomies
+      // Page routes - catch-all taxonomies (was [...slug].tsx)
       {
         source: '/taxonomies/:taxonomy/:slug+',
         destination: '/taxonomies/taxonomy-slug-page?taxonomy=:taxonomy&slug=:slug*',
       },
-      {
-        source: '/taxonomies/:taxonomy',
-        destination: '/taxonomies/taxonomy-page?taxonomy=:taxonomy',
-      },
-      // Page routes - products
-      {
-        source: '/products/:slug',
-        destination: '/products/product-page?slug=:slug',
-      },
-      // Page routes - catch-all pages
+      // Page routes - catch-all pages (was [...pages].tsx)
       {
         source: '/:pages+',
         destination: '/catch-all-pages?pages=:pages*',

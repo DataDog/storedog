@@ -17,14 +17,14 @@ function later(delay) {
 
 export async function getServerSideProps({
   req,
-  query,
-}: GetServerSidePropsContext) {
+  params,
+}: GetServerSidePropsContext<{ slug: string }>) {
   const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_API_ROUTE
     ? `${process.env.NEXT_PUBLIC_FRONTEND_API_ROUTE}/api`
     : 'http://localhost:3000/api'
 
   const product: Product = await fetch(
-    `${baseUrl}/products/${query?.slug}?include=default_variant,variants,option_types,product_properties,taxons,images,primary_variant`
+    `${baseUrl}/products/${params?.slug}?include=default_variant,variants,option_types,product_properties,taxons,images,primary_variant`
   )
     .then((res) => res.json())
     .catch((error) => {

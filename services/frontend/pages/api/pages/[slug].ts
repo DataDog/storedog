@@ -3,7 +3,7 @@ import { codeStash } from 'code-stash'
 import { getPage } from '@lib/api/pages'
 import config from '../../../featureFlags.config.json'
 
-// This is the handler for the /api/pages/:slug route
+// This is the handler for the /api/pages/[slug] route
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse

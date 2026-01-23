@@ -1,29 +1,21 @@
+import type { GetServerSidePropsContext } from 'next'
 import { Layout } from '@components/common'
 import { Page } from '@customTypes/page'
 import { Taxon } from '@customTypes/taxons'
 import { Container } from '@components/ui'
 import Link from 'next/link'
 
-export const getServerSideProps = async ({ query }) => {
+export const getServerSideProps = async ({ params }) => {
   const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_API_ROUTE
     ? `${process.env.NEXT_PUBLIC_FRONTEND_API_ROUTE}/api`
     : 'http://localhost:3000/api'
 
-  const { taxonomy } = query
-
   const pages: Page[] = await fetch(`${baseUrl}/pages`).then((res) =>
     res.json()
   )
-
-  const taxonRes = await fetch(`${baseUrl}/taxonomies/${taxonomy}`)
-  if (!taxonRes.ok) {
-    return { notFound: true }
-  }
-  const taxon: Taxon = await taxonRes.json()
-
-  if (!taxon?.id) {
-    return { notFound: true }
-  }
+  const taxon: Taxon = await fetch(
+    `${baseUrl}/taxonomies/${params.taxonomy}`
+  ).then((res) => res.json())
 
   const taxons: any = await fetch(`${baseUrl}/taxonomies`).then((res) =>
     res.json()
