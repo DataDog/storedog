@@ -156,6 +156,7 @@ const CartItem = ({
           handleChange={handleChange}
           increase={() => updateQuantity(1)}
           decrease={() => updateQuantity(-1)}
+          item={item}
         />
       )}
     </li>
