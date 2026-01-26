@@ -76,8 +76,9 @@ cd kafka-consumer/files/app
 
 ```bash
 # Build images
-docker build -t storedog/kafka-producer:latest kafka-producer/files/
-docker build -t storedog/kafka-consumer:latest kafka-consumer/files/
+docker build -t storedog/kafka-producer:1.0.0 kafka-producer/files/
+docker build -t storedog/kafka-consumer:1.0.0 kafka-consumer/files/
+docker build -t storedog/order-webhook-bridge:1.0.0 order-webhook-bridge/files/
 ```
 
 ## Running in Kubernetes
