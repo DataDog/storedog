@@ -4,14 +4,16 @@ import datadog.kafka.example.producer.service.AutoProducerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 
-@Component
-public class ScheduledTasks {
+@Configuration
+public class ScheduledTasks implements SchedulingConfigurer {
     private static final Logger log = LoggerFactory.getLogger(ScheduledTasks.class);
     
     private final int messagesPerMinute;
+    private final long intervalMs;
 
     @Autowired
     private AutoProducerService autoProducerService;
@@ -23,17 +25,19 @@ public class ScheduledTasks {
             ? Integer.parseInt(rateEnv) 
             : 60;
         
+        // Calculate interval in milliseconds (60000ms per minute)
+        this.intervalMs = this.messagesPerMinute > 0 ? (60000 / messagesPerMinute) : 1000;
+        
         log.info("Scheduled producer configured: {} messages/minute (interval: {}ms)", 
-            messagesPerMinute, getIntervalMs());
-    }
-    
-    // Public getter for SpEL access in @Scheduled
-    public long getIntervalMs() {
-        return this.messagesPerMinute > 0 ? (60000 / messagesPerMinute) : 1000;
+            messagesPerMinute, intervalMs);
     }
 
-    @Scheduled(fixedRateString = "#{__listener.intervalMs}")
-    public void autoProduce() {
-        autoProducerService.produceMessages();
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
+        taskRegistrar.addFixedRateTask(
+            () -> autoProducerService.produceMessages(),
+            intervalMs
+        );
+        log.info("Scheduled task registered with {}ms interval", intervalMs);
     }
 }
