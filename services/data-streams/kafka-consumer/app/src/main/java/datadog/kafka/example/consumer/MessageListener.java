@@ -21,6 +21,8 @@ public class MessageListener {
     private KafkaTemplate<String, byte[]> kafkaTemplate;
 
     private final String serviceName = System.getenv().getOrDefault("DD_SERVICE_NAME", "unknown");
+    private final String consumerGroup = System.getenv().getOrDefault("CONSUMER_GROUP", "default-group");
+    private final String inTopics = System.getenv().getOrDefault("TOPICS_IN", "");
     private final String outTopics = System.getenv("TOPICS_OUT");
     private final int processingTimeMin = getEnvInt("PROCESSING_TIME_MS_MIN", 50);
     private final int processingTimeMax = getEnvInt("PROCESSING_TIME_MS_MAX", 100);
@@ -28,8 +30,8 @@ public class MessageListener {
     
     private final Random random = new Random();
 
-    @KafkaListener(groupId = "#{spring.kafka.consumerGroup}", 
-                   topics = "#{'${spring.kafka.inTopics}'.split(',')}")
+    @KafkaListener(groupId = "#{__listener.consumerGroup}", 
+                   topics = "#{__listener.inTopics.split(',')}")
     public void listen(byte[] messageBytes) {
         String messageId = UUID.randomUUID().toString().substring(0, 8);
         long startTime = System.currentTimeMillis();

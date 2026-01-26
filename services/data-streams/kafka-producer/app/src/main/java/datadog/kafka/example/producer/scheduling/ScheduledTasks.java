@@ -25,13 +25,13 @@ public class ScheduledTasks {
             : 60;
         
         // Calculate interval in milliseconds (60000ms per minute)
-        this.intervalMs = 60000 / messagesPerMinute;
+        this.intervalMs = this.messagesPerMinute > 0 ? (60000 / messagesPerMinute) : 1000;
         
         log.info("Scheduled producer configured: {} messages/minute (every {}ms)", 
             messagesPerMinute, intervalMs);
     }
 
-    @Scheduled(fixedRateString = "#{${MESSAGES_PER_MINUTE:60} == 0 ? 1000 : 60000 / ${MESSAGES_PER_MINUTE:60}}")
+    @Scheduled(fixedRateString = "#{__listener.intervalMs}")
     public void autoProduce() {
         autoProducerService.produceMessages();
     }
