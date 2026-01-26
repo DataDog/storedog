@@ -28,16 +28,22 @@ Welcome to the Storedog Data Streams project! This index helps you find the righ
 - **[PROJECT_SUMMARY.md](./PROJECT_SUMMARY.md)** 📝  
   Complete overview of what's been built and next steps
 
+- **[K8S_SUMMARY.md](./K8S_SUMMARY.md)** ☸️  
+  Kubernetes deployment summary and manifest overview
+
 - **[REFACTORING_SUMMARY.md](./REFACTORING_SUMMARY.md)** 🔄  
   What changed from the original codebase
 
 ### For Operations
 
 - **[QUICKSTART.md](./QUICKSTART.md)** ⚡  
-  Quick deployment and troubleshooting
+  Quick deployment and troubleshooting (Kubernetes)
 
-- **[docker-compose.yml](./docker-compose.yml)** 🐳  
-  Docker Compose configuration
+- **[DOCKER_COMPOSE.md](./DOCKER_COMPOSE.md)** 🐳  
+  Docker Compose alternative for local development
+
+- **[../../k8s-manifests/README.md#data-streams-monitoring](../../k8s-manifests/README.md#data-streams-monitoring)** ☸️  
+  Kubernetes manifests documentation
 
 ## 📂 Directory Structure
 
@@ -89,7 +95,7 @@ data-streams/
 → Read [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 **...get it running quickly**  
-→ Follow [QUICKSTART.md](./QUICKSTART.md)
+→ Follow [QUICKSTART.md](./QUICKSTART.md) (K8s) or [DOCKER_COMPOSE.md](./DOCKER_COMPOSE.md) (local)
 
 **...see the pipeline visually**  
 → Check [PIPELINE_DIAGRAM.md](./PIPELINE_DIAGRAM.md)
@@ -107,7 +113,10 @@ data-streams/
 → See [SERVICE_DEFINITIONS.md](./SERVICE_DEFINITIONS.md#adding-a-new-service)
 
 **...deploy to Kubernetes**  
-→ Documentation coming soon (see PROJECT_SUMMARY.md Phase 3)
+→ Follow [QUICKSTART.md](./QUICKSTART.md) or see [k8s-manifests README](../../k8s-manifests/README.md#data-streams-monitoring)
+
+**...run locally with Docker Compose**  
+→ See [DOCKER_COMPOSE.md](./DOCKER_COMPOSE.md)
 
 **...integrate with Storedog**  
 → Documentation coming soon (see PROJECT_SUMMARY.md Phase 3)
@@ -116,7 +125,7 @@ data-streams/
 
 ### Platform Engineer
 1. [ARCHITECTURE.md](./ARCHITECTURE.md) - System design
-2. [docker-compose.yml](./docker-compose.yml) - Infrastructure config
+2. [K8S_SUMMARY.md](./K8S_SUMMARY.md) - K8s infrastructure
 3. [QUICKSTART.md](./QUICKSTART.md) - Deployment guide
 
 ### Software Developer
@@ -131,7 +140,7 @@ data-streams/
 
 ### SRE / Operations
 1. [QUICKSTART.md](./QUICKSTART.md) - Troubleshooting
-2. [docker-compose.yml](./docker-compose.yml) - Service configs
+2. [K8S_SUMMARY.md](./K8S_SUMMARY.md) - K8s resources
 3. [ARCHITECTURE.md](./ARCHITECTURE.md) - Service dependencies
 
 ## 🔍 By Topic
@@ -156,9 +165,16 @@ data-streams/
 - [ARCHITECTURE.md](./ARCHITECTURE.md#service-definitions)
 - [SERVICE_DEFINITIONS.md](./SERVICE_DEFINITIONS.md#current-service-definitions)
 
-### Docker
+### Kubernetes
 - [QUICKSTART.md](./QUICKSTART.md)
+- [K8S_SUMMARY.md](./K8S_SUMMARY.md)
+- [../../k8s-manifests/README.md#data-streams-monitoring](../../k8s-manifests/README.md#data-streams-monitoring)
+
+### Docker Compose
+- [DOCKER_COMPOSE.md](./DOCKER_COMPOSE.md)
 - [docker-compose.yml](./docker-compose.yml)
+
+### Docker Images
 - `kafka-producer/files/Dockerfile`
 - `kafka-consumer/files/Dockerfile`
 
@@ -171,15 +187,18 @@ data-streams/
 
 | Document | Lines | Read Time | Audience |
 |----------|-------|-----------|----------|
-| QUICKSTART.md | ~300 | 5 min | Everyone |
+| QUICKSTART.md | ~400 | 10 min | K8s deployment |
+| DOCKER_COMPOSE.md | ~50 | 3 min | Local dev |
 | README.md | ~150 | 3 min | Everyone |
 | ARCHITECTURE.md | ~350 | 15 min | Engineers |
 | SERVICE_DEFINITIONS.md | ~400 | 10 min | Developers |
 | PIPELINE_DIAGRAM.md | ~400 | 10 min | Visual learners |
 | PROJECT_SUMMARY.md | ~300 | 10 min | Project overview |
+| K8S_SUMMARY.md | ~400 | 10 min | K8s deployment |
 | REFACTORING_SUMMARY.md | ~250 | 5 min | Migrating users |
+| K8s README section | ~200 | 5 min | K8s operators |
 
-**Total: ~2,150 lines of documentation**
+**Total: 3,000+ lines of documentation**
 
 ## 🎓 Learning Path
 

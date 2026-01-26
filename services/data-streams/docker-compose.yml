@@ -1,0 +1,273 @@
+# Docker Compose for Data Streams
+# Alternative deployment option for local development
+# Primary deployment: Kubernetes (see k8s-manifests/storedog-app/)
+
+version: '3.8'
+
+services:
+  # ============================================================================
+  # Infrastructure Services
+  # ============================================================================
+  
+  kafka:
+    hostname: kafka
+    image: bitnami/kafka:3.9.0
+    ports:
+      - "9092:9092"
+      - "9999:9999"
+    volumes:
+      - kafka_data:/bitnami
+    environment:
+      # KRaft mode configuration
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      # JMX for monitoring
+      - JMX_PORT=9999
+      - KAFKA_JMX_OPTS=-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=kafka -Dcom.sun.management.jmxremote.rmi.port=9999
+    labels:
+      com.datadoghq.ad.check_names: '["kafka", "kafka_consumer"]'
+      com.datadoghq.ad.init_configs: '[{},{}]'
+      com.datadoghq.ad.instances: |
+        [
+          {
+            "host": "%%host%%",
+            "port": "9999"
+          },
+          {
+            "kafka_connect_str": "%%host%%:9092",
+            "monitor_unlisted_consumer_groups": "true"
+          }
+        ]
+    healthcheck:
+      test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Optional: Datadog Agent for monitoring
+  datadog:
+    image: gcr.io/datadoghq/agent:7.61.0
+    environment:
+      - DD_API_KEY=${DD_API_KEY}
+      - DD_SITE=${DD_SITE:-datadoghq.com}
+      - DD_APM_ENABLED=true
+      - DD_APM_NON_LOCAL_TRAFFIC=true
+      - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
+      - DD_PROCESS_AGENT_ENABLED=true
+      - DD_ENV=${DD_ENV:-docker-compose}
+    ports:
+      - "8126:8126/tcp"
+      - "8125:8125/udp"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc/:/host/proc/:ro
+      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+    profiles:
+      - monitoring
+
+  # ============================================================================
+  # Producer Services
+  # ============================================================================
+  
+  order-producer:
+    image: ${REGISTRY:-localhost:5000}/kafka-producer:${VERSION:-latest}
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - BOOTSTRAP=kafka:9092
+      - TOPICS_OUT=order-events
+      - MESSAGES_PER_MINUTE=60
+      - DD_AGENT_HOST=datadog
+      - DD_DATA_STREAMS_ENABLED=true
+      - DD_SERVICE_NAME=order-producer
+      - DD_VERSION=1.0.0
+      - DD_ENV=${DD_ENV:-docker-compose}
+      - DD_SERVICE_MAPPING=kafka:order-producer
+      - DD_TAGS=service_type:producer,pipeline_stage:order_creation
+
+  # ============================================================================
+  # Consumer/Producer Services
+  # ============================================================================
+  
+  order-validator:
+    image: ${REGISTRY:-localhost:5000}/kafka-consumer:${VERSION:-latest}
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8081:8080"
+    environment:
+      - KAFKA_CONSUME_SERVER=kafka:9092
+      - KAFKA_PRODUCE_SERVER=kafka:9092
+      - TOPICS_IN=order-events
+      - TOPICS_OUT=validated-orders,invalid-orders
+      - CONSUMER_GROUP=order-validator-group
+      - PROCESSING_TIME_MS_MIN=50
+      - PROCESSING_TIME_MS_MAX=100
+      - ERROR_RATE_PERCENT=2
+      - DD_AGENT_HOST=datadog
+      - DD_DATA_STREAMS_ENABLED=true
+      - DD_SERVICE_NAME=order-validator
+      - DD_VERSION=1.0.0
+      - DD_ENV=${DD_ENV:-docker-compose}
+      - DD_SERVICE_MAPPING=kafka:order-validator
+      - DD_TAGS=service_type:validation,pipeline_stage:order_validation
+
+  inventory-service:
+    image: ${REGISTRY:-localhost:5000}/kafka-consumer:${VERSION:-latest}
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8082:8080"
+    environment:
+      - KAFKA_CONSUME_SERVER=kafka:9092
+      - KAFKA_PRODUCE_SERVER=kafka:9092
+      - TOPICS_IN=validated-orders
+      - TOPICS_OUT=inventory-reserved,inventory-unavailable
+      - CONSUMER_GROUP=inventory-service-group
+      - PROCESSING_TIME_MS_MIN=100
+      - PROCESSING_TIME_MS_MAX=200
+      - ERROR_RATE_PERCENT=5
+      - DD_AGENT_HOST=datadog
+      - DD_DATA_STREAMS_ENABLED=true
+      - DD_SERVICE_NAME=inventory-service
+      - DD_VERSION=1.0.0
+      - DD_ENV=${DD_ENV:-docker-compose}
+      - DD_SERVICE_MAPPING=kafka:inventory-service
+      - DD_TAGS=service_type:inventory,pipeline_stage:inventory_reservation
+
+  payment-processor:
+    image: ${REGISTRY:-localhost:5000}/kafka-consumer:${VERSION:-latest}
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8083:8080"
+    environment:
+      - KAFKA_CONSUME_SERVER=kafka:9092
+      - KAFKA_PRODUCE_SERVER=kafka:9092
+      - TOPICS_IN=inventory-reserved
+      - TOPICS_OUT=payment-confirmed,payment-failed
+      - CONSUMER_GROUP=payment-processor-group
+      - PROCESSING_TIME_MS_MIN=200
+      - PROCESSING_TIME_MS_MAX=500
+      - ERROR_RATE_PERCENT=3
+      - DD_AGENT_HOST=datadog
+      - DD_DATA_STREAMS_ENABLED=true
+      - DD_SERVICE_NAME=payment-processor
+      - DD_VERSION=1.0.0
+      - DD_ENV=${DD_ENV:-docker-compose}
+      - DD_SERVICE_MAPPING=kafka:payment-processor
+      - DD_TAGS=service_type:payment,pipeline_stage:payment_processing,pci_compliant:true
+
+  fraud-detector:
+    image: ${REGISTRY:-localhost:5000}/kafka-consumer:${VERSION:-latest}
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8084:8080"
+    environment:
+      - KAFKA_CONSUME_SERVER=kafka:9092
+      - KAFKA_PRODUCE_SERVER=kafka:9092
+      - TOPICS_IN=order-events,payment-confirmed
+      - TOPICS_OUT=fraud-alerts,order-events-analyzed
+      - CONSUMER_GROUP=fraud-detector-group
+      - PROCESSING_TIME_MS_MIN=50
+      - PROCESSING_TIME_MS_MAX=150
+      - ERROR_RATE_PERCENT=1
+      - DD_AGENT_HOST=datadog
+      - DD_DATA_STREAMS_ENABLED=true
+      - DD_SERVICE_NAME=fraud-detector
+      - DD_VERSION=1.0.0
+      - DD_ENV=${DD_ENV:-docker-compose}
+      - DD_SERVICE_MAPPING=kafka:fraud-detector
+      - DD_TAGS=service_type:security,pipeline_stage:fraud_detection,ml_enabled:true
+
+  fulfillment-service:
+    image: ${REGISTRY:-localhost:5000}/kafka-consumer:${VERSION:-latest}
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8085:8080"
+    environment:
+      - KAFKA_CONSUME_SERVER=kafka:9092
+      - KAFKA_PRODUCE_SERVER=kafka:9092
+      - TOPICS_IN=payment-confirmed
+      - TOPICS_OUT=order-fulfilled,shipment-created,warehouse-assigned
+      - CONSUMER_GROUP=fulfillment-service-group
+      - PROCESSING_TIME_MS_MIN=150
+      - PROCESSING_TIME_MS_MAX=300
+      - ERROR_RATE_PERCENT=4
+      - DD_AGENT_HOST=datadog
+      - DD_DATA_STREAMS_ENABLED=true
+      - DD_SERVICE_NAME=fulfillment-service
+      - DD_VERSION=1.0.0
+      - DD_ENV=${DD_ENV:-docker-compose}
+      - DD_SERVICE_MAPPING=kafka:fulfillment-service
+      - DD_TAGS=service_type:fulfillment,pipeline_stage:order_fulfillment
+
+  # ============================================================================
+  # Consumer-Only Services (Terminal nodes)
+  # ============================================================================
+  
+  notification-service:
+    image: ${REGISTRY:-localhost:5000}/kafka-consumer:${VERSION:-latest}
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8086:8080"
+    environment:
+      - KAFKA_CONSUME_SERVER=kafka:9092
+      - TOPICS_IN=order-fulfilled,shipment-created,payment-failed,inventory-unavailable,fraud-alerts
+      - CONSUMER_GROUP=notification-service-group
+      - PROCESSING_TIME_MS_MIN=300
+      - PROCESSING_TIME_MS_MAX=800
+      - ERROR_RATE_PERCENT=10
+      - DD_AGENT_HOST=datadog
+      - DD_DATA_STREAMS_ENABLED=true
+      - DD_SERVICE_NAME=notification-service
+      - DD_VERSION=1.0.0
+      - DD_ENV=${DD_ENV:-docker-compose}
+      - DD_SERVICE_MAPPING=kafka:notification-service
+      - DD_TAGS=service_type:notification,pipeline_stage:customer_communication
+
+  analytics-aggregator:
+    image: ${REGISTRY:-localhost:5000}/kafka-consumer:${VERSION:-latest}
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8087:8080"
+    environment:
+      - KAFKA_CONSUME_SERVER=kafka:9092
+      - TOPICS_IN=order-events,order-fulfilled,payment-confirmed,fraud-alerts
+      - CONSUMER_GROUP=analytics-aggregator-group
+      - KAFKA_CONSUMER_FETCH_MIN_BYTES=5120
+      - KAFKA_CONSUMER_FETCH_MAX_WAIT_MS=5000
+      - PROCESSING_TIME_MS_MIN=500
+      - PROCESSING_TIME_MS_MAX=1000
+      - ERROR_RATE_PERCENT=1
+      - DD_AGENT_HOST=datadog
+      - DD_DATA_STREAMS_ENABLED=true
+      - DD_SERVICE_NAME=analytics-aggregator
+      - DD_VERSION=1.0.0
+      - DD_ENV=${DD_ENV:-docker-compose}
+      - DD_SERVICE_MAPPING=kafka:analytics-aggregator
+      - DD_TAGS=service_type:analytics,pipeline_stage:data_aggregation,consumer_only:true
+
+volumes:
+  kafka_data:
+    driver: local

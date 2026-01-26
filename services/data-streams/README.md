@@ -80,10 +80,10 @@ docker build -t storedog/kafka-producer:latest kafka-producer/files/
 docker build -t storedog/kafka-consumer:latest kafka-consumer/files/
 ```
 
-## Running with Docker Compose
-
-See `docker-compose.yml` for example service configurations.
-
 ## Running in Kubernetes
 
-See `../../k8s-manifests/data-streams/` for Kubernetes deployment manifests.
+See `../../k8s-manifests/README.md#data-streams-monitoring` for Kubernetes deployment manifests and instructions.
+
+## Running with Docker Compose (Alternative)
+
+See `DOCKER_COMPOSE.md` for Docker Compose deployment instructions (useful for local development).

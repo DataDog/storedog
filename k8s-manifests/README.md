@@ -22,6 +22,9 @@ k8s-manifests/
 
 - **`cluster-setup/`**: Manifests for cluster-wide components (storage, provisioner, ingress controller).
 - **`storedog-app/`**: All manifests for the Storedog application, organized by resource type (configmaps, secrets, deployments, statefulsets, ingress).
+- **`datadog/`**: Datadog Agent/Operator configuration.
+- **`external-services/`**: External services (e.g., ad-provider).
+- **`fake-traffic/`**: Puppeteer for generating synthetic traffic.
 
 ## Cluster Prerequisites
 
@@ -245,3 +248,204 @@ kubectl logs -n local-path-storage -l app=local-path-provisioner
 # Ingress Controller Logs
 kubectl logs -n ingress-nginx -l app.kubernetes.io/name=ingress-nginx
 ```
+
+## Data Streams Monitoring
+
+The Storedog application includes a Kafka-based data streaming pipeline for demonstrating Datadog Data Streams Monitoring.
+
+### Overview
+
+The Data Streams pipeline consists of:
+- **1 Kafka StatefulSet** (message broker with persistence)
+- **1 Producer Deployment** (generates order events)
+- **7 Consumer Deployments** (process and forward messages)
+- **1 ConfigMap** (shared configuration)
+
+### Pipeline Architecture
+
+```
+order-producer → order-events
+  ↓
+order-validator → validated-orders
+  ↓
+inventory-service → inventory-reserved
+  ↓
+payment-processor → payment-confirmed
+  ↓
+fulfillment-service → order-fulfilled
+  ↓
+notification-service (terminal)
+
+Parallel flows:
+- fraud-detector (monitors order-events & payment-confirmed)
+- analytics-aggregator (monitors multiple topics)
+```
+
+### Data Streams Files
+
+```
+storedog-app/
+├── configmaps/
+│   └── data-streams-config.yaml       # Shared configuration
+├── statefulsets/
+│   └── kafka.yaml                     # Kafka broker (3.9.0)
+└── deployments/
+    ├── order-producer.yaml            # Generates orders
+    ├── order-validator.yaml           # Validates orders
+    ├── inventory-service.yaml         # Reserves inventory
+    ├── payment-processor.yaml         # Processes payments
+    ├── fraud-detector.yaml            # Detects fraud (parallel)
+    ├── fulfillment-service.yaml       # Creates shipments
+    ├── notification-service.yaml      # Sends notifications
+    └── analytics-aggregator.yaml      # Aggregates analytics
+```
+
+### Deploying Data Streams
+
+1. **Deploy Kafka StatefulSet:**
+
+```bash
+kubectl apply -f k8s-manifests/storedog-app/statefulsets/kafka.yaml -n storedog
+kubectl wait --for=condition=ready pod kafka-0 -n storedog --timeout=120s
+```
+
+2. **Deploy ConfigMap:**
+
+```bash
+kubectl apply -f k8s-manifests/storedog-app/configmaps/data-streams-config.yaml -n storedog
+```
+
+3. **Deploy Data Streams Services:**
+
+```bash
+kubectl apply -f k8s-manifests/storedog-app/deployments/order-producer.yaml -n storedog
+kubectl apply -f k8s-manifests/storedog-app/deployments/order-validator.yaml -n storedog
+kubectl apply -f k8s-manifests/storedog-app/deployments/inventory-service.yaml -n storedog
+kubectl apply -f k8s-manifests/storedog-app/deployments/payment-processor.yaml -n storedog
+kubectl apply -f k8s-manifests/storedog-app/deployments/fraud-detector.yaml -n storedog
+kubectl apply -f k8s-manifests/storedog-app/deployments/fulfillment-service.yaml -n storedog
+kubectl apply -f k8s-manifests/storedog-app/deployments/notification-service.yaml -n storedog
+kubectl apply -f k8s-manifests/storedog-app/deployments/analytics-aggregator.yaml -n storedog
+```
+
+### Verifying Data Streams Deployment
+
+Check all data streams pods:
+
+```bash
+kubectl get pods -l component=data-streams -n storedog
+```
+
+Check services:
+
+```bash
+kubectl get svc -l component=data-streams -n storedog
+```
+
+View Kafka topics:
+
+```bash
+kubectl exec -it kafka-0 -n storedog -- kafka-topics.sh \
+  --bootstrap-server localhost:9092 --list
+```
+
+### Data Streams Monitoring
+
+All services have `DD_DATA_STREAMS_ENABLED=true` to enable Datadog Data Streams Monitoring.
+
+View the pipeline in Datadog:
+- Navigate to [Data Streams Monitoring](https://app.datadoghq.com/data-streams)
+- Filter by `env:apm-workshop`
+- View pipeline topology, pathway latencies, and consumer lag
+
+### Configuration
+
+Key configuration is in the `data-streams-config` ConfigMap:
+
+```yaml
+KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+DD_ENV: "apm-workshop"
+DD_DATA_STREAMS_ENABLED: "true"
+```
+
+Each service deployment defines:
+- `TOPICS_IN` - Topics to consume from
+- `TOPICS_OUT` - Topics to produce to (if applicable)
+- `CONSUMER_GROUP` - Kafka consumer group
+- `DD_SERVICE_NAME` - Service name for Datadog
+- `DD_TAGS` - Custom tags for pipeline stages
+
+### Scaling Data Streams Services
+
+Scale producers to increase load:
+
+```bash
+kubectl scale deployment order-producer --replicas=3 -n storedog
+```
+
+Scale consumers for parallel processing:
+
+```bash
+kubectl scale deployment order-validator --replicas=2 -n storedog
+```
+
+### Troubleshooting Data Streams
+
+View logs for all data streams services:
+
+```bash
+kubectl logs -l component=data-streams -n storedog --tail=100 -f
+```
+
+View logs for a specific service:
+
+```bash
+kubectl logs -l app=order-validator -n storedog -f
+```
+
+Check Kafka logs:
+
+```bash
+kubectl logs kafka-0 -n storedog -f
+```
+
+Check consumer lag:
+
+```bash
+kubectl exec -it kafka-0 -n storedog -- kafka-consumer-groups.sh \
+  --bootstrap-server localhost:9092 \
+  --describe --group order-validator-group
+```
+
+### Removing Data Streams
+
+Remove all data streams deployments:
+
+```bash
+kubectl delete deployment -l component=data-streams -n storedog
+kubectl delete svc -l component=data-streams -n storedog
+```
+
+Remove Kafka (keeps PVC):
+
+```bash
+kubectl delete statefulset kafka -n storedog
+```
+
+Remove everything including data:
+
+```bash
+kubectl delete deployment -l component=data-streams -n storedog
+kubectl delete svc -l component=data-streams -n storedog
+kubectl delete statefulset kafka -n storedog
+kubectl delete pvc -l app=kafka -n storedog
+```
+
+### Additional Documentation
+
+For more details on the Data Streams architecture and service definitions, see:
+- `../services/data-streams/README.md` - Overview
+- `../services/data-streams/ARCHITECTURE.md` - System design
+- `../services/data-streams/PIPELINE_DIAGRAM.md` - Visual flows
+- `../services/data-streams/QUICKSTART.md` - Detailed deployment guide
+- `../services/data-streams/DOCKER_COMPOSE.md` - Docker Compose alternative (for development)

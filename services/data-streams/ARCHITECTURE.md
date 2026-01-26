@@ -200,16 +200,44 @@ Modify Storedog backend to:
 
 ## Running the System
 
-### Docker Compose
+### Kubernetes (Primary Deployment)
+
+See the [k8s-manifests README - Data Streams Monitoring section](../../k8s-manifests/README.md#data-streams-monitoring) for detailed K8s deployment instructions.
+
+Quick deploy:
+```bash
+# Deploy Kafka
+kubectl apply -f k8s-manifests/storedog-app/statefulsets/kafka.yaml -n storedog
+
+# Deploy ConfigMap
+kubectl apply -f k8s-manifests/storedog-app/configmaps/data-streams-config.yaml -n storedog
+
+# Deploy all services
+kubectl apply -f k8s-manifests/storedog-app/deployments/order-producer.yaml -n storedog
+kubectl apply -f k8s-manifests/storedog-app/deployments/order-validator.yaml -n storedog
+kubectl apply -f k8s-manifests/storedog-app/deployments/inventory-service.yaml -n storedog
+kubectl apply -f k8s-manifests/storedog-app/deployments/payment-processor.yaml -n storedog
+kubectl apply -f k8s-manifests/storedog-app/deployments/fraud-detector.yaml -n storedog
+kubectl apply -f k8s-manifests/storedog-app/deployments/fulfillment-service.yaml -n storedog
+kubectl apply -f k8s-manifests/storedog-app/deployments/notification-service.yaml -n storedog
+kubectl apply -f k8s-manifests/storedog-app/deployments/analytics-aggregator.yaml -n storedog
+```
+
+### Docker Compose (Alternative for Development)
+
+For local development or backporting to non-K8s Storedog deployments:
+
 ```bash
 cd services/data-streams
+
+# Set Datadog API key (optional)
+export DD_API_KEY=your_api_key
+
+# Start all services
 docker compose up -d
 ```
 
-### Kubernetes
-```bash
-kubectl apply -f k8s-manifests/data-streams/
-```
+See [DOCKER_COMPOSE.md](./DOCKER_COMPOSE.md) for details.
 
 ### Viewing Metrics
 1. Go to Datadog Data Streams Monitoring
@@ -223,9 +251,9 @@ kubectl apply -f k8s-manifests/data-streams/
 2. ✅ ~~Create service definitions~~
 3. ✅ ~~Update dependencies to latest versions~~
 4. ✅ ~~Create Protobuf schemas~~
-5. ⏳ Update Java code to use new schemas
-6. ⏳ Implement YAML service definition loader
-7. ⏳ Create Kubernetes manifests
+5. ✅ ~~Create Kubernetes manifests~~
+6. ⏳ Update Java code to use new schemas
+7. ⏳ Implement YAML service definition loader
 8. ⏳ Build and push Docker images
 9. ⏳ Test end-to-end pipeline
 10. ⏳ Create integration with Storedog backend
@@ -236,9 +264,13 @@ kubectl apply -f k8s-manifests/data-streams/
 data-streams/
 ├── README.md                          # Overview
 ├── ARCHITECTURE.md                    # This file
-├── REFACTORING_SUMMARY.md            # Change log
-├── docker-compose.yml                # Docker Compose config
-├── service-definitions/              # Service YAML configs
+├── SERVICE_DEFINITIONS.md             # Service config reference
+├── PIPELINE_DIAGRAM.md                # Visual diagrams
+├── PROJECT_SUMMARY.md                 # Complete overview
+├── REFACTORING_SUMMARY.md             # Change log
+├── QUICKSTART.md                      # K8s deployment guide
+├── INDEX.md                           # Documentation index
+├── service-definitions/               # Service YAML configs
 │   ├── order-producer.yml
 │   ├── order-validator.yml
 │   ├── inventory-service.yml
@@ -247,22 +279,38 @@ data-streams/
 │   ├── fulfillment-service.yml
 │   ├── notification-service.yml
 │   └── analytics-aggregator.yml
-├── kafka-producer/                   # Generic producer
+├── kafka-producer/                    # Generic producer
 │   └── files/
 │       ├── Dockerfile
 │       └── app/
 │           ├── build.gradle
 │           └── src/main/
 │               ├── java/
-│               └── proto/           # Protobuf schemas
-└── kafka-consumer/                  # Generic consumer
+│               └── proto/              # Protobuf schemas
+└── kafka-consumer/                     # Generic consumer
     └── files/
         ├── Dockerfile
         └── app/
             ├── build.gradle
             └── src/main/
                 ├── java/
-                └── proto/          # Protobuf schemas (same)
+                └── proto/              # Protobuf schemas
+
+K8s Manifests (separate location):
+../../k8s-manifests/storedog-app/
+├── configmaps/
+│   └── data-streams-config.yaml
+├── statefulsets/
+│   └── kafka.yaml
+└── deployments/
+    ├── order-producer.yaml
+    ├── order-validator.yaml
+    ├── inventory-service.yaml
+    ├── payment-processor.yaml
+    ├── fraud-detector.yaml
+    ├── fulfillment-service.yaml
+    ├── notification-service.yaml
+    └── analytics-aggregator.yaml
 ```
 
 ## Questions?

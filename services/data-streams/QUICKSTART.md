@@ -155,61 +155,92 @@ curl http://localhost:8080/actuator/health
 
 ## View Logs
 
-All services:
+All data streams pods:
 ```bash
-docker compose logs -f
+kubectl logs -l component=data-streams --tail=100 -f
 ```
 
 Specific service:
 ```bash
-docker compose logs -f order-validator
+kubectl logs -l app=order-validator --tail=100 -f
+```
+
+Kafka logs:
+```bash
+kubectl logs kafka-0 --tail=100 -f
 ```
 
 ## Stop Services
 
+Remove data streams deployments:
 ```bash
-docker compose down
+kubectl delete -f k8s-manifests/storedog-app/deployments/order-producer.yaml \
+               -f k8s-manifests/storedog-app/deployments/order-validator.yaml \
+               -f k8s-manifests/storedog-app/deployments/inventory-service.yaml \
+               -f k8s-manifests/storedog-app/deployments/payment-processor.yaml \
+               -f k8s-manifests/storedog-app/deployments/fraud-detector.yaml \
+               -f k8s-manifests/storedog-app/deployments/fulfillment-service.yaml \
+               -f k8s-manifests/storedog-app/deployments/notification-service.yaml \
+               -f k8s-manifests/storedog-app/deployments/analytics-aggregator.yaml
 ```
 
-Keep data volumes:
+Remove Kafka (keeps PVC):
 ```bash
-docker compose down  # keeps volumes
+kubectl delete -f k8s-manifests/storedog-app/statefulsets/kafka.yaml
 ```
 
-Remove everything:
+Remove everything including data:
 ```bash
-docker compose down -v  # removes volumes too
+kubectl delete -f k8s-manifests/storedog-app/deployments/
+kubectl delete -f k8s-manifests/storedog-app/statefulsets/kafka.yaml
+kubectl delete pvc -l app=kafka
 ```
 
 ## Troubleshooting
 
-### Services won't start
+### Pods won't start
 
-Check if ports are in use:
+Check pod status:
 ```bash
-lsof -i :8080  # or other ports
+kubectl describe pod <pod-name>
+```
+
+Check if images are available:
+```bash
+kubectl get pods -l component=data-streams -o jsonpath='{.items[*].status.containerStatuses[*].state}'
 ```
 
 ### No data in Datadog
 
-1. Check `DD_API_KEY` is set correctly
-2. Verify Datadog agent is running:
+1. Verify Datadog agent is running:
    ```bash
-   docker compose logs datadog
+   kubectl get pods -l app=datadog
    ```
-3. Check if `DD_DATA_STREAMS_ENABLED=true` on services
+2. Check agent logs:
+   ```bash
+   kubectl logs -l app=datadog --tail=100
+   ```
+3. Verify `DD_DATA_STREAMS_ENABLED=true` in configmap:
+   ```bash
+   kubectl describe configmap data-streams-config
+   ```
 4. Wait 2-3 minutes for data to appear
 
 ### Kafka errors
 
 View Kafka logs:
 ```bash
-docker compose logs kafka
+kubectl logs kafka-0 --tail=100
+```
+
+Check Kafka readiness:
+```bash
+kubectl get pod kafka-0
 ```
 
 Check Kafka topics:
 ```bash
-docker compose exec kafka kafka-topics.sh \
+kubectl exec -it kafka-0 -- kafka-topics.sh \
   --bootstrap-server localhost:9092 --describe
 ```
 
@@ -217,22 +248,23 @@ docker compose exec kafka kafka-topics.sh \
 
 Check consumer groups:
 ```bash
-docker compose exec kafka kafka-consumer-groups.sh \
+kubectl exec -it kafka-0 -- kafka-consumer-groups.sh \
   --bootstrap-server localhost:9092 --list
 
-docker compose exec kafka kafka-consumer-groups.sh \
+kubectl exec -it kafka-0 -- kafka-consumer-groups.sh \
   --bootstrap-server localhost:9092 \
   --describe --group order-validator-group
 ```
 
 ## What You Should See
 
-### In Docker Compose
+### In Kubernetes
 ```
-✓ Kafka healthy
+✓ Kafka StatefulSet ready (1/1)
 ✓ Datadog agent running
-✓ 8 services running
+✓ 8 deployments running (1/1 each)
 ✓ Logs showing message processing
+✓ Services created for each deployment
 ```
 
 ### In Datadog DSM
@@ -267,38 +299,43 @@ docker compose exec kafka kafka-consumer-groups.sh \
 ## Common Commands
 
 ```bash
-# Start
-docker compose up -d
+# Apply all manifests
+kubectl apply -f k8s-manifests/storedog-app/statefulsets/kafka.yaml
+kubectl apply -f k8s-manifests/storedog-app/configmaps/data-streams-config.yaml
+kubectl apply -f k8s-manifests/storedog-app/deployments/
 
-# Stop
-docker compose down
+# View all data streams resources
+kubectl get all -l component=data-streams
 
 # View logs
-docker compose logs -f [service-name]
+kubectl logs -l component=data-streams --tail=100 -f
 
-# Restart a service
-docker compose restart order-validator
+# Restart a deployment
+kubectl rollout restart deployment order-validator
 
 # Scale a service
-docker compose up -d --scale order-producer=3
+kubectl scale deployment order-producer --replicas=3
 
 # Check status
-docker compose ps
+kubectl get pods -l component=data-streams
 
 # View resource usage
-docker stats
+kubectl top pods -l component=data-streams
 
 # Access Kafka container
-docker compose exec kafka bash
+kubectl exec -it kafka-0 -- bash
 
 # List topics
-docker compose exec kafka kafka-topics.sh --bootstrap-server localhost:9092 --list
+kubectl exec -it kafka-0 -- kafka-topics.sh --bootstrap-server localhost:9092 --list
 
 # Describe topic
-docker compose exec kafka kafka-topics.sh --bootstrap-server localhost:9092 --describe --topic order-events
+kubectl exec -it kafka-0 -- kafka-topics.sh --bootstrap-server localhost:9092 --describe --topic order-events
 
 # Consumer group status
-docker compose exec kafka kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --group order-validator-group
+kubectl exec -it kafka-0 -- kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --group order-validator-group
+
+# Port forward to service
+kubectl port-forward svc/order-producer 8080:8080
 ```
 
 ## Resource Usage
