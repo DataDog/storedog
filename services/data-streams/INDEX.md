@@ -236,8 +236,9 @@ data-streams/
 
 ### Kafka Documentation
 - [Apache Kafka](https://kafka.apache.org/documentation/)
+- [Confluent Platform](https://docs.confluent.io/platform/current/overview.html)
 - [Spring Kafka](https://spring.io/projects/spring-kafka)
-- [Bitnami Kafka](https://github.com/bitnami/containers/tree/main/bitnami/kafka)
+- [Confluent Kafka Docker](https://hub.docker.com/r/confluentinc/cp-kafka)
 
 ### Protobuf Documentation
 - [Protocol Buffers](https://protobuf.dev/)
