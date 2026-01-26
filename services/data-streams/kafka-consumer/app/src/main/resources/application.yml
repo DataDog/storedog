@@ -1,13 +1,9 @@
 spring:
+  application:
+    name: kafka-consumer
   kafka:
-    # One or more topic names separated by a comma
-    inTopics: ${TOPICS_IN}
-    # Name of the consumer group
-    consumerGroup: ${CONSUMER_GROUP}
     consumer:
-      bootstrap-servers: ${KAFKA_CONSUME_SERVER}
-      group-id: ${CONSUMER_GROUP}
-      auto-offset-reset: earliest
+      bootstrap-servers: ${KAFKA_CONSUME_SERVER:kafka:9092}
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
       enable-auto-commit: true
@@ -15,8 +11,17 @@ spring:
       fetch-min-size: ${KAFKA_CONSUMER_FETCH_MIN_BYTES:1024}
       fetch-max-wait: ${KAFKA_CONSUMER_FETCH_MAX_WAIT_MS:500}
     producer:
-      bootstrap-servers: ${KAFKA_PRODUCE_SERVER:}
+      bootstrap-servers: ${KAFKA_PRODUCE_SERVER:kafka:9092}
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
       acks: 1
       retries: 3
+
+server:
+  port: 8080
+
+logging:
+  level:
+    datadog.kafka.example: INFO
+    org.springframework.kafka: WARN
+    org.apache.kafka: WARN

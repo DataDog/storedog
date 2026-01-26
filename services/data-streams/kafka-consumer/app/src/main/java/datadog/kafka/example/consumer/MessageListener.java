@@ -134,7 +134,7 @@ public class MessageListener {
      * Simulates processing time based on configuration
      */
     private void simulateProcessing() throws InterruptedException {
-        if (processingTimeMax > 0) {
+        if (processingTimeMax > 0 && processingTimeMax >= processingTimeMin) {
             int processingTime = processingTimeMin + 
                 random.nextInt(processingTimeMax - processingTimeMin + 1);
             Thread.sleep(processingTime);
