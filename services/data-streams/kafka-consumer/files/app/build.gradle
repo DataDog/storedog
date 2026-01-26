@@ -63,5 +63,5 @@ tasks.named('test') {
 }
 
 bootJar {
-    mainClass = 'com.storedog.kafka.consumer.ConsumerApplication'
+    mainClass = 'datadog.kafka.example.consumer.ConsumerApplication'
 }

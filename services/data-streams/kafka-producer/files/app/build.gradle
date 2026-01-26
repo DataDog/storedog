@@ -63,5 +63,5 @@ tasks.named('test') {
 }
 
 bootJar {
-    mainClass = 'com.storedog.kafka.producer.ProducerApplication'
+    mainClass = 'datadog.kafka.example.producer.ProducerApplication'
 }
