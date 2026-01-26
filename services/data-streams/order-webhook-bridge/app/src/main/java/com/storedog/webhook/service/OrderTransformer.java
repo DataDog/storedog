@@ -111,7 +111,7 @@ public class OrderTransformer {
 
     private PaymentType parsePaymentType(String paymentMethod) {
         if (paymentMethod == null) {
-            return PaymentType.PAYMENT_TYPE_UNSPECIFIED;
+            return PaymentType.PAYMENT_TYPE_UNKNOWN;
         }
         
         String method = paymentMethod.toLowerCase();
