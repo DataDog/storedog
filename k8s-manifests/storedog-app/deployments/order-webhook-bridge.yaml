@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-webhook-bridge
+  namespace: storedog
+spec:
+  ports:
+    - port: 8081
+      targetPort: 8081
+      name: http
+  selector:
+    app: order-webhook-bridge
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-webhook-bridge
+  namespace: storedog
+  labels:
+    app: order-webhook-bridge
+    component: data-streams
+    service-type: bridge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-webhook-bridge
+  template:
+    metadata:
+      labels:
+        app: order-webhook-bridge
+        component: data-streams
+        team: integration
+      annotations:
+        ad.datadoghq.com/order-webhook-bridge.logs: '[{"source": "java"}]'
+    spec:
+      initContainers:
+        - name: wait-for-kafka
+          image: busybox:1.37.0
+          command: ['sh', '-c', 'until nc -z kafka 9092; do echo waiting for kafka; sleep 2; done;']
+      containers:
+        - name: order-webhook-bridge
+          image: localhost:5000/order-webhook-bridge:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8081
+          env:
+            - name: SERVER_PORT
+              value: "8081"
+            - name: BOOTSTRAP
+              valueFrom:
+                configMapKeyRef:
+                  name: data-streams-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+            - name: TOPICS_OUT
+              value: "order-events"
+          resources:
+            requests:
+              memory: "384Mi"
+              cpu: "200m"
+            limits:
+              memory: "768Mi"
+              cpu: "400m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 20
+            periodSeconds: 5

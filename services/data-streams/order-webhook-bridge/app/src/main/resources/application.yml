@@ -1,0 +1,12 @@
+server:
+  port: ${SERVER_PORT:8081}
+
+spring:
+  application:
+    name: order-webhook-bridge
+  
+logging:
+  level:
+    com.storedog.webhook: INFO
+    org.springframework.kafka: WARN
+    org.apache.kafka: WARN

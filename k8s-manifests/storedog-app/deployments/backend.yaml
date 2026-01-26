@@ -84,6 +84,10 @@ spec:
               value: "http://pricing:5001"
             - name: PRICING_SERVICE_ENABLED
               value: "true"
+            - name: ORDER_WEBHOOK_ENABLED
+              value: "false"
+            - name: ORDER_WEBHOOK_URL
+              value: "http://order-webhook-bridge:8081"
           resources:
             requests:
               memory: "512Mi"

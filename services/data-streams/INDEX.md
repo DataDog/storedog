@@ -28,6 +28,15 @@ Welcome to the Storedog Data Streams project! This index helps you find the righ
 - **[PROJECT_SUMMARY.md](./PROJECT_SUMMARY.md)** 📝  
   Complete overview of what's been built and next steps
 
+- **[PHASE1_COMPLETE.md](./PHASE1_COMPLETE.md)** ✅  
+  Java implementation details
+
+- **[HYBRID_IMPLEMENTATION.md](./HYBRID_IMPLEMENTATION.md)** 🔗  
+  Storedog integration design and implementation
+
+- **[TESTING_GUIDE.md](./TESTING_GUIDE.md)** 🧪  
+  Complete testing procedures
+
 - **[K8S_SUMMARY.md](./K8S_SUMMARY.md)** ☸️  
   Kubernetes deployment summary and manifest overview
 
@@ -119,7 +128,7 @@ data-streams/
 → See [DOCKER_COMPOSE.md](./DOCKER_COMPOSE.md)
 
 **...integrate with Storedog**  
-→ Documentation coming soon (see PROJECT_SUMMARY.md Phase 3)
+→ See [HYBRID_IMPLEMENTATION.md](./HYBRID_IMPLEMENTATION.md) and [TESTING_GUIDE.md](./TESTING_GUIDE.md)
 
 ## 📋 By Role
 

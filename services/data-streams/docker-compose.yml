@@ -74,6 +74,7 @@ services:
   # Producer Services
   # ============================================================================
   
+  # Synthetic order generator (high volume baseline traffic)
   order-producer:
     image: ${REGISTRY:-localhost:5000}/kafka-producer:${VERSION:-latest}
     depends_on:
@@ -94,6 +95,26 @@ services:
       - DD_SERVICE_MAPPING=kafka:order-producer
       - DD_TAGS=service_type:producer,pipeline_stage:order_creation
 
+  # Webhook bridge for real Storedog orders (with distributed traces)
+  order-webhook-bridge:
+    image: ${REGISTRY:-localhost:5000}/order-webhook-bridge:${VERSION:-latest}
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    environment:
+      - SERVER_PORT=8081
+      - BOOTSTRAP=kafka:9092
+      - TOPICS_OUT=order-events
+      - DD_AGENT_HOST=datadog
+      - DD_DATA_STREAMS_ENABLED=true
+      - DD_SERVICE_NAME=order-webhook-bridge
+      - DD_VERSION=1.0.0
+      - DD_ENV=${DD_ENV:-docker-compose}
+      - DD_SERVICE_MAPPING=kafka:order-webhook-bridge
+      - DD_TAGS=service_type:bridge,pipeline_stage:ingestion
+
   # ============================================================================
   # Consumer/Producer Services
   # ============================================================================
@@ -104,7 +125,7 @@ services:
       kafka:
         condition: service_healthy
     ports:
-      - "8081:8080"
+      - "8082:8080"
     environment:
       - KAFKA_CONSUME_SERVER=kafka:9092
       - KAFKA_PRODUCE_SERVER=kafka:9092
