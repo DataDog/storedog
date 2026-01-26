@@ -62,23 +62,45 @@ Services are instrumented for Datadog Data Streams Monitoring to track:
 
 ## Building Services
 
-```bash
-# Build producer
-cd kafka-producer/files/app
-./gradlew build
+### Prerequisites
+- Docker installed
+- Local registry running (e.g., `localhost:5000`) or remote registry access
+- Set `REGISTRY_URL` environment variable
 
-# Build consumer
-cd kafka-consumer/files/app
-./gradlew build
+### Build and Push Commands
+
+```bash
+cd /path/to/storedog
+
+# Set your registry URL (default: localhost:5000)
+export REGISTRY_URL=localhost:5000
+
+# Build Kafka Producer
+docker build -t "$REGISTRY_URL/kafka-producer:1.0.0" ./services/data-streams/kafka-producer
+docker push "$REGISTRY_URL/kafka-producer:1.0.0"
+
+# Build Kafka Consumer
+docker build -t "$REGISTRY_URL/kafka-consumer:1.0.0" ./services/data-streams/kafka-consumer
+docker push "$REGISTRY_URL/kafka-consumer:1.0.0"
+
+# Build Order Webhook Bridge
+docker build -t "$REGISTRY_URL/order-webhook-bridge:1.0.0" ./services/data-streams/order-webhook-bridge
+docker push "$REGISTRY_URL/order-webhook-bridge:1.0.0"
 ```
 
-## Docker Images
+### Build All at Once
 
 ```bash
-# Build images
-docker build -t storedog/kafka-producer:1.0.0 kafka-producer/files/
-docker build -t storedog/kafka-consumer:1.0.0 kafka-consumer/files/
-docker build -t storedog/order-webhook-bridge:1.0.0 order-webhook-bridge/files/
+cd /path/to/storedog
+export REGISTRY_URL=localhost:5000
+
+# Build and push all data streams images
+docker build -t "$REGISTRY_URL/kafka-producer:1.0.0" ./services/data-streams/kafka-producer && \
+docker push "$REGISTRY_URL/kafka-producer:1.0.0" && \
+docker build -t "$REGISTRY_URL/kafka-consumer:1.0.0" ./services/data-streams/kafka-consumer && \
+docker push "$REGISTRY_URL/kafka-consumer:1.0.0" && \
+docker build -t "$REGISTRY_URL/order-webhook-bridge:1.0.0" ./services/data-streams/order-webhook-bridge && \
+docker push "$REGISTRY_URL/order-webhook-bridge:1.0.0"
 ```
 
 ## Running in Kubernetes
