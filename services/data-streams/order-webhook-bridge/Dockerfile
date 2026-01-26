@@ -2,9 +2,8 @@ FROM eclipse-temurin:21-jdk-jammy AS build
 
 WORKDIR /workspace/app
 
-COPY gradle gradle
-COPY gradlew .
-COPY gradlew.bat .
+COPY app/gradle gradle
+COPY app/gradlew .
 COPY app/build.gradle app/
 COPY app/src app/src
 
