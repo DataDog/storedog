@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-aggregator
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
+  selector:
+    app: analytics-aggregator
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-aggregator
+  labels:
+    app: analytics-aggregator
+    component: data-streams
+    service-type: consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: analytics-aggregator
+  template:
+    metadata:
+      labels:
+        app: analytics-aggregator
+        component: data-streams
+        service-type: consumer
+        team: data-platform
+      annotations:
+        ad.datadoghq.com/analytics-aggregator.logs: '[{"source": "java"}]'
+    spec:
+      initContainers:
+        - name: wait-for-kafka
+          image: busybox:1.37.0
+          command: ['sh', '-c', 'until nc -z kafka 9092; do echo waiting for kafka; sleep 2; done;']
+      containers:
+        - name: analytics-aggregator
+          image: localhost:5000/kafka-consumer:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: KAFKA_CONSUME_SERVER
+              valueFrom:
+                configMapKeyRef:
+                  name: data-streams-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+            - name: TOPICS_IN
+              value: "order-events,order-fulfilled,payment-confirmed,fraud-alerts"
+            - name: CONSUMER_GROUP
+              value: "analytics-aggregator-group"
+            - name: KAFKA_CONSUMER_FETCH_MIN_BYTES
+              value: "5120"
+            - name: KAFKA_CONSUMER_FETCH_MAX_WAIT_MS
+              value: "5000"
+            - name: PROCESSING_TIME_MS_MIN
+              value: "500"
+            - name: PROCESSING_TIME_MS_MAX
+              value: "1000"
+            - name: ERROR_RATE_PERCENT
+              value: "1"
+            - name: DD_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: data-streams-config
+                  key: DD_ENV
+            - name: DD_DATA_STREAMS_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: data-streams-config
+                  key: DD_DATA_STREAMS_ENABLED
+            - name: DD_SERVICE_NAME
+              value: "analytics-aggregator"
+            - name: DD_VERSION
+              value: "1.0.0"
+            - name: DD_SERVICE_MAPPING
+              value: "kafka:analytics-aggregator"
+            - name: DD_TAGS
+              value: "service_type:analytics,pipeline_stage:data_aggregation,consumer_only:true"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"

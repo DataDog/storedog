@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: fraud-detector
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
+  selector:
+    app: fraud-detector
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fraud-detector
+  labels:
+    app: fraud-detector
+    component: data-streams
+    service-type: consumer-producer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fraud-detector
+  template:
+    metadata:
+      labels:
+        app: fraud-detector
+        component: data-streams
+        service-type: consumer-producer
+        team: data-platform
+      annotations:
+        ad.datadoghq.com/fraud-detector.logs: '[{"source": "java"}]'
+    spec:
+      initContainers:
+        - name: wait-for-kafka
+          image: busybox:1.37.0
+          command: ['sh', '-c', 'until nc -z kafka 9092; do echo waiting for kafka; sleep 2; done;']
+      containers:
+        - name: fraud-detector
+          image: localhost:5000/kafka-consumer:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: KAFKA_CONSUME_SERVER
+              valueFrom:
+                configMapKeyRef:
+                  name: data-streams-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+            - name: KAFKA_PRODUCE_SERVER
+              valueFrom:
+                configMapKeyRef:
+                  name: data-streams-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+            - name: TOPICS_IN
+              value: "order-events,payment-confirmed"
+            - name: TOPICS_OUT
+              value: "fraud-alerts,order-events-analyzed"
+            - name: CONSUMER_GROUP
+              value: "fraud-detector-group"
+            - name: PROCESSING_TIME_MS_MIN
+              value: "50"
+            - name: PROCESSING_TIME_MS_MAX
+              value: "150"
+            - name: ERROR_RATE_PERCENT
+              value: "1"
+            - name: DD_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: data-streams-config
+                  key: DD_ENV
+            - name: DD_DATA_STREAMS_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: data-streams-config
+                  key: DD_DATA_STREAMS_ENABLED
+            - name: DD_SERVICE_NAME
+              value: "fraud-detector"
+            - name: DD_VERSION
+              value: "1.0.0"
+            - name: DD_SERVICE_MAPPING
+              value: "kafka:fraud-detector"
+            - name: DD_TAGS
+              value: "service_type:security,pipeline_stage:fraud_detection,ml_enabled:true"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"

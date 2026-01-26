@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
+  selector:
+    app: notification-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  labels:
+    app: notification-service
+    component: data-streams
+    service-type: consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+        component: data-streams
+        service-type: consumer
+        team: data-platform
+      annotations:
+        ad.datadoghq.com/notification-service.logs: '[{"source": "java"}]'
+    spec:
+      initContainers:
+        - name: wait-for-kafka
+          image: busybox:1.37.0
+          command: ['sh', '-c', 'until nc -z kafka 9092; do echo waiting for kafka; sleep 2; done;']
+      containers:
+        - name: notification-service
+          image: localhost:5000/kafka-consumer:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: KAFKA_CONSUME_SERVER
+              valueFrom:
+                configMapKeyRef:
+                  name: data-streams-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+            - name: TOPICS_IN
+              value: "order-fulfilled,shipment-created,payment-failed,inventory-unavailable,fraud-alerts"
+            - name: CONSUMER_GROUP
+              value: "notification-service-group"
+            - name: PROCESSING_TIME_MS_MIN
+              value: "300"
+            - name: PROCESSING_TIME_MS_MAX
+              value: "800"
+            - name: ERROR_RATE_PERCENT
+              value: "10"
+            - name: DD_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: data-streams-config
+                  key: DD_ENV
+            - name: DD_DATA_STREAMS_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: data-streams-config
+                  key: DD_DATA_STREAMS_ENABLED
+            - name: DD_SERVICE_NAME
+              value: "notification-service"
+            - name: DD_VERSION
+              value: "1.0.0"
+            - name: DD_SERVICE_MAPPING
+              value: "kafka:notification-service"
+            - name: DD_TAGS
+              value: "service_type:notification,pipeline_stage:customer_communication"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"

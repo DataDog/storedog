@@ -1,0 +1,39 @@
+# Inventory Service Definition
+# Reserves inventory for validated orders
+
+name: inventory-service
+type: consumer-producer
+description: Checks and reserves inventory for order items
+
+kafka:
+  consumer:
+    topics:
+      - validated-orders
+    group_id: inventory-service-group
+    fetch_min_bytes: 2048
+    fetch_max_wait_ms: 300
+  
+  producer:
+    topics:
+      - inventory-reserved
+      - inventory-unavailable
+
+processing:
+  validation_rules:
+    - check_stock_levels
+    - reserve_inventory
+    - update_inventory_cache
+  
+  routing:
+    success_topic: inventory-reserved
+    failure_topic: inventory-unavailable
+  
+  processing_time_ms: 100-200
+  error_rate_percent: 5
+
+metrics:
+  track_latency: true
+  track_throughput: true
+  custom_tags:
+    - service_type:inventory
+    - pipeline_stage:inventory_reservation

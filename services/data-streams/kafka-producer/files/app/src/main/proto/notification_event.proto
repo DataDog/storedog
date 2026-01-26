@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package storedog.events;
+
+option java_package = "com.storedog.kafka.proto";
+option java_outer_classname = "NotificationProto";
+option java_multiple_files = true;
+
+// Notification event
+message NotificationEvent {
+  string notification_id = 1;
+  string order_id = 2;
+  string customer_id = 3;
+  int64 timestamp = 4;
+  NotificationType type = 5;
+  NotificationChannel channel = 6;
+  NotificationContent content = 7;
+  NotificationStatus status = 8;
+}
+
+// Notification content
+message NotificationContent {
+  string subject = 1;
+  string body = 2;
+  string template_id = 3;
+  map<string, string> template_variables = 4;
+}
+
+// Notification type
+enum NotificationType {
+  NOTIFICATION_TYPE_UNKNOWN = 0;
+  NOTIFICATION_TYPE_ORDER_CONFIRMATION = 1;
+  NOTIFICATION_TYPE_PAYMENT_CONFIRMATION = 2;
+  NOTIFICATION_TYPE_SHIPMENT_CONFIRMATION = 3;
+  NOTIFICATION_TYPE_DELIVERY_CONFIRMATION = 4;
+  NOTIFICATION_TYPE_ORDER_CANCELLED = 5;
+  NOTIFICATION_TYPE_PAYMENT_FAILED = 6;
+  NOTIFICATION_TYPE_INVENTORY_UNAVAILABLE = 7;
+  NOTIFICATION_TYPE_FRAUD_ALERT = 8;
+}
+
+// Notification channel
+enum NotificationChannel {
+  NOTIFICATION_CHANNEL_UNKNOWN = 0;
+  NOTIFICATION_CHANNEL_EMAIL = 1;
+  NOTIFICATION_CHANNEL_SMS = 2;
+  NOTIFICATION_CHANNEL_PUSH = 3;
+  NOTIFICATION_CHANNEL_WEBHOOK = 4;
+}
+
+// Notification status
+enum NotificationStatus {
+  NOTIFICATION_STATUS_UNKNOWN = 0;
+  NOTIFICATION_STATUS_PENDING = 1;
+  NOTIFICATION_STATUS_SENT = 2;
+  NOTIFICATION_STATUS_DELIVERED = 3;
+  NOTIFICATION_STATUS_FAILED = 4;
+  NOTIFICATION_STATUS_BOUNCED = 5;
+}

@@ -1,0 +1,47 @@
+# Notification Service Definition
+# Sends customer notifications (email, SMS, push) for order updates
+
+name: notification-service
+type: consumer
+description: Sends customer notifications for order lifecycle events
+
+kafka:
+  consumer:
+    topics:
+      - order-fulfilled
+      - shipment-created
+      - payment-failed
+      - inventory-unavailable
+      - fraud-alerts
+    group_id: notification-service-group
+    fetch_min_bytes: 512
+    fetch_max_wait_ms: 2000
+
+processing:
+  notification_types:
+    - email
+    - sms
+    - push_notification
+  
+  templates:
+    order_fulfilled: "Your order #{order_id} has been fulfilled"
+    shipment_created: "Your order #{order_id} has shipped"
+    payment_failed: "Payment failed for order #{order_id}"
+    inventory_unavailable: "Items in order #{order_id} are out of stock"
+    fraud_alert: "Security review required for order #{order_id}"
+  
+  # Notification sending can be slow (external APIs)
+  processing_time_ms: 300-800
+  error_rate_percent: 10
+  
+  retry_policy:
+    max_attempts: 3
+    backoff_ms: 1000
+
+metrics:
+  track_latency: true
+  track_throughput: true
+  track_notification_success_rate: true
+  custom_tags:
+    - service_type:notification
+    - pipeline_stage:customer_communication

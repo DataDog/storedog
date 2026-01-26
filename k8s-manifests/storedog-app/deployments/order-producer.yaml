@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-producer
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
+  selector:
+    app: order-producer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-producer
+  labels:
+    app: order-producer
+    component: data-streams
+    service-type: producer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-producer
+  template:
+    metadata:
+      labels:
+        app: order-producer
+        component: data-streams
+        service-type: producer
+        team: data-platform
+      annotations:
+        ad.datadoghq.com/order-producer.logs: '[{"source": "java"}]'
+    spec:
+      initContainers:
+        - name: wait-for-kafka
+          image: busybox:1.37.0
+          command: ['sh', '-c', 'until nc -z kafka 9092; do echo waiting for kafka; sleep 2; done;']
+      containers:
+        - name: order-producer
+          image: localhost:5000/kafka-producer:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: data-streams-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+            - name: BOOTSTRAP
+              valueFrom:
+                configMapKeyRef:
+                  name: data-streams-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+            - name: TOPICS_OUT
+              value: "order-events"
+            - name: MESSAGES_PER_MINUTE
+              value: "60"
+            - name: DD_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: data-streams-config
+                  key: DD_ENV
+            - name: DD_DATA_STREAMS_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: data-streams-config
+                  key: DD_DATA_STREAMS_ENABLED
+            - name: DD_SERVICE_NAME
+              value: "order-producer"
+            - name: DD_VERSION
+              value: "1.0.0"
+            - name: DD_SERVICE_MAPPING
+              value: "kafka:order-producer"
+            - name: DD_TAGS
+              value: "service_type:producer,pipeline_stage:order_creation"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"

@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package storedog.events;
+
+option java_package = "com.storedog.kafka.proto";
+option java_outer_classname = "InventoryProto";
+option java_multiple_files = true;
+
+// Inventory reservation event
+message InventoryReservationEvent {
+  string reservation_id = 1;
+  string order_id = 2;
+  int64 timestamp = 3;
+  ReservationStatus status = 4;
+  repeated InventoryItem items = 5;
+  string warehouse_id = 6;
+}
+
+// Individual inventory item
+message InventoryItem {
+  string product_id = 1;
+  string sku = 2;
+  int32 quantity_requested = 3;
+  int32 quantity_reserved = 4;
+  int32 quantity_available = 5;
+  string location = 6;
+}
+
+// Reservation status
+enum ReservationStatus {
+  RESERVATION_STATUS_UNKNOWN = 0;
+  RESERVATION_STATUS_PENDING = 1;
+  RESERVATION_STATUS_RESERVED = 2;
+  RESERVATION_STATUS_PARTIAL = 3;
+  RESERVATION_STATUS_UNAVAILABLE = 4;
+  RESERVATION_STATUS_RELEASED = 5;
+  RESERVATION_STATUS_EXPIRED = 6;
+}

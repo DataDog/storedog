@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-processor
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
+  selector:
+    app: payment-processor
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-processor
+  labels:
+    app: payment-processor
+    component: data-streams
+    service-type: consumer-producer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-processor
+  template:
+    metadata:
+      labels:
+        app: payment-processor
+        component: data-streams
+        service-type: consumer-producer
+        team: data-platform
+      annotations:
+        ad.datadoghq.com/payment-processor.logs: '[{"source": "java"}]'
+    spec:
+      initContainers:
+        - name: wait-for-kafka
+          image: busybox:1.37.0
+          command: ['sh', '-c', 'until nc -z kafka 9092; do echo waiting for kafka; sleep 2; done;']
+      containers:
+        - name: payment-processor
+          image: localhost:5000/kafka-consumer:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: KAFKA_CONSUME_SERVER
+              valueFrom:
+                configMapKeyRef:
+                  name: data-streams-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+            - name: KAFKA_PRODUCE_SERVER
+              valueFrom:
+                configMapKeyRef:
+                  name: data-streams-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+            - name: TOPICS_IN
+              value: "inventory-reserved"
+            - name: TOPICS_OUT
+              value: "payment-confirmed,payment-failed"
+            - name: CONSUMER_GROUP
+              value: "payment-processor-group"
+            - name: PROCESSING_TIME_MS_MIN
+              value: "200"
+            - name: PROCESSING_TIME_MS_MAX
+              value: "500"
+            - name: ERROR_RATE_PERCENT
+              value: "3"
+            - name: DD_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: data-streams-config
+                  key: DD_ENV
+            - name: DD_DATA_STREAMS_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: data-streams-config
+                  key: DD_DATA_STREAMS_ENABLED
+            - name: DD_SERVICE_NAME
+              value: "payment-processor"
+            - name: DD_VERSION
+              value: "1.0.0"
+            - name: DD_SERVICE_MAPPING
+              value: "kafka:payment-processor"
+            - name: DD_TAGS
+              value: "service_type:payment,pipeline_stage:payment_processing,pci_compliant:true"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
