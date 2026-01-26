@@ -76,7 +76,7 @@ services:
   
   # Synthetic order generator (high volume baseline traffic)
   order-producer:
-    image: ${REGISTRY:-localhost:5000}/kafka-producer:${VERSION:-latest}
+    image: ${REGISTRY:-localhost:5000}/kafka-producer:${VERSION:-1.0.0}
     depends_on:
       kafka:
         condition: service_healthy
@@ -97,7 +97,7 @@ services:
 
   # Webhook bridge for real Storedog orders (with distributed traces)
   order-webhook-bridge:
-    image: ${REGISTRY:-localhost:5000}/order-webhook-bridge:${VERSION:-latest}
+    image: ${REGISTRY:-localhost:5000}/order-webhook-bridge:${VERSION:-1.0.0}
     depends_on:
       kafka:
         condition: service_healthy
@@ -120,7 +120,7 @@ services:
   # ============================================================================
   
   order-validator:
-    image: ${REGISTRY:-localhost:5000}/kafka-consumer:${VERSION:-latest}
+    image: ${REGISTRY:-localhost:5000}/kafka-consumer:${VERSION:-1.0.0}
     depends_on:
       kafka:
         condition: service_healthy
@@ -144,7 +144,7 @@ services:
       - DD_TAGS=service_type:validation,pipeline_stage:order_validation
 
   inventory-service:
-    image: ${REGISTRY:-localhost:5000}/kafka-consumer:${VERSION:-latest}
+    image: ${REGISTRY:-localhost:5000}/kafka-consumer:${VERSION:-1.0.0}
     depends_on:
       kafka:
         condition: service_healthy
@@ -168,7 +168,7 @@ services:
       - DD_TAGS=service_type:inventory,pipeline_stage:inventory_reservation
 
   payment-processor:
-    image: ${REGISTRY:-localhost:5000}/kafka-consumer:${VERSION:-latest}
+    image: ${REGISTRY:-localhost:5000}/kafka-consumer:${VERSION:-1.0.0}
     depends_on:
       kafka:
         condition: service_healthy
@@ -192,7 +192,7 @@ services:
       - DD_TAGS=service_type:payment,pipeline_stage:payment_processing,pci_compliant:true
 
   fraud-detector:
-    image: ${REGISTRY:-localhost:5000}/kafka-consumer:${VERSION:-latest}
+    image: ${REGISTRY:-localhost:5000}/kafka-consumer:${VERSION:-1.0.0}
     depends_on:
       kafka:
         condition: service_healthy
@@ -216,7 +216,7 @@ services:
       - DD_TAGS=service_type:security,pipeline_stage:fraud_detection,ml_enabled:true
 
   fulfillment-service:
-    image: ${REGISTRY:-localhost:5000}/kafka-consumer:${VERSION:-latest}
+    image: ${REGISTRY:-localhost:5000}/kafka-consumer:${VERSION:-1.0.0}
     depends_on:
       kafka:
         condition: service_healthy
@@ -244,7 +244,7 @@ services:
   # ============================================================================
   
   notification-service:
-    image: ${REGISTRY:-localhost:5000}/kafka-consumer:${VERSION:-latest}
+    image: ${REGISTRY:-localhost:5000}/kafka-consumer:${VERSION:-1.0.0}
     depends_on:
       kafka:
         condition: service_healthy
@@ -266,7 +266,7 @@ services:
       - DD_TAGS=service_type:notification,pipeline_stage:customer_communication
 
   analytics-aggregator:
-    image: ${REGISTRY:-localhost:5000}/kafka-consumer:${VERSION:-latest}
+    image: ${REGISTRY:-localhost:5000}/kafka-consumer:${VERSION:-1.0.0}
     depends_on:
       kafka:
         condition: service_healthy

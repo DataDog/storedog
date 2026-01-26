@@ -40,7 +40,7 @@ spec:
           command: ['sh', '-c', 'until nc -z kafka 9092; do echo waiting for kafka; sleep 2; done;']
       containers:
         - name: order-webhook-bridge
-          image: localhost:5000/order-webhook-bridge:latest
+          image: localhost:5000/order-webhook-bridge:1.0.0
           imagePullPolicy: Always
           ports:
             - containerPort: 8081

@@ -42,22 +42,22 @@ Complete guide for testing the Storedog → Kafka integration with distributed t
 ### 1.1 Build Producer (Synthetic)
 ```bash
 cd services/data-streams/kafka-producer/files
-docker build -t localhost:5000/kafka-producer:latest .
-docker push localhost:5000/kafka-producer:latest
+docker build -t localhost:5000/kafka-producer:1.0.0 .
+docker push localhost:5000/kafka-producer:1.0.0
 ```
 
 ### 1.2 Build Consumer (Generic)
 ```bash
 cd services/data-streams/kafka-consumer/files
-docker build -t localhost:5000/kafka-consumer:latest .
-docker push localhost:5000/kafka-consumer:latest
+docker build -t localhost:5000/kafka-consumer:1.0.0 .
+docker push localhost:5000/kafka-consumer:1.0.0
 ```
 
 ### 1.3 Build Webhook Bridge (NEW)
 ```bash
 cd services/data-streams/order-webhook-bridge
-docker build -t localhost:5000/order-webhook-bridge:latest .
-docker push localhost:5000/order-webhook-bridge:latest
+docker build -t localhost:5000/order-webhook-bridge:1.0.0 .
+docker push localhost:5000/order-webhook-bridge:1.0.0
 ```
 
 ### 1.4 Rebuild Backend (with webhook code)

@@ -39,7 +39,7 @@ spec:
           command: ['sh', '-c', 'until nc -z kafka 9092; do echo waiting for kafka; sleep 2; done;']
       containers:
         - name: order-validator
-          image: localhost:5000/kafka-consumer:latest
+          image: localhost:5000/kafka-consumer:1.0.0
           ports:
             - containerPort: 8080
           env:

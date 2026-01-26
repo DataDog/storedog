@@ -239,8 +239,8 @@ Total: ~1.5 seconds end-to-end
 ```bash
 # Webhook bridge (new)
 cd services/data-streams/order-webhook-bridge
-docker build -t localhost:5000/order-webhook-bridge:latest .
-docker push localhost:5000/order-webhook-bridge:latest
+docker build -t localhost:5000/order-webhook-bridge:1.0.0 .
+docker push localhost:5000/order-webhook-bridge:1.0.0
 
 # Backend (with webhook code)
 cd services/backend
@@ -249,12 +249,12 @@ docker push localhost:5000/backend:latest
 
 # Producer & Consumer (unchanged)
 cd services/data-streams/kafka-producer/files
-docker build -t localhost:5000/kafka-producer:latest .
-docker push localhost:5000/kafka-producer:latest
+docker build -t localhost:5000/kafka-producer:1.0.0 .
+docker push localhost:5000/kafka-producer:1.0.0
 
 cd ../../kafka-consumer/files
-docker build -t localhost:5000/kafka-consumer:latest .
-docker push localhost:5000/kafka-consumer:latest
+docker build -t localhost:5000/kafka-consumer:1.0.0 .
+docker push localhost:5000/kafka-consumer:1.0.0
 ```
 
 ### Deploy to Kubernetes

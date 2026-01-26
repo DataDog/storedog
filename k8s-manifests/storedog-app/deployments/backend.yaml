@@ -85,7 +85,7 @@ spec:
             - name: PRICING_SERVICE_ENABLED
               value: "true"
             - name: ORDER_WEBHOOK_ENABLED
-              value: "false"
+              value: "true"
             - name: ORDER_WEBHOOK_URL
               value: "http://order-webhook-bridge:8081"
           resources:
