@@ -1,0 +1,28 @@
+spring:
+  kafka:
+    properties:
+      schema.registry.url: "http://schema-registry.kafka-external.svc.cluster.local:8081"
+    # One or more topic names separated by a comma
+    inTopics: ${TOPICS_IN}
+    # Name of the consumer group to identify this instance so that multiple
+    # consumers can recieve messages on the same topic
+    consumerGroup: ${CONSUMER_GROUP}
+    consumer:
+      bootstrap-servers: ${KAFKA_CONSUME_SERVER}
+      group-id: group-id
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
+    producer:
+      bootstrap-servers: ${KAFKA_PRODUCE_SERVER}
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
+      properties:
+        max.request.size: 104857600
+app:
+  enableCrashes: ${ENABLE_CRASHES}
+  crashAtMinutes: ${CRASH_AT_MINUTES}
+dd:
+  trace:
+    otel:
+      enabled: true

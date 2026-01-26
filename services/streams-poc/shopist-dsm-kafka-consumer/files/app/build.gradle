@@ -1,0 +1,39 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.4'
+    id 'com.google.protobuf' version '0.9.4'
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url 'https://packages.confluent.io/maven/'
+    }
+}
+
+dependencies {
+    implementation platform('org.springframework.boot:spring-boot-dependencies:3.3.4')
+    implementation('org.springframework.boot:spring-boot-starter-web:3.3.4')
+    implementation('org.springframework.kafka:spring-kafka:3.2.4')
+    implementation('com.datadoghq:dd-trace-api:1.37.1')
+    implementation(platform("io.opentelemetry:opentelemetry-bom:1.41.0"))
+    implementation("io.opentelemetry:opentelemetry-api:1.41.0")
+    implementation('io.confluent:kafka-protobuf-serializer:7.5.6')
+    implementation('com.google.protobuf:protobuf-java:3.25.5')
+    implementation('io.confluent:kafka-schema-registry-client:7.5.6')
+}
+
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.25.5'
+    }
+    generateProtoTasks {
+        all()*.builtins {
+            java {}
+        }
+    }
+}
+
+bootJar {
+    mainClass = "datadog.kafka.example.consumer.ConsumerApplication"
+}
