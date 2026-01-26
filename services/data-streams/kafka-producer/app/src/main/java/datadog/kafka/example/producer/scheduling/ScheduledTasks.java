@@ -12,7 +12,6 @@ public class ScheduledTasks {
     private static final Logger log = LoggerFactory.getLogger(ScheduledTasks.class);
     
     private final int messagesPerMinute;
-    private final long intervalMs;
 
     @Autowired
     private AutoProducerService autoProducerService;
@@ -24,11 +23,13 @@ public class ScheduledTasks {
             ? Integer.parseInt(rateEnv) 
             : 60;
         
-        // Calculate interval in milliseconds (60000ms per minute)
-        this.intervalMs = this.messagesPerMinute > 0 ? (60000 / messagesPerMinute) : 1000;
-        
-        log.info("Scheduled producer configured: {} messages/minute (every {}ms)", 
-            messagesPerMinute, intervalMs);
+        log.info("Scheduled producer configured: {} messages/minute (interval: {}ms)", 
+            messagesPerMinute, getIntervalMs());
+    }
+    
+    // Public getter for SpEL access in @Scheduled
+    public long getIntervalMs() {
+        return this.messagesPerMinute > 0 ? (60000 / messagesPerMinute) : 1000;
     }
 
     @Scheduled(fixedRateString = "#{__listener.intervalMs}")

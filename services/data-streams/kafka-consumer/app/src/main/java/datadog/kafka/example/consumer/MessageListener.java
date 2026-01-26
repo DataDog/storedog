@@ -21,14 +21,21 @@ public class MessageListener {
     private KafkaTemplate<String, byte[]> kafkaTemplate;
 
     private final String serviceName = System.getenv().getOrDefault("DD_SERVICE_NAME", "unknown");
-    private final String consumerGroup = System.getenv().getOrDefault("CONSUMER_GROUP", "default-group");
-    private final String inTopics = System.getenv().getOrDefault("TOPICS_IN", "");
     private final String outTopics = System.getenv("TOPICS_OUT");
     private final int processingTimeMin = getEnvInt("PROCESSING_TIME_MS_MIN", 50);
     private final int processingTimeMax = getEnvInt("PROCESSING_TIME_MS_MAX", 100);
     private final int errorRatePercent = getEnvInt("ERROR_RATE_PERCENT", 0);
     
     private final Random random = new Random();
+    
+    // Public getters for SpEL access in @KafkaListener
+    public String getConsumerGroup() {
+        return System.getenv().getOrDefault("CONSUMER_GROUP", "default-group");
+    }
+    
+    public String getInTopics() {
+        return System.getenv().getOrDefault("TOPICS_IN", "");
+    }
 
     @KafkaListener(groupId = "#{__listener.consumerGroup}", 
                    topics = "#{__listener.inTopics.split(',')}")
