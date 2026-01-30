@@ -5,11 +5,7 @@ metadata:
 data:
   # Kafka configuration
   KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
-  
-  # Datadog configuration
-  DD_ENV: "apm-workshop"
-  DD_DATA_STREAMS_ENABLED: "true"
-  
+
   # Processing configuration defaults
   PROCESSING_TIME_MS_MIN: "50"
   PROCESSING_TIME_MS_MAX: "100"
