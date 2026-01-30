@@ -57,24 +57,6 @@ spec:
               value: "order-events"
             - name: MESSAGES_PER_MINUTE
               value: "60"
-            - name: DD_ENV
-              valueFrom:
-                configMapKeyRef:
-                  name: data-streams-config
-                  key: DD_ENV
-            - name: DD_DATA_STREAMS_ENABLED
-              valueFrom:
-                configMapKeyRef:
-                  name: data-streams-config
-                  key: DD_DATA_STREAMS_ENABLED
-            - name: DD_SERVICE_NAME
-              value: "order-producer"
-            - name: DD_VERSION
-              value: "1.0.0"
-            - name: DD_SERVICE_MAPPING
-              value: "kafka:order-producer"
-            - name: DD_TAGS
-              value: "service_type:producer,pipeline_stage:order_creation"
           resources:
             requests:
               memory: "512Mi"

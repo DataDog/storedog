@@ -65,24 +65,6 @@ spec:
               value: "500"
             - name: ERROR_RATE_PERCENT
               value: "3"
-            - name: DD_ENV
-              valueFrom:
-                configMapKeyRef:
-                  name: data-streams-config
-                  key: DD_ENV
-            - name: DD_DATA_STREAMS_ENABLED
-              valueFrom:
-                configMapKeyRef:
-                  name: data-streams-config
-                  key: DD_DATA_STREAMS_ENABLED
-            - name: DD_SERVICE_NAME
-              value: "payment-processor"
-            - name: DD_VERSION
-              value: "1.0.0"
-            - name: DD_SERVICE_MAPPING
-              value: "kafka:payment-processor"
-            - name: DD_TAGS
-              value: "service_type:payment,pipeline_stage:payment_processing,pci_compliant:true"
           resources:
             requests:
               memory: "512Mi"

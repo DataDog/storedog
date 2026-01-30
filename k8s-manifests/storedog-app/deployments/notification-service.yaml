@@ -58,24 +58,6 @@ spec:
               value: "800"
             - name: ERROR_RATE_PERCENT
               value: "10"
-            - name: DD_ENV
-              valueFrom:
-                configMapKeyRef:
-                  name: data-streams-config
-                  key: DD_ENV
-            - name: DD_DATA_STREAMS_ENABLED
-              valueFrom:
-                configMapKeyRef:
-                  name: data-streams-config
-                  key: DD_DATA_STREAMS_ENABLED
-            - name: DD_SERVICE_NAME
-              value: "notification-service"
-            - name: DD_VERSION
-              value: "1.0.0"
-            - name: DD_SERVICE_MAPPING
-              value: "kafka:notification-service"
-            - name: DD_TAGS
-              value: "service_type:notification,pipeline_stage:customer_communication"
           resources:
             requests:
               memory: "512Mi"

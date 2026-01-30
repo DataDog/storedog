@@ -65,24 +65,6 @@ spec:
               value: "300"
             - name: ERROR_RATE_PERCENT
               value: "4"
-            - name: DD_ENV
-              valueFrom:
-                configMapKeyRef:
-                  name: data-streams-config
-                  key: DD_ENV
-            - name: DD_DATA_STREAMS_ENABLED
-              valueFrom:
-                configMapKeyRef:
-                  name: data-streams-config
-                  key: DD_DATA_STREAMS_ENABLED
-            - name: DD_SERVICE_NAME
-              value: "fulfillment-service"
-            - name: DD_VERSION
-              value: "1.0.0"
-            - name: DD_SERVICE_MAPPING
-              value: "kafka:fulfillment-service"
-            - name: DD_TAGS
-              value: "service_type:fulfillment,pipeline_stage:order_fulfillment"
           resources:
             requests:
               memory: "512Mi"

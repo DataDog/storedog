@@ -62,24 +62,6 @@ spec:
               value: "1000"
             - name: ERROR_RATE_PERCENT
               value: "1"
-            - name: DD_ENV
-              valueFrom:
-                configMapKeyRef:
-                  name: data-streams-config
-                  key: DD_ENV
-            - name: DD_DATA_STREAMS_ENABLED
-              valueFrom:
-                configMapKeyRef:
-                  name: data-streams-config
-                  key: DD_DATA_STREAMS_ENABLED
-            - name: DD_SERVICE_NAME
-              value: "analytics-aggregator"
-            - name: DD_VERSION
-              value: "1.0.0"
-            - name: DD_SERVICE_MAPPING
-              value: "kafka:analytics-aggregator"
-            - name: DD_TAGS
-              value: "service_type:analytics,pipeline_stage:data_aggregation,consumer_only:true"
           resources:
             requests:
               memory: "512Mi"
