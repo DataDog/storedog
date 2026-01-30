@@ -64,6 +64,10 @@ spec:
                 configMapKeyRef:
                   name: storedog-config
                   key: MAX_THREADS
+            - name: ORDER_WEBHOOK_ENABLED
+              value: "true"
+            - name: ORDER_WEBHOOK_URL
+              value: "http://order-webhook-bridge:8081"
           resources:
             requests:
               memory: "512Mi"
