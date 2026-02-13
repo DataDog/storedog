@@ -17,13 +17,13 @@ protobuf==3.14.0
 psutil==5.8.0
 psycopg2==2.8.6
 PyDispatcher==2.0.5
-PyYAML==5.4.1
+PyYAML==6.0.3
 requests==2.25.1
 six==1.15.0
 sortedcontainers==2.3.0
 SQLAlchemy==1.3.23
 tenacity==6.3.1
 urllib3==1.26.5
-Werkzeug==1.0.1
+Werkzeug==3.1.5
 wrapt==1.12.1
 JSON-log-formatter==0.5.2
