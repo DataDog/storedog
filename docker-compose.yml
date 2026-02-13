@@ -209,6 +209,8 @@ services:
     depends_on:
       dd-agent:
         condition: service_started
+      ads:
+        condition: service_started
       discounts:
         condition: service_healthy
       backend:
