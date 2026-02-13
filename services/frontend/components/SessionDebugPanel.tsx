@@ -66,9 +66,9 @@ export default function SessionDebugPanel() {
     >
       <div className={styles.header}>
         <h2 id="rum-panel-title" className={styles.title}>
-          <span className="sr-only">Real User Monitoring </span>
+          <span className={styles.srOnly}>Real User Monitoring </span>
           RUM Events
-          <span aria-live="polite" aria-atomic="true" className="sr-only">
+          <span aria-live="polite" aria-atomic="true" className={styles.srOnly}>
             {events.length} events
           </span>
           <span aria-hidden="true"> ({events.length})</span>
