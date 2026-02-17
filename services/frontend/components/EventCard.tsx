@@ -199,7 +199,7 @@ function Card({ type, isNewest, timestamp, badgeText, badgeAriaLabel, eventLabel
         </span>
         {headerContent}
         <time className={styles.timestamp}>
-          <span className="sr-only">Timestamp: </span>
+          <span className={styles.srOnly}>Timestamp: </span>
           {timestamp}
         </time>
       </div>
