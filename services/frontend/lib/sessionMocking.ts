@@ -126,6 +126,13 @@ export class ViewEventHandler extends BaseEventHandler {
 
     const additionalChanges = this.calculateTimeSpentChanges(session)
 
+    if (isUpdate && updatedProperties.includes('is_active')) {
+      additionalChanges.push({
+        field: 'session.is_active',
+        to: event.view.is_active ?? false,
+      })
+    }
+
     this.dispatchEvent({
       type: 'view',
       count: session.getCounter('view'),

@@ -11,7 +11,7 @@ export interface SessionChange {
 
 export interface AttributeChange {
   field: AttributeChangeField
-  to: number | string | object
+  to: number | string | boolean | object
 }
 
 export interface ViewEventData {
