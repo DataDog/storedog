@@ -246,9 +246,9 @@ export default function EventCard({ event, isNewest }: EventCardProps) {
     
     case 'action':
       return (
-        <Card {...commonProps}>
-          {data.name && <div className={styles.name}>{data.name}</div>}
-        </Card>
+        <Card {...commonProps}
+        headerContent={<span className={styles.name}>{data.name}</span>}
+        />
       )
     
     case 'resource':
