@@ -228,12 +228,7 @@ export default function EventCard({ event, isNewest }: EventCardProps) {
       return (
         <Card 
           {...commonProps}
-          headerContent={
-            <>
-              <span className={styles.url}>{formatUrl(data.url)}</span>
-              <span className={styles.count}>{data.count} total</span>
-            </>
-          }
+          headerContent={<span className={styles.url}>{formatUrl(data.url)}</span>}
         >
           {data.name && <div className={styles.name}>{data.name}</div>}
           {data.updatePropertiesText && (
