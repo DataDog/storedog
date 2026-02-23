@@ -42,13 +42,40 @@ class BrowserPool {
     return newBrowser;
   }
 
+  async clearBrowserContext(browser) {
+    try {
+      const pages = await browser.pages();
+      const page = pages[0];
+      if (!page) return;
+
+      const client = await page.createCDPSession();
+      await client.send('Network.clearBrowserCookies');
+      await client.send('Network.clearBrowserCache');
+      await client.send('Runtime.evaluate', {
+        expression: `
+          try {
+            localStorage.clear();
+            sessionStorage.clear();
+          } catch (e) {}
+          if (window.indexedDB) {
+            indexedDB.databases().then(dbs => {
+              dbs.forEach(db => indexedDB.deleteDatabase(db.name));
+            }).catch(() => {});
+          }
+        `
+      });
+      await client.detach();
+      this.log(`Browser context cleared for ${browser.id}`);
+    } catch (error) {
+      this.log(`Error clearing browser context: ${error.message}`);
+    }
+  }
+
   async releaseBrowser(browser) {
     try {
       if (browser.isConnected() && this.pool.length < this.poolSize) {
-        // Clean up any orphaned pages before returning to pool
         try {
           const pages = await browser.pages();
-          // Close all pages except the default about:blank page
           for (const page of pages) {
             if (page.url() !== 'about:blank') {
               await page.close().catch(() => {});
@@ -57,6 +84,8 @@ class BrowserPool {
         } catch (pageCleanupError) {
           this.log(`Error cleaning up pages: ${pageCleanupError.message}`);
         }
+
+        await this.clearBrowserContext(browser);
         
         this.pool.push(browser);
         this.log(`Browser ${browser.id} returned to pool`);

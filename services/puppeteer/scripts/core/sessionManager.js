@@ -69,45 +69,6 @@ class SessionManager {
     console.log(`[🕺 SessionManager] ${message}`);
   }
 
-  // Clear all browser data (cookies, cache, storage) to create a "fresh" session.
-  // This makes each session unique from RUM's perspective - they appear as different users.
-  async clearBrowserContext(session) {
-    try {
-      // Create a Chrome DevTools Protocol (CDP) session to send low-level commands
-      // CDP lets us control Chrome features that aren't available in the regular Puppeteer API
-      const client = await session.page.target().createCDPSession();
-      
-      // Send commands to clear network-level data
-      await client.send('Network.clearBrowserCookies');  // Delete all cookies
-      await client.send('Network.clearBrowserCache');    // Clear the browser cache
-      
-      // Execute JavaScript in the browser to clear storage
-      // localStorage, sessionStorage, and IndexedDB are where websites store data
-      // Wrapped in try-catch to handle SecurityErrors on special pages (about:blank, etc.)
-      await client.send('Runtime.evaluate', {
-        expression: `
-          try {
-            localStorage.clear();      // Clear localStorage (key-value storage)
-            sessionStorage.clear();    // Clear sessionStorage (temporary storage)
-          } catch (e) {
-            // Ignore SecurityError on special pages like about:blank
-          }
-          if (window.indexedDB) {    // Check if IndexedDB is available
-            indexedDB.databases().then(databases => {
-              // Loop through all databases and delete them
-              databases.forEach(db => indexedDB.deleteDatabase(db.name));
-            }).catch(() => {});  // Ignore errors (some browsers don't support databases())
-          }
-        `
-      });
-      
-      this.log(`Browser context cleared for ${session.browser.id}`);
-    } catch (error) {
-      // If clearing fails, log it but don't crash - the session can still continue
-      this.log('Error clearing browser context:', error.message);
-    }
-  }
-
   getMemoryUsage = () => {
     const memUsage = process.memoryUsage();
     const memoryUsage = {
@@ -204,18 +165,7 @@ class SessionManager {
             this.log(`Error creating session: ${error.message}`);
           } finally {
             try {
-              if (session && browser) {
-                // Always try to clear browser context before releasing
-                // Even if page is closed, we can still clear cookies/cache at browser level
-                try {
-                  if (session.page && !session.page.isClosed()) {
-                    await this.clearBrowserContext(session);
-                  }
-                } catch (contextError) {
-                  this.log(`Context clear error: ${contextError.message}`);
-                }
-                
-                // Always release browser back to pool
+              if (browser) {
                 await this.browserPool.releaseBrowser(browser);
               }
             } catch (cleanupError) {
