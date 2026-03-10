@@ -23,40 +23,18 @@ spec:
     metadata:
       labels:
         app: ads
-      annotations:
-        ad.datadoghq.com/ads.logs: '[{"source": "java"}]'
     spec:
-      volumes:
-        - name: apmsocketpath
-          hostPath:
-            path: /var/run/datadog/
       containers:
         - name: ads
           image: ${REGISTRY_URL}/ads-java:${SD_TAG}
           ports:
             - containerPort: 3030
           env:
-            - name: DD_ENV
-              value: ${DD_ENV}
-            - name: DD_SERVICE
-              value: ads
-            - name: DD_VERSION
-              value: ${DD_VERSION_ADS}
-            - name: DD_LOGS_INJECTION
-              value: "true"
-            - name: DD_RUNTIME_METRICS_ENABLED
-              value: "true"
-            - name: DD_PROFILING_ENABLED
-              value: "true"
-            - name: DD_PROFILING_ALLOCATION_ENABLED
-              value: "true"
-            - name: DD_PROFILING_TIMELINE_ENABLED
-              value: "true"
             # OpenTelemetry configuration (complete the Dockerfile config)
             - name: OTEL_SERVICE_NAME
               value: "ads"
             - name: OTEL_SERVICE_VERSION
-              value: ${DD_VERSION_ADS}
+              value: "1.0.0"
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: "http://otelcol:4317"
             - name: OTEL_EXPORTER_OTLP_PROTOCOL
@@ -68,7 +46,7 @@ spec:
             - name: OTEL_LOGS_EXPORTER
               value: "console,otlp"
             - name: OTEL_RESOURCE_ATTRIBUTES
-              value: "service.name=ads,service.version=${DD_VERSION_ADS},deployment.environment=${DD_ENV}"
+              value: "service.name=ads,service.version=1.0.0,deployment.environment=development"
           resources:
             requests:
               memory: "256Mi"
@@ -76,6 +54,3 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "400m"
-          volumeMounts:
-            - name: apmsocketpath
-              mountPath: /var/run/datadog

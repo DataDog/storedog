@@ -205,7 +205,18 @@ kubectl create secret generic datadog-secret \
   -n storedog
 ```
 
-4. **Deploy the Storedog Application:**
+4. **Create the OpenTelemetry Collector ConfigMap:**
+
+The Kubernetes deployment uses the canonical collector config from [services/otel/otelcol-config.yaml](../services/otel/otelcol-config.yaml). Create the runtime ConfigMap from that file before applying the app manifests.
+
+```bash
+kubectl create configmap otel-config-map \
+  --from-file=otelcol-config.yaml=services/otel/otelcol-config.yaml \
+  -n storedog \
+  --dry-run=client -o yaml | kubectl apply -f -
+```
+
+5. **Deploy the Storedog Application:**
 
 The following command deploys all application components into it.
 

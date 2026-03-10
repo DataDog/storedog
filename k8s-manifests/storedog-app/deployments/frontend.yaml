@@ -23,13 +23,8 @@ spec:
     metadata:
       labels:
         app: frontend
-      annotations:
-        ad.datadoghq.com/frontend.logs: '[{"source": "nodejs", "auto_multi_line_detection":true}]'
     spec:
       volumes:
-        - name: apmsocketpath
-          hostPath:
-            path: /var/run/datadog/
         - name: feature-flags-config
           configMap:
             name: feature-flags-config
@@ -84,37 +79,11 @@ spec:
                 configMapKeyRef:
                   name: storedog-config
                   key: NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN
-            - name: NEXT_PUBLIC_DD_APPLICATION_ID
-              valueFrom:
-                secretKeyRef:
-                  name: datadog-secret
-                  key: dd_application_id
-            - name: NEXT_PUBLIC_DD_CLIENT_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: datadog-secret
-                  key: dd_client_token
-            - name: DD_ENV
-              value: ${DD_ENV}
-            - name: DD_SERVICE
-              value: ${NEXT_PUBLIC_DD_SERVICE_FRONTEND}
-            - name: DD_VERSION
-              value: ${NEXT_PUBLIC_DD_VERSION_FRONTEND}
-            - name: DD_LOGS_INJECTION
-              value: "true"
-            - name: DD_RUNTIME_METRICS_ENABLED
-              value: "true"
-            - name: DD_PROFILING_ENABLED
-              value: "true"
-            - name: DD_PROFILING_ALLOCATION_ENABLED
-              value: "true"
-            - name: DD_PROFILING_TIMELINE_ENABLED
-              value: "true"
             # OpenTelemetry configuration (override Dockerfile settings)
             - name: OTEL_SERVICE_NAME
-              value: ${NEXT_PUBLIC_DD_SERVICE_FRONTEND}
+              value: "frontend"
             - name: OTEL_SERVICE_VERSION
-              value: ${NEXT_PUBLIC_DD_VERSION_FRONTEND}
+              value: "1.0.0"
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: "http://otelcol:4318"
             - name: OTEL_EXPORTER_OTLP_PROTOCOL
@@ -126,7 +95,7 @@ spec:
             - name: OTEL_LOGS_EXPORTER
               value: "console,otlp"
             - name: OTEL_RESOURCE_ATTRIBUTES
-              value: "service.name=${NEXT_PUBLIC_DD_SERVICE_FRONTEND},service.version=${NEXT_PUBLIC_DD_VERSION_FRONTEND},deployment.environment=${DD_ENV}"
+              value: "service.name=frontend,service.version=1.0.0,deployment.environment=development"
           resources:
             requests:
               memory: "256Mi"
@@ -134,8 +103,6 @@ spec:
             limits:
               memory: "2Gi"
           volumeMounts:
-            - name: apmsocketpath
-              mountPath: /var/run/datadog
             - name: feature-flags-config
               mountPath: /app/featureFlags.config.json
               subPath: featureFlags.config.json

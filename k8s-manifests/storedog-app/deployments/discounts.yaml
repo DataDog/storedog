@@ -23,13 +23,7 @@ spec:
     metadata:
       labels:
         app: discounts
-      annotations:
-        ad.datadoghq.com/discounts.logs: '[{"source": "python"}]'
     spec:
-      volumes:
-        - name: apmsocketpath
-          hostPath:
-            path: /var/run/datadog/
       initContainers:
         - name: wait-for-db
           image: busybox
@@ -58,27 +52,11 @@ spec:
                   key: POSTGRES_USER
             - name: POSTGRES_HOST
               value: postgres
-            - name: DD_ENV
-              value: ${DD_ENV}
-            - name: DD_SERVICE
-              value: discounts
-            - name: DD_VERSION
-              value: ${DD_VERSION_DISCOUNTS}
-            - name: DD_LOGS_INJECTION
-              value: "true"
-            - name: DD_RUNTIME_METRICS_ENABLED
-              value: "true"
-            - name: DD_PROFILING_ENABLED
-              value: "true"
-            - name: DD_PROFILING_ALLOCATION_ENABLED
-              value: "true"
-            - name: DD_PROFILING_TIMELINE_ENABLED
-              value: "true"
             # OpenTelemetry configuration (override Dockerfile to use HTTP for consistency)
             - name: OTEL_SERVICE_NAME
               value: "discounts"
             - name: OTEL_SERVICE_VERSION
-              value: ${DD_VERSION_DISCOUNTS}
+              value: "1.0.0"
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: "http://otelcol:4317"
             - name: OTEL_EXPORTER_OTLP_PROTOCOL
@@ -90,7 +68,7 @@ spec:
             - name: OTEL_LOGS_EXPORTER
               value: "console,otlp"
             - name: OTEL_RESOURCE_ATTRIBUTES
-              value: "service.name=discounts,service.version=${DD_VERSION_DISCOUNTS},deployment.environment=${DD_ENV}"
+              value: "service.name=discounts,service.version=1.0.0,deployment.environment=development"
           resources:
             requests:
               memory: "128Mi"
@@ -98,6 +76,3 @@ spec:
             limits:
               memory: "256Mi"
               cpu: "200m"
-          volumeMounts:
-            - name: apmsocketpath
-              mountPath: /var/run/datadog

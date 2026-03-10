@@ -14,7 +14,6 @@ services:
         - "--config=/etc/otelcol-config.yaml"
       volumes:
         - ./services/otel/otelcol-config.yaml:/etc/otelcol-config.yaml
-        - /var/run/docker.sock:/var/run/docker.sock
       ports:
         - 4317:4317
         - 4318:4318
@@ -31,8 +30,6 @@ services:
       - otelcol
     networks:
       - storedog-network
-    labels:
-      com.datadoghq.ad.logs: '[{"source": "nodejs", "auto_multi_line_detection":true }]'
   backend:
     container_name: backend
     hostname: backend
@@ -51,15 +48,13 @@ services:
     environment:
       # OpenTelemetry configuration
       - OTEL_SERVICE_NAME=backend
-      - OTEL_SERVICE_VERSION=${DD_VERSION_BACKEND:-1.0.0}
+      - OTEL_SERVICE_VERSION=1.0.0
       - OTEL_TRACES_EXPORTER=console,otlp
       - OTEL_METRICS_EXPORTER=console,otlp
       - OTEL_LOGS_EXPORTER=console,otlp
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otelcol:4318
       - OTEL_PROPAGATORS=tracecontext,baggage
       - OTEL_LOG_LEVEL=debug
-    labels:
-      com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection":true }]'
   worker:
     container_name: worker
     hostname: worker
@@ -75,28 +70,23 @@ services:
     environment:
        # OpenTelemetry configuration
       - OTEL_SERVICE_NAME=worker
-      - OTEL_SERVICE_VERSION=${DD_VERSION_BACKEND:-1.0.0}
+      - OTEL_SERVICE_VERSION=1.0.0
       - OTEL_TRACES_EXPORTER=console,otlp
       - OTEL_METRICS_EXPORTER=console,otlp
       - OTEL_LOGS_EXPORTER=console,otlp
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otelcol:4318
       - OTEL_PROPAGATORS=tracecontext,baggage
       - OTEL_LOG_LEVEL=debug
-    labels:
-      com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection":true }]'
   discounts:
     container_name: discounts
     hostname: discounts
     build: 
       context: ./services/discounts
-    #command: wait-for-it postgres:5432 -- ddtrace-run flask run --port=2814 --host=0.0.0.0
     depends_on:
       - postgres
       - otelcol
     networks:
       - storedog-network
-    labels:
-      com.datadoghq.ad.logs: '[{"source": "python"}]'
   ads:
     container_name: ads
     hostname: ads
@@ -112,20 +102,16 @@ services:
       - POSTGRES_HOST=postgres
       # OpenTelemetry configuration for Java agent
       - OTEL_SERVICE_NAME=store-ads
-      - OTEL_SERVICE_VERSION=${DD_VERSION_ADS:-1.0.0}
+      - OTEL_SERVICE_VERSION=1.0.0
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otelcol:4318
       - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
-      - OTEL_RESOURCE_ATTRIBUTES=service.name=store-ads,service.version=${DD_VERSION_ADS:-1.0.0},deployment.environment=production
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=store-ads,service.version=1.0.0,deployment.environment=production
       - OTEL_TRACES_EXPORTER=console,otlp
       - OTEL_METRICS_EXPORTER=console,otlp
       - OTEL_LOGS_EXPORTER=console,otlp
       - OTEL_LOG_LEVEL=debug
     networks:
       - storedog-network
-    labels:
-      com.datadoghq.ad.logs: '[{"source": "java"}]'
-      com.datadoghq.tags.service: 'store-ads'
-      com.datadoghq.tags.version: '${DD_VERSION_ADS:-1.0.0}'
   service-proxy:
     container_name: service-proxy
     hostname: service-proxy
@@ -141,14 +127,6 @@ services:
       - ADS_A_UPSTREAM=${ADS_A_UPSTREAM:-ads:3030} # Only needed if using AB testing
       - ADS_B_UPSTREAM=${ADS_B_UPSTREAM:-ads-python:3030} # Only needed if using AB testing
       - ADS_B_PERCENT=${ADS_B_PERCENT:-0} # Percent of traffic to ads-python; remainder goes to ads-java. Only needed if using AB testing
-      - DD_AGENT_HOST=dd-agent
-      - DD_SERVICE=service-proxy
-      - DD_VERSION=${DD_VERSION_NGINX:-1.28.0}
-    labels:
-      com.datadoghq.ad.logs: '[{"source": "nginx"}]'
-      com.datadoghq.ad.check_names: '["nginx"]'
-      com.datadoghq.ad.init_configs: '[{}]'
-      com.datadoghq.ad.instances: '[{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]'
   postgres:
     container_name: postgres
     hostname: postgres
@@ -161,13 +139,6 @@ services:
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-    labels:
-      com.datadoghq.tags.service: 'store-db'
-      com.datadoghq.tags.version: '${DD_VERSION_POSTGRES:-15.0}'
-      com.datadoghq.ad.check_names: '["postgres"]'
-      com.datadoghq.ad.init_configs: '[{}]'
-      com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":5432, "username":"datadog", "password":"datadog"}]'
-      com.datadoghq.ad.logs: '[{"source": "postgresql", "auto_multi_line_detection":true, "path": "/var/log/pg_log/postgresql*.json", "type": "file"}]'
   redis:
     container_name: redis
     hostname: redis
@@ -176,14 +147,6 @@ services:
       - 'redis:/data'
     networks:
       - storedog-network
-    labels:
-      com.datadoghq.tags.service: 'redis'
-      com.datadoghq.tags.env: '${DD_ENV:-production}'
-      com.datadoghq.tags.version: '${DD_VERSION_REDIS:-6.2}'
-      com.datadoghq.ad.check_names: '["redisdb"]'
-      com.datadoghq.ad.init_configs: '[{}]'
-      com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":6379}]'
-      com.datadoghq.ad.logs: '[{"source": "redis", "service": "redis"}]'
   puppeteer:
     container_name: puppeteer
     hostname: puppeteer

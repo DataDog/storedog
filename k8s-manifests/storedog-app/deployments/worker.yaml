@@ -11,13 +11,7 @@ spec:
     metadata:
       labels:
         app: worker
-      annotations:
-        ad.datadoghq.com/worker.logs: '[{"source": "ruby", "auto_multi_line_detection":true}]'
     spec:
-      volumes:
-        - name: apmsocketpath
-          hostPath:
-            path: /var/run/datadog/
       initContainers:
         - name: wait-for-db
           image: busybox
@@ -64,27 +58,11 @@ spec:
                 configMapKeyRef:
                   name: storedog-config
                   key: MAX_THREADS
-            - name: DD_ENV
-              value: ${DD_ENV}
-            - name: DD_SERVICE
-              value: worker
-            - name: DD_VERSION
-              value: ${DD_VERSION_BACKEND}
-            - name: DD_LOGS_INJECTION
-              value: "true"
-            - name: DD_RUNTIME_METRICS_ENABLED
-              value: "true"
-            - name: DD_PROFILING_ENABLED
-              value: "true"
-            - name: DD_PROFILING_ALLOCATION_ENABLED
-              value: "true"
-            - name: DD_PROFILING_TIMELINE_ENABLED
-              value: "true"
             # OpenTelemetry configuration
             - name: OTEL_SERVICE_NAME
               value: "worker"
             - name: OTEL_SERVICE_VERSION
-              value: ${DD_VERSION_BACKEND}
+              value: "1.0.0"
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: "http://otelcol:4317"
             - name: OTEL_EXPORTER_OTLP_PROTOCOL
@@ -96,7 +74,7 @@ spec:
             - name: OTEL_LOGS_EXPORTER
               value: "console,otlp"
             - name: OTEL_RESOURCE_ATTRIBUTES
-              value: "service.name=worker,service.version=${DD_VERSION_BACKEND},deployment.environment=${DD_ENV}"
+              value: "service.name=worker,service.version=1.0.0,deployment.environment=development"
           resources:
             requests:
               memory: "512Mi"
@@ -104,6 +82,3 @@ spec:
             limits:
               memory: "1Gi"
               cpu: "500m"
-          volumeMounts:
-            - name: apmsocketpath
-              mountPath: /var/run/datadog

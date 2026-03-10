@@ -7,6 +7,7 @@ from sqlalchemy.orm import joinedload
 from flask_cors import CORS
 from flask import request as flask_request
 from flask import Flask, Response, jsonify
+from opentelemetry import metrics, trace
 import words
 import requests
 import random
@@ -20,9 +21,30 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 formatter = json_log_formatter.VerboseJSONFormatter()
 json_handler = logging.StreamHandler(sys.stdout)
 json_handler.setFormatter(formatter)
-logger = logging.getLogger('werkzeug')
+logger = logging.getLogger('discounts')
 logger.addHandler(json_handler)
 logger.setLevel(logging.DEBUG)
+logger.propagate = False
+
+meter = metrics.get_meter("discounts-service", "1.0.0")
+discount_request_counter = meter.create_counter(
+    "discounts.requests",
+    description="Counts discount service requests.",
+)
+discount_error_counter = meter.create_counter(
+    "discounts.errors",
+    description="Counts discount service request failures.",
+)
+discount_result_histogram = meter.create_histogram(
+    "discounts.result_count",
+    description="Records the number of discounts returned per request.",
+    unit="1",
+)
+discount_value_histogram = meter.create_histogram(
+    "discounts.lookup_value",
+    description="Records the value of discounts returned by code lookup.",
+    unit="1",
+)
 
 # get the BROKEN_DISCOUNTS environment variable, if it exists
 BROKEN_DISCOUNTS = os.getenv("BROKEN_DISCOUNTS")
@@ -55,6 +77,44 @@ remove_color_filter = NoEscape()
 logger.addFilter(remove_color_filter)
 
 
+def _trace_context():
+    span = trace.get_current_span()
+    span_context = span.get_span_context()
+    if not span_context.is_valid:
+        return {}
+
+    return {
+        "trace_id": format(span_context.trace_id, "032x"),
+        "span_id": format(span_context.span_id, "016x"),
+    }
+
+
+def log_event(level, message, exc_info=False, **fields):
+    payload = _trace_context()
+    payload.update(fields)
+    logger.log(level, message, exc_info=exc_info, extra=payload)
+
+
+def record_request(endpoint, method, outcome, **attrs):
+    attributes = {
+        "endpoint": endpoint,
+        "method": method,
+        "outcome": outcome,
+    }
+    attributes.update(attrs)
+    discount_request_counter.add(1, attributes)
+
+
+def record_error(endpoint, method, error_type, **attrs):
+    attributes = {
+        "endpoint": endpoint,
+        "method": method,
+        "error.type": error_type,
+    }
+    attributes.update(attrs)
+    discount_error_counter.add(1, attributes)
+
+
 @app.route('/')
 def hello():
     return Response({'Hello from Discounts!': 'world'}, mimetype='application/json')
@@ -66,19 +126,41 @@ def status():
 
         try:
             discounts = Discount.query.all()
-            logger.info(f"Discounts available: {len(discounts)}")
-
             influencer_count = 0
             for discount in discounts:
                 if discount.discount_type.influencer:
                     influencer_count += 1
-            logger.info(
-                f"Total of {influencer_count} influencer specific discounts as of this request")
+            result_count = len(discounts)
+            record_request("/discount", "GET", "success")
+            discount_result_histogram.record(
+                result_count,
+                {
+                    "endpoint": "/discount",
+                    "method": "GET",
+                },
+            )
+            log_event(
+                logging.INFO,
+                "discount list served",
+                endpoint="/discount",
+                method="GET",
+                result_count=result_count,
+                influencer_count=influencer_count,
+            )
 
             return jsonify([b.serialize() for b in discounts])
 
-        except:
-            logger.error("An error occurred while getting discounts.")
+        except Exception as exc:
+            record_request("/discount", "GET", "error")
+            record_error("/discount", "GET", type(exc).__name__)
+            log_event(
+                logging.ERROR,
+                "discount list failed",
+                endpoint="/discount",
+                method="GET",
+                error_type=type(exc).__name__,
+                exc_info=True,
+            )
             err = jsonify({'error': 'Internal Server Error'})
             err.status_code = 500
             return err
@@ -95,20 +177,47 @@ def status():
                                     words.get_random(random.randint(2, 4)),
                                     random.randint(10, 500),
                                     new_discount_type)
-            logger.info(f"Adding discount {new_discount}")
             db.session.add(new_discount)
             db.session.commit()
             discounts = Discount.query.all()
+            result_count = len(discounts)
+            record_request("/discount", "POST", "success")
+            discount_result_histogram.record(
+                result_count,
+                {
+                    "endpoint": "/discount",
+                    "method": "POST",
+                },
+            )
+            log_event(
+                logging.INFO,
+                "discount created",
+                endpoint="/discount",
+                method="POST",
+                discount_code=new_discount.code,
+                discount_value=new_discount.value,
+                result_count=result_count,
+            )
 
             return jsonify([b.serialize() for b in discounts])
 
-        except:
-            logger.error("An error occurred while creating a new discount.")
+        except Exception as exc:
+            record_request("/discount", "POST", "error")
+            record_error("/discount", "POST", type(exc).__name__)
+            log_event(
+                logging.ERROR,
+                "discount creation failed",
+                endpoint="/discount",
+                method="POST",
+                error_type=type(exc).__name__,
+                exc_info=True,
+            )
             err = jsonify({'error': 'Internal Server Error'})
             err.status_code = 500
             return err
 
     else:
+        record_request("/discount", flask_request.method, "invalid_method")
         err = jsonify({'error': 'Invalid request method'})
         err.status_code = 405
         return err
@@ -120,8 +229,6 @@ def getDiscount():
         try:
             # Get the discount code from the query string
             discount_code = flask_request.args.get("discount_code")
-            # Log the discount code
-            logger.info(f"Discount code: {discount_code}")
             discount = Discount.query.filter_by(code=discount_code).first()
 
             # Broken discounts feature flag is ENABLED, randomly error out
@@ -131,20 +238,65 @@ def getDiscount():
             if discount:
                 response = discount.serialize()
                 response.update({"status": 1})
+                record_request("/discount-code", "GET", "hit")
+                discount_value_histogram.record(
+                    discount.value,
+                    {
+                        "endpoint": "/discount-code",
+                        "discount_type": discount.discount_type.name,
+                    },
+                )
+                log_event(
+                    logging.INFO,
+                    "discount lookup hit",
+                    endpoint="/discount-code",
+                    method="GET",
+                    discount_code=discount_code,
+                    discount_name=discount.name,
+                    discount_type=discount.discount_type.name,
+                    discount_value=discount.value,
+                )
                 return jsonify(response)
             else:
+                record_request("/discount-code", "GET", "miss")
+                log_event(
+                    logging.WARNING,
+                    "discount lookup miss",
+                    endpoint="/discount-code",
+                    method="GET",
+                    discount_code=discount_code,
+                )
                 err = jsonify({"error": "Discount not found", "status": 0})
                 err.status_code = 404
                 return err
         except Exception as e:
+            record_request("/discount-code", "GET", "error")
+            record_error(
+                "/discount-code",
+                "GET",
+                type(e).__name__,
+                broken_discounts=BROKEN_DISCOUNTS == "ENABLED",
+            )
             # Log the error details with exception type, message, and stack trace
-            logger.error(
-                "An error occurred while getting discount.",
-                exc_info=True  # Includes the stack trace in the log
+            log_event(
+                logging.ERROR,
+                "discount lookup failed",
+                endpoint="/discount-code",
+                method="GET",
+                discount_code=flask_request.args.get("discount_code"),
+                error_type=type(e).__name__,
+                broken_discounts=BROKEN_DISCOUNTS == "ENABLED",
+                exc_info=True,
             )
             # Optionally capture the stack trace separately if needed
             stack_trace = traceback.format_exc()
-            logger.debug(f"Stack trace: {stack_trace}")
+            log_event(
+                logging.DEBUG,
+                "discount lookup stack trace",
+                endpoint="/discount-code",
+                method="GET",
+                stack_trace=stack_trace,
+            )
 
             # Add error details to the response for debugging
             err = jsonify({

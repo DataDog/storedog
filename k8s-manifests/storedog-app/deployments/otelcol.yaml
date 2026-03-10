@@ -28,8 +28,6 @@ spec:
     metadata:
       labels:
         app: otelcol
-      annotations:
-        ad.datadoghq.com/otelcol.logs: '[{"source": "otel"}]'
     spec:
       containers:
         - name: otelcol
@@ -46,16 +44,6 @@ spec:
           env:
             - name: OTEL_LOG_LEVEL
               value: "debug"
-            - name: DD_SITE
-              value: ${DD_SITE}
-            - name: DD_API_KEY
-              value: ${DD_API_KEY}
-            - name: DD_APP_KEY
-              value: ${DD_APP_KEY}
-            - name: DATADOG_API_KEY
-              value: ${DATADOG_API_KEY}
-            - name: DD_ENV
-              value: ${DD_ENV}
           resources:
             requests:
               memory: "128Mi"
@@ -64,10 +52,10 @@ spec:
               memory: "200Mi"
               cpu: "200m"
           volumeMounts:
-            - name: otelcol-config-ddog
+            - name: otelcol-config
               mountPath: /etc/otelcol-config.yaml
               subPath: otelcol-config.yaml
       volumes:
-        - name: otelcol-config-ddog
+        - name: otelcol-config
           configMap:
-            name: otelcol-config-ddog
+            name: otel-config-map
