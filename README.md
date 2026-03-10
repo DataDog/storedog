@@ -9,7 +9,7 @@ Storedog is a Dockerized e-commerce site used primarily in labs run at [learn.da
 - **Postgres**: A Postgres database that stores the product catalog and order data, as well as the Discount service's data.
 - **Nginx**: A reverse proxy that routes requests to the appropriate service. Also known as `service-proxy`. 
 - **DBM**: An optional Python service that runs a long-running query to demonstrate Database Monitoring. See [the DBM service's README](./services/dbm/README.md) for details on how to run this service.
-- **The Datadog Agent**: collects metrics and traces from the other services and sends them to Datadog.
+- **OpenTelemetry Collector**: receives OTLP telemetry from the application services and writes it to the configured exporters.
 - **Puppeteer**: A Node.js service that runs a headless browser to generate RUM data for the frontend.
 
 > [!NOTE]
@@ -32,47 +32,7 @@ The Storedog application comes pre-configured with default environment variable 
 >
 > You'll also notice the `docker-compose.yml` file has less environment variables set. This is to make it easier to run in lab environments and rely more on default values.
 
-The only values you need to provide are your Datadog credentials to enable Datadog features. You can set these in the Docker Compose file, on the host, or in a `.env` file. If you use the `.env` file, you can use the `.env.template` file as a reference for the available variables.
-
-See the [Environment Variables](#environment-variables) section below for more details on the available environment variables.
-
-> [!WARNING]
-> While you can mix and match the environment variables in the Docker Compose file, host, and `.env` file, be mindful of the order of precedence. See the [Docker Compose documentation](https://docs.docker.com/compose/compose-file/compose-file-v3/#environment-variables) for more details.
-
-### Using the Docker Compose file
-
-1. Go into the Docker Compose file and set or overwrite the environment variables you need to override.
-
-  ```yaml
-  environment:
-    - DD_API_KEY=your_datadog_api_key
-    - DD_APP_KEY=your_datadog_app_key
-  ```
-
-### Using the host
-
-1. Set the environment variables in your shell
-
-  ```sh
-  export DD_API_KEY=your_datadog_api_key
-  export DD_APP_KEY=your_datadog_app_key
-  ```
-
-### Using the `.env` file
-
-1. Copy the environment template:
-
-  ```sh
-  cp .env.template .env
-  ```
-
-1. Open the `.env` file and provide your Datadog credentials:
-   - `DD_API_KEY`: Required for Datadog Agent and APM
-   - `DD_APP_KEY`: Required for Datadog API access
-   - `NEXT_PUBLIC_DD_APPLICATION_ID`: Required for RUM in frontend service
-   - `NEXT_PUBLIC_DD_CLIENT_TOKEN`: Required for RUM in frontend service
-
-   You can find or create these values in your Datadog organization. All other variables have sensible defaults and can be left as-is.
+No Datadog-specific credentials are required for the default local setup. The application emits OpenTelemetry data to the local `otelcol` service, which writes telemetry to its `debug` exporter by default.
 
 ### Starting the application
 
@@ -99,15 +59,6 @@ See the [Environment Variables](#environment-variables) section below for more d
 > By default, the frontend service runs in development mode when using `docker compose -f docker-compose.dev.yml up -d`. If you want to run it in production, you can set the `FRONTEND_COMMAND` environment variable to `npm run prod`. This can be done either in the compose file, on the host, or in the `.env` file.
 
 ## Environment Variables
-
-### Core Datadog Variables
-
-These variables must be set for core functionality with Datadog, but will not affect the application's behavior. Find these values in your Datadog organization's settings, you'll need to create a RUM application for the `DD_APPLICATION_ID` and `DD_CLIENT_TOKEN` values.
-
-- `DD_API_KEY`: Your Datadog API key (required for monitoring)
-- `DD_APP_KEY`: Your Datadog application key (required for API access)
-- `NEXT_PUBLIC_DD_APPLICATION_ID`: Datadog RUM application ID (required for RUM in frontend service)
-- `NEXT_PUBLIC_DD_CLIENT_TOKEN`: Datadog RUM client token (required for RUM in frontend service)
 
 ### Frontend Service Variables
 
@@ -144,29 +95,18 @@ These variables must be set for core functionality with Datadog, but will not af
 - `MAX_THREADS`: Maximum worker threads (default: `5`)
 - `RAILS_ENV`: Rails environment (default: `production`)
 
-### Datadog Configuration Variables
+### OpenTelemetry Variables
 
-Common Datadog variables that can be set in application services:
+Common OpenTelemetry variables used in the services:
 
-- `DD_ENV`: Environment name
-- `DD_SITE`: Datadog site (e.g., `datadoghq.com`, `datadoghq.eu`)
-- `DD_HOSTNAME`: Override default hostname
-- `DD_LOGS_INJECTION`: Enable log injection into traces. Some languages' trace libraries turn this on by default, but we turn it on explicitly to prevent confusion.
-- `DD_PROFILING_ENABLED`: Enable the Continuous Profiler 
-- `DD_RUNTIME_METRICS_ENABLED`: Enable runtime metrics
-
-Service-specific versions:
-- `DD_VERSION_FRONTEND`: Frontend version (default: `1.0.0`)
-- `DD_VERSION_BACKEND`: Backend version (default: `1.0.0`)
-- `DD_VERSION_DISCOUNTS`: Discounts service version (default: `1.0.0`)
-- `DD_VERSION_ADS`: Ads service version (default: `1.0.0`)
-- `DD_VERSION_ADS_PYTHON`: Ads Python service version (default: `1.0.0`)
-- `DD_VERSION_NGINX`: nginx service version (default: `1.28.0`)
-- `DD_VERSION_POSTGRES`: PostgreSQL service version (default: `15.0`)
-- `DD_VERSION_REDIS`: Redis version (default: `6.2`)
-
-> [!NOTE]
-> Most of the time, these service versions will remain at the same version as one another. The reason for having them defined separately is to allow for the ability to change the version of one service without having to change the version of all of the other services, something that may be common when working in a lab environment.
+- `OTEL_SERVICE_NAME`: Logical service name reported by the application.
+- `OTEL_SERVICE_VERSION`: Service version reported in resource attributes.
+- `OTEL_EXPORTER_OTLP_ENDPOINT`: OTLP endpoint for the local collector, usually `http://otelcol:4317` or `http://otelcol:4318`.
+- `OTEL_EXPORTER_OTLP_PROTOCOL`: OTLP transport protocol such as `grpc` or `http/protobuf`.
+- `OTEL_TRACES_EXPORTER`: Trace exporter configuration.
+- `OTEL_METRICS_EXPORTER`: Metrics exporter configuration.
+- `OTEL_LOGS_EXPORTER`: Logs exporter configuration.
+- `OTEL_RESOURCE_ATTRIBUTES`: Additional resource metadata such as `service.version` and `deployment.environment`.
 
 ### Puppeteer user session simulation variables
 
@@ -276,7 +216,7 @@ Separately, we tag and publish *all* images when a new release is created with t
 
 ## Breakdown of services
 
-All of the services in the Storedog application are Dockerized and run in containers. See the [docker-compose.yml](./docker-compose.yml) file for the full list of services and how they are connected. You'll also find specific Datadog configurations, volume mounts, and environment variables for each service in there.
+All of the services in the Storedog application are Dockerized and run in containers. See the [docker-compose.yml](./docker-compose.yml) file for the full list of services and how they are connected.
 
 Below is a breakdown of services and some instructions on how to use them.
 
@@ -356,4 +296,3 @@ volumes:
 ## Contributing
 
 While we don't accept contributions to the Storedog project from members outside of Datadog, we encourage you to fork the project and make it your own! 
-

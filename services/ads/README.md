@@ -86,17 +86,15 @@ The auto-instrumentation automatically captures:
 
 The Python service is a Flask application that uses SQLAlchemy to connect to a PostgreSQL database. The service is packaged as a Docker image and typically used in a Docker Compose file (see the root of this repo).
 
-### Datadog configuration
+### Python service telemetry
 
 #### Logs
 
-Logging is configured in the `docker-compose.yml` file along with the Datadog Agent.
+Logs are emitted to stdout by the Flask application.
 
 #### APM
 
-The `ddtrace` library is used to instrument the Python service. The `ddtrace` library is installed in the `requirements.txt` file. The `ddtrace-run` command is used to run the service in the `Dockerfile`.
-
-Log injection is enabled in the `docker-compose.yml` file, but the logs are formatted in the `ads.py` file.
+The Python variant is still based on `ddtrace`, but it is not the default lab path. The main lab baseline uses the Java ads service plus OpenTelemetry.
 
 ### Endpoints (Python)
 
@@ -223,23 +221,12 @@ ads:
     command: wait-for-it postgres:5432 -- flask run --port=3030 --host=0.0.0.0 # If using any other port besides the default 9292, overriding the CMD is required
     depends_on:
       - postgres
-      - dd-agent
     environment:
       - FLASK_APP=ads.py
       - FLASK_DEBUG=0
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_HOST=postgres
-      - DD_AGENT_HOST=dd-agent
-      - DD_LOGS_INJECTION=true
-      - DD_TRACE_ANALYTICS_ENABLED=true
-      - DD_PROFILING_ENABLED=true
-      - DD_APPSEC_ENABLED=true
-      - DD_VERSION=${DD_VERSION_ADS-1.0.0}
-      - DD_SERVICE=store-ads
-      - DD_ENV=${DD_ENV-dev}
     volumes:
       - ./services/ads/python:/app
-    labels:
-      com.datadoghq.ad.logs: '[{"source": "python"}]'
 ```

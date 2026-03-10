@@ -12,18 +12,15 @@ k8s-manifests/
 │   ├── ingress-controller/
 │   ├── provisioner/
 │   └── storage/
-├── datadog/
 └── storedog-app/
-    ├── configmaps/
-    ├── secrets/
     ├── deployments/
-    ├── statefulsets/
-    └── ingress/
+    ├── ingress/
+    ├── secrets/
+    └── statefulsets/
 ```
 
 - **`cluster-setup/`**: Manifests for cluster-wide components (storage, provisioner, ingress controller).
-- **`datadog/`**: Datadog agent manifest for observability.
-- **`storedog-app/`**: All manifests for the Storedog application, organized by resource type (configmaps, secrets, deployments, statefulsets, ingress).
+- **`storedog-app/`**: All manifests for the Storedog application, organized by resource type.
 
 ## Cluster Prerequisites
 
@@ -91,7 +88,6 @@ docker build -t $REGISTRY_URL/$SERVICE_NAME:latest ./services/$SERVICE_NAME && d
 Before deploying, ensure you have the following tools installed:
 
 - **kubectl** (v1.20+ recommended): For interacting with your Kubernetes cluster.
-- **helm** (v3+): For installing the Datadog Operator.
 - **docker**: For building and pushing container images.
 - **envsubst**: For substituting environment variables in manifest files.
 
@@ -105,17 +101,7 @@ The deployment process uses several environment variables to template image loca
 |-------------------------------|---------------------------------------------|---------------------------------|
 | `REGISTRY_URL`                | Container registry base URL                 | `localhost:5000`               |
 | `SD_TAG`                      | Storedog image tag/version                  | `latest`                       |
-| `DD_VERSION_ADS`              | Version tag for ads service                 | `1.0.0`                        |
-| `DD_VERSION_BACKEND`          | Version tag for backend & worker services   | `1.0.0`                        |
-| `DD_VERSION_DISCOUNTS`        | Version tag for discounts service           | `1.0.0`                        |
-| `DD_VERSION_NGINX`            | Version tag for nginx                       | `1.0.0`                        |
-| `NEXT_PUBLIC_DD_SERVICE_FRONTEND` | RUM service name for frontend           | `store-frontend`               |
-| `NEXT_PUBLIC_DD_VERSION_FRONTEND` | Version tag for frontend service        | `1.0.0`                        |
-| `DD_ENV`                      | Environment name (e.g., development, prod)  | `development`                   |
-| `DD_API_KEY`                  | Datadog API key (for secret creation)       | `<your-datadog-api-key>`        |
-| `DD_APP_KEY`                  | Datadog App key (for secret creation)       | `<your-datadog-app-key>`        |
-
-Set these variables in your shell before running the deployment commands. See the deployment steps below for usage examples.
+Set these variables in your shell before running the deployment commands. The current Kubernetes manifests use fixed OpenTelemetry service metadata and do not require Datadog-specific environment variables.
 
 ## Deployment Steps
 
@@ -133,42 +119,6 @@ Example values for hosted containers:
 ```bash
 export REGISTRY_URL="ghcr.io/datadog/storedog"
 export SD_TAG=1.4.0
-```
-
-### Set default environment variables for Storedog
-
-```bash
-export DD_VERSION_ADS=1.0.0
-export DD_VERSION_BACKEND=1.0.0
-export DD_VERSION_DISCOUNTS=1.0.0
-export DD_VERSION_NGINX=1.28.0
-export NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend
-export NEXT_PUBLIC_DD_VERSION_FRONTEND=1.0.0
-export DD_ENV=development
-```
-
-### Deploy the Datadog Operator
-
-1. Install the Datadog Operator with Helm:
-
-```bash
-helm repo add datadog https://helm.datadoghq.com
-helm repo update
-helm install my-datadog-operator datadog/datadog-operator
-```
-
-2. Create a Kubernetes secret with your Datadog API and app keys:
-
-```bash
-kubectl create secret generic datadog-secret \
-  --from-literal api-key=$DD_API_KEY \
-  --from-literal app-key=$DD_APP_KEY
-```
-
-3. Apply the Datadog Agent definition:
-
-```bash
-kubectl apply -f k8s-manifests/datadog/datadog-agent.yaml
 ```
 
 ### Deploy Cluster Setup and Storedog
@@ -191,21 +141,7 @@ The following command creates a `storedog` namespace.
 kubectl create namespace storedog
 ```
 
-3. **Create Secrets for Datadog RUM:**
-
-The following command creates a Kubernetes secret with your Datadog RUM app id and client token keys:
-
-> [!IMPORTANT]
-> Change the namespace from `storedog` if needed.
-
-```bash
-kubectl create secret generic datadog-secret \
-  --from-literal=dd_application_id=${DD_APPLICATION_ID} \
-  --from-literal=dd_client_token=${DD_CLIENT_TOKEN} \
-  -n storedog
-```
-
-4. **Create the OpenTelemetry Collector ConfigMap:**
+3. **Create the OpenTelemetry Collector ConfigMap:**
 
 The Kubernetes deployment uses the canonical collector config from [services/otel/otelcol-config.yaml](../services/otel/otelcol-config.yaml). Create the runtime ConfigMap from that file before applying the app manifests.
 
@@ -216,7 +152,7 @@ kubectl create configmap otel-config-map \
   --dry-run=client -o yaml | kubectl apply -f -
 ```
 
-5. **Deploy the Storedog Application:**
+4. **Deploy the Storedog Application:**
 
 The following command deploys all application components into it.
 

@@ -4,17 +4,15 @@
 
 This service is responsible for managing discounts written in Python using the Flask framework. It uses a PostgreSQL database to store the discounts.
 
-## Datadog configuration
+## Telemetry configuration
 
 ### Logs
 
-Logging is configured in the `docker-compose.yml` file along with the Datadog Agent.
+Logs are emitted to stdout by the Flask service.
 
 ### APM
 
-The `ddtrace` library is used to instrument the Python service. The `ddtrace` library is installed in the `requirements.txt` file. The `ddtrace-run` command is used to run the service in the `Dockerfile`.
-
-Log injection is enabled in the `docker-compose.yml` file, but the logs are formatted in the `ads.py` file.
+The service uses OpenTelemetry Python instrumentation and exports OTLP to the local `otelcol` service.
 
 ## Endpoints
 

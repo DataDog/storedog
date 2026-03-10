@@ -27,5 +27,5 @@ COPY . .
 RUN npm run build
 EXPOSE 3000
 
-ENV NODE_OPTIONS="--require @opentelemetry/auto-instrumentations-node/register"
+ENV NODE_OPTIONS="--require ./log-shim.js --require @opentelemetry/auto-instrumentations-node/register"
 CMD ["sh", "-c", "npx next start"]
