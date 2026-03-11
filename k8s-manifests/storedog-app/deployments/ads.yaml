@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: ads
+  namespace: storedog
 spec:
   ports:
     - port: 3030
@@ -30,27 +31,59 @@ spec:
           ports:
             - containerPort: 3030
           env:
+            # JVM Performance Tuning
+            - name: JAVA_OPTS
+              value: "-XX:+UseG1GC -XX:+UseStringDeduplication -XX:+OptimizeStringConcat"
+            - name: JVM_XMS
+              value: "128m"              # Initial heap size
+            - name: JVM_XMX
+              value: "384m"              # Max heap size (75% of memory limit)
             # OpenTelemetry configuration (complete the Dockerfile config)
             - name: OTEL_SERVICE_NAME
               value: "ads"
             - name: OTEL_SERVICE_VERSION
-              value: "1.0.0"
+              value: ${DD_VERSION_ADS}
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: OTLP_GRPC_PORT
+              value: "4317"
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: "http://otelcol:4317"
+              value: '$(HOST_IP):$(OTLP_GRPC_PORT)'
             - name: OTEL_EXPORTER_OTLP_PROTOCOL
-              value: "grpc"
+              value: 'grpc'
             - name: OTEL_TRACES_EXPORTER
-              value: "console,otlp"
+              value: otlp
             - name: OTEL_METRICS_EXPORTER
-              value: "console,otlp"
+              value: otlp
             - name: OTEL_LOGS_EXPORTER
-              value: "console,otlp"
+              value: otlp
             - name: OTEL_RESOURCE_ATTRIBUTES
-              value: "service.name=ads,service.version=1.0.0,deployment.environment=development"
+              value: "service.name=ads,service.version=${DD_VERSION_ADS},service.namespace=storedog,deployment.environment=${DD_ENV}"
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "200m"
+              cpu: 100m
+              memory: 384Mi
             limits:
-              memory: "512Mi"
-              cpu: "400m"
+              cpu: 300m
+              memory: 512Mi
+          # Extended readiness probe for JVM warmup
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3030
+            initialDelaySeconds: 45    # Allow more time for JVM startup
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6         # Allow more failures during warmup
+            successThreshold: 3         # Require multiple successes before ready
+          # Liveness probe with generous settings
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3030
+            initialDelaySeconds: 55    # Give JVM plenty of time
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5

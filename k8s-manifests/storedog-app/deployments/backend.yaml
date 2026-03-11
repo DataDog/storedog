@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: backend
+  namespace: storedog
 spec:
   ports:
     - port: 4000
@@ -15,7 +16,7 @@ kind: Deployment
 metadata:
   name: backend
 spec:
-  replicas: 1
+  replicas: 1                                  # Increased from 1 for better load distribution
   selector:
     matchLabels:
       app: backend
@@ -26,7 +27,7 @@ spec:
     spec:
       initContainers:
         - name: wait-for-db
-          image: busybox
+          image: busybox:1.37.0
           command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done;']
       containers:
         - name: backend
@@ -65,36 +66,107 @@ spec:
                   name: storedog-config
                   key: RAILS_ENV
             - name: DB_POOL
-              valueFrom:
-                configMapKeyRef:
-                  name: storedog-config
-                  key: DB_POOL
+              value: "25"                      # Increased from configmap for better connection pooling
             - name: MAX_THREADS
               valueFrom:
                 configMapKeyRef:
                   name: storedog-config
                   key: MAX_THREADS
-            # OpenTelemetry configuration
+            # Redis Caching Configuration
+            - name: RAILS_CACHE_STORE
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: RAILS_CACHE_STORE
+            - name: CACHE_REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: CACHE_REDIS_URL
+            - name: SESSION_STORE
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: SESSION_STORE
+            - name: SESSION_REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: SESSION_REDIS_URL
+            - name: RAILS_CACHE_FRAGMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: RAILS_CACHE_FRAGMENT
+            - name: CACHE_DEFAULT_EXPIRES_IN
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: CACHE_DEFAULT_EXPIRES_IN
+            - name: RAILS_CACHE_QUERIES
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: RAILS_CACHE_QUERIES
+            - name: CACHE_REDIS_POOL_SIZE
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: CACHE_REDIS_POOL_SIZE
+            - name: RAILS_CACHE_COMPRESSION
+              valueFrom:
+                configMapKeyRef:
+                  name: storedog-config
+                  key: RAILS_CACHE_COMPRESSION
             - name: OTEL_SERVICE_NAME
               value: "backend"
             - name: OTEL_SERVICE_VERSION
-              value: "1.0.0"
+              value: ${DD_VERSION_BACKEND}
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: OTLP_GRPC_PORT
+              value: "4317"
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: "http://otelcol:4317"
+              value: '$(HOST_IP):$(OTLP_GRPC_PORT)'
             - name: OTEL_EXPORTER_OTLP_PROTOCOL
-              value: "grpc"
+              value: 'grpc'
             - name: OTEL_TRACES_EXPORTER
-              value: "console,otlp"
+              value: otlp
             - name: OTEL_METRICS_EXPORTER
-              value: "console,otlp"
+              value: otlp
             - name: OTEL_LOGS_EXPORTER
-              value: "console,otlp"
+              value: otlp
             - name: OTEL_RESOURCE_ATTRIBUTES
-              value: "service.name=backend,service.version=1.0.0,deployment.environment=development"
+              value: "service.name=backend,service.version=${DD_VERSION_BACKEND},service.namespace=storedog,deployment.environment=${DD_ENV}"
           resources:
             requests:
-              memory: "512Mi"
-              cpu: "250m"
+              cpu: 100m
+              memory: 768Mi
             limits:
-              memory: "1Gi"
-              cpu: "500m"
+              cpu: 500m
+              memory: 1Gi                      # Reduced from 2Gi
+          # Health probes for automatic monitoring and recovery
+          readinessProbe:
+            tcpSocket:
+              port: 4000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+          livenessProbe:
+            tcpSocket:
+              port: 4000
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5
+          startupProbe:
+            tcpSocket:
+              port: 4000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 12

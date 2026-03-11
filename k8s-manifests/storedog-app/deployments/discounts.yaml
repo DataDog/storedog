@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: discounts
+  namespace: storedog
 spec:
   ports:
     - port: 2814
@@ -26,7 +27,7 @@ spec:
     spec:
       initContainers:
         - name: wait-for-db
-          image: busybox
+          image: busybox:1.37.0
           command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done;']
       containers:
         - name: discounts
@@ -34,12 +35,21 @@ spec:
           ports:
             - containerPort: 2814
           env:
+            # Flask Application Configuration
             - name: FLASK_APP
               value: "discounts.py"
             - name: DISCOUNTS_PORT
               value: "2814"
             - name: FLASK_DEBUG
               value: "0"
+            # Flask Binding Configuration - Fix for HTTP 308 redirects
+            - name: FLASK_ENV
+              value: "production"
+            - name: FLASK_HOST
+              value: "0.0.0.0"
+            - name: FLASK_PORT
+              value: "2814"
+            # Database Configuration
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -56,23 +66,46 @@ spec:
             - name: OTEL_SERVICE_NAME
               value: "discounts"
             - name: OTEL_SERVICE_VERSION
-              value: "1.0.0"
+              value: ${DD_VERSION_DISCOUNTS}
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: OTLP_GRPC_PORT
+              value: "4317"
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: "http://otelcol:4317"
+              value: '$(HOST_IP):$(OTLP_GRPC_PORT)'
             - name: OTEL_EXPORTER_OTLP_PROTOCOL
-              value: "grpc"
+              value: 'grpc'
             - name: OTEL_TRACES_EXPORTER
-              value: "console,otlp"
+              value: otlp
             - name: OTEL_METRICS_EXPORTER
-              value: "console,otlp"
+              value: otlp
             - name: OTEL_LOGS_EXPORTER
-              value: "console,otlp"
+              value: otlp
             - name: OTEL_RESOURCE_ATTRIBUTES
-              value: "service.name=discounts,service.version=1.0.0,deployment.environment=development"
+              value: "service.name=discounts,service.version=${DD_VERSION_DISCOUNTS},service.namespace=storedog,deployment.environment=${DD_ENV}"
           resources:
             requests:
-              memory: "128Mi"
-              cpu: "100m"
+              cpu: 50m
+              memory: 128Mi
             limits:
-              memory: "256Mi"
-              cpu: "200m"
+              cpu: 300m
+              memory: 256Mi
+          # Health probes for better monitoring
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 2814
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 2814
+            initialDelaySeconds: 40
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5

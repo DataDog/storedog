@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: frontend
+  namespace: storedog
 spec:
   ports:
     - port: 3000
@@ -30,15 +31,43 @@ spec:
             name: feature-flags-config
       initContainers:
         - name: wait-for-backend
-          image: busybox
+          image: busybox:1.37.0
           command: ['sh', '-c', 'until nc -z backend 4000; do echo waiting for backend; sleep 2; done;']
       containers:
         - name: frontend
           image: ${REGISTRY_URL}/frontend:${SD_TAG}
           ports:
             - containerPort: 3000
-          command: ["npm", "run", "dev"]
+          command: ["npm", "run", "prod"]
           env:
+            # OpenTelemetry configuration (override Dockerfile settings)
+            - name: OTEL_SERVICE_NAME
+              value: "frontend"
+            - name: OTEL_SERVICE_VERSION
+              value: ${NEXT_PUBLIC_DD_VERSION_FRONTEND}
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: OTLP_GRPC_PORT
+              value: "4317"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: '$(HOST_IP):$(OTLP_GRPC_PORT)'
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: "grpc"
+            - name: OTEL_TRACES_EXPORTER
+              value: otlp
+            - name: OTEL_METRICS_EXPORTER
+              value: otlp
+            - name: OTEL_LOGS_EXPORTER
+              value: otlp
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "service.name=frontend,service.version=${NEXT_PUBLIC_DD_VERSION_FRONTEND},service.namespace=storedog,deployment.environment=${DD_ENV}"
+            - name: OTEL_EXPORTER_OTLP_TRACES_PROTOCOL
+              value: "http/protobuf"
+            - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+              value: "http://$(HOST_IP):4318/v1/traces"
+            # Frontend API Configuration from ConfigMap
             - name: NEXT_PUBLIC_ADS_ROUTE
               valueFrom:
                 configMapKeyRef:
@@ -79,43 +108,35 @@ spec:
                 configMapKeyRef:
                   name: storedog-config
                   key: NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN
-            # OpenTelemetry configuration (override Dockerfile settings)
-            - name: OTEL_SERVICE_NAME
-              value: "frontend"
-            - name: OTEL_SERVICE_VERSION
-              value: "1.0.0"
-            - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: "http://otelcol:4318"
-            - name: OTEL_EXPORTER_OTLP_PROTOCOL
-              value: "http/protobuf"
-            - name: OTEL_TRACES_EXPORTER
-              value: "console,otlp"
-            - name: OTEL_METRICS_EXPORTER
-              value: "console,otlp"
-            - name: OTEL_LOGS_EXPORTER
-              value: "console,otlp"
-            - name: OTEL_RESOURCE_ATTRIBUTES
-              value: "service.name=frontend,service.version=1.0.0,deployment.environment=development"
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "100m"
+              cpu: 200m
+              memory: 256Mi
             limits:
-              memory: "2Gi"
+              cpu: 400m
+              memory: 512Mi
           volumeMounts:
             - name: feature-flags-config
               mountPath: /app/featureFlags.config.json
               subPath: featureFlags.config.json
-          livenessProbe:
+          startupProbe:
             httpGet:
               path: /
               port: 3000
-            initialDelaySeconds: 180
-            periodSeconds: 20
-            failureThreshold: 5
+            failureThreshold: 60   # 60 * 5s = 300s (5 minutes)
+            periodSeconds: 5
           readinessProbe:
             httpGet:
               path: /
               port: 3000
-            initialDelaySeconds: 120
-            periodSeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 60
+            periodSeconds: 30           # Increased from 20s - check less frequently
+            timeoutSeconds: 10          # Add explicit timeout
+            failureThreshold: 5         # Keep current value

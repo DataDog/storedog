@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: ${REGISTRY_URL}/postgres:${SD_TAG}
+          image: ${REGISTRY_URL}/postgres:1.4.0
           ports:
             - containerPort: 5432
               name: postgres
@@ -42,6 +42,13 @@ spec:
                 secretKeyRef:
                   name: storedog-secrets
                   key: POSTGRES_PASSWORD
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "300m"
+              memory: "256Mi"
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data

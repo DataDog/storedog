@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: puppeteer
-  namespace: fake-traffic
 spec:
   replicas: 1
   selector:
@@ -15,22 +14,22 @@ spec:
     spec:
       containers:
         - name: puppeteer
-          image: ${REGISTRY_URL}/puppeteer:${SD_TAG}
+          image: ${REGISTRY_URL}/puppeteer
           env:
             - name: STOREDOG_URL
-              # Change namespace as needed
-              value: "http://service-proxy.storedog.svc.cluster.local"
+              # Updated to target frontend service directly instead of service-proxy
+              value: "http://frontend.storedog.svc.cluster.local:3000"
             - name: PUPPETEER_TIMEOUT
               value: "30000"
             - name: SKIP_SESSION_CLOSE
               value: "false"
           resources:
             requests:
-              memory: "1Gi"
-              cpu: "250m"
+              memory: "1.5Gi"
+              cpu: "500m"
             limits:
               memory: "2Gi"
-              cpu: "500m"
+              cpu: "750m"
           securityContext:
             capabilities:
               add:
