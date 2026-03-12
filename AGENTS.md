@@ -1,1 +1,0 @@
-/Users/nik.stern/AGENTS.md
