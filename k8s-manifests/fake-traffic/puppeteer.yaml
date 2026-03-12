@@ -19,6 +19,8 @@ spec:
             - name: STOREDOG_URL
               # Updated to target frontend service directly instead of service-proxy
               value: "http://frontend.storedog.svc.cluster.local:3000"
+            - name: SERVICE_PROXY_URL
+              value: "http://service-proxy.storedog.svc.cluster.local:80"
             - name: PUPPETEER_TIMEOUT
               value: "30000"
             - name: SKIP_SESSION_CLOSE
