@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: puppeteer
-          image: ${REGISTRY_URL}/puppeteer:${SD_TAG}
+          image: ${REGISTRY_URL}/puppeteer:1.4.0
           env:
             - name: STOREDOG_URL
               # Updated to target frontend service directly instead of service-proxy
@@ -33,7 +33,7 @@ spec:
           securityContext:
             capabilities:
               add:
-                - SYS_ADMIN  # Required for Puppeteer to run in Docker
+                - SYS_ADMIN # Required for Puppeteer to run in Docker
           volumeMounts:
             - name: dshm
               mountPath: /dev/shm
@@ -41,4 +41,4 @@ spec:
         - name: dshm
           emptyDir:
             medium: Memory
-            sizeLimit: 4Gi  # Equivalent to shm_size: '4gb' in docker-compose
+            sizeLimit: 4Gi # Equivalent to shm_size: '4gb' in docker-compose
