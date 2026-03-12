@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: puppeteer
-          image: ${REGISTRY_URL}/puppeteer:1.4.0
+          image: ${REGISTRY_URL}/puppeteer:${SD_TAG}
           env:
             - name: STOREDOG_URL
               # Updated to target frontend service directly instead of service-proxy
