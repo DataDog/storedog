@@ -1,13 +1,18 @@
 import json_log_formatter
 import traceback
 import logging
+from logging import Handler
 from models import Discount, DiscountType, db
 from bootstrap import create_app
 from flask_cors import CORS
 from flask import request as flask_request
 from flask import Flask, Response, jsonify
 from opentelemetry import metrics, trace
+from opentelemetry._logs import set_logger_provider
+from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import SERVICE_NAME, SERVICE_VERSION, Resource
@@ -25,22 +30,24 @@ formatter = json_log_formatter.VerboseJSONFormatter()
 json_handler = logging.StreamHandler(sys.stdout)
 json_handler.setFormatter(formatter)
 logger = logging.getLogger('discounts')
-logger.addHandler(json_handler)
 logger.setLevel(logging.DEBUG)
 logger.propagate = False
 
 
-def configure_metrics():
-    provider = metrics.get_meter_provider()
-    if provider.__class__.__name__ != "ProxyMeterProvider":
-        return provider
-
-    resource = Resource.create(
+def create_resource():
+    return Resource.create(
         {
             SERVICE_NAME: os.getenv("OTEL_SERVICE_NAME", "discounts"),
             SERVICE_VERSION: os.getenv("OTEL_SERVICE_VERSION", "1.0.0"),
         }
     )
+
+
+def configure_metrics(resource):
+    provider = metrics.get_meter_provider()
+    if provider.__class__.__name__ != "ProxyMeterProvider":
+        return provider
+
     exporter = OTLPMetricExporter()
     reader = PeriodicExportingMetricReader(exporter)
     provider = MeterProvider(resource=resource, metric_readers=[reader])
@@ -48,7 +55,18 @@ def configure_metrics():
     return metrics.get_meter_provider()
 
 
-metric_provider = configure_metrics()
+def configure_logs(resource):
+    provider = LoggerProvider(resource=resource)
+    provider.add_log_record_processor(BatchLogRecordProcessor(OTLPLogExporter()))
+    set_logger_provider(provider)
+    return LoggingHandler(level=logging.NOTSET, logger_provider=provider)
+
+
+resource = create_resource()
+otel_log_handler = configure_logs(resource)
+logger.addHandler(json_handler)
+logger.addHandler(otel_log_handler)
+metric_provider = configure_metrics(resource)
 meter = metrics.get_meter("discounts-service", "1.0.0")
 discount_request_counter = meter.create_counter(
     "discounts.requests",
