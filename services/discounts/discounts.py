@@ -3,11 +3,14 @@ import traceback
 import logging
 from models import Discount, DiscountType, db
 from bootstrap import create_app
-from sqlalchemy.orm import joinedload
 from flask_cors import CORS
 from flask import request as flask_request
 from flask import Flask, Response, jsonify
 from opentelemetry import metrics, trace
+from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+from opentelemetry.sdk.resources import SERVICE_NAME, SERVICE_VERSION, Resource
 import words
 import requests
 import random
@@ -26,6 +29,26 @@ logger.addHandler(json_handler)
 logger.setLevel(logging.DEBUG)
 logger.propagate = False
 
+
+def configure_metrics():
+    provider = metrics.get_meter_provider()
+    if provider.__class__.__name__ != "ProxyMeterProvider":
+        return provider
+
+    resource = Resource.create(
+        {
+            SERVICE_NAME: os.getenv("OTEL_SERVICE_NAME", "discounts"),
+            SERVICE_VERSION: os.getenv("OTEL_SERVICE_VERSION", "1.0.0"),
+        }
+    )
+    exporter = OTLPMetricExporter()
+    reader = PeriodicExportingMetricReader(exporter)
+    provider = MeterProvider(resource=resource, metric_readers=[reader])
+    metrics.set_meter_provider(provider)
+    return metrics.get_meter_provider()
+
+
+metric_provider = configure_metrics()
 meter = metrics.get_meter("discounts-service", "1.0.0")
 discount_request_counter = meter.create_counter(
     "discounts.requests",
