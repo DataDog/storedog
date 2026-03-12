@@ -52,3 +52,6 @@ yarn-debug.log*
 .env.test.local
 .env.production.local
 .env.local
+
+# Local Gradle cache for the ads Java service.
+services/ads/java/.gradle/
