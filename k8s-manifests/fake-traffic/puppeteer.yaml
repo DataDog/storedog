@@ -21,6 +21,14 @@ spec:
               value: "http://frontend.storedog.svc.cluster.local:3000"
             - name: SERVICE_PROXY_URL
               value: "http://service-proxy.storedog.svc.cluster.local:80"
+            - name: ADS_TRAFFIC_INTERVAL_SECONDS
+              value: "20"
+            - name: ADS_ERROR_EVERY
+              value: "6"
+            - name: DISCOUNTS_TRAFFIC_INTERVAL_SECONDS
+              value: "20"
+            - name: DISCOUNTS_TRAFFIC_OFFSET_SECONDS
+              value: "5"
             - name: PUPPETEER_TIMEOUT
               value: "30000"
             - name: SKIP_SESSION_CLOSE

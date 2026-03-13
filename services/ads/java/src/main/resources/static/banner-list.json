@@ -1,21 +1,21 @@
 [
   {
     "id": 1, 
-    "name": "Discount Clothing", 
+    "name": "Seasonal Apparel Promotion", 
     "path": "ad1.jpg", 
     "url": "/t/clothing", 
     "weight": 15.1
   }, 
   {
     "id": 2, 
-    "name": "Cool Hats", 
+    "name": "Featured Brand Apparel", 
     "path": "ad2.jpg", 
     "url": "/products/datadog-ringer-t-shirt", 
     "weight": 300.1
   }, 
   {
     "id": 3, 
-    "name": "Nice Bags", 
+    "name": "Travel Accessories Collection", 
     "path": "ad3.jpg", 
     "url": "/t/bags", 
     "weight": 5242.1

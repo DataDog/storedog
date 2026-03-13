@@ -2,41 +2,77 @@
 
 adsTrafficUrl="${ADS_TRAFFIC_URL:-${SERVICE_PROXY_URL}/services/ads/ads}"
 discountsTrafficUrl="${DISCOUNTS_TRAFFIC_URL:-${SERVICE_PROXY_URL}/services/discounts/discount}"
-apiTrafficInterval="${API_TRAFFIC_INTERVAL_SECONDS:-15}"
+discountLookupUrl="${DISCOUNT_LOOKUP_URL:-${SERVICE_PROXY_URL}/services/discounts/discount-code}"
+adsTrafficInterval="${ADS_TRAFFIC_INTERVAL_SECONDS:-20}"
+discountsTrafficInterval="${DISCOUNTS_TRAFFIC_INTERVAL_SECONDS:-20}"
+discountsTrafficOffset="${DISCOUNTS_TRAFFIC_OFFSET_SECONDS:-5}"
+adsErrorEvery="${ADS_ERROR_EVERY:-6}"
 
 checkStoredog() {
   wget --quiet -O - $STOREDOG_URL |grep -qi storedog
 }
 
-generateApiTraffic() {
+httpGet() {
+  local url="$1"
+  shift
+
+  wget \
+    --quiet \
+    --tries=1 \
+    --timeout=10 \
+    -O /dev/null \
+    "$@" \
+    "$url"
+}
+
+pickDiscountCode() {
+  local discountsJson="$1"
+
+  printf '%s' "$discountsJson" |
+    grep -o '"code":"[^"]*"' |
+    sed 's/"code":"//; s/"$//' |
+    sort -u
+}
+
+generateAdsTraffic() {
+  local reqCount=0
+
   while :; do
-    if (( RANDOM % 4 == 0 )); then
-      wget --quiet \
+    reqCount=$((reqCount + 1))
+
+    if (( adsErrorEvery > 0 )) && (( reqCount % adsErrorEvery == 0 )); then
+      httpGet \
+        "$adsTrafficUrl" \
         --header="x-throw-error: true" \
-        --header="x-error-rate: 1" \
-        -O /dev/null \
-        "$adsTrafficUrl" || true
+        --header="x-error-rate: 1" || true
     else
-      wget --quiet -O /dev/null "$adsTrafficUrl" || true
+      httpGet "$adsTrafficUrl" || true
     fi
 
-    discountsJson="$(wget --quiet -O - "$discountsTrafficUrl" || true)"
-    if [[ -n "$discountsJson" ]]; then
-      discountCode="$(
-        printf '%s' "$discountsJson" |
-          grep -o '"code":"[^"]*"' |
-          sed 's/"code":"//; s/"$//' |
-          shuf -n 1
-      )"
+    sleep "$adsTrafficInterval"
+  done
+}
 
-      if [[ -n "$discountCode" ]]; then
-        wget --quiet \
-          -O /dev/null \
-          "${SERVICE_PROXY_URL}/services/discounts/discount-code?discount_code=${discountCode}" || true
+generateDiscountTraffic() {
+  local discountIndex=0
+
+  sleep "$discountsTrafficOffset"
+
+  while :; do
+    discountsJson="$(wget --quiet --tries=1 --timeout=10 -O - "$discountsTrafficUrl" || true)"
+    if [[ -n "$discountsJson" ]]; then
+      mapfile -t discountCodes < <(pickDiscountCode "$discountsJson")
+
+      if (( ${#discountCodes[@]} > 0 )); then
+        discountCode="${discountCodes[$((discountIndex % ${#discountCodes[@]}))]}"
+        discountIndex=$((discountIndex + 1))
+
+        httpGet \
+          "${discountLookupUrl}?discount_code=${discountCode}" || true
       fi
     fi
 
-    sleep "$apiTrafficInterval"
+    sleep "$discountsTrafficInterval"
   done
 }
 
@@ -49,7 +85,8 @@ done
 
 printf "\nBrowser replay starting.\n\n"
 
-generateApiTraffic &
+generateAdsTraffic &
+generateDiscountTraffic &
 
 while :
 do

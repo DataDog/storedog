@@ -24,9 +24,9 @@ def initialize_database(app, db):
     with app.app_context():
         db.drop_all()
         db.create_all()
-        first_ad = Advertisement('Discount Clothing', '/t/clothing', 15.1, '1.jpg')
-        second_ad = Advertisement('Cool Hats', '/products/datadog-ringer-t-shirt', 300.1, '2.jpg')
-        third_ad = Advertisement('Nice Bags', '/t/bags', 5242.1, '3.jpg')
+        first_ad = Advertisement('Seasonal Apparel Promotion', '/t/clothing', 15.1, '1.jpg')
+        second_ad = Advertisement('Featured Brand Apparel', '/products/datadog-ringer-t-shirt', 300.1, '2.jpg')
+        third_ad = Advertisement('Travel Accessories Collection', '/t/bags', 5242.1, '3.jpg')
         db.session.add(first_ad)
         db.session.add(second_ad)
         db.session.add(third_ad)
