@@ -1,6 +1,6 @@
 #!/bin/bash
 
-adsTrafficUrl="${ADS_TRAFFIC_URL:-${SERVICE_PROXY_URL}/services/ads}"
+adsTrafficUrl="${ADS_TRAFFIC_URL:-${SERVICE_PROXY_URL}/services/ads/ads}"
 discountsTrafficUrl="${DISCOUNTS_TRAFFIC_URL:-${SERVICE_PROXY_URL}/services/discounts/discount}"
 discountsCodeUrl="${DISCOUNTS_CODE_URL:-${SERVICE_PROXY_URL}/services/discounts/discount-code?discount_code=BFRIDAY}"
 apiTrafficInterval="${API_TRAFFIC_INTERVAL_SECONDS:-15}"
