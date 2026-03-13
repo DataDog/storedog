@@ -2,7 +2,6 @@
 
 adsTrafficUrl="${ADS_TRAFFIC_URL:-${SERVICE_PROXY_URL}/services/ads/ads}"
 discountsTrafficUrl="${DISCOUNTS_TRAFFIC_URL:-${SERVICE_PROXY_URL}/services/discounts/discount}"
-discountsCodeUrl="${DISCOUNTS_CODE_URL:-${SERVICE_PROXY_URL}/services/discounts/discount-code?discount_code=BFRIDAY}"
 apiTrafficInterval="${API_TRAFFIC_INTERVAL_SECONDS:-15}"
 
 checkStoredog() {
@@ -11,9 +10,32 @@ checkStoredog() {
 
 generateApiTraffic() {
   while :; do
-    wget --quiet -O /dev/null "$adsTrafficUrl" || true
-    wget --quiet -O /dev/null "$discountsTrafficUrl" || true
-    wget --quiet -O /dev/null "$discountsCodeUrl" || true
+    if (( RANDOM % 4 == 0 )); then
+      wget --quiet \
+        --header="x-throw-error: true" \
+        --header="x-error-rate: 1" \
+        -O /dev/null \
+        "$adsTrafficUrl" || true
+    else
+      wget --quiet -O /dev/null "$adsTrafficUrl" || true
+    fi
+
+    discountsJson="$(wget --quiet -O - "$discountsTrafficUrl" || true)"
+    if [[ -n "$discountsJson" ]]; then
+      discountCode="$(
+        printf '%s' "$discountsJson" |
+          grep -o '"code":"[^"]*"' |
+          sed 's/"code":"//; s/"$//' |
+          shuf -n 1
+      )"
+
+      if [[ -n "$discountCode" ]]; then
+        wget --quiet \
+          -O /dev/null \
+          "${SERVICE_PROXY_URL}/services/discounts/discount-code?discount_code=${discountCode}" || true
+      fi
+    fi
+
     sleep "$apiTrafficInterval"
   done
 }
