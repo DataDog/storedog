@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import type { RumEvent } from '@lib/sessionMocking.types'
+import type { ResourceRumEvent, RumEvent } from '@lib/sessionMocking.types'
 import { datadogRum } from '@datadog/browser-rum'
 import { MAX_EVENTS } from '@lib/sessionMocking.constants'
 import EventCard from './EventCard'
@@ -56,6 +56,14 @@ export default function SessionDebugPanel() {
     )
   }
 
+  const totalEventCount = (() => {
+    const nonResourceCount = events.filter(e => e.type !== 'resource').length
+    const latestResourceCount = events
+      .filter((e): e is ResourceRumEvent => e.type === 'resource')
+      .reduce((max, e) => Math.max(max, e.count), 0)
+    return nonResourceCount + latestResourceCount
+  })()
+
   return (
     <aside 
       ref={panelRef}
@@ -69,9 +77,9 @@ export default function SessionDebugPanel() {
           <span className={styles.srOnly}>Real User Monitoring </span>
           RUM Events
           <span aria-live="polite" aria-atomic="true" className={styles.srOnly}>
-            {events.length} events
+            {totalEventCount} events
           </span>
-          <span aria-hidden="true"> ({events.length})</span>
+          <span aria-hidden="true"> ({totalEventCount})</span>
         </h2>
         <div className={styles.headerButtons}>
           <button 
