@@ -43,10 +43,10 @@ A Go service that simulates an external ad enrichment API. Always deployed with 
 
 ### discounts service - N+1 Query
 
-Removes `joinedload()` from queries, causing N+1 database queries when serializing discounts.
+Removes `joinedload()` from queries, causing N+1 database queries when listing discounts (lazy `discount_type` and `influencer` per row).
 
-- **Good version**: `Discount.query.options(joinedload(Discount.discount_type)).all()`
-- **Latency version**: `Discount.query.all()` (triggers lazy load per discount)
+- **Good version**: `Discount.query.options(joinedload(Discount.discount_type).joinedload(DiscountType.influencer)).all()`
+- **Latency version**: `Discount.query.all()` (triggers lazy load per discount for those relationships)
 
 Affected endpoints:
 - `GET /discount` - lists all discounts

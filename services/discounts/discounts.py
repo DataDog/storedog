@@ -63,7 +63,9 @@ def status():
     if flask_request.method == 'GET':
 
         try:
-            discounts = Discount.query.options(joinedload(Discount.discount_type)).all()
+            discounts = Discount.query.options(
+                joinedload(Discount.discount_type).joinedload(DiscountType.influencer)
+            ).all()
             logger.info(f"Discounts available: {len(discounts)}")
 
             influencer_count = 0
@@ -94,7 +96,9 @@ def status():
             logger.info(f"Adding discount {new_discount}")
             db.session.add(new_discount)
             db.session.commit()
-            discounts = Discount.query.options(joinedload(Discount.discount_type)).all()
+            discounts = Discount.query.options(
+                joinedload(Discount.discount_type).joinedload(DiscountType.influencer)
+            ).all()
 
             return jsonify([b.serialize() for b in discounts])
 

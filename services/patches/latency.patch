@@ -8,24 +8,28 @@
  from models import Discount, DiscountType, db
  from bootstrap import create_app
  from flask_cors import CORS
-@@ -63,7 +62,7 @@ def status():
+@@ -63,9 +62,7 @@
      if flask_request.method == 'GET':
-
+ 
          try:
--            discounts = Discount.query.options(joinedload(Discount.discount_type)).all()
+-            discounts = Discount.query.options(
+-                joinedload(Discount.discount_type).joinedload(DiscountType.influencer)
+-            ).all()
 +            discounts = Discount.query.all()
              logger.info(f"Discounts available: {len(discounts)}")
-
+ 
              influencer_count = 0
-@@ -94,7 +93,7 @@ def status():
+@@ -96,9 +93,7 @@ def status():
              logger.info(f"Adding discount {new_discount}")
              db.session.add(new_discount)
              db.session.commit()
--            discounts = Discount.query.options(joinedload(Discount.discount_type)).all()
+-            discounts = Discount.query.options(
+-                joinedload(Discount.discount_type).joinedload(DiscountType.influencer)
+-            ).all()
 +            discounts = Discount.query.all()
-
+ 
              return jsonify([b.serialize() for b in discounts])
-
+ 
 --- ads/java/src/main/java/adsjava/AdsJavaApplication.java.orig
 +++ ads/java/src/main/java/adsjava/AdsJavaApplication.java
 @@ -17,7 +17,6 @@ import java.util.concurrent.TimeoutException;
