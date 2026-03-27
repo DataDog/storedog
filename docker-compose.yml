@@ -1,6 +1,6 @@
 services:
   dd-agent:
-    image: gcr.io/datadoghq/agent:7.56.0
+    image: gcr.io/datadoghq/agent:7.77.1
     pid: host
     environment:
       - DD_API_KEY=${DD_API_KEY}
@@ -26,9 +26,6 @@ services:
         NEXT_PUBLIC_DD_SERVICE_FRONTEND: store-frontend
         NEXT_PUBLIC_DD_SITE: ${DD_SITE:-datadoghq.com}
         NEXT_PUBLIC_DD_ENV_FRONTEND: ${DD_ENV:-development}
-        # RUM config provided at runtime via nginx cookies, not build time
-        # NEXT_PUBLIC_DD_APPLICATION_ID: DD_APPLICATION_ID_PLACEHOLDER
-        # NEXT_PUBLIC_DD_CLIENT_TOKEN: DD_CLIENT_TOKEN_PLACEHOLDER
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "3000"]
       interval: 3s
@@ -46,13 +43,6 @@ services:
     volumes:
       - ./services/frontend:/app
       - /app/node_modules
-      # Mount only specific files that need to be edited during the lab
-      # - ./services/frontend/pages/_app.tsx:/app/pages/_app.tsx
-      # - ./services/frontend/pages/about-us.tsx:/app/pages/about-us.tsx
-      # - ./services/frontend/components/common/Ad/Ad.tsx:/app/components/common/Ad/Ad.tsx
-      # - ./services/frontend/components/cart/CartSidebarView/CartSidebarView.tsx:/app/components/cart/CartSidebarView/CartSidebarView.tsx
-      # Mount public assets that may be updated
-      # - ./services/frontend/public:/app/public
     networks:
       - storedog-network
     environment:
