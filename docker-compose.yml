@@ -1,6 +1,6 @@
 services:
   dd-agent:
-    image: gcr.io/datadoghq/agent:${DD_AGENT_VERSION:-latest}
+    image: registry.datadoghq.com/agent:${DD_AGENT_VERSION:-latest}
     pid: host
     environment:
       - DD_API_KEY=${DD_API_KEY}
