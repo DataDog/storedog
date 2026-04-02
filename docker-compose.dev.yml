@@ -3,7 +3,7 @@
 services:
   # Datadog Agent for monitoring and observability
   dd-agent:
-    image: gcr.io/datadoghq/agent:latest
+    image: registry.datadoghq.com/agent:latest
     pid: host
     environment:
       - DD_API_KEY=${DD_API_KEY}
