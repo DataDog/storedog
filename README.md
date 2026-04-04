@@ -98,6 +98,16 @@ See the [Environment Variables](#environment-variables) section below for more d
 > [!NOTE]
 > By default, the frontend service runs in development mode when using `docker compose -f docker-compose.dev.yml up -d`. If you want to run it in production, you can set the `FRONTEND_COMMAND` environment variable to `npm run prod`. This can be done either in the compose file, on the host, or in the `.env` file.
 
+### Minimal local profile (without Datadog Agent)
+
+If you want a lighter setup for local study and do not need Datadog features, use:
+
+```sh
+docker compose -f docker-compose.minimal.yml up -d --build
+```
+
+This profile excludes the Datadog Agent and Puppeteer services, while keeping the core app path (`frontend`, `backend`, `worker`, `ads`, `discounts`, `postgres`, `redis`, `service-proxy`).
+
 ## Environment Variables
 
 ### Core Datadog Variables
@@ -444,4 +454,3 @@ volumes:
 ## Contributing
 
 While we don't accept contributions to the Storedog project from members outside of Datadog, we encourage you to fork the project and make it your own! 
-
