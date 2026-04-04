@@ -1,0 +1,24 @@
+name: CI Visibility Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run simple test
+        run: echo "Testing Datadog CI Visibility integration"
+
+      - name: Simulate test success
+        run: |
+          echo "Running tests..."
+          sleep 2
+          echo "Tests passed!"
