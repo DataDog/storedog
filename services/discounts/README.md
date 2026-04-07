@@ -18,7 +18,7 @@ Logging is configured in the `docker-compose.yml` file along with the Datadog Ag
 
 The `ddtrace` library is used to instrument the Python service. The `ddtrace` library is installed in the `requirements.txt` file. The `ddtrace-run` command is used to run the service in the `Dockerfile`.
 
-Log injection is enabled in the `docker-compose.yml` file, but the logs are formatted in the `ads.py` file.
+Log injection is enabled in the `docker-compose.yml` file, but the logs are formatted in the `discounts.py` file.
 
 ## Endpoints
 

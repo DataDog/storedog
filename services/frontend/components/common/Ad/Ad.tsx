@@ -16,10 +16,6 @@ function Ad() {
   const [isLoading, setLoading] = useState(false)
   const adsPath = process.env.NEXT_PUBLIC_ADS_ROUTE || `/services/ads`
 
-  const getRandomArbitrary = useCallback((min: number, max: number) => {
-    return Math.floor(Math.random() * (max - min) + min)
-  }, [])
-
   const fetchAd = useCallback(async () => {
     setLoading(true)
     const flag = (await codeStash('error-tracking', { file: config })) || false
@@ -43,7 +39,6 @@ function Ad() {
       const now = new Date()
       const adIndex = Math.floor(now.getSeconds() / 5) % sortedAds.length // Change ad every 5 seconds
       const selectedAd = sortedAds[adIndex]
-      console.log('Selected ad:', selectedAd)
       setData(selectedAd)
       setLoading(false)
     } catch (e) {
@@ -54,13 +49,6 @@ function Ad() {
 
   const handleAdClick = useCallback(() => {
     if (data?.id) {
-      console.log('Ad clicked!', {
-        adId: data.id,
-        adName: data.name,
-        clickUrl: data.clickUrl,
-        imagePath: data.path,
-        redirectUrl: `${adsPath}/click/${data.id}`
-      })
       // Direct browser navigation to the click endpoint
       // The Java service will handle the redirect to the appropriate URL
       window.location.href = `${adsPath}/click/${data.id}`

@@ -28,7 +28,7 @@ define get_compose_file
 $(if $(filter dev,$(ENV)),$(COMPOSE_DEV_FILE),$(if $(filter dev-frontend-prod,$(ENV)),$(COMPOSE_FRONTEND_PROD_FILE),$(COMPOSE_FILE)))
 endef
 
-.PHONY: help prepare-release up down restart stop ps logs clean build dd-dev dd-prod backup-db prepare-frontend-prod
+.PHONY: help prepare-release up down restart stop ps logs clean build backup-db frontend-prod
 
 help: ## Show this comprehensive help menu
 	@echo "${GREEN}===============================================================================${NC}"

@@ -11,6 +11,7 @@
 .pt
 .ruby-gemset
 .env
+
 **/.DS_Store
 
 __pycache__
@@ -28,18 +29,16 @@ config/initializers/secret_token.rb
 # unless supporting rvm < 1.11.0 or doing something fancy, ignore this:
 .rvmrc
 
-node_modules/*
+node_modules
 public/sitemap*
 # React on Rails
 npm-debug.log
 npm-debug.log*
-node_modules
 
 # Generated js bundles
 /app/assets/webpack/
 /public/packs
 /public/packs-test
-/node_modules
 yarn-debug.log*
 .yarn-integrity
 /yarn-error.log
@@ -47,12 +46,10 @@ yarn-debug.log*
 !/app/assets/builds/.keep
 
 # local env files
-.env
 .env.development.local
 .env.test.local
 .env.production.local
 .env.local
-
 
 .gradle/
 
