@@ -279,15 +279,27 @@ services:
   puppeteer:
     build:
       context: ./services/puppeteer
+      args:
+        - RUM_APP_ID=${NEXT_PUBLIC_DD_APPLICATION_ID:-}
+        - RUM_CLIENT_TOKEN=${NEXT_PUBLIC_DD_CLIENT_TOKEN:-}
     platform: linux/amd64
     environment:
       - STOREDOG_URL=${STOREDOG_URL:-http://service-proxy:80}
       - PUPPETEER_TIMEOUT=${PUPPETEER_TIMEOUT:-30000}
-      - SKIP_SESSION_CLOSE=${SKIP_SESSION_CLOSE:-false}
+      - PUPPETEER_ENABLE_CACHE=${PUPPETEER_ENABLE_CACHE:-false}
+      - PUPPETEER_SYSTEM_MEMORY=${PUPPETEER_SYSTEM_MEMORY:-8GB}
+      - PUPPETEER_STARTUP_DELAY=${PUPPETEER_STARTUP_DELAY:-10000}
+      - PUPPETEER_RAMP_INTERVAL=${PUPPETEER_RAMP_INTERVAL:-30000}
+      - PUPPETEER_DEBUG=${PUPPETEER_DEBUG:-false}
+      - PUPPETEER_DEBUG_SESSIONS=${PUPPETEER_DEBUG_SESSIONS:-false}
+      - PUPPETEER_LOOP=${PUPPETEER_LOOP:-infinite}
+      - PUPPETEER_SESSION_TYPES=${PUPPETEER_SESSION_TYPES:-browsing,vip,frustration,homepage,short,taxonomy}
+      - RUM_APP_ID=${NEXT_PUBLIC_DD_APPLICATION_ID:-}
+      - RUM_CLIENT_TOKEN=${NEXT_PUBLIC_DD_CLIENT_TOKEN:-}
     networks:
       - storedog-network
     volumes:
-      - ./services/puppeteer/scripts/puppeteer.js:/home/pptruser/puppeteer.js
+      - ./services/puppeteer/scripts:/home/pptruser/scripts
     depends_on:
       - frontend
     shm_size: '4gb' # Increase shared memory size
