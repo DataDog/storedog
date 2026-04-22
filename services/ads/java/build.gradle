@@ -1,6 +1,6 @@
 plugins {
-	id 'org.springframework.boot' version '2.7.5'
-	id 'io.spring.dependency-management' version '1.0.15.RELEASE'
+	id 'org.springframework.boot' version '2.7.18'
+	id 'io.spring.dependency-management' version '1.1.7'
 	id 'java'
 }
 
@@ -19,8 +19,8 @@ dependencies {
     'org.springframework.boot:spring-boot-starter-data-jpa'
   )
 	runtimeOnly 'org.postgresql:postgresql'
-	implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
-  	implementation 'net.logstash.logback:logstash-logback-encoder:7.0'
+	implementation 'com.fasterxml.jackson.core:jackson-databind:2.21.2'
+  	implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'com.h2database:h2'
 }
