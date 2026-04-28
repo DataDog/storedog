@@ -42,6 +42,8 @@ spec:
             }
           }
     spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       volumes:
         - name: apmsocketpath
           hostPath:

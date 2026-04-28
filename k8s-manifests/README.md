@@ -9,7 +9,6 @@ The manifests are split into logical groups and subdirectories as follows:
 ```
 k8s-manifests/
 ├── cluster-setup/
-│   ├── ingress-controller/
 │   ├── provisioner/
 │   └── storage/
 ├── datadog/
@@ -17,25 +16,24 @@ k8s-manifests/
     ├── configmaps/
     ├── secrets/
     ├── deployments/
-    ├── statefulsets/
-    └── ingress/
+    └── statefulsets/
 ```
 
-- **`cluster-setup/`**: Manifests for cluster-wide components (storage, provisioner, ingress controller).
+- **`cluster-setup/`**: Manifests for cluster-wide components (storage and provisioner).
 - **`datadog/`**: Datadog agent manifest for observability.
-- **`storedog-app/`**: All manifests for the Storedog application, organized by resource type (configmaps, secrets, deployments, statefulsets, ingress).
+- **`storedog-app/`**: All manifests for the Storedog application, organized by resource type (configmaps, secrets, deployments, statefulsets).
 
 ## Cluster Prerequisites
 
-This deployment requires two cluster-level components to function on a non-cloud or local Kubernetes setup: a storage provisioner and an ingress controller. The manifests for both are included in the `cluster-setup/` directory.
+This deployment requires a cluster-level storage provisioner to function on a non-cloud or local Kubernetes setup. The manifests are included in the `cluster-setup/` directory.
 
 ### Storage
 
 A storage provisioner is required for the PostgreSQL and Redis `StatefulSet`s. This repository includes manifests for the **Rancher Local Path Provisioner** and a default `StorageClass` to use it.
 
-### Ingress
+### HTTP access
 
-An Ingress Controller is required to expose the application on standard HTTP/S ports. This repository includes the manifest for the standard **NGINX Ingress Controller**, configured to use the host node's network.
+The `service-proxy` (nginx) `Deployment` uses the pod's `hostNetwork` so it listens on port 80 on the node where the pod is scheduled. Open the app using that node's IP address or hostname (no separate Ingress controller).
 
 ## Using a Local Registry
 
@@ -187,7 +185,7 @@ The storedog-app definition files contain variables which need to be set before 
 
 1. **Deploy Cluster Components (one-time setup per cluster):**
 
-Install the storage provisioner and the ingress controller.
+Install the storage provisioner.
 
 ```bash
 kubectl apply -R -f k8s-manifests/cluster-setup/
@@ -285,12 +283,6 @@ kubectl logs <pod-name> -n storedog
 kubectl get services -n storedog
 ```
 
-- Check ingress status:
-
-```bash
-kubectl get ingress -n storedog
-```
-
 - Check Persistent Volume Claims:
 
 ```bash
@@ -304,7 +296,4 @@ Check the logs for cluster components (if issues persist):
 ```bash
 # Storage Provisioner Logs
 kubectl logs -n local-path-storage -l app=local-path-provisioner
-
-# Ingress Controller Logs
-kubectl logs -n ingress-nginx -l app.kubernetes.io/name=ingress-nginx
 ```

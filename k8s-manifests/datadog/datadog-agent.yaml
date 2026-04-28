@@ -79,22 +79,6 @@ spec:
                 tls_ca_cert: /host/etc/kubernetes/pki/etcd/ca.crt
                 tls_cert: /host/etc/kubernetes/pki/etcd/server.crt
                 tls_private_key: /host/etc/kubernetes/pki/etcd/server.key
-          nginx_ingress_controller.yaml: |- # nginx-ingress-controller integration
-            ad_identifiers:
-              - controller
-            init_config:
-            instances:
-              - prometheus_url: http://%%host%%:10254/metrics
-                collect_nginx_histograms: true
-            logs:
-              - service: controller
-                source: nginx-ingress-controller
-          nginx.yaml: |- # nginx integration on the nginx-ingress-controller
-            ad_identifiers:
-              - controller
-            init_config:
-            instances:
-              - nginx_status_url: http://%%host%%:18080/nginx_status
           # Send audit logs to Datadog
           # kube_audit.yaml: |-
           #   logs:

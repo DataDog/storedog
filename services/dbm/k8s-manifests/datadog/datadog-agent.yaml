@@ -50,24 +50,6 @@ spec:
         - name: shared-pg-logs # For Postgres log collection
           persistentVolumeClaim:
             claimName: shared-pg-logs
-      extraConfd:
-        configDataMap: # Integration configurations
-          nginx_ingress_controller.yaml: |- # nginx-ingress-controller integration
-            ad_identifiers:
-              - controller
-            init_config:
-            instances:
-              - prometheus_url: http://%%host%%:10254/metrics
-                collect_nginx_histograms: true
-            logs:
-              - service: controller
-                source: nginx-ingress-controller
-          nginx.yaml: |- # nginx integration on the nginx-ingress-controller
-            ad_identifiers:
-              - controller
-            init_config:
-            instances:
-              - nginx_status_url: http://%%host%%:18080/nginx_status
     clusterAgent:
       extraConfd:
         configDataMap:
