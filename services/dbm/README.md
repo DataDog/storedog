@@ -221,7 +221,7 @@ kubectl apply -n default -f k8s-manifests/storedog-app/secrets/shared-secrets.ya
 kubectl apply -n fake-traffic -f k8s-manifests/storedog-app/secrets/shared-secrets.yaml
 ```
 
-5. Apply the storage provisioner and the ingress controller.
+5. Apply the storage provisioner.
 
 ```bash
 kubectl apply -R -f k8s-manifests/cluster-setup/
@@ -266,13 +266,10 @@ for file in k8s-manifests/storedog-app/statefulsets/*.yaml; do envsubst < "$file
 for file in k8s-manifests/storedog-app/deployments/*.yaml; do envsubst < "$file" | kubectl apply -f -; done
 ```
 
-11. Apply Ingress for external traffic:
+> [!NOTE]
+> The `service-proxy` (nginx) pod uses `hostNetwork`, so the UI is available on port 80 of the node where that pod runs. No Ingress resources are applied.
 
-```bash
-for file in k8s-manifests/storedog-app/ingress/*.yaml; do envsubst < "$file" | kubectl apply -f -; done
-```
-
-12. Apply the ConfigMap and services to generate fake traffic.
+11. Apply the ConfigMap and services to generate fake traffic.
 
 ```bash
 kubectl apply -f k8s-manifests/storedog-app/configmaps/shared-config.yaml -n fake-traffic
