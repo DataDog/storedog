@@ -7,7 +7,7 @@ FROM python:3.9.23-slim-bookworm
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     apt-get upgrade --yes && \
-    apt-get install --yes build-essential libpq-dev wait-for-it && \
+    apt-get install --yes build-essential libpq-dev netcat-openbsd && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 

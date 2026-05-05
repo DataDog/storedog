@@ -12,7 +12,6 @@ RUN apt-get update -yq \
     netcat-traditional \
     imagemagick \
     postgresql-client \
-    wait-for-it \
   # INSTALL NODE
   && curl -sL https://deb.nodesource.com/setup_20.x | bash - \
   && apt-get install -y --no-install-recommends nodejs \
@@ -66,4 +65,4 @@ RUN SECRET_KEY_BASE=precompile_placeholder \
 
 EXPOSE 4000
 
-CMD ["/bin/bash", "-c", "rm -f /app/tmp/pids/server.pid && bundle exec rails s -b 0.0.0.0 -p 4000"]
+CMD ["/bin/bash", "-c", "rm -f /app/tmp/pids/server.pid && bundle exec ddprofrb execrails s -b 0.0.0.0 -p 4000"]
