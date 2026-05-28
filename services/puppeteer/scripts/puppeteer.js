@@ -316,9 +316,16 @@ const selectProductsPageProduct = async (page) => {
 const goToFooterPage = async (page) => {
   console.log('In goToFooterPage on page', await page.title());
   const links = await page.$$('.footer-link');
-  let linkIndex = Math.floor(Math.random() * links.length);
-  console.log('link index', linkIndex);
-  let selector = `span:nth-of-type(${linkIndex}) .footer-link`;
+  // let linkIndex = Math.floor(Math.random() * links.length);
+  // console.log('link index', linkIndex);
+
+  // For RUM LCP faking: 
+  linkToClick = 'About Us';
+
+  // This uses the Puppeteer psuedo-element selector syntax. Selects an <a> element with class .footer-link with innerText matching linkToClick
+  let selector = `a.footer-link ::-p-text(${linkToClick})`;
+
+  // let selector = `span:nth-of-type(${linkIndex}) .footer-link`;
   let link = await page.$(selector, { visible: true });
 
   try {
@@ -328,8 +335,8 @@ const goToFooterPage = async (page) => {
       page.waitForNavigation(),
     ]);
 
-    // wait 2500ms and go back
-    await page.waitForTimeout(2500);
+    // wait 10s and go back
+    await page.waitForTimeout(10000);
     await Promise.all([page.goBack(), page.waitForNavigation()]);
   } catch (e) {
     console.error(e);
@@ -506,6 +513,45 @@ const checkout = async (page) => {
   return;
 };
 
+const maybeClickAd = async (page) => {
+  // Only attempt to click ad 1/3 of the time
+  if (Math.floor(Math.random() * 3) !== 0) {
+    console.log('Skipping ad click this session');
+    return;
+  }
+
+  console.log('Attempting to click ad on page', await page.title());
+
+  try {
+    // Check if ad banner exists (service may be flaky)
+    const adBanner = await page.$('.advertisement-banner');
+    if (!adBanner) {
+      console.log('No ad banner found, skipping');
+      return;
+    }
+
+    await page.waitForTimeout(1000);
+
+    // Click the ad - this navigates away
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+      page.click('.advertisement-banner'),
+    ]);
+
+    console.log('Ad clicked, navigated to:', await page.url());
+    await page.waitForTimeout(2000);
+
+    // Navigate back to homepage by clicking the logo
+    const logo = await page.$('[href="/"]');
+    await logo.evaluate((el) => el.click());
+    await page.waitForNavigation();
+    console.log('Returned to homepage');
+    await page.waitForTimeout(1000);
+  } catch (e) {
+    console.log('Ad click failed (service may be down):', e.message);
+  }
+};
+
 const mainSession = async () => {
   const browser = await getNewBrowser();
   let selector;
@@ -535,6 +581,9 @@ const mainSession = async () => {
 
     const pageTitle = await page.title();
     console.log(`"${pageTitle}" loaded`);
+
+    // Maybe click the ad banner (1/3 chance)
+    await maybeClickAd(page);
 
     await selectHomePageProduct(page);
     await page.waitForTimeout(2000);
@@ -768,9 +817,18 @@ const fourthSession = async () => {
       process.env.PUPPETEER_TIMEOUT || 40000
     );
 
-    const urlWithUtm = Math.random() > 0.5 ? setUtmParams(startUrl) : startUrl;
+    // const urlWithUtm = Math.random() > 0.5 ? setUtmParams(startUrl) : startUrl;
     // go to home page
-    await page.goto(urlWithUtm, { waitUntil: 'domcontentloaded' });
+    // await page.goto(urlWithUtm, { waitUntil: 'domcontentloaded' });
+
+    // To get LCP issues to appear in RUM
+
+    const aboutUsPageURL = `${startUrl}/about-us`;
+
+    await page.goto(aboutUsPageURL)
+
+    await page.waitForTimeout(10000);
+
     let pageTitle = await page.title();
     console.log(`"${pageTitle}" loaded`);
 

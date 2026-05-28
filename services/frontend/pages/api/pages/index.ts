@@ -12,9 +12,10 @@ export default async function handler(
 
     if (isError) {
       const random = Math.random()
-      if (random < 0.33) {
+      // Reduced error rate to ~5% (2.5% 400s + 2.5% 500s)
+      if (random < 0.025) {
         return res.status(400).json({ message: 'Bad request' })
-      } else if (random < 0.66) {
+      } else if (random < 0.05) {
         return res.status(500).json({ message: 'Internal server error' })
       }
     }

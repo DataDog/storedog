@@ -1,7 +1,6 @@
 from ddtrace import patch
 import json_log_formatter
 from ddtrace import tracer
-import traceback
 import logging
 from models import Discount, DiscountType, db
 from bootstrap import create_app
@@ -18,6 +17,7 @@ import os
 import re
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 
 patch(logging=True)
 
@@ -58,12 +58,20 @@ class NoEscape(logging.Filter):
 remove_color_filter = NoEscape()
 logger.addFilter(remove_color_filter)
 
+# set the Timing-Allow-Origin header to allow the RUM to access the response time
+@app.after_request
+def add_timing_allow_origin_header(response):
+    response.headers['Timing-Allow-Origin'] = '*'
+    return response
 
+# Hello world
+@tracer.wrap()
 @app.route('/')
 def hello():
     return Response({'Hello from Discounts!': 'world'}, mimetype='application/json')
 
 
+@tracer.wrap()
 @app.route('/discount', methods=['GET', 'POST'])
 def status():
     if flask_request.method == 'GET':
@@ -122,40 +130,30 @@ def status():
 def getDiscount():
     if flask_request.method == "GET":
         try:
-            # Get the discount code from the query string
+           # get the discount code from the query string
             discount_code = flask_request.args.get("discount_code")
-            # Log the discount code
+            # log the discount code
             logger.info(f"Discount code: {discount_code}")
             discount = Discount.query.filter_by(code=discount_code).first()
 
-            # Broken discounts feature flag is ENABLED, randomly error out
+            # broken discounts feature flag is ENABLED, randomly error out
             if BROKEN_DISCOUNTS == "ENABLED" and random.choice([True, False]):
-                raise Exception("Discount service error")
-
-            if discount:
-                response = discount.serialize()
-                response.update({"status": 1})
-                return jsonify(response)
-            else:
-                err = jsonify({"error": "Discount not found", "status": 0})
-                err.status_code = 404
+                err = jsonify(
+                    {"error": "Discount service error", "status": -1})
+                err.status_code = 500
                 return err
-        except Exception as e:
-            # Log the error details with exception type, message, and stack trace
-            logger.error(
-                "An error occurred while getting discount.",
-                exc_info=True  # Includes the stack trace in the log
-            )
-            # Optionally capture the stack trace separately if needed
-            stack_trace = traceback.format_exc()
-            logger.debug(f"Stack trace: {stack_trace}")
-
-            # Add error details to the response for debugging
-            err = jsonify({
-                'error': str(e),
-                'message': 'Internal Server Error',
-                'stack_trace': stack_trace  # Optional: Include only for debugging purposes
-            })
+            else:
+                if discount:
+                    response = discount.serialize()
+                    response.update({"status": 1})
+                    return jsonify(response)
+                else:
+                    err = jsonify({"error": "Discount not found", "status": 0})
+                    err.status_code = 404
+                    return err
+        except:
+            logger.error("An error occurred while getting discount.")
+            err = jsonify({'error': 'Internal Server Error'})
             err.status_code = 500
             return err
     else:

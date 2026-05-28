@@ -32,7 +32,7 @@ function Discount() {
         }
       })
       .catch((e) => {
-        console.error('An error occurred while fetching the discount code:', e)
+        throw new Error('Error fetching discount code', e)
       })
       .finally(() => {
         setLoading(false) // Ensure loading state is updated

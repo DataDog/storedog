@@ -98,7 +98,7 @@ function Ad() {
         <img 
           src={`${adsPath}/banners/${data.path}`} 
           alt={data.name || "Advertisement"} 
-          className="cursor-pointer"
+          className="advertisement-image cursor-pointer"
         />
       </picture>
     </div>
