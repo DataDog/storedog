@@ -1,22 +1,27 @@
 [
   {
     "id": "1",
-    "name": "dbm",
+    "name": "xss",
     "active": false
   },
   {
     "id": "2",
-    "name": "error-tracking",
+    "name": "dbm",
     "active": false
   },
   {
     "id": "3",
-    "name": "api-errors",
-    "active": false
+    "name": "error-tracking",
+    "active": true
   },
   {
     "id": "4",
+    "name": "api-errors",
+    "active": true
+  },
+  {
+    "id": "5",
     "name": "product-card-frustration",
-    "active": false
+    "active": true
   }
 ]

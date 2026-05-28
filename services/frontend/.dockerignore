@@ -1,0 +1,14 @@
+node_modules
+.next
+out
+build
+coverage
+.DS_Store
+*.log
+.env
+.env.*.local
+.vercel
+Dockerfile
+.dockerignore
+.git
+.gitignore
