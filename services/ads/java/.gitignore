@@ -1,0 +1,4 @@
+# Gradle / Java build artifacts
+.gradle/
+build/
+bin/
