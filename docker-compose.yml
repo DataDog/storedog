@@ -30,8 +30,7 @@ services:
       - dd-agent
       - backend
     volumes:
-      - ${STOREDOG_DIR}/services/frontend:/app
-      - /app/node_modules
+      - ${STOREDOG_DIR:-/storedog}/services/frontend:/app
     networks:
       - storedog-network
     environment:
@@ -54,7 +53,7 @@ services:
       com.datadoghq.ad.logs: '[{"source": "nodejs", "auto_multi_line_detection":true }]'
   backend:
     image: ghcr.io/datadog/storedog/backend:${STOREDOG_IMAGE_VERSION:-latest}
-    command: wait-for-it postgres:5432 -- bundle exec ddprofrb execrails s -b 0.0.0.0 -p 4000 --pid /app/tmp/pids/server.pid
+    command: wait-for-it postgres:5432 -- bundle exec ddprofrb exec rails s -b 0.0.0.0 -p 4000 --pid /app/tmp/pids/server.pid
     depends_on:
       - 'postgres'
       - 'redis'
@@ -84,9 +83,6 @@ services:
       - 'dd-agent'
     networks:
       - storedog-network
-    volumes:
-      - ./services/backend:/app
-      - ./services/worker/config/initializers/datadog-tracer.rb:/app/config/initializers/datadog-tracer.rb
     environment:
       - WORKER=true
       - DD_AGENT_HOST=dd-agent
