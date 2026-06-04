@@ -4,6 +4,7 @@ services:
     pid: host
     environment:
       - DD_API_KEY=${DD_API_KEY}
+      - DD_SITE=${DD_SITE:-datadoghq.com}
       - DD_ENV=${DD_ENV:-production}
       - DD_LOGS_ENABLED=true
       - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
