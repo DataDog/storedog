@@ -197,7 +197,7 @@ services:
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":6379}]'
       com.datadoghq.ad.logs: '[{"source": "redis", "service": "redis"}]'
   puppeteer:
-    image: ghcr.io/puppeteer/puppeteer:${PUPPETEER_VERSION:-20.9.0}
+    image: ghcr.io/datadog/storedog/puppeteer:${STOREDOG_IMAGE_VERSION:-latest}
     platform: linux/amd64
     volumes: 
     - ./services/puppeteer/scripts/puppeteer.js:/home/pptruser/puppeteer.js
