@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { FC, useState } from 'react'
 import cn from 'clsx'
 import { datadogRum } from '@datadog/browser-rum'
@@ -25,7 +24,6 @@ const CheckoutSidebarView: FC = () => {
     shippingRate,
     addressStatus,
     paymentStatus,
-    clearCheckoutFields,
     handleCompleteCheckout,
   } = useCheckoutContext()
 
@@ -48,12 +46,9 @@ const CheckoutSidebarView: FC = () => {
       event.preventDefault()
 
       const res = await handleCompleteCheckout()
-      console.log('checkout response', res)
       if (res.error) {
         throw res.error
       }
-
-      console.log('cartData', cartData)
 
       datadogRum.addAction('Successful Checkout', {
         id: cartData.id,
@@ -74,7 +69,6 @@ const CheckoutSidebarView: FC = () => {
         })
       })
 
-      // clearCheckoutFields()
       setLoadingSubmit(false)
       await cartEmpty()
       await cartInit()
@@ -112,9 +106,6 @@ const CheckoutSidebarView: FC = () => {
         throw discount.error
       }
 
-      console.log('discount accepted', discount)
-
-      // always hardcode this to FREESHIP because that's all that's set up in spree
       await applyDiscount('FREESHIP')
 
       setDiscountInput('')

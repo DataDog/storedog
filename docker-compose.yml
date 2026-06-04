@@ -9,8 +9,11 @@ services:
       - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
       - DD_CONTAINER_EXCLUDE=image:agent name:puppeteer
       - DD_CLOUD_PROVIDER_METADATA=[]
-      - DD_HOSTNAME=${DD_HOSTNAME:-production-host}
+      - DD_HOSTNAME=${DD_HOSTNAME-storedog-host}
       - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
+    ports:
+      - '8126:8126/tcp'
+      - '8125:8125/udp'
     networks:
       - storedog-network
     volumes:
@@ -21,39 +24,45 @@ services:
       - postgres_logs:/var/log/pg_log:ro
   frontend:
     image: ghcr.io/datadog/storedog/frontend:${STOREDOG_IMAGE_VERSION:-latest}
-    command: bash -c "wait-for-it backend:4000 -- ${FRONTEND_COMMAND:-npm run prod}"
+    command: bash -c "npm ci && npm run build && wait-for-it backend:4000 -- npm run start"
     depends_on:
       - worker
       - dd-agent
       - backend
+    volumes:
+      - ${STOREDOG_DIR}/services/frontend:/app
+      - /app/node_modules
     networks:
       - storedog-network
     environment:
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV:-production}
-      - DD_SERVICE=store-frontend-api # used for Next.js API routes
-      - DD_VERSION=${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}
+      - DD_VERSION=${FRONTEND_VERSION-1.0.0}
+      - DD_SERVICE=store-frontend-api
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
       - DD_PROFILING_TIMELINE_ENABLED=true
       - DD_PROFILING_ALLOCATION_ENABLED=true
-      - NEXT_PUBLIC_DD_APPLICATION_ID=${NEXT_PUBLIC_DD_APPLICATION_ID:-DD_APPLICATION_ID-not-set}
-      - NEXT_PUBLIC_DD_CLIENT_TOKEN=${NEXT_PUBLIC_DD_CLIENT_TOKEN:-DD_CLIENT_TOKEN-not-set}
-      - NEXT_PUBLIC_DD_SITE=${NEXT_PUBLIC_DD_SITE:-datadoghq.com}
-      - NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend # used for client-side Next.js RUM configuration
+      - NEXT_PUBLIC_DD_VERSION_FRONTEND=${FRONTEND_VERSION-1.0.0}
+      - NEXT_PUBLIC_DD_APPLICATION_ID=${NEXT_PUBLIC_DD_APPLICATION_ID:-NEXT_PUBLIC_DD_APPLICATION_ID-not-set}
+      - NEXT_PUBLIC_DD_CLIENT_TOKEN=${NEXT_PUBLIC_DD_CLIENT_TOKEN:-NEXT_PUBLIC_DD_CLIENT_TOKEN-not-set}
+      - NEXT_PUBLIC_DD_SITE=${DD_SITE:-datadoghq.com}
+      - NEXT_PUBLIC_DD_SERVICE_FRONTEND=${DD_SERVICE_FRONTEND:-store-frontend}
       - NEXT_PUBLIC_DD_ENV=${DD_ENV:-production}
-      - NEXT_PUBLIC_DD_VERSION=${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}
+
     labels:
-      com.datadoghq.ad.logs: '[{"source": "nodejs", "auto_multi_line_detection": true }]'
+      com.datadoghq.ad.logs: '[{"source": "nodejs", "auto_multi_line_detection":true }]'
   backend:
     image: ghcr.io/datadog/storedog/backend:${STOREDOG_IMAGE_VERSION:-latest}
-    command: wait-for-it postgres:5432 -- bundle exec ddprofrb exec rails s -b 0.0.0.0 -p 4000 --pid /app/tmp/pids/server.pid
+    command: wait-for-it postgres:5432 -- bundle exec ddprofrb execrails s -b 0.0.0.0 -p 4000 --pid /app/tmp/pids/server.pid
     depends_on:
       - 'postgres'
       - 'redis'
       - 'dd-agent'
     networks:
       - storedog-network
+    volumes:
+      - './services/backend:/app'
     environment:
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV:-production}
@@ -75,6 +84,9 @@ services:
       - 'dd-agent'
     networks:
       - storedog-network
+    volumes:
+      - ./services/backend:/app
+      - ./services/worker/config/initializers/datadog-tracer.rb:/app/config/initializers/datadog-tracer.rb
     environment:
       - WORKER=true
       - DD_AGENT_HOST=dd-agent
@@ -95,19 +107,22 @@ services:
       - dd-agent
     environment:
       - DD_AGENT_HOST=dd-agent
-      - DD_ENV=${DD_ENV:-production}
+      - DD_ENV=${DD_ENV-dev}
       - DD_SERVICE=store-discounts
       - DD_VERSION=${DD_VERSION_DISCOUNTS:-1.0.0}
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
       - DD_PROFILING_TIMELINE_ENABLED=true
       - DD_PROFILING_ALLOCATION_ENABLED=true
+    volumes:
+      - ./services/discounts:/app
     networks:
       - storedog-network
     labels:
       com.datadoghq.ad.logs: '[{"source": "python"}]'
   ads:
-    image: ghcr.io/datadog/storedog/ads-java:${STOREDOG_IMAGE_VERSION:-latest}
+    build:
+      context: ./services/ads/java
     depends_on:
       - postgres
       - dd-agent
@@ -126,9 +141,10 @@ services:
       - storedog-network
     labels:
       com.datadoghq.ad.logs: '[{"source": "java"}]'
+      com.datadoghq.tags.env: '${DD_ENV:-production}'
       com.datadoghq.tags.service: 'store-ads'
       com.datadoghq.tags.version: '${DD_VERSION_ADS:-1.0.0}'
-  service-proxy:
+  nginx:
     image: ghcr.io/datadog/storedog/nginx:${STOREDOG_IMAGE_VERSION:-latest}
     restart: always
     ports:
@@ -146,8 +162,6 @@ services:
     labels:
       com.datadoghq.ad.logs: '[{"source": "nginx"}]'
       com.datadoghq.ad.check_names: '["nginx"]'
-      com.datadoghq.ad.init_configs: '[{}]'
-      com.datadoghq.ad.instances: '[{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]'
   postgres:
     image: ghcr.io/datadog/storedog/postgres:${STOREDOG_IMAGE_VERSION:-latest}
     restart: always
@@ -183,8 +197,11 @@ services:
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":6379}]'
       com.datadoghq.ad.logs: '[{"source": "redis", "service": "redis"}]'
   puppeteer:
-    image: ghcr.io/datadog/storedog/puppeteer:${STOREDOG_IMAGE_VERSION:-latest}
+    image: ghcr.io/puppeteer/puppeteer:${PUPPETEER_VERSION:-20.9.0}
     platform: linux/amd64
+    volumes: 
+    - ./services/puppeteer/scripts/puppeteer.js:/home/pptruser/puppeteer.js
+    - ./services/puppeteer/scripts/puppeteer.sh:/home/pptruser/puppeteer.sh
     environment:
       - STOREDOG_URL=${STOREDOG_URL:-http://service-proxy:80}
       - PUPPETEER_TIMEOUT=${PUPPETEER_TIMEOUT:-30000}
