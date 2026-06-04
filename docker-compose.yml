@@ -140,7 +140,7 @@ services:
       com.datadoghq.tags.env: '${DD_ENV:-production}'
       com.datadoghq.tags.service: 'store-ads'
       com.datadoghq.tags.version: '${DD_VERSION_ADS:-1.0.0}'
-  nginx:
+  service-proxy:
     image: ghcr.io/datadog/storedog/nginx:${STOREDOG_IMAGE_VERSION:-latest}
     restart: always
     ports:
