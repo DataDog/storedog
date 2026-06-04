@@ -49,7 +49,6 @@ services:
       - NEXT_PUBLIC_DD_SITE=${DD_SITE:-datadoghq.com}
       - NEXT_PUBLIC_DD_SERVICE_FRONTEND=${DD_SERVICE_FRONTEND:-store-frontend}
       - NEXT_PUBLIC_DD_ENV=${DD_ENV:-production}
-
     labels:
       com.datadoghq.ad.logs: '[{"source": "nodejs", "auto_multi_line_detection":true }]'
   backend:
