@@ -61,7 +61,8 @@ services:
     networks:
       - storedog-network
     volumes:
-      - './services/backend:/app'
+      - './services/backend/config/routes.rb:/app/config/routes.rb'
+      - './services/backend/app/controllers/api/v2/custom_controller.rb:/app/app/controllers/api/v2/custom_controller.rb'
     environment:
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV:-production}
