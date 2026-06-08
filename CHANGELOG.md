@@ -17,3 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com).
 - Replaced `wait-for-it`-based startup ordering with container `healthcheck` blocks across all services and `depends_on` `condition: service_healthy`/`service_started` gating in both compose files.
 - Removed the `wait-for-it` package from the backend, ads (Python), and discounts Dockerfiles (adding `netcat-openbsd` where the healthcheck needs `nc`).
 - Backend gains a `.dockerignore`, and `services/backend/config/database.yml` now reads `POSTGRES_USER`/`POSTGRES_PASSWORD` from the environment.
+
+### Compose transformation tooling
+
+- Added `scripts/transform_compose.py` and `scripts/transform_compose_frontend.py` to generate a production compose configuration from the development compose file (image swaps, `development` -> `production` targets, frontend build -> image, comment stripping).
+- Added `unittest`-based coverage in `scripts/test_transform_compose.py` and `scripts/test_transform_compose_frontend.py`.
