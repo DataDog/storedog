@@ -1,0 +1,116 @@
+{
+  "geo": {
+    "continent": "North America",
+    "country": "United States",
+    "as": {
+      "domain": "comcast.com",
+      "name": "Comcast Cable Communications, LLC",
+      "type": "isp"
+    },
+    "country_iso_code": "US",
+    "city": "Spry",
+    "latitude": 39.91843,
+    "continent_code": "NA",
+    "country_subdivision_iso_code": "US-PA",
+    "location": [
+      -76.68497,
+      39.91843
+    ],
+    "country_subdivision": "Pennsylvania",
+    "longitude": -76.68497
+  },
+  "application": {
+    "name": "Retention Filters 1",
+    "short_name": "retention_filters_1",
+    "id": "35649584-ef6a-4096-9c28-344f8ce8cec2"
+  },
+  "os": {
+    "name": "Android",
+    "version": "14",
+    "version_major": "14"
+  },
+  "connectivity": {
+    "effective_type": "4g"
+  },
+  "usr": {
+    "anonymous_id": "6ffa6a27-22cb-4e1a-969c-55a8a713d1fa"
+  },
+  "session": {
+    "is_active": false,
+    "resource": {
+      "count": 0
+    },
+    "ip": "174.54.119.247",
+    "frustration": {
+      "count": 0
+    },
+    "useragent": "Mozilla/5.0 (Linux; Android 14; SM-S921B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Mobile Safari/537.36",
+    "long_task": {
+      "count": 0
+    },
+    "retention_reason": "rum_retention_filter",
+    "type": "user",
+    "error": {
+      "count": 0
+    },
+    "has_full_snapshot": false,
+    "time_spent": 1375000000,
+    "last_view": {
+      "url_query": {
+        "utm_campaign": "cool_bits_sale",
+        "utm_medium": "facebook",
+        "utm_source": "search"
+      },
+      "url_path_group": "/",
+      "name": "/",
+      "id": "c9f17dae-3b23-471f-8754-248d94cd685d",
+      "url_host": "localhost",
+      "url_path": "/",
+      "url_scheme": "http"
+    },
+    "crash": {
+      "count": 0
+    },
+    "view": {
+      "count": 1
+    },
+    "sampled_for_replay": true,
+    "is_replay_available": false,
+    "initial_view": {
+      "url_query": {
+        "utm_campaign": "cool_bits_sale",
+        "utm_medium": "facebook",
+        "utm_source": "search"
+      },
+      "url_path_group": "/",
+      "name": "/",
+      "id": "c9f17dae-3b23-471f-8754-248d94cd685d",
+      "url_host": "localhost",
+      "url_path": "/",
+      "url_scheme": "http"
+    },
+    "action": {
+      "count": 0
+    },
+    "id": "6d6c8feb-b7bd-46f8-8451-7432f8679285",
+    "matching_retention_filter": {
+      "name": "Sessions",
+      "id": "default_sessions"
+    },
+    "plan": "browser"
+  },
+  "service": "store-frontend",
+  "browser": {
+    "name": "Chrome Mobile",
+    "version": "121.0.0.0",
+    "version_major": "121"
+  },
+  "type": "session",
+  "device": {
+    "name": "Samsung SM-S921B",
+    "model": "SM-S921B",
+    "type": "Mobile",
+    "brand": "Samsung"
+  },
+  "last_user_interaction_time": 1761857051802
+}
