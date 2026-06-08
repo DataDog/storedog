@@ -1,4 +1,5 @@
 module.exports = {
+  output: 'standalone',
   productionBrowserSourceMaps: true,
   eslint: {
     // Warning: This allows production builds to successfully complete even if
