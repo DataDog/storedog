@@ -24,7 +24,7 @@ services:
       - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
       - postgres_logs:/var/log/pg_log:ro
   frontend:
-    image: ghcr.io/datadog/storedog/frontend:${STOREDOG_IMAGE_VERSION:-latest}
+    image: ghcr.io/datadog/storedog/frontend:latest
     command: bash -c "npm ci && npm run build && wait-for-it backend:4000 -- npm run start"
     depends_on:
       - worker
@@ -52,7 +52,7 @@ services:
     labels:
       com.datadoghq.ad.logs: '[{"source": "nodejs", "auto_multi_line_detection":true }]'
   backend:
-    image: ghcr.io/datadog/storedog/backend:${STOREDOG_IMAGE_VERSION:-latest}
+    image: ghcr.io/datadog/storedog/backend:latest
     command: wait-for-it postgres:5432 -- bundle exec ddprofrb exec rails s -b 0.0.0.0 -p 4000 --pid /app/tmp/pids/server.pid
     depends_on:
       - 'postgres'
@@ -75,7 +75,7 @@ services:
     labels:
       com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection": true }]'
   worker:
-    image: ghcr.io/datadog/storedog/backend:${STOREDOG_IMAGE_VERSION:-latest}
+    image: ghcr.io/datadog/storedog/backend:latest
     command: wait-for-it postgres:5432 -- bundle exec ddprofrb exec sidekiq -C config/sidekiq.yml
     depends_on:
       - 'postgres'
@@ -97,7 +97,7 @@ services:
     labels:
       com.datadoghq.ad.logs: '[{"source": "ruby", "auto_multi_line_detection": true }]'
   discounts:
-    image: ghcr.io/datadog/storedog/discounts:${STOREDOG_IMAGE_VERSION:-latest}
+    image: ghcr.io/datadog/storedog/discounts:latest
     command: wait-for-it postgres:5432 -- ddtrace-run flask run --port=2814 --host=0.0.0.0
     depends_on:
       - postgres
@@ -142,7 +142,7 @@ services:
       com.datadoghq.tags.service: 'store-ads'
       com.datadoghq.tags.version: '${DD_VERSION_ADS:-1.0.0}'
   service-proxy:
-    image: ghcr.io/datadog/storedog/nginx:${STOREDOG_IMAGE_VERSION:-latest}
+    image: ghcr.io/datadog/storedog/nginx:latest
     restart: always
     ports:
       - '80:80'
@@ -160,7 +160,7 @@ services:
       com.datadoghq.ad.logs: '[{"source": "nginx"}]'
       com.datadoghq.ad.check_names: '["nginx"]'
   postgres:
-    image: ghcr.io/datadog/storedog/postgres:${STOREDOG_IMAGE_VERSION:-latest}
+    image: ghcr.io/datadog/storedog/postgres:latest
     restart: always
     depends_on:
       - dd-agent
@@ -194,7 +194,7 @@ services:
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":6379}]'
       com.datadoghq.ad.logs: '[{"source": "redis", "service": "redis"}]'
   puppeteer:
-    image: ghcr.io/datadog/storedog/puppeteer:${STOREDOG_IMAGE_VERSION:-latest}
+    image: ghcr.io/datadog/storedog/puppeteer:latest
     platform: linux/amd64
     volumes: 
     - ./services/puppeteer/scripts/puppeteer.js:/home/pptruser/puppeteer.js
