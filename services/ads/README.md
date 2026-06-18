@@ -218,6 +218,10 @@ spec:
         - name: apmsocketpath
           hostPath:
             path: /var/run/datadog/
+      initContainers:
+        - name: wait-for-db
+          image: busybox:1.37.0
+          command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done;']
       containers:
         - name: ads
           image: ${REGISTRY_URL}/ads-python:${SD_TAG}
