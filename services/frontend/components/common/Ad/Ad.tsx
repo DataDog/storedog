@@ -2,19 +2,20 @@ import { useState, useEffect, useCallback } from 'react'
 import { codeStash } from 'code-stash'
 import config from '../../../featureFlags.config.json'
 
+const AD_PLACEMENT = 'homepage'
+
 export interface AdDataResults {
-  data: object | null
+  id: number
+  name: string
   path: string
+  url?: string
+  weight?: number
 }
 // Advertisement banner
 function Ad() {
   const [data, setData] = useState<AdDataResults | null>(null)
   const [isLoading, setLoading] = useState(false)
   const adsPath = process.env.NEXT_PUBLIC_ADS_ROUTE || `/services/ads`
-
-  const getRandomArbitrary = useCallback((min: number, max: number) => {
-    return Math.floor(Math.random() * (max - min) + min)
-  }, [])
 
   const fetchAd = useCallback(async () => {
     setLoading(true)
@@ -27,20 +28,19 @@ function Ad() {
 
     try {
       console.log('ads path', adsPath)
-      const res = await fetch(`${adsPath}/ads`, { headers })
+      const res = await fetch(`${adsPath}/ads/serve?placement=${AD_PLACEMENT}`, { headers })
       if (!res.ok) {
         throw new Error('Error fetching ad')
       }
       const data = await res.json()
       console.log(data)
-      const index = getRandomArbitrary(0, data.length)
-      setData(data[index])
+      setData(data)
       setLoading(false)
     } catch (e) {
       console.error(e)
       setLoading(false)
     }
-  }, [adsPath, getRandomArbitrary, setData, setLoading])
+  }, [adsPath, setData, setLoading])
 
   useEffect(() => {
     if (!data) fetchAd()
@@ -61,10 +61,15 @@ function Ad() {
 
   return (
     <div className="flex flex-row justify-center py-4 advertisement-wrapper">
-      <picture className="advertisement-banner">
-        <source srcSet={`${adsPath}/banners/${data.path}`} type="image/webp" />
-        <img src={`${adsPath}/banners/${data.path}`} alt="Landscape picture" />
-      </picture>
+      <a href={`${adsPath}/ads/${data.id}/click?placement=${AD_PLACEMENT}`} aria-label={data.name}>
+        <picture className="advertisement-banner">
+          <source
+            srcSet={`${adsPath}/banners/${data.path}?placement=${AD_PLACEMENT}`}
+            type="image/jpeg"
+          />
+          <img src={`${adsPath}/banners/${data.path}?placement=${AD_PLACEMENT}`} alt={data.name} />
+        </picture>
+      </a>
     </div>
   )
 }
