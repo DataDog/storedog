@@ -10,7 +10,6 @@ public class Advertisement {
     private String name;
     private String path;
     private String url;
-    private Double weight;
 
     public Advertisement() {}
 
@@ -19,11 +18,10 @@ public class Advertisement {
         this.path = path;
     }
 
-    public Advertisement(String name, String path, String url, Double weight) {
+    public Advertisement(String name, String path, String url) {
         this.name = name;
         this.path = path;
         this.url = url;
-        this.weight = weight;
     }
 
     public Long getId() { return id; }
@@ -34,6 +32,4 @@ public class Advertisement {
     public void setPath(String path) { this.path = path; }
     public String getUrl() { return url; }
     public void setUrl(String url) { this.url = url; }
-    public Double getWeight() { return weight; }
-    public void setWeight(Double weight) { this.weight = weight; }
 }

@@ -13,7 +13,6 @@ import org.apache.commons.io.IOUtils;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.HashMap;
 import java.util.Map;
-import org.springframework.web.bind.annotation.RequestParam;
 import java.util.concurrent.TimeoutException;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,19 +57,19 @@ public class AdsJavaApplication {
         .setUnit("1")
         .build();
     private static final LongCounter impressionCounter = meter.counterBuilder("ads.impressions")
-        .setDescription("Counts banner impressions by ad and placement.")
+        .setDescription("Counts banner impressions by ad.")
         .build();
     private static final LongCounter clickCounter = meter.counterBuilder("ads.clicks")
-        .setDescription("Counts ad clicks by ad and placement.")
+        .setDescription("Counts ad clicks by ad.")
         .build();
     private static final LongCounter selectionCounter = meter.counterBuilder("ads.selection_count")
-        .setDescription("Counts server-side ad selections by ad and placement.")
+        .setDescription("Counts server-side ad selections by ad.")
         .build();
     private static final LongCounter imageErrorCounter = meter.counterBuilder("ads.image_errors")
         .setDescription("Counts banner image failures by path and reason.")
         .build();
     private static final LongCounter noFillCounter = meter.counterBuilder("ads.no_fill")
-        .setDescription("Counts requests where no ad was available for a placement.")
+        .setDescription("Counts requests where no ad was available.")
         .build();
 
     @Autowired
@@ -119,8 +118,7 @@ public class AdsJavaApplication {
         produces = MediaType.IMAGE_JPEG_VALUE
     )
     public @ResponseBody byte[] getImageWithMediaType(
-        @PathVariable("path") String path,
-        @RequestParam(value = "placement", defaultValue = "homepage") String placement
+        @PathVariable("path") String path
     ) throws IOException {
         Advertisement ad = advertisementRepository.findByPath(path).orElse(null);
         if (ad == null) {
@@ -141,14 +139,13 @@ public class AdsJavaApplication {
         try (InputStream in = getClass().getResourceAsStream(imagePath)) {
             if (in == null) {
                 recordRequest("/banners/{path}", "GET", "error");
-                recordImageError(ad, placement, "missing_resource");
+                recordImageError(ad, "missing_resource");
                 try (
                     MDC.MDCCloseable endpoint = MDC.putCloseable("endpoint", "/banners/{path}");
                     MDC.MDCCloseable method = MDC.putCloseable("method", "GET");
                     MDC.MDCCloseable adId = MDC.putCloseable("ad_id", String.valueOf(ad.getId()));
                     MDC.MDCCloseable adName = MDC.putCloseable("ad_name", attributeValue(ad.getName()));
                     MDC.MDCCloseable bannerPath = MDC.putCloseable("banner_path", attributeValue(ad.getPath()));
-                    MDC.MDCCloseable placementValue = MDC.putCloseable("placement", attributeValue(placement));
                     MDC.MDCCloseable reason = MDC.putCloseable("reason", "missing_resource")
                 ) {
                     logger.warn("Banner image resource is missing");
@@ -158,21 +155,20 @@ public class AdsJavaApplication {
 
             byte[] image = IOUtils.toByteArray(in);
             recordRequest("/banners/{path}", "GET", "success");
-            recordAdCounter(impressionCounter, ad, placement);
+            recordAdCounter(impressionCounter, ad);
             try (
                 MDC.MDCCloseable endpoint = MDC.putCloseable("endpoint", "/banners/{path}");
                 MDC.MDCCloseable method = MDC.putCloseable("method", "GET");
                 MDC.MDCCloseable adId = MDC.putCloseable("ad_id", String.valueOf(ad.getId()));
                 MDC.MDCCloseable adName = MDC.putCloseable("ad_name", attributeValue(ad.getName()));
-                MDC.MDCCloseable bannerPath = MDC.putCloseable("banner_path", attributeValue(ad.getPath()));
-                MDC.MDCCloseable placementValue = MDC.putCloseable("placement", attributeValue(placement))
+                MDC.MDCCloseable bannerPath = MDC.putCloseable("banner_path", attributeValue(ad.getPath()))
             ) {
                 logger.info("Banner impression recorded");
             }
             return image;
         } catch (IOException e) {
             recordRequest("/banners/{path}", "GET", "error");
-            recordImageError(ad, placement, "read_failed");
+            recordImageError(ad, "read_failed");
             throw e;
         }
     }
@@ -182,8 +178,7 @@ public class AdsJavaApplication {
         value = "/ads/{id}/click"
     )
     public RedirectView clickAd(
-        @PathVariable("id") Long id,
-        @RequestParam(value = "placement", defaultValue = "homepage") String placement
+        @PathVariable("id") Long id
     ) {
         Advertisement ad = advertisementRepository.findById(id).orElse(null);
         if (ad == null) {
@@ -201,13 +196,12 @@ public class AdsJavaApplication {
         }
 
         recordRequest("/ads/{id}/click", "GET", "success");
-        recordAdCounter(clickCounter, ad, placement);
+        recordAdCounter(clickCounter, ad);
         try (
             MDC.MDCCloseable endpoint = MDC.putCloseable("endpoint", "/ads/{id}/click");
             MDC.MDCCloseable method = MDC.putCloseable("method", "GET");
             MDC.MDCCloseable adId = MDC.putCloseable("ad_id", String.valueOf(ad.getId()));
             MDC.MDCCloseable adName = MDC.putCloseable("ad_name", attributeValue(ad.getName()));
-            MDC.MDCCloseable placementValue = MDC.putCloseable("placement", attributeValue(placement));
             MDC.MDCCloseable targetUrl = MDC.putCloseable("target_url", attributeValue(ad.getUrl()))
         ) {
             logger.info("Ad click recorded");
@@ -221,8 +215,7 @@ public class AdsJavaApplication {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     public Advertisement serveAd(
-        @RequestHeader HashMap<String, String> headers,
-        @RequestParam(value = "placement", defaultValue = "homepage") String placement
+        @RequestHeader HashMap<String, String> headers
     ) {
         ErrorInjection errorInjection = parseErrorInjection(headers);
         throwInjectedErrorIfRequested("/ads/serve", errorInjection);
@@ -230,22 +223,21 @@ public class AdsJavaApplication {
         List<Advertisement> ads = advertisementRepository.findAll();
         if (ads.isEmpty()) {
             recordRequest("/ads/serve", "GET", "error");
-            recordNoFill(placement);
+            recordNoFill();
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No advertisements available");
         }
 
         Advertisement selectedAd = selectAd(ads);
         recordRequest("/ads/serve", "GET", "success");
-        recordAdCounter(selectionCounter, selectedAd, placement);
+        recordAdCounter(selectionCounter, selectedAd);
         try (
             MDC.MDCCloseable endpoint = MDC.putCloseable("endpoint", "/ads/serve");
             MDC.MDCCloseable method = MDC.putCloseable("method", "GET");
             MDC.MDCCloseable adId = MDC.putCloseable("ad_id", String.valueOf(selectedAd.getId()));
             MDC.MDCCloseable adName = MDC.putCloseable("ad_name", attributeValue(selectedAd.getName()));
-            MDC.MDCCloseable placementValue = MDC.putCloseable("placement", attributeValue(placement));
             MDC.MDCCloseable injectedError = MDC.putCloseable("error_injection_enabled", String.valueOf(errorInjection.enabled))
         ) {
-            logger.info("Selected ad for placement");
+            logger.info("Selected ad");
         }
         return selectedAd;
     }
@@ -301,14 +293,13 @@ public class AdsJavaApplication {
         );
     }
 
-    private static void recordAdCounter(LongCounter counter, Advertisement ad, String placement) {
+    private static void recordAdCounter(LongCounter counter, Advertisement ad) {
         counter.add(
             1,
             Attributes.of(
                 AttributeKey.stringKey("ad.id"), String.valueOf(ad.getId()),
                 AttributeKey.stringKey("ad.name"), attributeValue(ad.getName()),
-                AttributeKey.stringKey("ad.path"), attributeValue(ad.getPath()),
-                AttributeKey.stringKey("placement"), attributeValue(placement)
+                AttributeKey.stringKey("ad.path"), attributeValue(ad.getPath())
             )
         );
     }
@@ -323,26 +314,20 @@ public class AdsJavaApplication {
         );
     }
 
-    private static void recordImageError(Advertisement ad, String placement, String reason) {
+    private static void recordImageError(Advertisement ad, String reason) {
         imageErrorCounter.add(
             1,
             Attributes.of(
                 AttributeKey.stringKey("ad.id"), String.valueOf(ad.getId()),
                 AttributeKey.stringKey("ad.name"), attributeValue(ad.getName()),
                 AttributeKey.stringKey("ad.path"), attributeValue(ad.getPath()),
-                AttributeKey.stringKey("placement"), attributeValue(placement),
                 AttributeKey.stringKey("reason"), attributeValue(reason)
             )
         );
     }
 
-    private static void recordNoFill(String placement) {
-        noFillCounter.add(
-            1,
-            Attributes.of(
-                AttributeKey.stringKey("placement"), attributeValue(placement)
-            )
-        );
+    private static void recordNoFill() {
+        noFillCounter.add(1);
     }
 
     private static String attributeValue(String value) {
@@ -353,28 +338,7 @@ public class AdsJavaApplication {
     }
 
     private static Advertisement selectAd(List<Advertisement> ads) {
-        double totalWeight = ads.stream()
-            .filter(ad -> ad.getWeight() != null && ad.getWeight() > 0)
-            .mapToDouble(Advertisement::getWeight)
-            .sum();
-
-        if (totalWeight <= 0) {
-            return ads.get(ThreadLocalRandom.current().nextInt(ads.size()));
-        }
-
-        double target = ThreadLocalRandom.current().nextDouble(totalWeight);
-        double runningTotal = 0;
-        for (Advertisement ad : ads) {
-            if (ad.getWeight() == null || ad.getWeight() <= 0) {
-                continue;
-            }
-            runningTotal += ad.getWeight();
-            if (target < runningTotal) {
-                return ad;
-            }
-        }
-
-        return ads.get(ads.size() - 1);
+        return ads.get(ThreadLocalRandom.current().nextInt(ads.size()));
     }
 
     private static String imageResourcePath(Advertisement ad) {
@@ -452,9 +416,9 @@ public class AdsJavaApplication {
     @Bean
     public CommandLineRunner initDb(AdvertisementRepository repository) {
         return args -> {
-            upsertDefaultAdvertisement(repository, "Discount Clothing", "1.jpg", "/t/clothing", 15.1);
-            upsertDefaultAdvertisement(repository, "Cool Hats", "2.jpg", "/products/datadog-ringer-t-shirt", 300.1);
-            upsertDefaultAdvertisement(repository, "Nice Bags", "3.jpg", "/t/bags", 5242.1);
+            upsertDefaultAdvertisement(repository, "Discount Clothing", "1.jpg", "/t/clothing");
+            upsertDefaultAdvertisement(repository, "Cool Hats", "2.jpg", "/products/datadog-ringer-t-shirt");
+            upsertDefaultAdvertisement(repository, "Nice Bags", "3.jpg", "/t/bags");
         };
     }
 
@@ -462,8 +426,7 @@ public class AdsJavaApplication {
         AdvertisementRepository repository,
         String name,
         String path,
-        String url,
-        Double weight
+        String url
     ) {
         Advertisement ad = repository.findByPath(path)
             .orElseGet(() -> new Advertisement(name, path));
@@ -475,10 +438,6 @@ public class AdsJavaApplication {
         }
         if (ad.getUrl() == null || ad.getUrl().isBlank()) {
             ad.setUrl(url);
-            changed = true;
-        }
-        if (ad.getWeight() == null) {
-            ad.setWeight(weight);
             changed = true;
         }
 
