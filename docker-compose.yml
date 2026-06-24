@@ -21,7 +21,6 @@ services:
       - postgres_logs:/var/log/pg_log:ro
   frontend:
     image: ghcr.io/datadog/storedog/frontend:${STOREDOG_IMAGE_VERSION:-latest}
-    command: bash -c "wait-for-it backend:4000 -- ${FRONTEND_COMMAND:-npm run prod}"
     depends_on:
       - worker
       - dd-agent
@@ -31,18 +30,18 @@ services:
     environment:
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV:-production}
-      - DD_SERVICE=store-frontend-api # used for Next.js API routes
-      - DD_VERSION=${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}
-      - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
       - DD_PROFILING_TIMELINE_ENABLED=true
       - DD_PROFILING_ALLOCATION_ENABLED=true
-      - NEXT_PUBLIC_DD_APPLICATION_ID=${NEXT_PUBLIC_DD_APPLICATION_ID:-DD_APPLICATION_ID-not-set}
-      - NEXT_PUBLIC_DD_CLIENT_TOKEN=${NEXT_PUBLIC_DD_CLIENT_TOKEN:-DD_CLIENT_TOKEN-not-set}
+      - DD_RUNTIME_METRICS_ENABLED=true
+      - DD_SERVICE=${NEXT_PUBLIC_DD_SERVICE_FRONTEND:-store-frontend}
+      - DD_VERSION=${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}
+      - NEXT_PUBLIC_DD_ENV=${NEXT_PUBLIC_DD_ENV:-production}
+      - NEXT_PUBLIC_DD_VERSION_FRONTEND=${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}
+      - NEXT_PUBLIC_DD_SERVICE_FRONTEND=${NEXT_PUBLIC_DD_SERVICE_FRONTEND:-store-frontend}
       - NEXT_PUBLIC_DD_SITE=${NEXT_PUBLIC_DD_SITE:-datadoghq.com}
-      - NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend # used for client-side Next.js RUM configuration
-      - NEXT_PUBLIC_DD_ENV=${DD_ENV:-production}
-      - NEXT_PUBLIC_DD_VERSION=${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}
+      - NEXT_PUBLIC_DD_APPLICATION_ID=${NEXT_PUBLIC_DD_APPLICATION_ID:-not-set-in-docker-compose}
+      - NEXT_PUBLIC_DD_CLIENT_TOKEN=${NEXT_PUBLIC_DD_CLIENT_TOKEN:-not-set-in-docker-compose}
     labels:
       com.datadoghq.ad.logs: '[{"source": "nodejs", "auto_multi_line_detection": true }]'
   backend:
