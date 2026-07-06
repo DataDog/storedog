@@ -96,5 +96,15 @@
     "entrypoints": [
       "pages"
     ]
+  },
+  "overrides": {
+    "sucrase": {
+      "minimatch": "^9.0.9",
+      "glob": "^10.5.0",
+      "brace-expansion": "^2.0.3"
+    },
+    "tailwindcss": {
+      "yaml": "^2.8.4"
+    }
   }
 }
