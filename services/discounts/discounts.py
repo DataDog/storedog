@@ -68,24 +68,8 @@ logger.addHandler(json_handler)
 logger.addHandler(otel_log_handler)
 metric_provider = configure_metrics(resource)
 meter = metrics.get_meter("discounts-service", "1.0.0")
-discount_request_counter = meter.create_counter(
-    "discounts.requests",
-    description="Counts discount service requests.",
-)
-discount_error_counter = meter.create_counter(
-    "discounts.errors",
-    description="Counts discount service request failures.",
-)
-discount_result_histogram = meter.create_histogram(
-    "discounts.result_count",
-    description="Records the number of discounts returned per request.",
-    unit="1",
-)
-discount_value_histogram = meter.create_histogram(
-    "discounts.lookup_value",
-    description="Records the value of discounts returned by code lookup.",
-    unit="1",
-)
+
+# Add the custom counter and histogram here.
 
 # get the BROKEN_DISCOUNTS environment variable, if it exists
 BROKEN_DISCOUNTS = os.getenv("BROKEN_DISCOUNTS")
@@ -93,6 +77,8 @@ BROKEN_DISCOUNTS = os.getenv("BROKEN_DISCOUNTS")
 app = create_app()
 CORS(app)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Add the observable gauge here.
 
 # Add filter to remove color-encoding from logs e.g. "[37mGET / HTTP/1.1 [0m" 200 -
 
@@ -136,26 +122,6 @@ def log_event(level, message, exc_info=False, **fields):
     logger.log(level, message, exc_info=exc_info, extra=payload)
 
 
-def record_request(endpoint, method, outcome, **attrs):
-    attributes = {
-        "endpoint": endpoint,
-        "method": method,
-        "outcome": outcome,
-    }
-    attributes.update(attrs)
-    discount_request_counter.add(1, attributes)
-
-
-def record_error(endpoint, method, error_type, **attrs):
-    attributes = {
-        "endpoint": endpoint,
-        "method": method,
-        "error.type": error_type,
-    }
-    attributes.update(attrs)
-    discount_error_counter.add(1, attributes)
-
-
 @app.route('/')
 def hello():
     return Response({'Hello from Discounts!': 'world'}, mimetype='application/json')
@@ -172,14 +138,6 @@ def status():
                 if discount.discount_type.influencer:
                     influencer_count += 1
             result_count = len(discounts)
-            record_request("/discount", "GET", "success")
-            discount_result_histogram.record(
-                result_count,
-                {
-                    "endpoint": "/discount",
-                    "method": "GET",
-                },
-            )
             log_event(
                 logging.INFO,
                 "discount list served",
@@ -192,8 +150,6 @@ def status():
             return jsonify([b.serialize() for b in discounts])
 
         except Exception as exc:
-            record_request("/discount", "GET", "error")
-            record_error("/discount", "GET", type(exc).__name__)
             log_event(
                 logging.ERROR,
                 "discount list failed",
@@ -222,14 +178,6 @@ def status():
             db.session.commit()
             discounts = Discount.query.all()
             result_count = len(discounts)
-            record_request("/discount", "POST", "success")
-            discount_result_histogram.record(
-                result_count,
-                {
-                    "endpoint": "/discount",
-                    "method": "POST",
-                },
-            )
             log_event(
                 logging.INFO,
                 "discount created",
@@ -243,8 +191,6 @@ def status():
             return jsonify([b.serialize() for b in discounts])
 
         except Exception as exc:
-            record_request("/discount", "POST", "error")
-            record_error("/discount", "POST", type(exc).__name__)
             log_event(
                 logging.ERROR,
                 "discount creation failed",
@@ -258,7 +204,6 @@ def status():
             return err
 
     else:
-        record_request("/discount", flask_request.method, "invalid_method")
         err = jsonify({'error': 'Invalid request method'})
         err.status_code = 405
         return err
@@ -279,14 +224,7 @@ def getDiscount():
             if discount:
                 response = discount.serialize()
                 response.update({"status": 1})
-                record_request("/discount-code", "GET", "hit")
-                discount_value_histogram.record(
-                    discount.value,
-                    {
-                        "endpoint": "/discount-code",
-                        "discount_type": discount.discount_type.name,
-                    },
-                )
+                # Record successful lookup metrics here.
                 log_event(
                     logging.INFO,
                     "discount lookup hit",
@@ -299,7 +237,7 @@ def getDiscount():
                 )
                 return jsonify(response)
             else:
-                record_request("/discount-code", "GET", "miss")
+                # Record the lookup miss here.
                 log_event(
                     logging.WARNING,
                     "discount lookup miss",
@@ -311,13 +249,7 @@ def getDiscount():
                 err.status_code = 404
                 return err
         except Exception as e:
-            record_request("/discount-code", "GET", "error")
-            record_error(
-                "/discount-code",
-                "GET",
-                type(e).__name__,
-                broken_discounts=BROKEN_DISCOUNTS == "ENABLED",
-            )
+            # Record the lookup error here.
             # Log the error details with exception type, message, and stack trace
             log_event(
                 logging.ERROR,

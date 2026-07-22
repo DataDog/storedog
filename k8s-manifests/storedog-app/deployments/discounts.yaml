@@ -25,6 +25,8 @@ spec:
       labels:
         app: discounts
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: control-plane
       initContainers:
         - name: wait-for-db
           image: busybox:1.37.0
@@ -94,6 +96,9 @@ spec:
             limits:
               cpu: 300m
               memory: 256Mi
+          volumeMounts:
+            - name: discounts-source
+              mountPath: /app
           # Health probes for better monitoring
           readinessProbe:
             httpGet:
@@ -111,3 +116,8 @@ spec:
             periodSeconds: 30
             timeoutSeconds: 10
             failureThreshold: 5
+      volumes:
+        - name: discounts-source
+          hostPath:
+            path: /root/lab/storedog-services/discounts
+            type: Directory
