@@ -52,3 +52,11 @@ yarn-debug.log*
 .env.test.local
 .env.production.local
 .env.local
+
+
+.gradle/
+Gemfile.lock
+
+settings.json
+
+docker-compose.dev.frontend-prod.yml

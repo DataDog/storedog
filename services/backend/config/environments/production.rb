@@ -34,9 +34,7 @@ Rails.application.configure do
   config.assets.precompile += %w[ spree/backend/all.js spree/backend/all.css ]
 
   # Do not fallback to assets pipeline if a precompiled asset is missed.
-  # Assets are precompiled during Docker build - disable runtime compilation
-  # to prevent ExecJS errors in Sidekiq workers
-  config.assets.compile = false
+  config.assets.compile = true
 
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.action_controller.asset_host = 'http://assets.example.com'
@@ -78,13 +76,6 @@ Rails.application.configure do
   
   # Log to a dedicated file
   config.lograge.logger = ActiveSupport::Logger.new(STDOUT)
-
-  # Log configuration for Datadog
-  # disable ActiveSupport::TaggedLogging to prevent plain-text TaggedLogging tags from polluting the log lines.
-  config.logger = ActiveSupport::Logger.new(STDOUT)
-  config.active_job.logger = ActiveSupport::Logger.new(STDOUT)
-  config.active_job.lograge = ActiveSupport::Logger.new(STDOUT)
-
 
   # Use a different cache store in production.
   if ENV['MEMCACHEDCLOUD_SERVERS'].present?
@@ -151,6 +142,14 @@ Rails.application.configure do
     logger           = ActiveSupport::Logger.new(STDOUT)
     logger.formatter = config.log_formatter
     config.logger    = ActiveSupport::TaggedLogging.new(logger)
+  end
+
+  # papertrail config
+  if ENV['PAPERTRAIL_HOSTNAME'].present? && ENV['PAPERTRAIL_REMOTE_PORT'].present?
+    remote_syslog_logger = RemoteSyslogLogger.new(ENV['PAPERTRAIL_HOSTNAME'],
+                                                  ENV['PAPERTRAIL_REMOTE_PORT'],
+                                                  program: "spree-#{ENV['RAILS_ENV']}")
+    config.logger = ActiveSupport::TaggedLogging.new remote_syslog_logger
   end
 
   # sendgrid mail

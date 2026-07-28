@@ -1,0 +1,34 @@
+# Git
+.git
+.gitignore
+
+# Logs
+*.log
+log/*
+
+# Temporary files
+tmp/*
+tmp/pids/*
+tmp/cache/*
+tmp/sockets/*
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage
+
+# Node modules (will be installed during build)
+node_modules
+
+# Environment files
+.env.local
+.env.*.local
+

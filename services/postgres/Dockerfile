@@ -1,7 +1,7 @@
 FROM postgres:15-alpine
 
-# Install dcron and su-exec for user switching
-RUN apk update && apk add --no-cache dcron su-exec
+# Install dcron, su-exec, and netcat for user switching and health checks
+RUN apk update && apk add --no-cache dcron su-exec netcat-openbsd
 
 # Set default environment variables
 ENV POSTGRES_USER=postgres \

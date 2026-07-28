@@ -23,7 +23,7 @@ const UserNav: React.FC<{
           <Button
             className={`${s.item} toggle-cart`}
             variant="naked"
-            data-dd-action-name="Toggle Cart"
+            data-dd-action-name="ToggleCart"
             onClick={() => {
               setSidebarView('CART_VIEW')
               openSidebar()

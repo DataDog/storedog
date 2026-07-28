@@ -137,9 +137,8 @@ def getDiscount():
                 response.update({"status": 1})
                 return jsonify(response)
             else:
-                err = jsonify({"error": "Discount not found", "status": 0})
-                err.status_code = 404
-                return err
+                response = jsonify({"error": "Discount not found", "status": 0})
+                return response
         except Exception as e:
             # Log the error details with exception type, message, and stack trace
             logger.error(

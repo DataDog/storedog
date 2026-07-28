@@ -1,34 +1,39 @@
-import React, { FC } from 'react';
-import cn from 'clsx';
-import { Container } from '@components/ui';
-import { ArrowRight } from '@components/icons';
-import s from './Hero.module.css';
-import Link from 'next/link';
+import React, { FC } from 'react'
+import cn from 'clsx'
+import { Container } from '@components/ui'
+import { ArrowRight } from '@components/icons'
+import s from './Hero.module.css'
+import Link from 'next/link'
 interface HeroProps {
-  className?: string;
-  headline: string;
-  description: string;
+  className?: string
+  headline: string
+  description: string
 }
 
 const Hero: FC<HeroProps> = ({ headline, description, className }) => {
   return (
-    <div className={cn(`bg-primary-2 border-b border-t border-accent-2`, className)}>
+    <div
+      className={cn(
+        `bg-primary-2 border-b border-t border-accent-2`,
+        className
+      )}
+    >
       <Container>
         <div className={s.root}>
           <h2 className={s.title}>{headline}</h2>
           <div className={s.description}>
             <p>{description}</p>
-            <Link href='/'>
-              <a className='flex items-center text-white pt-3 font-bold hover:underline cursor-pointer w-max-content'>
+            <Link href="/">
+              <a className="flex items-center text-white pt-3 font-bold hover:underline cursor-pointer w-max-content">
                 Read it here
-                <ArrowRight width='20' heigh='20' className='ml-1' />
+                <ArrowRight width="20" heigh="20" className="ml-1" />
               </a>
             </Link>
           </div>
         </div>
       </Container>
     </div>
-  );
-};
+  )
+}
 
-export default Hero;
+export default Hero

@@ -24,8 +24,6 @@ RUN apt-get clean -qy \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-ARG DD_GIT_REPOSITORY_URL
-ARG DD_GIT_COMMIT_SHA
 
 ENV BUNDLE_GEMFILE=/app/Gemfile \
     BUNDLE_JOBS=20 \
@@ -36,13 +34,11 @@ ENV BUNDLE_GEMFILE=/app/Gemfile \
     REDIS_URL=redis://redis:6379/0 \
     DB_HOST=postgres \
     DB_PORT=5432 \
-    POSTGRES_PASSWORD=postgres \
-    POSTGRES_USER=postgres \
-    DB_POOL=25 \
-    MAX_THREADS=5 \
-    DISABLE_SPRING=1 \
-    DD_GIT_REPOSITORY_URL=${DD_GIT_REPOSITORY_URL} \
-    DD_GIT_COMMIT_SHA=${DD_GIT_COMMIT_SHA}
+  POSTGRES_PASSWORD=postgres \
+  POSTGRES_USER=postgres \
+  DB_POOL=25 \
+  MAX_THREADS=5 \
+  DISABLE_SPRING=1
 
 ENV PATH="${BUNDLE_BIN}:${PATH}"
 
@@ -52,17 +48,12 @@ COPY . .
 # When upgrading RubyGems
 #  * upgrade Bundler to match the new RubyGems version
 #  * update "BUNDLED WITH" in Gemfile.lock to match the bundler version
-RUN gem update --system 3.5.23
-RUN gem install bundler -v 2.5.23
+RUN gem update --system 3.5.23 --quiet
+RUN gem install bundler -v 2.5.23 --quiet
 
 RUN bundle install || exit 1
 RUN npm install
 RUN npm run build
-
-# Precompile assets - use dummy secret key base and nulldb adapter to avoid database connection
-RUN SECRET_KEY_BASE=precompile_placeholder \
-    DATABASE_URL="nulldb://localhost/precompile" \
-    bundle exec rails assets:precompile
 
 EXPOSE 4000
 

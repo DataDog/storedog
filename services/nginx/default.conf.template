@@ -70,7 +70,29 @@ server {
 
     # Reverse proxy for frontend (Next.js)
     location / {
-
+        # Handle RUM configuration routing
+        # Initialize to empty
+        set $rum_app_id "";
+        set $rum_client_token "";
+        
+        # Read from custom headers (puppeteer) or use defaults (learner browser)
+        set $rum_app_id $http_x_rum_app_id;
+        set $rum_client_token $http_x_rum_client_token;
+        
+        # If no headers present, use defaults from env vars
+        if ($rum_app_id = "") {
+            set $rum_app_id "${DEFAULT_RUM_APP_ID}";
+        }
+        
+        if ($rum_client_token = "") {
+            set $rum_client_token "${DEFAULT_RUM_CLIENT_TOKEN}";
+        }
+        
+        # Forward RUM credentials to Next.js as request headers
+        # Next.js middleware will set them as cookies in the response
+        proxy_set_header X-RUM-App-ID $rum_app_id;
+        proxy_set_header X-RUM-Client-Token $rum_client_token;
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
