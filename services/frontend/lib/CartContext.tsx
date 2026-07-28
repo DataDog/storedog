@@ -53,6 +53,28 @@ export const CartContext = createContext<CartContextType>({
   applyDiscount: async () => {},
 })
 
+// Fire the general "Cart Updated" custom RUM action after any successful cart
+// mutation. This co-exists with the more specific "Product Added to Cart"
+// action and carries the cart total plus per-item details.
+function trackCartUpdated(cart: Cart | null) {
+  if (!cart) {
+    return
+  }
+
+  datadogRum.addAction('Cart Updated', {
+    cart: {
+      total: cart.totalPrice,
+      item_count: cart.lineItems?.length ?? 0,
+      items: cart.lineItems?.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        price: item.variant?.price,
+      })),
+    },
+  })
+}
+
 export const CartProvider = ({ children }: CartProviderProps) => {
   const [cart, setCart] = useState<Cart | null>(null)
   const [cartToken, setCartToken] = useState<string | null>(null)
@@ -163,6 +185,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
 
         setCart(cart)
         setCartError(null)
+        trackCartUpdated(cart)
         return cart
       } else {
         const cartToken = await cartInit()
@@ -173,6 +196,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         })
         setCart(cart)
         setCartError(null)
+        trackCartUpdated(cart)
         return cart
       }
     } catch (error) {
@@ -199,6 +223,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
 
         setCart(cart)
         setCartError(null)
+        trackCartUpdated(cart)
       } else {
         setCartError('Cart not found')
       }
@@ -221,6 +246,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         })
         setCart(cart)
         setCartError(null)
+        trackCartUpdated(cart)
       } else {
         setCartError('Cart not found')
       }
@@ -246,6 +272,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         }
         setCart(cart)
         setCartError(null)
+        trackCartUpdated(cart)
       } else {
         setCartError('Cart not found')
       }
