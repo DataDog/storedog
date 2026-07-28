@@ -526,11 +526,11 @@ const applyDiscountCode = async (session, discountCode) => {
 
     session.log(`Entered code: ${discountCode}`);
 
-    await session.page.waitForSelector('button[data-dd-action-name="Apply Discount"]', {
+    await session.page.waitForSelector('button[data-dd-action-name="ApplyDiscount"]', {
       visible: true,
     });
 
-    await session.page.click('button[data-dd-action-name="Apply Discount"]');
+    await session.page.click('button[data-dd-action-name="ApplyDiscount"]');
     session.log('Clicked apply discount code button');
   } catch (e) {
     session.log(`Error: ${e}`);
@@ -618,7 +618,7 @@ const useDiscountCode = async (session) => {
 
 const toggleCart = async (session) => {
   try {
-    await session.page.waitForSelector('button[data-dd-action-name="Toggle Cart"]', {
+    await session.page.waitForSelector('button[data-dd-action-name="ToggleCart"]', {
     visible: true,
     timeout: 10000,
   });
@@ -626,7 +626,7 @@ const toggleCart = async (session) => {
   session.log('Clicking cart toggle button...');
   await Promise.all([
     setTimeout(500),
-    session.page.click('button[data-dd-action-name="Toggle Cart"]'),
+    session.page.click('button[data-dd-action-name="ToggleCart"]'),
   ]);
   } catch (e) {
     session.log(`Cart toggle button not found: ${e.message}`);
@@ -636,16 +636,16 @@ const toggleCart = async (session) => {
 
 const proceedToCheckout = async (session) => {
   try {
-    await session.page.waitForSelector('button[data-dd-action-name="Proceed to Checkout"]', {
+    await session.page.waitForSelector('button[data-dd-action-name="ProceedToCheckout"]', {
       visible: true,
       timeout: 10000,
     });
     await Promise.all([
       setTimeout(2000),
-      session.page.click('button[data-dd-action-name="Proceed to Checkout"]'),
+      session.page.click('button[data-dd-action-name="ProceedToCheckout"]'),
     ]);
     session.log('Proceed to checkout button clicked');
-    await session.page.waitForSelector('button[data-dd-action-name="Confirm Purchase"]', {
+    await session.page.waitForSelector('button[data-dd-action-name="ConfirmPurchase"]', {
       visible: true,
       timeout: 15000,
     });
@@ -659,13 +659,13 @@ const proceedToCheckout = async (session) => {
 
 const confirmPurchase = async (session) => {
   try {
-    await session.page.waitForSelector('button[data-dd-action-name="Confirm Purchase"]', {
+    await session.page.waitForSelector('button[data-dd-action-name="ConfirmPurchase"]', {
       visible: true,
       timeout: 15000,
     });
     await Promise.all([
       setTimeout(2000),
-      session.page.click('button[data-dd-action-name="Confirm Purchase"]'),
+      session.page.click('button[data-dd-action-name="ConfirmPurchase"]'),
     ]);
     session.log('Confirm purchase button clicked');
     await session.page.waitForSelector('.purchase-confirmed-msg', { visible: true });
