@@ -14,6 +14,7 @@ const EarlyErrorSession = require('../sessions/earlyErrorSession');
 const LateErrorSession = require('../sessions/lateErrorSession');
 const CartAbandonmentSession = require('../sessions/cartAbandonmentSession');
 const BotSession = require('../sessions/botSession');
+const CheckoutErrorSession = require('../sessions/checkoutErrorSession');
 
 // Build ramp-up schedule from the memory profile's percentages
 // Each percentage is applied to the configured maxConcurrency
@@ -47,6 +48,8 @@ class SessionManager {
         return CartAbandonmentSession;
       case 'bot':
         return BotSession;
+      case 'checkouterror':
+        return CheckoutErrorSession;
       default:
         return BrowsingSession;
     }
