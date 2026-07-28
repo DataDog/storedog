@@ -199,7 +199,11 @@ These variables control the upstream configuration for the ads services in the N
   - Set to a value between `0` and `100` to control the split.
 
 > [!IMPORTANT]
+<<<<<<< HEAD
 > When `ENABLE_SSL` is set to `true`, the `service-proxy` container looks for a certificate and key at `/etc/nginx/certs/cert.pem` and `/etc/nginx/certs/key.pem`. If they aren't already mounted there, it tries to download them from GCP instance metadata. Otherwise, the service-proxy exits with an error on startup.
+=======
+> When `ENABLE_SSL` is set to `true`, a certificate and key must be mounted into the `service-proxy` container at `/etc/nginx/certs/cert.pem` and `/etc/nginx/certs/key.pem`. Otherwise, the service-proxy exits with an error on startup.
+>>>>>>> 46d5b6e7 (added feature to enable SSL in Nginx)
 
 - `ENABLE_SSL`: Enables HTTPS on the service-proxy container, listening on port `443` (default: `false`). Only the exact value `true` enables it; any other value, including unset, is treated as disabled.
 
@@ -338,6 +342,96 @@ A Kubernetes manifest for the Python Ads service is available in the `services/a
 
 > [!IMPORTANT]
 > Be sure to set the `DD_VERSION_ADS_PYTHON` environment variable so that it will be applied to the file by `envsubst`.
+
+### Enable SSL/TLS on the service proxy
+
+By default, the service-proxy serves plain HTTP on port `80`. This is fine when a lab is reached through Instruqt's learner proxy (`*.env.play.instruqt.com`), since Instruqt terminates HTTPS for you there. Some labs instead expose Storedog through Instruqt's external ingress (`*.instruqt.io`), which is unauthenticated and does not terminate HTTPS on Storedog's behalf. In that case, the service-proxy needs to terminate its own TLS, which is what `ENABLE_SSL` is for.
+
+Internal service-to-service traffic (`NEXT_PUBLIC_FRONTEND_API_ROUTE`, Puppeteer's `STOREDOG_URL`, both defaulting to `http://service-proxy:80`) is unaffected by `ENABLE_SSL`, since `listen 80;` always stays present in the generated config regardless of this setting. No other service's configuration needs to change.
+
+**How to use**
+
+#### Docker Compose
+
+1. Add these to the `service-proxy` service in your `docker-compose.yml` file:
+
+    ```yaml
+    service-proxy:
+      ports:
+        - "443:443"
+      volumes:
+        - ./certs:/etc/nginx/certs:ro
+      environment:
+        - ENABLE_SSL=${ENABLE_SSL:-true}
+    ```
+
+1. Place your certificate and key at `./certs/cert.pem` and `./certs/key.pem`.
+
+1. Start the app via `docker compose up -d`
+
+#### Kubernetes
+
+The certificate and key need to be delivered into the `service-proxy` pod at `/etc/nginx/certs/cert.pem` and `/etc/nginx/certs/key.pem`. There are two ways to do this:
+
+**Option A - Secret (recommended, portable to any cluster)**
+
+```bash
+kubectl create secret tls storedog-tls \
+  --cert=/path/to/cert.pem \
+  --key=/path/to/key.pem \
+  -n storedog
+```
+
+```yaml
+volumes:
+  - name: apmsocketpath
+    hostPath:
+      path: /var/run/datadog/
+  - name: sslcerts
+    secret:
+      secretName: storedog-tls
+      items:
+        - key: tls.crt
+          path: cert.pem
+        - key: tls.key
+          path: key.pem
+...
+volumeMounts:
+  - name: apmsocketpath
+    mountPath: /var/run/datadog
+  - name: sslcerts
+    mountPath: /etc/nginx/certs
+    readOnly: true
+```
+
+`kubectl create secret tls` always stores the pair as `tls.crt`/`tls.key`; the `items` remap above gives the mounted files the `cert.pem`/`key.pem` names the service-proxy expects.
+
+> [!NOTE]
+> For Instruqt Kubernetes labs, the SSL certificate is typically only fetchable via GCP instance metadata on the VM that has `provision_ssl_certificate: true` in its `config.yml`. If that VM is different from the one with `kubectl` admin access (for example, in a split control-plane/worker topology), the certificate needs to be transferred between VMs before the Secret can be created. Instruqt's standard pattern for this is host-to-host `scp` over an SSH keypair stored as Instruqt secrets, installed via each host's `track_scripts/setup-<hostname>` script. See the [Kubernetes README](./k8s-manifests/README.md) and the `services/nginx/README.md` for example setup scripts.
+
+**Option B - hostPath (simpler when the pod always schedules onto the VM that fetched the certificate)**
+
+```yaml
+volumes:
+  - name: apmsocketpath
+    hostPath:
+      path: /var/run/datadog/
+  - name: sslcerts
+    hostPath:
+      path: /etc/storedog/certs
+      type: Directory
+...
+volumeMounts:
+  - name: apmsocketpath
+    mountPath: /var/run/datadog
+  - name: sslcerts
+    mountPath: /etc/nginx/certs
+    readOnly: true
+```
+
+This avoids any cross-VM credential transfer, but only works if the `service-proxy` pod is guaranteed to schedule onto the VM that fetched the certificate into `/etc/storedog/certs`. It is not portable to a cluster where that isn't guaranteed.
+
+Either option also needs the `ENABLE_SSL` environment variable added to the `service-proxy` container, plus `containerPort: 443` and a matching Service `port: 443`. Ready-to-use manifests for both options are available in `services/nginx/k8s-manifests/` (`nginx-ssl-secret.yaml` and `nginx-ssl-hostpath.yaml`), the same way `services/ads/k8s-manifests/ads-python.yaml` backs the A/B testing instructions above. Replace your entire `k8s-manifests/storedog-app/deployments/nginx.yaml` file with whichever one matches your setup.
 
 ### Feature flags
 
