@@ -351,6 +351,11 @@ A Kubernetes manifest for the Python Ads service is available in the `services/a
 
 By default, the service-proxy serves plain HTTP on port `80`. This is fine when a lab is reached through Instruqt's learner proxy (`*.env.play.instruqt.com`), since Instruqt terminates HTTPS for you there. Some labs instead expose Storedog through Instruqt's external ingress (`*.instruqt.io`), which is unauthenticated and does not terminate HTTPS on Storedog's behalf. In that case, the service-proxy needs to terminate its own TLS, which is what `ENABLE_SSL` is for.
 
+Situations where a lab typically needs this:
+- Datadog Synthetic browser tests, which need a valid HTTPS URL to run reliably against the lab
+- Demonstrating browser features that require a secure context (for example, Service Workers or WebAuthn)
+- A lab where an external service needs a stable public URL to call back into Storedog (for example, webhooks), rather than Instruqt's session-scoped learner proxy
+
 Internal service-to-service traffic (`NEXT_PUBLIC_FRONTEND_API_ROUTE`, Puppeteer's `STOREDOG_URL`, both defaulting to `http://service-proxy:80`) is unaffected by `ENABLE_SSL`, since `listen 80;` always stays present in the generated config regardless of this setting. No other service's configuration needs to change.
 
 **How to use**
