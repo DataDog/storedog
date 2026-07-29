@@ -60,3 +60,6 @@ build/
 services/ads/java/bin/
 *.tmp
 **/gradle-wrapper.jar
+
+# local SSL certs/keys used for testing ENABLE_SSL
+certs/

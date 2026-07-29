@@ -198,6 +198,11 @@ These variables control the upstream configuration for the ads services in the N
 - `ADS_B_PERCENT`: Percentage of traffic to route to the B (Python) ads service (default: `0`). The remainder goes to the A (Java) ads service.
   - Set to a value between `0` and `100` to control the split.
 
+> [!IMPORTANT]
+> When `ENABLE_SSL` is set to `true`, the `service-proxy` container looks for a certificate and key at `/etc/nginx/certs/cert.pem` and `/etc/nginx/certs/key.pem`. If they aren't already mounted there, it tries to download them from GCP instance metadata. Otherwise, the service-proxy exits with an error on startup.
+
+- `ENABLE_SSL`: Enables HTTPS on the service-proxy container, listening on port `443` (default: `false`). Only the exact value `true` enables it; any other value, including unset, is treated as disabled.
+
 ## Optional features
 
 There are several features that can be enabled by setting environment variables and feature flags.
@@ -245,6 +250,42 @@ Run two Ads services and split traffic between them. The amount of traffic sent 
     - `ADS_B_PERCENT`: Percentage of traffic to route to the B (Python) ads service (default: `0`). The remainder goes to the A (Java) ads service.
       - Set to a value between `0` and `100` to control the split.
 1. Start the app via `docker compose up -d`
+
+### Enable SSL/TLS on the service proxy
+
+By default, the service-proxy serves plain HTTP on port `80`. This is fine when a lab is reached through Instruqt's learner proxy (`*.env.play.instruqt.com`), since Instruqt terminates HTTPS for you there. Some labs instead expose Storedog through Instruqt's external ingress (`*.instruqt.io`), which is unauthenticated and does not terminate HTTPS on Storedog's behalf. In that case, the service-proxy needs to terminate its own TLS, which is what `ENABLE_SSL` is for.
+
+Situations where a lab typically needs this:
+- Datadog Synthetic browser tests, which need a valid HTTPS URL to run reliably against the lab
+- Demonstrating browser features that require a secure context (for example, Service Workers or WebAuthn)
+- A lab where an external service needs a stable public URL to call back into Storedog (for example, webhooks), rather than Instruqt's session-scoped learner proxy
+
+Internal service-to-service traffic (`NEXT_PUBLIC_FRONTEND_API_ROUTE`, Puppeteer's `STOREDOG_URL`, both defaulting to `http://service-proxy:80`) is unaffected by `ENABLE_SSL`, since `listen 80;` always stays present in the generated config regardless of this setting. No other service's configuration needs to change.
+
+**How to use**
+
+#### Docker Compose
+
+1. Add these to the `service-proxy` service in your `docker-compose.yml` file:
+
+    ```yaml
+    service-proxy:
+      ports:
+        - '443:443'
+      environment:
+        - ENABLE_SSL=${ENABLE_SSL:-true}
+    ```
+
+1. Start the app via `docker compose up -d`. With nothing mounted, the container downloads the cert/key from GCP instance metadata on startup. To use your own cert/key instead, add a `./certs:/etc/nginx/certs:ro` volume and place them at `./certs/cert.pem` and `./certs/key.pem` before starting.
+
+#### Kubernetes
+
+No cert volume is needed: the `service-proxy` container fetches its own certificate and key from GCP instance metadata at startup, the same way it does for Docker Compose when nothing is mounted.
+
+1. Replace your entire `k8s-manifests/storedog-app/deployments/nginx.yaml` file with [`services/nginx/k8s-manifests/nginx-ssl.yaml`](./services/nginx/k8s-manifests/nginx-ssl.yaml). It adds `ENABLE_SSL=true`, `containerPort: 443`, and a matching Service `port: 443` to the base manifest.
+
+> [!NOTE]
+> This only works if the `service-proxy` pod is scheduled onto a VM with `provision_ssl_certificate: true` in its `config.yml` (or a single-node cluster, where that's the only VM). In a split control-plane/worker topology, that usually means the worker node exposed via external ingress.
 
 ### Feature flags
 Some capabilities are hidden behind feature flags, which can be controlled via `services/frontend/site/featureFlags.config.json`. 
