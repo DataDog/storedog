@@ -70,6 +70,7 @@ services:
 >>>>>>> 1875d967 (added DD_ENV)
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
+<<<<<<< HEAD
       # Application Environment
       - DD_API_KEY=${DD_API_KEY}
       - DD_APP_KEY=${DD_APP_KEY}
@@ -83,6 +84,16 @@ services:
       - NEXT_PUBLIC_DD_APPLICATION_ID=${RUM_APPLICATION_ID}
       - NEXT_PUBLIC_DD_CLIENT_TOKEN=${RUM_CLIENT_TOKEN}
       - NEXT_PUBLIC_DD_VERSION_FRONTEND=${FRONTEND_VERSION}
+=======
+      - DD_PROFILING_TIMELINE_ENABLED=true
+      - DD_PROFILING_ALLOCATION_ENABLED=true
+      - NEXT_PUBLIC_DD_APPLICATION_ID=${NEXT_PUBLIC_DD_APPLICATION_ID:-DD_APPLICATION_ID-not-set}
+      - NEXT_PUBLIC_DD_CLIENT_TOKEN=${NEXT_PUBLIC_DD_CLIENT_TOKEN:-DD_CLIENT_TOKEN-not-set}
+      - NEXT_PUBLIC_DD_SITE=${NEXT_PUBLIC_DD_SITE:-datadoghq.com}
+      - NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend # used for client-side Next.js RUM configuration
+      - NEXT_PUBLIC_DD_ENV=${DD_ENV:-production}
+      - NEXT_PUBLIC_DD_VERSION_FRONTEND=${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}
+>>>>>>> 05b1a60d (Fix frontend RUM version env var name in docker-compose files)
     labels:
       com.datadoghq.ad.logs: '[{"source": "nodejs", "service": "store-frontend", "auto_multi_line_detection":true }]'
   backend:
