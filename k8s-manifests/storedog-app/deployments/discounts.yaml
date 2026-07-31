@@ -27,6 +27,10 @@ spec:
     spec:
       nodeSelector:
         kubernetes.io/hostname: control-plane
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       initContainers:
         - name: wait-for-db
           image: busybox:1.37.0
