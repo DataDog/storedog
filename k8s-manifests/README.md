@@ -118,7 +118,7 @@ Example values for hosted containers:
 
 ```bash
 export REGISTRY_URL="ghcr.io/datadog/storedog"
-export SD_TAG=1.4.0
+export SD_TAG=1.5.0
 ```
 
 ### Deploy Cluster Setup and Storedog
