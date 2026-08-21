@@ -61,18 +61,18 @@ function trackCartUpdated(cart: Cart | null) {
     return
   }
 
-  datadogRum.addAction('Cart Updated', {
-    cart: {
-      total: cart.totalPrice,
-      item_count: cart.lineItems?.length ?? 0,
-      items: cart.lineItems?.map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        quantity: item.quantity,
-        price: item.variant?.price,
-      })),
-    },
-  })
+  // datadogRum.addAction('Cart Updated', {
+  //   cart: {
+  //     total: cart.totalPrice,
+  //     item_count: cart.lineItems?.length ?? 0,
+  //     items: cart.lineItems?.map((item: any) => ({
+  //       id: item.id,
+  //       name: item.name,
+  //       quantity: item.quantity,
+  //       price: item.variant?.price,
+  //     })),
+  //   },
+  // })
 }
 
 export const CartProvider = ({ children }: CartProviderProps) => {
