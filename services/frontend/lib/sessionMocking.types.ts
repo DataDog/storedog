@@ -1,18 +1,5 @@
 export type RumEventType = 'session' | 'view' | 'action' | 'error' | 'resource' | 'long_task' | 'vitals'
-export type CountableEventType = 'view' | 'error' | 'action' | 'resource' | 'long_task' | 'frustration'
-
-export type SessionChangeField = 'view.count' | 'error.count' | 'action.count' | 'resource.count' | 'long_task.count'
-export type AttributeChangeField = 'session.time_spent' | 'time_spent' | string
-
-export interface SessionChange {
-  field: SessionChangeField
-  to: number
-}
-
-export interface AttributeChange {
-  field: AttributeChangeField
-  to: number | string | boolean | object
-}
+export type CountableEventType = 'view' | 'error' | 'action' | 'long_task' | 'frustration'
 
 export interface ViewEventData {
   url: string
@@ -30,58 +17,62 @@ export interface ActionEventData {
 interface BaseRumEvent {
   id: string
   timestamp: string
-  sessionChange?: SessionChange
-  additionalChanges?: AttributeChange[]
+}
+
+export interface SessionRumEvent extends BaseRumEvent {
+  type: 'session'
 }
 
 export interface ViewRumEvent extends BaseRumEvent {
   type: 'view'
   count: number
   data: ViewEventData
-  isUpdate?: boolean
-  updatedProperties?: string[]
+  viewId?: string
 }
 
 export interface ErrorRumEvent extends BaseRumEvent {
   type: 'error'
   data: ErrorEventData
+  viewId?: string
 }
 
 export interface ActionRumEvent extends BaseRumEvent {
   type: 'action'
   data: ActionEventData
+  viewId?: string
 }
 
 export interface ResourceRumEvent extends BaseRumEvent {
   type: 'resource'
   count: number
+  viewId?: string
 }
 
 export interface LongTaskRumEvent extends BaseRumEvent {
   type: 'long_task'
+  viewId?: string
 }
 
 export interface VitalsRumEvent extends BaseRumEvent {
   type: 'vitals'
   data: Record<string, unknown>
+  viewId?: string
 }
 
-export type RumEvent = 
-  | ViewRumEvent 
-  | ErrorRumEvent 
-  | ActionRumEvent 
-  | ResourceRumEvent 
-  | LongTaskRumEvent 
+export type RumEvent =
+  | SessionRumEvent
+  | ViewRumEvent
+  | ErrorRumEvent
+  | ActionRumEvent
+  | ResourceRumEvent
+  | LongTaskRumEvent
   | VitalsRumEvent
 
 export interface EventDispatchPayload {
   type: RumEventType
   count?: number
   data?: ViewEventData | ErrorEventData | ActionEventData | Record<string, unknown>
-  sessionChange?: SessionChange
-  additionalChanges?: AttributeChange[]
-  isUpdate?: boolean
-  updatedProperties?: string[]
+  viewId?: string
 }
 
 export interface DatadogViewEvent {
@@ -110,6 +101,9 @@ export interface DatadogErrorEvent {
   error: {
     message: string
   }
+  view?: {
+    id?: string
+  }
 }
 
 export interface DatadogActionEvent {
@@ -119,17 +113,29 @@ export interface DatadogActionEvent {
       name?: string
     }
   }
+  view?: {
+    id?: string
+  }
 }
 
 export interface DatadogResourceEvent {
   type: 'resource'
+  view?: {
+    id?: string
+  }
 }
 
 export interface DatadogLongTaskEvent {
   type: 'long_task'
+  view?: {
+    id?: string
+  }
 }
 
 export interface DatadogVitalsEvent {
   type: 'vitals'
+  view?: {
+    id?: string
+  }
   [key: string]: unknown
 }

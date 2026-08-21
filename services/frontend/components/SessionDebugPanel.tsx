@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from 'react'
 import type { ResourceRumEvent, RumEvent } from '@lib/sessionMocking.types'
 import { datadogRum } from '@datadog/browser-rum'
 import { MAX_EVENTS } from '@lib/sessionMocking.constants'
+import { getBufferedRumEvents } from '@lib/sessionMocking'
+import { buildSessionTree } from '@lib/sessionEventTree'
 import EventCard from './EventCard'
 import styles from './SessionDebugPanel.module.css'
 
@@ -11,6 +13,7 @@ export default function SessionDebugPanel() {
   const [newestEventId, setNewestEventId] = useState<string>('')
   const panelRef = useRef<HTMLDivElement>(null)
   const toggleButtonRef = useRef<HTMLButtonElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
 
   const handleStopSession = () => {
     datadogRum.stopSession()
@@ -30,17 +33,31 @@ export default function SessionDebugPanel() {
   useEffect(() => {
     const handleRumEvent = (domEvent: CustomEvent) => {
       const eventDetail = domEvent.detail as RumEvent
-      
+
       setNewestEventId(eventDetail.id)
-      setEvents(prev => [eventDetail, ...prev].slice(0, MAX_EVENTS))
+      setEvents(prev => [...prev, eventDetail].slice(-MAX_EVENTS))
     }
 
     window.addEventListener('rum-event', handleRumEvent as EventListener)
-    
+
+    // Backfill events dispatched before this panel mounted (e.g. session-start,
+    // first view) so they aren't missed while the listener wasn't attached yet.
+    const buffered = getBufferedRumEvents()
+    if (buffered.length > 0) {
+      setNewestEventId(buffered[buffered.length - 1].id)
+      setEvents(prev => [...buffered, ...prev].slice(-MAX_EVENTS))
+    }
+
     return () => {
       window.removeEventListener('rum-event', handleRumEvent as EventListener)
     }
   }, [])
+
+  useEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollTop = contentRef.current.scrollHeight
+    }
+  }, [newestEventId])
 
   if (!isVisible) {
     return (
@@ -58,11 +75,20 @@ export default function SessionDebugPanel() {
 
   const totalEventCount = (() => {
     const nonResourceCount = events.filter(e => e.type !== 'resource').length
-    const latestResourceCount = events
+
+    const latestResourceCountByView = new Map<string, number>()
+    events
       .filter((e): e is ResourceRumEvent => e.type === 'resource')
-      .reduce((max, e) => Math.max(max, e.count), 0)
-    return nonResourceCount + latestResourceCount
+      .forEach(e => {
+        const key = e.viewId ?? ''
+        latestResourceCountByView.set(key, Math.max(latestResourceCountByView.get(key) ?? 0, e.count))
+      })
+    const totalResourceCount = [...latestResourceCountByView.values()].reduce((sum, count) => sum + count, 0)
+
+    return nonResourceCount + totalResourceCount
   })()
+
+  const { session, views } = buildSessionTree(events)
 
   return (
     <aside 
@@ -100,24 +126,31 @@ export default function SessionDebugPanel() {
         </div>
       </div>
     
-      <div 
+      <div
+        ref={contentRef}
         className={styles.content}
         role="log"
         aria-live="polite"
         aria-label="RUM event log"
       >
-        {events.length === 0 ? (
+        {!session ? (
           <div className={styles.empty} role="status">
             Waiting for RUM events...
           </div>
         ) : (
-          events.map((event) => (
-            <EventCard 
-              key={event.id}
-              event={event}
-              isNewest={event.id === newestEventId}
-            />
-          ))
+          <EventCard event={session} isNewest={session.id === newestEventId}>
+            {views.map(({ view, children }) => (
+              <EventCard key={view.id} event={view} isNewest={view.id === newestEventId}>
+                {children.map(child => (
+                  <EventCard
+                    key={child.id}
+                    event={child}
+                    isNewest={child.id === newestEventId}
+                  />
+                ))}
+              </EventCard>
+            ))}
+          </EventCard>
         )}
       </div>
     </aside>

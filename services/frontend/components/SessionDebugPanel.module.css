@@ -11,31 +11,31 @@
 
 /* Event Type Styling */
 .card[data-event-type="session"] {
-  border-left: 4px solid rgb(99, 44, 166);
+  border-left: 2px solid rgb(99, 44, 166);
 }
 
 .card[data-event-type="view"] {
-  border-left: 4px solid rgb(0, 107, 194);
+  border-left: 2px solid rgb(0, 107, 194);
 }
 
 .card[data-event-type="action"] {
-  border-left: 4px solid rgb(147, 100, 205);
+  border-left: 2px solid rgb(147, 100, 205);
 }
 
 .card[data-event-type="error"] {
-  border-left: 4px solid #ef4444;
+  border-left: 2px solid #ef4444;
 }
 
 .card[data-event-type="resource"] {
-  border-left: 4px solid #60a5fa;
+  border-left: 2px solid #60a5fa;
 }
 
 .card[data-event-type="long_task"] {
-  border-left: 4px solid #fcc028;
+  border-left: 2px solid #fcc028;
 }
 
 .card[data-event-type="vital"] {
-  border-left: 4px solid #06b6d4;
+  border-left: 2px solid #06b6d4;
 }
 
 .badge[data-event-type="session"] {
@@ -168,7 +168,7 @@
 }
 
 .card {
-  padding: 10px;
+  padding: 8px;
   margin-bottom: 10px;
   background-color: #ffffff;
   border: 1px solid #e2e8f0;
@@ -178,6 +178,21 @@
 
 .newEvent {
   animation: slideInFade 0.3s ease-out;
+}
+
+.nestedContent {
+  margin-left: 6px;
+  margin-top: 8px;
+  padding-left: 6px;
+  border-left: 2px solid #e2e8f0;
+}
+
+.nestedContent .card {
+  margin-bottom: 8px;
+}
+
+.nestedContent .card:last-child {
+  margin-bottom: 0;
 }
 
 .cardHeader {
@@ -231,35 +246,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.updateInfo {
-  color: #4a5568;
-  font-size: 11px;
-  font-style: italic;
-  margin-bottom: 4px;
-  padding: 4px 8px;
-  background-color: #f7fafc;
-  border-radius: 4px;
-}
-
-.changes {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #e2e8f0;
-}
-
-.changeBadge {
-  display: inline-block;
-  font-size: 11px;
-  color: #4a5568;
-  font-weight: 600;
-  font-family: monospace;
-  background-color: #f3f4f6;
-  padding: 4px 8px;
-  border-radius: 12px;
-  margin-right: 6px;
-  margin-bottom: 4px;
 }
 
 .srOnly {

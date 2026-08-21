@@ -1,9 +1,9 @@
-import { RESOURCE_DISPATCH_THRESHOLD, VIEW_TRACKED_PROPERTIES } from './sessionMocking.constants'
+import { MAX_EVENTS, RESOURCE_DISPATCH_THRESHOLD } from './sessionMocking.constants'
 import { formatTimestamp, generateEventId } from './sessionFormatting'
 import type {
   CountableEventType,
   EventDispatchPayload,
-  AttributeChange,
+  RumEvent,
   DatadogViewEvent,
   DatadogErrorEvent,
   DatadogActionEvent,
@@ -12,25 +12,37 @@ import type {
   DatadogVitalsEvent,
 } from './sessionMocking.types'
 
+// Buffered so the debug panel can backfill events dispatched before it mounts
+// (e.g. the session-start and first-view events, which fire as soon as RUM initializes).
+const eventBuffer: RumEvent[] = []
+
+export function getBufferedRumEvents(): RumEvent[] {
+  return eventBuffer
+}
+
+const UNKNOWN_VIEW_ID = 'unknown'
+
 export class MockSession {
   private counters = {
     view: 0,
     error: 0,
     action: 0,
-    resource: 0,
     long_task: 0,
     frustration: 0,
-    last_resource_dispatch: 0,
   }
 
-  private seenViewIds = new Set<string>()
-  private firstEventTime: number | null = null
-  private viewStates = new Map<string, DatadogViewEvent['view']>()
+  private resourceCounts = new Map<string, number>()
+  private lastResourceDispatch = new Map<string, number>()
 
-  recordEventTime(): void {
-    if (!this.firstEventTime) {
-      this.firstEventTime = performance.now()
-    }
+  private seenViewIds = new Set<string>()
+  private sessionStarted = false
+
+  hasStartedSession(): boolean {
+    return this.sessionStarted
+  }
+
+  markSessionStarted(): void {
+    this.sessionStarted = true
   }
 
   getCounter(type: CountableEventType): number {
@@ -41,12 +53,23 @@ export class MockSession {
     this.counters[type]++
   }
 
-  getLastResourceDispatch(): number {
-    return this.counters.last_resource_dispatch
+  incrementResourceCount(viewId: string | undefined): number {
+    const key = viewId ?? UNKNOWN_VIEW_ID
+    const next = (this.resourceCounts.get(key) ?? 0) + 1
+    this.resourceCounts.set(key, next)
+    return next
   }
 
-  setLastResourceDispatch(value: number): void {
-    this.counters.last_resource_dispatch = value
+  getResourceCount(viewId: string | undefined): number {
+    return this.resourceCounts.get(viewId ?? UNKNOWN_VIEW_ID) ?? 0
+  }
+
+  getLastResourceDispatch(viewId: string | undefined): number {
+    return this.lastResourceDispatch.get(viewId ?? UNKNOWN_VIEW_ID) ?? 0
+  }
+
+  setLastResourceDispatch(viewId: string | undefined, value: number): void {
+    this.lastResourceDispatch.set(viewId ?? UNKNOWN_VIEW_ID, value)
   }
 
   hasSeenView(viewId: string): boolean {
@@ -56,19 +79,6 @@ export class MockSession {
   markViewAsSeen(viewId: string): void {
     this.seenViewIds.add(viewId)
   }
-
-  getTimeSpent(): number {
-    if (!this.firstEventTime) return 0
-    return performance.now() - this.firstEventTime
-  }
-
-  getPreviousViewState(viewId: string): DatadogViewEvent['view'] | undefined {
-    return this.viewStates.get(viewId)
-  }
-
-  saveViewState(viewId: string, viewData: DatadogViewEvent['view']): void {
-    this.viewStates.set(viewId, { ...viewData })
-  }
 }
 
 abstract class BaseEventHandler {
@@ -77,188 +87,129 @@ abstract class BaseEventHandler {
       ...payload,
       id: generateEventId(),
       timestamp: formatTimestamp(),
+    } as RumEvent
+
+    eventBuffer.push(eventWithMetadata)
+    if (eventBuffer.length > MAX_EVENTS) {
+      eventBuffer.shift()
     }
+
     window.dispatchEvent(new CustomEvent('rum-event', { detail: eventWithMetadata }))
   }
 
-  protected static calculateTimeSpentChanges(session: MockSession): AttributeChange[] {
-    const timeSpent = Math.round(session.getTimeSpent())
-    return [
-      {
-        field: 'session.time_spent',
-        to: timeSpent,
-      },
-    ]
+  protected static ensureSessionStarted(session: MockSession): void {
+    if (session.hasStartedSession()) {
+      return
+    }
+    session.markSessionStarted()
+    this.dispatchEvent({ type: 'session' })
   }
 
   protected static recordAndIncrement(
     session: MockSession,
     eventType: CountableEventType
   ): void {
-    session.recordEventTime()
     session.incrementCounter(eventType)
   }
 }
 
 export class ViewEventHandler extends BaseEventHandler {
   static handle(event: DatadogViewEvent, session: MockSession): void {
-    session.recordEventTime()
+    this.ensureSessionStarted(session)
 
     const viewId = event.view?.id
     const isUpdate = viewId ? session.hasSeenView(viewId) : false
 
-    let updatedProperties: string[] = []
-    if (isUpdate && viewId) {
-      const previousView = session.getPreviousViewState(viewId)
-      if (previousView) {
-        updatedProperties = this.detectViewChanges(previousView, event.view)
-      }
-    }
-
     if (viewId) {
       session.markViewAsSeen(viewId)
-      session.saveViewState(viewId, event.view)
     }
 
-    if (!isUpdate) {
-      session.incrementCounter('view')
+    if (isUpdate) {
+      return
     }
 
-    const additionalChanges = this.calculateTimeSpentChanges(session)
-
-    if (isUpdate && updatedProperties.includes('is_active')) {
-      additionalChanges.push({
-        field: 'session.is_active',
-        to: event.view.is_active ?? false,
-      })
-    }
+    session.incrementCounter('view')
 
     this.dispatchEvent({
       type: 'view',
       count: session.getCounter('view'),
-      data: { 
-        url: event.view?.url || '', 
-        name: event.view?.name 
+      data: {
+        url: event.view?.url || '',
+        name: event.view?.name
       },
-      sessionChange: !isUpdate
-        ? {
-            field: 'view.count',
-            to: session.getCounter('view'),
-          }
-        : undefined,
-      additionalChanges,
-      isUpdate,
-      updatedProperties: updatedProperties.length > 0 ? updatedProperties : undefined,
+      viewId,
     })
-  }
-
-  private static detectViewChanges(
-    previousView: DatadogViewEvent['view'],
-    currentView: DatadogViewEvent['view']
-  ): string[] {
-    const changes: string[] = []
-
-    for (const key of VIEW_TRACKED_PROPERTIES) {
-      const prevValue = previousView[key]
-      const currValue = currentView[key]
-      if (prevValue !== currValue && currValue !== undefined) {
-        changes.push(key)
-      }
-    }
-
-    return changes
   }
 }
 
 export class ResourceEventHandler extends BaseEventHandler {
   static handle(event: DatadogResourceEvent, session: MockSession): void {
-    this.recordAndIncrement(session, 'resource')
+    this.ensureSessionStarted(session)
+
+    const viewId = event.view?.id
+    const count = session.incrementResourceCount(viewId)
 
     const shouldDispatch =
-      session.getCounter('resource') === 1 ||
-      session.getCounter('resource') - session.getLastResourceDispatch() >= RESOURCE_DISPATCH_THRESHOLD
+      count === 1 ||
+      count - session.getLastResourceDispatch(viewId) >= RESOURCE_DISPATCH_THRESHOLD
 
     if (shouldDispatch) {
-      const additionalChanges = this.calculateTimeSpentChanges(session)
-
       this.dispatchEvent({
         type: 'resource',
-        count: session.getCounter('resource'),
-        sessionChange: {
-          field: 'resource.count',
-          to: session.getCounter('resource'),
-        },
-        additionalChanges,
+        count,
+        viewId,
       })
 
-      session.setLastResourceDispatch(session.getCounter('resource'))
+      session.setLastResourceDispatch(viewId, count)
     }
   }
 }
 
 export class ErrorEventHandler extends BaseEventHandler {
   static handle(event: DatadogErrorEvent, session: MockSession): void {
+    this.ensureSessionStarted(session)
     this.recordAndIncrement(session, 'error')
-
-    const additionalChanges = this.calculateTimeSpentChanges(session)
 
     this.dispatchEvent({
       type: 'error',
       data: { message: event.error?.message || 'Unknown error' },
-      sessionChange: {
-        field: 'error.count',
-        to: session.getCounter('error'),
-      },
-      additionalChanges,
+      viewId: event.view?.id,
     })
   }
 }
 
 export class ActionEventHandler extends BaseEventHandler {
   static handle(event: DatadogActionEvent, session: MockSession): void {
+    this.ensureSessionStarted(session)
     this.recordAndIncrement(session, 'action')
-
-    const additionalChanges = this.calculateTimeSpentChanges(session)
 
     this.dispatchEvent({
       type: 'action',
       data: { name: event.action?.target?.name },
-      sessionChange: {
-        field: 'action.count',
-        to: session.getCounter('action'),
-      },
-      additionalChanges,
+      viewId: event.view?.id,
     })
   }
 }
 
 export class LongTaskEventHandler extends BaseEventHandler {
   static handle(event: DatadogLongTaskEvent, session: MockSession): void {
+    this.ensureSessionStarted(session)
     this.recordAndIncrement(session, 'long_task')
-
-    const additionalChanges = this.calculateTimeSpentChanges(session)
 
     this.dispatchEvent({
       type: 'long_task',
-      sessionChange: {
-        field: 'long_task.count',
-        to: session.getCounter('long_task'),
-      },
-      additionalChanges,
+      viewId: event.view?.id,
     })
   }
 }
 
 export class VitalsEventHandler extends BaseEventHandler {
   static handle(event: DatadogVitalsEvent, session: MockSession): void {
-    session.recordEventTime()
-
-    const additionalChanges = this.calculateTimeSpentChanges(session)
-
+    this.ensureSessionStarted(session)
     this.dispatchEvent({
       type: 'vitals',
       data: event,
-      additionalChanges,
+      viewId: event.view?.id,
     })
   }
 }
