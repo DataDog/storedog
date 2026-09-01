@@ -1,4 +1,4 @@
-# Storedog
+# KFM Fork - Storedog
 
 Storedog is a Dockerized e-commerce site used primarily in labs run at [learn.datadoghq.com](https://learn.datadoghq.com). It consists of multiple services:
 
@@ -11,6 +11,10 @@ Storedog is a Dockerized e-commerce site used primarily in labs run at [learn.da
 - **DBM**: An optional Python service that runs a long-running query to demonstrate Database Monitoring. See [the DBM service's README](./services/dbm/README.md) for details on how to run this service.
 - **The Datadog Agent**: collects metrics and traces from the other services and sends them to Datadog.
 - **Puppeteer**: A Node.js service that runs a headless browser to generate RUM data for the frontend.
+
+
+
+
 
 > [!NOTE]
 > This application is built and tested to run within [Datadog Learning Center](https://learn.datadoghq.com/) lab environments. This application can be run outside of the Datadog Learning Center lab environments, but some features may not work as expected. 
