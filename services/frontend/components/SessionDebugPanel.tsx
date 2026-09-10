@@ -55,7 +55,12 @@ export default function SessionDebugPanel() {
 
   useEffect(() => {
     if (contentRef.current) {
+      console.log('[DEBUG] pre ' + JSON.stringify({ sh: contentRef.current.scrollHeight, st: contentRef.current.scrollTop, ch: contentRef.current.clientHeight }))
       contentRef.current.scrollTop = contentRef.current.scrollHeight
+      console.log('[DEBUG] post ' + JSON.stringify({ sh: contentRef.current.scrollHeight, st: contentRef.current.scrollTop, ch: contentRef.current.clientHeight }))
+      requestAnimationFrame(() => {
+        console.log('[DEBUG] rAF ' + JSON.stringify({ sh: contentRef.current?.scrollHeight, st: contentRef.current?.scrollTop }))
+      })
     }
   }, [newestEventId])
 
