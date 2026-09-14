@@ -55,6 +55,9 @@ yarn-debug.log*
 
 
 .gradle/
+*.class
+services/ads/java/bin/
+
 Gemfile.lock
 
 settings.json
