@@ -43,20 +43,17 @@ services:
     networks:
       - storedog-network
     environment:
-      # Datadog Agent Configuration
       - DD_VERSION=${FRONTEND_VERSION-1.0.0}
       - DD_SERVICE=store-frontend
       - DD_AGENT_HOST=dd-agent
       - DD_LOGS_INJECTION=true
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
-      # Application Environment
       - DD_API_KEY=${DD_API_KEY}
       - DD_APP_KEY=${DD_APP_KEY}
       - DATADOG_API_KEY=${DD_API_KEY}
       - DD_ENV=${DD_ENV:-development}
       - DD_HOSTNAME=${DD_HOSTNAME}
-      # RUM Configuration (NEXT_PUBLIC_ variables)
       - NEXT_PUBLIC_DD_SITE=${DD_SITE:-datadoghq.com}
       - NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend
       - NEXT_PUBLIC_DD_ENV_FRONTEND=${DD_ENV:-development}
