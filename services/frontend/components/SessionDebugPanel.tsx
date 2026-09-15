@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useLayoutEffect, useState, useRef } from 'react'
 import type { ResourceRumEvent, RumEvent } from '@lib/sessionMocking.types'
 import { datadogRum } from '@datadog/browser-rum'
 import { MAX_EVENTS } from '@lib/sessionMocking.constants'
@@ -49,16 +49,15 @@ export default function SessionDebugPanel() {
     }
   }, [])
 
-  useEffect(() => {
+  // useLayoutEffect runs synchronously after DOM mutations (before paint), so the
+  // new EventCard has already been laid out and scrollHeight reflects the true bottom.
+  // Keying on events.length (rather than newestEventId) guarantees this fires for
+  // every appended event, even if an event id were ever repeated.
+  useLayoutEffect(() => {
     if (contentRef.current) {
-      console.log('[DEBUG] pre ' + JSON.stringify({ sh: contentRef.current.scrollHeight, st: contentRef.current.scrollTop, ch: contentRef.current.clientHeight }))
       contentRef.current.scrollTop = contentRef.current.scrollHeight
-      console.log('[DEBUG] post ' + JSON.stringify({ sh: contentRef.current.scrollHeight, st: contentRef.current.scrollTop, ch: contentRef.current.clientHeight }))
-      requestAnimationFrame(() => {
-        console.log('[DEBUG] rAF ' + JSON.stringify({ sh: contentRef.current?.scrollHeight, st: contentRef.current?.scrollTop }))
-      })
     }
-  }, [newestEventId])
+  }, [events.length])
 
   if (!isVisible) {
     return (
@@ -66,10 +65,10 @@ export default function SessionDebugPanel() {
         ref={toggleButtonRef}
         onClick={() => handleToggleVisibility(true)} 
         className={styles.toggleBtn}
-        aria-label="Show RUM event debug panel"
+        aria-label="Show live RUM events panel"
         aria-expanded="false"
       >
-        Show Session Debug
+        Show Live RUM Events
       </button>
     )
   }
@@ -96,23 +95,19 @@ export default function SessionDebugPanel() {
       ref={panelRef}
       className={styles.container}
       role="complementary"
-      aria-label="RUM Event Debug Panel"
+      aria-label="Live RUM Events Panel"
       tabIndex={-1}
     >
       <div className={styles.header}>
         <h2 id="rum-panel-title" className={styles.title}>
           <span className={styles.srOnly}>Real User Monitoring </span>
           RUM Events
-          <span aria-live="polite" aria-atomic="true" className={styles.srOnly}>
-            {totalEventCount} events
-          </span>
-          <span aria-hidden="true"> ({totalEventCount})</span>
         </h2>
         <div className={styles.headerButtons}>
           <button 
             onClick={() => handleToggleVisibility(false)} 
             className={styles.closeBtn}
-            aria-label="Hide RUM event debug panel"
+            aria-label="Hide live RUM events panel"
             aria-expanded="true"
           >
             <span aria-hidden="true">×</span>
