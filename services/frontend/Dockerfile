@@ -1,4 +1,4 @@
-FROM node:20 AS builder
+FROM node:22 AS builder
 
 # install wait-for-it
 RUN apt-get update && apt-get install -y wait-for-it
