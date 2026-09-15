@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 FROM node:20-alpine AS base
+=======
+FROM node:22 AS builder
+>>>>>>> aad0093f (TRAIN-4474: Update Datadog trace libraries and RUM SDK to latest)
 
 # This comes form https://github.com/vercel/next.js/blob/canary/examples/with-docker-compose/next-app/prod.Dockerfile
 

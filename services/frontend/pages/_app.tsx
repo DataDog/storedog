@@ -53,6 +53,9 @@ datadogRum.init({
     },
   ],
   traceSampleRate: 100,
+  // v7 defaults this to true, which adds a `baggage` header to traced requests.
+  // service-proxy doesn't allow that header for cross-origin lab domains, so keep it off.
+  propagateTraceBaggage: false,
   allowUntrustedEvents: true,
   beforeSend: (event) => {
     if (
