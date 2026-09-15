@@ -45,8 +45,10 @@ dbm:
     context: ./services/dbm
   command: gunicorn --bind dbm:7595 dbm:app # If using any other port besides the default 8282, overriding the CMD is required
   depends_on:
-    - postgres
-    - dd-agent
+    postgres:
+      condition: service_healthy
+    dd-agent:
+      condition: service_started
   environment:
     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     - POSTGRES_USER=${POSTGRES_USER}
@@ -73,6 +75,11 @@ postgres:
   restart: always
   depends_on:
     - dd-agent
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U postgres"]
+    interval: 5s
+    timeout: 5s
+    retries: 10
   volumes:
     - postgres_logs:/var/log/pg_log:rw
   networks:
