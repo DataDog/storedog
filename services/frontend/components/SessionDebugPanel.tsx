@@ -15,10 +15,6 @@ export default function SessionDebugPanel() {
   const toggleButtonRef = useRef<HTMLButtonElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
 
-  const handleStopSession = () => {
-    datadogRum.stopSession()
-  }
-
   const handleToggleVisibility = (show: boolean) => {
     setIsVisible(show)
     setTimeout(() => {
@@ -113,13 +109,6 @@ export default function SessionDebugPanel() {
           <span aria-hidden="true"> ({totalEventCount})</span>
         </h2>
         <div className={styles.headerButtons}>
-          <button 
-            onClick={handleStopSession} 
-            className={styles.stopBtn}
-            aria-label="Stop current RUM session"
-          >
-            Stop Session
-          </button>
           <button 
             onClick={() => handleToggleVisibility(false)} 
             className={styles.closeBtn}
