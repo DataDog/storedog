@@ -1,6 +1,6 @@
 services:
   dd-agent:
-    image: registry.datadoghq.com/agent:7.81.2
+    image: registry.datadoghq.com/agent:7.83.1
     pid: host
     environment:
       - DD_API_KEY=${DD_API_KEY}
