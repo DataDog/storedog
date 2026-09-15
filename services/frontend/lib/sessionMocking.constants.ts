@@ -1,3 +1,2 @@
 export const MAX_EVENTS = 100
 export const MESSAGE_TRUNCATE_LENGTH = 60
-export const RESOURCE_DISPATCH_THRESHOLD = 10

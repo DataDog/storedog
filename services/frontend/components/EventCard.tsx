@@ -31,7 +31,7 @@ interface ActionEventDisplay {
 
 interface ResourceEventDisplay {
   type: 'resource'
-  count: number
+  url: string
 }
 
 interface LongTaskEventDisplay {
@@ -80,7 +80,7 @@ function useEventDisplayData(event: RumEvent): EventDisplayData {
     case 'resource':
       return {
         type: 'resource',
-        count: event.count,
+        url: formatUrl(event.data.url),
       }
 
     case 'long_task':
@@ -171,7 +171,7 @@ export default function EventCard({ event, isNewest, children }: EventCardProps)
       return (
         <Card
           {...commonProps}
-          headerContent={<span className={styles.count}>{data.count} total</span>}
+          headerContent={<span className={styles.url}>{data.url}</span>}
         />
       )
 

@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useState, useRef } from 'react'
-import type { ResourceRumEvent, RumEvent } from '@lib/sessionMocking.types'
+import type { RumEvent } from '@lib/sessionMocking.types'
 import { datadogRum } from '@datadog/browser-rum'
 import { MAX_EVENTS } from '@lib/sessionMocking.constants'
 import { getBufferedRumEvents } from '@lib/sessionMocking'
@@ -72,21 +72,6 @@ export default function SessionDebugPanel() {
       </button>
     )
   }
-
-  const totalEventCount = (() => {
-    const nonResourceCount = events.filter(e => e.type !== 'resource').length
-
-    const latestResourceCountByView = new Map<string, number>()
-    events
-      .filter((e): e is ResourceRumEvent => e.type === 'resource')
-      .forEach(e => {
-        const key = e.viewId ?? ''
-        latestResourceCountByView.set(key, Math.max(latestResourceCountByView.get(key) ?? 0, e.count))
-      })
-    const totalResourceCount = [...latestResourceCountByView.values()].reduce((sum, count) => sum + count, 0)
-
-    return nonResourceCount + totalResourceCount
-  })()
 
   const { session, views } = buildSessionTree(events)
 

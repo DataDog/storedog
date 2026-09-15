@@ -14,6 +14,10 @@ export interface ActionEventData {
   name?: string
 }
 
+export interface ResourceEventData {
+  url: string
+}
+
 interface BaseRumEvent {
   id: string
   timestamp: string
@@ -44,7 +48,7 @@ export interface ActionRumEvent extends BaseRumEvent {
 
 export interface ResourceRumEvent extends BaseRumEvent {
   type: 'resource'
-  count: number
+  data: ResourceEventData
   viewId?: string
 }
 
@@ -71,7 +75,7 @@ export type RumEvent =
 export interface EventDispatchPayload {
   type: RumEventType
   count?: number
-  data?: ViewEventData | ErrorEventData | ActionEventData | Record<string, unknown>
+  data?: ViewEventData | ErrorEventData | ActionEventData | ResourceEventData | Record<string, unknown>
   viewId?: string
 }
 
@@ -120,6 +124,9 @@ export interface DatadogActionEvent {
 
 export interface DatadogResourceEvent {
   type: 'resource'
+  resource: {
+    url: string
+  }
   view?: {
     id?: string
   }

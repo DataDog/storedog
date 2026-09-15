@@ -1,4 +1,4 @@
-import { MAX_EVENTS, RESOURCE_DISPATCH_THRESHOLD } from './sessionMocking.constants'
+import { MAX_EVENTS } from './sessionMocking.constants'
 import { formatTimestamp, generateEventId } from './sessionFormatting'
 import type {
   CountableEventType,
@@ -20,8 +20,6 @@ export function getBufferedRumEvents(): RumEvent[] {
   return eventBuffer
 }
 
-const UNKNOWN_VIEW_ID = 'unknown'
-
 export class MockSession {
   private counters = {
     view: 0,
@@ -30,9 +28,6 @@ export class MockSession {
     long_task: 0,
     frustration: 0,
   }
-
-  private resourceCounts = new Map<string, number>()
-  private lastResourceDispatch = new Map<string, number>()
 
   private seenViewIds = new Set<string>()
   private sessionStarted = false
@@ -51,25 +46,6 @@ export class MockSession {
 
   incrementCounter(type: CountableEventType): void {
     this.counters[type]++
-  }
-
-  incrementResourceCount(viewId: string | undefined): number {
-    const key = viewId ?? UNKNOWN_VIEW_ID
-    const next = (this.resourceCounts.get(key) ?? 0) + 1
-    this.resourceCounts.set(key, next)
-    return next
-  }
-
-  getResourceCount(viewId: string | undefined): number {
-    return this.resourceCounts.get(viewId ?? UNKNOWN_VIEW_ID) ?? 0
-  }
-
-  getLastResourceDispatch(viewId: string | undefined): number {
-    return this.lastResourceDispatch.get(viewId ?? UNKNOWN_VIEW_ID) ?? 0
-  }
-
-  setLastResourceDispatch(viewId: string | undefined, value: number): void {
-    this.lastResourceDispatch.set(viewId ?? UNKNOWN_VIEW_ID, value)
   }
 
   hasSeenView(viewId: string): boolean {
@@ -146,22 +122,11 @@ export class ResourceEventHandler extends BaseEventHandler {
   static handle(event: DatadogResourceEvent, session: MockSession): void {
     this.ensureSessionStarted(session)
 
-    const viewId = event.view?.id
-    const count = session.incrementResourceCount(viewId)
-
-    const shouldDispatch =
-      count === 1 ||
-      count - session.getLastResourceDispatch(viewId) >= RESOURCE_DISPATCH_THRESHOLD
-
-    if (shouldDispatch) {
-      this.dispatchEvent({
-        type: 'resource',
-        count,
-        viewId,
-      })
-
-      session.setLastResourceDispatch(viewId, count)
-    }
+    this.dispatchEvent({
+      type: 'resource',
+      data: { url: event.resource?.url || '' },
+      viewId: event.view?.id,
+    })
   }
 }
 
