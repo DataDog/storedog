@@ -25,6 +25,22 @@ import {
 // Initialize mock session
 const mockSession = new MockSession()
 
+const FIRST_PARTY_TRACING_HOSTS = new Set(['localhost', '127.0.0.1', 'service-proxy'])
+
+// RUM matches the full request URL. Only inject tracing headers on first-party
+// fetches so third-party calls (Datadog intake, CDNs) do not get CORS preflights.
+function isFirstPartyTracingUrl(url: string): boolean {
+  try {
+    const { hostname } = new URL(url)
+    return (
+      FIRST_PARTY_TRACING_HOSTS.has(hostname) ||
+      hostname.endsWith('.env.play.instruqt.com')
+    )
+  } catch {
+    return false
+  }
+}
+
 // RUM configuration factory - generates config with dynamic application ID and client token
 function getRumConfig(applicationId: string, clientToken: string): RumInitConfiguration {
   return {
@@ -46,20 +62,7 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
     sessionReplaySampleRate: 100,
     silentMultipleInit: true,
     defaultPrivacyLevel: 'allow',
-    allowedTracingUrls: [
-      {
-        match: /https:\/\/.*\.env.play.instruqt\.com/,
-        propagatorTypes: ['tracecontext', 'datadog', 'b3', 'b3multi'],
-      },
-      {
-        match: /^http:\/\/localhost(:\d+)?$/,
-        propagatorTypes: ['tracecontext', 'datadog', 'b3', 'b3multi'],
-      },
-      {
-        match: /.*/,
-        propagatorTypes: ['tracecontext', 'datadog', 'b3', 'b3multi'],
-      },
-    ],
+    allowedTracingUrls: [isFirstPartyTracingUrl],
     traceSampleRate: 100,
     allowUntrustedEvents: true,
     beforeSend: (event: any) => {
