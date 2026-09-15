@@ -1,6 +1,6 @@
 package adsjava;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 public class Advertisement {
@@ -32,4 +32,4 @@ public class Advertisement {
     public void setPath(String path) { this.path = path; }
     public String getClickUrl() { return clickUrl; }
     public void setClickUrl(String clickUrl) { this.clickUrl = clickUrl; }
-} 
+}
