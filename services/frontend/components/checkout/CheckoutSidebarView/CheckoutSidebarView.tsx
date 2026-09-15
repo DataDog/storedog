@@ -85,7 +85,7 @@ const CheckoutSidebarView: FC = () => {
     }
 
     try {
-      const discountPath = process.env.NEXT_PUBLIC_DISCOUNTS_ROUTE
+      const discountPath = process.env.NEXT_PUBLIC_DISCOUNTS_ROUTE || `/services/discounts`
       const discountCode = discountInput.toUpperCase()
       const discountCodeUrl = `${discountPath}/discount-code?discount_code=${discountCode}`
       // call discounts service
