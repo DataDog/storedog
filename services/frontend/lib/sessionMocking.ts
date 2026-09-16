@@ -20,6 +20,14 @@ export function getBufferedRumEvents(): RumEvent[] {
   return eventBuffer
 }
 
+function isNextJsAssetUrl(url: string): boolean {
+  try {
+    return new URL(url).pathname.includes('/_next/')
+  } catch {
+    return url.includes('/_next/')
+  }
+}
+
 export class MockSession {
   private counters = {
     view: 0,
@@ -120,11 +128,16 @@ export class ViewEventHandler extends BaseEventHandler {
 
 export class ResourceEventHandler extends BaseEventHandler {
   static handle(event: DatadogResourceEvent, session: MockSession): void {
+    const url = event.resource?.url || ''
+    if (isNextJsAssetUrl(url)) {
+      return
+    }
+
     this.ensureSessionStarted(session)
 
     this.dispatchEvent({
       type: 'resource',
-      data: { url: event.resource?.url || '' },
+      data: { url },
       viewId: event.view?.id,
     })
   }
