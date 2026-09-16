@@ -14,6 +14,8 @@ import { useCheckoutContext } from '../context'
 
 import s from './CheckoutSidebarView.module.css'
 
+const SUBMIT_ORDER_OPERATION = 'checkout.submit_order'
+
 const CheckoutSidebarView: FC = () => {
   const [loadingSubmit, setLoadingSubmit] = useState(false)
   const [discountInput, setDiscountInput] = useState('')
@@ -37,14 +39,32 @@ const CheckoutSidebarView: FC = () => {
   )
 
   async function handleSubmit(event: React.ChangeEvent<HTMLFormElement>) {
-    try {
-      setLoadingSubmit(true)
-      event.preventDefault()
+    event.preventDefault()
+    setLoadingSubmit(true)
 
+    // Captured before cartInit() swaps in a fresh, empty cart. The same options
+    // object goes to start and end so operationKey matches on both events.
+    const operationOptions = {
+      operationKey: cartData?.id,
+      description: 'Submit the order and complete checkout',
+      context: {
+        cart_total: cartData?.totalPrice,
+        item_count: cartData?.lineItems?.length,
+        currency: cartData?.currency?.code,
+        discounts: cartData?.discounts,
+        shipping_rate: shippingRate?.price,
+      },
+    }
+
+    datadogRum.startOperation(SUBMIT_ORDER_OPERATION, operationOptions)
+
+    try {
       const res = await handleCompleteCheckout()
       if (res.error) {
         throw res.error
       }
+
+      datadogRum.succeedOperation(SUBMIT_ORDER_OPERATION, operationOptions)
 
       // datadogRum.addAction('Successful Checkout', {
       //   id: cartData.id,
@@ -70,6 +90,7 @@ const CheckoutSidebarView: FC = () => {
       await cartInit()
       setSidebarView('ORDER_CONFIRM_VIEW')
     } catch (e) {
+      datadogRum.failOperation(SUBMIT_ORDER_OPERATION, 'error', operationOptions)
       console.log(e)
       setCheckoutError(e)
       setLoadingSubmit(false)
