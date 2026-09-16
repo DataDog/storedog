@@ -67,11 +67,14 @@ services:
   backend:
     build:
       context: ./services/backend
-    command: wait-for-it postgres:5432 -- bundle exec ddprofrb exec rails s -b 0.0.0.0 -p 4000 --pid /app/tmp/pids/server.pid
+    command: bundle exec ddprofrb exec rails s -b 0.0.0.0 -p 4000 --pid /app/tmp/pids/server.pid
     depends_on:
-      - 'postgres'
-      - 'redis'
-      - 'dd-agent'
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      dd-agent:
+        condition: service_started
     networks:
       - storedog-network
     volumes:
@@ -101,12 +104,16 @@ services:
   worker:
     build:
       context: ./services/backend
-    command: wait-for-it postgres:5432 -- bundle exec ddprofrb exec sidekiq -C config/sidekiq.yml
+    command: bundle exec ddprofrb exec sidekiq -C config/sidekiq.yml
     depends_on:
-      - 'postgres'
-      - 'redis'
-      - 'backend'
-      - 'dd-agent'
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      backend:
+        condition: service_started
+      dd-agent:
+        condition: service_started
     networks:
       - storedog-network
     volumes:
@@ -137,10 +144,12 @@ services:
   discounts:
     build:
       context: ./services/discounts
-    command: wait-for-it postgres:5432 -- ddtrace-run flask run --port=2814 --host=0.0.0.0
+    command: ddtrace-run flask run --port=2814 --host=0.0.0.0
     depends_on:
-      - postgres
-      - dd-agent
+      postgres:
+        condition: service_healthy
+      dd-agent:
+        condition: service_started
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
@@ -165,8 +174,10 @@ services:
     build:
       context: ./services/ads/java
     depends_on:
-      - postgres
-      - dd-agent
+      postgres:
+        condition: service_healthy
+      dd-agent:
+        condition: service_started
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
@@ -213,6 +224,11 @@ services:
     restart: always
     depends_on:
       - dd-agent
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     volumes:
       - postgres_logs:/var/log/pg_log:rw
     networks:

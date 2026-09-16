@@ -1,5 +1,5 @@
 # compile via gradle
-FROM gradle:jdk11 AS temp_build_image
+FROM gradle:jdk17 AS temp_build_image
 ENV APP_HOME=/usr/app/
 WORKDIR $APP_HOME
 COPY build.gradle settings.gradle $APP_HOME
@@ -14,7 +14,7 @@ RUN gradle clean build
 
 # app container
 FROM alpine:latest
-RUN apk --update add openjdk11-jre
+RUN apk --update add openjdk17-jre
 
 ARG DD_GIT_REPOSITORY_URL
 ARG DD_GIT_COMMIT_SHA
