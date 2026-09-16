@@ -1,23 +1,47 @@
 import { useState, useEffect, useCallback } from 'react'
+import { datadogRum } from '@datadog/browser-rum'
 
 export interface AdDataResults {
   data: object | null
   path: string
   name: string
 }
+
+// Measures time-to-visible-ad: fetch + render + banner image download. The
+// Layout renders an <Ad /> with no id, so the slot falls back to 'bottom-ad'.
+const VITAL_NAME = 'ad.banner_load'
+
 // Advertisement banner
 function Ad({ id }: { id: string }) {
   const [data, setData] = useState<AdDataResults | null>(null)
   const [isLoading, setLoading] = useState(false)
   const [adContainerId, setAdContainerId] = useState<string | null>(null)
   const adsPath = process.env.NEXT_PUBLIC_ADS_ROUTE || `/services/ads`
+  const slot = id || 'bottom-ad'
 
   const getRandomArbitrary = useCallback((min: number, max: number) => {
     return Math.floor(Math.random() * (max - min) + min)
   }, [])
 
+  // Several ads mount at once on the home page, so each needs its own vitalKey.
+  const stopAdVital = useCallback(
+    (outcome: 'success' | 'image_error') => {
+      datadogRum.stopDurationVital(VITAL_NAME, {
+        vitalKey: slot,
+        context: { outcome, ad_name: data?.name, ad_path: data?.path },
+      })
+    },
+    [slot, data]
+  )
+
   const fetchAd = useCallback(async () => {
     setLoading(true)
+
+    datadogRum.startDurationVital(VITAL_NAME, {
+      vitalKey: slot,
+      description: slot,
+      context: { ad_slot: slot },
+    })
 
     switch (id) {
       case 'first-ad':
@@ -41,9 +65,13 @@ function Ad({ id }: { id: string }) {
       setLoading(false)
     } catch (e) {
       console.error(e)
+      datadogRum.stopDurationVital(VITAL_NAME, {
+        vitalKey: slot,
+        context: { outcome: 'fetch_error' },
+      })
       setLoading(false)
     }
-  }, [adsPath, getRandomArbitrary, setData, setLoading])
+  }, [adsPath, getRandomArbitrary, setData, setLoading, slot])
 
   useEffect(() => {
     if (!data) fetchAd()
@@ -64,6 +92,8 @@ function Ad({ id }: { id: string }) {
               <img
                 src={`${adsPath}/banners/${data.path}`}
                 alt={`${data.name} Advertisement`}
+                onLoad={() => stopAdVital('success')}
+                onError={() => stopAdVital('image_error')}
               />
             </picture>
           </div>
