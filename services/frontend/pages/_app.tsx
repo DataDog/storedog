@@ -197,7 +197,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
       
       // Show debug panel only for learning center user
       if (user.email === 'learning-center-user@example.com') {
-        datadogRum.startSessionReplayRecording
+        datadogRum.startSessionReplayRecording({force: true})
         setShowDebugPanel(true)
       }
     } else {

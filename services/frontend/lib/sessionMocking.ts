@@ -184,9 +184,20 @@ export class LongTaskEventHandler extends BaseEventHandler {
 export class VitalsEventHandler extends BaseEventHandler {
   static handle(event: DatadogVitalsEvent, session: MockSession): void {
     this.ensureSessionStarted(session)
+
+    const vital = event.vital
+
     this.dispatchEvent({
-      type: 'vitals',
-      data: event,
+      type: 'vital',
+      data: {
+        name: vital?.name,
+        vitalType: vital?.type,
+        description: vital?.description,
+        duration: vital?.duration,
+        stepType: vital?.step_type,
+        failureReason: vital?.failure_reason,
+        operationKey: vital?.operation_key,
+      },
       viewId: event.view?.id,
     })
   }

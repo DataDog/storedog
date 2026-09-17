@@ -1,4 +1,4 @@
-export type RumEventType = 'session' | 'view' | 'action' | 'error' | 'resource' | 'long_task' | 'vitals'
+export type RumEventType = 'session' | 'view' | 'action' | 'error' | 'resource' | 'long_task' | 'vital'
 export type CountableEventType = 'view' | 'error' | 'action' | 'long_task' | 'frustration'
 
 export interface ViewEventData {
@@ -16,6 +16,19 @@ export interface ActionEventData {
 
 export interface ResourceEventData {
   url: string
+}
+
+export interface VitalEventData {
+  name?: string
+  /** 'duration' for custom vitals, 'operation_step' for Operations */
+  vitalType?: string
+  description?: string
+  /** Nanoseconds, as sent on the wire. Only set on duration vitals. */
+  duration?: number
+  /** Operation steps only */
+  stepType?: string
+  failureReason?: string
+  operationKey?: string
 }
 
 interface BaseRumEvent {
@@ -58,8 +71,8 @@ export interface LongTaskRumEvent extends BaseRumEvent {
 }
 
 export interface VitalsRumEvent extends BaseRumEvent {
-  type: 'vitals'
-  data: Record<string, unknown>
+  type: 'vital'
+  data: VitalEventData
   viewId?: string
 }
 
@@ -75,7 +88,13 @@ export type RumEvent =
 export interface EventDispatchPayload {
   type: RumEventType
   count?: number
-  data?: ViewEventData | ErrorEventData | ActionEventData | ResourceEventData | Record<string, unknown>
+  data?:
+    | ViewEventData
+    | ErrorEventData
+    | ActionEventData
+    | ResourceEventData
+    | VitalEventData
+    | Record<string, unknown>
   viewId?: string
 }
 
@@ -140,7 +159,18 @@ export interface DatadogLongTaskEvent {
 }
 
 export interface DatadogVitalsEvent {
-  type: 'vitals'
+  type: 'vital'
+  /** Field names here are the wire format, hence the snake_case. */
+  vital?: {
+    id?: string
+    name?: string
+    type?: string
+    description?: string
+    duration?: number
+    step_type?: string
+    operation_key?: string
+    failure_reason?: string
+  }
   view?: {
     id?: string
   }

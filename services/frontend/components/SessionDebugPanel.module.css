@@ -211,6 +211,44 @@
   letter-spacing: 0.5px;
 }
 
+.vitalName {
+  font-size: 11px;
+  color: #0e7490;
+  font-weight: 700;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Duration for custom vitals, step outcome for Operation steps. */
+.vitalDetail {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  background-color: #cffafe;
+  color: #0e7490;
+}
+
+.vitalDetail[data-vital-status="start"] {
+  background-color: #e2e8f0;
+  color: #475569;
+}
+
+.vitalDetail[data-vital-status="success"] {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.vitalDetail[data-vital-status="failed"] {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
 .url {
   font-size: 11px;
   color: #718096;

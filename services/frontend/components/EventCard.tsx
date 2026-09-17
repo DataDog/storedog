@@ -1,5 +1,5 @@
 import type { RumEvent } from '@lib/sessionMocking.types'
-import { formatUrl, truncateMessage } from '@lib/sessionFormatting'
+import { formatUrl, truncateMessage, formatVitalDuration } from '@lib/sessionFormatting'
 import { MESSAGE_TRUNCATE_LENGTH } from '@lib/sessionMocking.constants'
 import styles from './SessionDebugPanel.module.css'
 
@@ -38,8 +38,14 @@ interface LongTaskEventDisplay {
   type: 'long_task'
 }
 
-interface VitalsEventDisplay {
-  type: 'vitals'
+interface VitalEventDisplay {
+  type: 'vital'
+  name: string | null
+  /** Duration for custom vitals, step outcome for Operation steps. */
+  detail: string | null
+  /** Distinguishes an instance of a vital, e.g. which ad slot. */
+  description: string | null
+  status: 'start' | 'success' | 'failed' | null
 }
 
 type EventDisplayData =
@@ -49,7 +55,7 @@ type EventDisplayData =
   | ActionEventDisplay
   | ResourceEventDisplay
   | LongTaskEventDisplay
-  | VitalsEventDisplay
+  | VitalEventDisplay
 
 function useEventDisplayData(event: RumEvent): EventDisplayData {
   switch (event.type) {
@@ -88,10 +94,38 @@ function useEventDisplayData(event: RumEvent): EventDisplayData {
         type: 'long_task',
       }
 
-    case 'vitals':
+    case 'vital': {
+      const { name, vitalType, duration, description, stepType, failureReason } = event.data
+
+      // Operations arrive as two vital events (a start step and an end step)
+      // rather than one event carrying a duration.
+      const isOperationStep = vitalType === 'operation_step'
+      const status = !isOperationStep
+        ? null
+        : stepType === 'start'
+        ? 'start'
+        : failureReason
+        ? 'failed'
+        : 'success'
+
+      const detail = isOperationStep
+        ? failureReason
+          ? `${status} · ${failureReason}`
+          : status
+        : typeof duration === 'number'
+        ? formatVitalDuration(duration)
+        : null
+
       return {
-        type: 'vitals',
+        type: 'vital',
+        name: name ?? null,
+        detail: detail ?? null,
+        // The ad vital sets description to the slot, which duplicates the name
+        // on screen for other vitals — only show it when it adds something.
+        description: description && description !== name ? description : null,
+        status,
       }
+    }
   }
 }
 
@@ -176,7 +210,27 @@ export default function EventCard({ event, isNewest, children }: EventCardProps)
       )
 
     case 'long_task':
-    case 'vitals':
       return <Card {...commonProps} />
+
+    case 'vital':
+      return (
+        <Card
+          {...commonProps}
+          headerContent={
+            <>
+              {data.name && <span className={styles.vitalName}>{data.name}</span>}
+              {data.detail && (
+                <span className={styles.vitalDetail} data-vital-status={data.status}>
+                  {data.detail}
+                </span>
+              )}
+            </>
+          }
+        >
+          {data.description && (
+            <div className={styles.name}>{data.description}</div>
+          )}
+        </Card>
+      )
   }
 }
