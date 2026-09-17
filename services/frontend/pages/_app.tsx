@@ -59,7 +59,7 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
     trackResources: true,
     trackLongTasks: true,
     sessionSampleRate: 100,
-    sessionReplaySampleRate: 100,
+    sessionReplaySampleRate: 50,
     silentMultipleInit: true,
     defaultPrivacyLevel: 'allow',
     allowedTracingUrls: [isFirstPartyTracingUrl],
