@@ -40,6 +40,8 @@ interface LongTaskEventDisplay {
 
 interface VitalEventDisplay {
   type: 'vital'
+  /** Operation steps are vital events, but read as "operation" on the card. */
+  label: 'vital' | 'operation'
   name: string | null
   /** Duration for custom vitals, step outcome for Operation steps. */
   detail: string | null
@@ -118,6 +120,7 @@ function useEventDisplayData(event: RumEvent): EventDisplayData {
 
       return {
         type: 'vital',
+        label: isOperationStep ? 'operation' : 'vital',
         name: name ?? null,
         detail: detail ?? null,
         // The ad vital sets description to the slot, which duplicates the name
@@ -216,6 +219,7 @@ export default function EventCard({ event, isNewest, children }: EventCardProps)
       return (
         <Card
           {...commonProps}
+          type={data.label}
           headerContent={
             <>
               {data.name && <span className={styles.vitalName}>{data.name}</span>}
@@ -228,7 +232,7 @@ export default function EventCard({ event, isNewest, children }: EventCardProps)
           }
         >
           {data.description && (
-            <div className={styles.name}>{data.description}</div>
+            <div className={styles.name}>Description: {data.description}</div>
           )}
         </Card>
       )

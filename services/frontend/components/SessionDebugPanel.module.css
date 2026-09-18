@@ -38,6 +38,10 @@
   border-left: 2px solid #06b6d4;
 }
 
+.card[data-event-type="operation"] {
+  border-left: 2px solid #4f46e5;
+}
+
 .badge[data-event-type="session"] {
   background-color: rgb(99, 44, 166);
   color: #ffffff;
@@ -70,6 +74,11 @@
 
 .badge[data-event-type="vital"] {
   background-color: #06b6d4;
+  color: #ffffff;
+}
+
+.badge[data-event-type="operation"] {
+  background-color: #4f46e5;
   color: #ffffff;
 }
 
@@ -219,6 +228,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.card[data-event-type="operation"] .vitalName {
+  color: #4338ca;
 }
 
 /* Duration for custom vitals, step outcome for Operation steps. */
