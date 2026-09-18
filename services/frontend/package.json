@@ -98,5 +98,8 @@
     "entrypoints": [
       "pages"
     ]
+  },
+  "overrides": {
+    "typescript": "4.3.4"
   }
 }
