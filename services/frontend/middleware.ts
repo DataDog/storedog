@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from 'next/server'
 export function middleware(request: NextRequest) {
   const response = NextResponse.next()
 
+  // Required for RUM browser profiling (JS Self-Profiling API)
+  response.headers.set('Document-Policy', 'js-profiling')
+
   // Read RUM credentials forwarded by nginx
   // Nginx reads from puppeteer custom headers or uses defaults
   const rumAppId = request.headers.get('x-rum-app-id')

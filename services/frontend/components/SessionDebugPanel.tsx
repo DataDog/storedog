@@ -24,10 +24,15 @@ function getMaxWidth(): number {
   return Math.min(window.innerWidth / 2, PANEL_MAX_WIDTH)
 }
 
-// Min wins on viewports too narrow for the cap; there the panel overlays rather
-// than reflowing the store, so it is free to exceed half the width.
+// The store reflows around the panel at every viewport width, so the cap always
+// wins: on a viewport too narrow for the floor, holding the floor would eat the
+// store's half rather than the panel's. Mirrors min-width: min(320px, 50vw).
+function getMinWidth(): number {
+  return Math.min(PANEL_MIN_WIDTH, getMaxWidth())
+}
+
 function clampWidth(width: number): number {
-  return Math.max(PANEL_MIN_WIDTH, Math.min(width, getMaxWidth()))
+  return Math.max(getMinWidth(), Math.min(width, getMaxWidth()))
 }
 
 // localStorage throws rather than returning null in some privacy modes, and a

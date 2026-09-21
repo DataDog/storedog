@@ -112,8 +112,11 @@
      panel itself always move together. */
   width: var(--rum-panel-width, 420px);
   /* Mirrors PANEL_MIN_WIDTH / PANEL_MAX_WIDTH in SessionDebugPanel.tsx. Enforced
-     here too so a stale persisted width can never crush the panel. */
-  min-width: 320px;
+     here too so a stale persisted width can never crush the panel. The floor
+     yields to the 50vw cap on narrow viewports: the store always reflows around
+     the panel, so a floor that outgrew the cap would squeeze the store instead
+     of the panel. */
+  min-width: min(320px, 50vw);
   max-width: min(50vw, 720px);
   background-color: white;
   border-right: 1px solid #e0e0e0;

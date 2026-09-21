@@ -85,7 +85,8 @@ body {
   min-height: 100%;
   margin: 0;
   /* The RUM events panel docks to the left edge and the store reflows out of its
-     way. SessionDebugPanel keeps --rum-panel-width in sync (0px when closed).
+     way, at every viewport width, so the panel never covers store content.
+     SessionDebugPanel keeps --rum-panel-width in sync (0px when closed).
      The navbar is sticky rather than fixed, so it shifts with this padding. */
   padding-left: var(--rum-panel-width, 0px);
   transition: padding-left 150ms;
@@ -99,13 +100,6 @@ html[data-rum-resizing] body {
 html[data-rum-resizing] {
   user-select: none;
   cursor: col-resize;
-}
-
-/* Too narrow to donate the width: let the panel overlay instead of reflowing. */
-@media (max-width: 1023px) {
-  body {
-    padding-left: 0;
-  }
 }
 
 a {
