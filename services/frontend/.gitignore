@@ -12,6 +12,9 @@ node_modules
 .next/
 out/
 
+# typescript incremental build cache
+tsconfig.tsbuildinfo
+
 # production
 /build
 
