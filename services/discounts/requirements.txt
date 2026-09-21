@@ -5,7 +5,7 @@ ddtrace==4.14.0
 Flask==3.1.2
 Flask-Cors==6.0.5
 Flask-SQLAlchemy==3.1.1
-idna==2.10
+idna==3.20
 intervaltree==3.1.0
 itsdangerous==2.2.0
 Jinja2==3.1.6
