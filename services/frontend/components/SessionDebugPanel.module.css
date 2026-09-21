@@ -82,31 +82,41 @@
   color: #ffffff;
 }
 
+/* Collapsed state: a thin tab flush against the left edge, so it reads as the
+   docked panel's edge rather than as something floating over the store. */
 .toggleBtn {
   position: fixed;
-  bottom: 20px;
-  left: 20px;
-  padding: 10px 15px;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  padding: 14px 8px;
   background-color: rgb(99, 44, 166);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 0 6px 6px 0;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: bold;
+  letter-spacing: 0.5px;
+  writing-mode: vertical-rl;
   z-index: 10000;
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 .container {
   position: fixed;
-  bottom: 20px;
-  left: 20px;
-  width: 550px;
-  max-height: 500px;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  /* Width lives on :root so the body padding that reflows the store and the
+     panel itself always move together. */
+  width: var(--rum-panel-width, 420px);
+  /* Mirrors PANEL_MIN_WIDTH / PANEL_MAX_WIDTH in SessionDebugPanel.tsx. Enforced
+     here too so a stale persisted width can never crush the panel. */
+  min-width: 320px;
+  max-width: min(50vw, 720px);
   background-color: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border-right: 1px solid #e0e0e0;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   z-index: 10000;
   font-family: monospace;
@@ -119,11 +129,29 @@
   padding: 12px 16px;
   background-color: rgb(99, 44, 166);
   color: white;
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
+}
+
+/* Drag target for resizing, straddling the panel's right border. */
+.resizeHandle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  background: transparent;
+  touch-action: none;
+  z-index: 1;
+}
+
+.resizeHandle:hover,
+.resizeHandle:focus-visible {
+  background-color: rgba(99, 44, 166, 0.35);
+  outline: none;
 }
 
 .title {
@@ -167,6 +195,11 @@
 .content {
   padding: 12px;
   overflow-y: auto;
+  /* Cards have no min-width, so they shrink with the dock and the header values
+     ellipsize. This is the safety net for content that genuinely cannot shrink
+     (an unbreakable token, a future wider card): scroll beats clipping it out
+     of reach. It stays dormant at every width where things do fit. */
+  overflow-x: auto;
   flex-grow: 1;
 }
 
@@ -209,10 +242,14 @@
   align-items: center;
   gap: 8px;
   margin-bottom: 6px;
+  /* Without this the header refuses to shrink below its content, so the
+     ellipsis on .url / .vitalName never engages. */
+  min-width: 0;
 }
 
 .badge {
   padding: 4px 10px;
+  flex-shrink: 0;
   border-radius: 4px;
   font-size: 11px;
   font-weight: 700;
@@ -220,11 +257,14 @@
   letter-spacing: 0.5px;
 }
 
+/* Shrinks against the actual panel width instead of a width tuned to the old
+   550px floating card. Full value stays available via the title attribute. */
 .vitalName {
   font-size: 11px;
   color: #0e7490;
   font-weight: 700;
-  max-width: 260px;
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -243,6 +283,7 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
+  flex-shrink: 0;
   background-color: #cffafe;
   color: #0e7490;
 }
@@ -266,7 +307,8 @@
   font-size: 11px;
   color: #718096;
   font-weight: 600;
-  max-width: 300px;
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -276,6 +318,7 @@
   font-size: 11px;
   color: #718096;
   margin-left: auto;
+  flex-shrink: 0;
 }
 
 .message {
@@ -284,10 +327,14 @@
   margin-bottom: 4px;
 }
 
+/* Used both as a card-header flex child (action events) and as a block row
+   (view/vital names); the flex properties are inert in the block case. */
 .name {
   color: #2d3748;
   font-size: 12px;
   margin-bottom: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

@@ -183,9 +183,19 @@ export default function EventCard({ event, isNewest, children }: EventCardProps)
       return (
         <Card
           {...commonProps}
-          headerContent={<span className={styles.url}>{data.url}</span>}
+          headerContent={
+            // title exposes the full value when the panel is narrow enough to
+            // ellipsize it.
+            <span className={styles.url} title={data.url}>
+              {data.url}
+            </span>
+          }
         >
-          {data.name && <div className={styles.name}>{data.name}</div>}
+          {data.name && (
+            <div className={styles.name} title={data.name}>
+              {data.name}
+            </div>
+          )}
           {children && <div className={styles.nestedContent}>{children}</div>}
         </Card>
       )
@@ -200,7 +210,14 @@ export default function EventCard({ event, isNewest, children }: EventCardProps)
     case 'action':
       return (
         <Card {...commonProps}
-        headerContent={<span className={styles.name}>{data.name ? `Click on ${data.name}` : data.name}</span>}
+        headerContent={
+          <span
+            className={styles.name}
+            title={data.name ? `Click on ${data.name}` : undefined}
+          >
+            {data.name ? `Click on ${data.name}` : data.name}
+          </span>
+        }
         />
       )
 
@@ -208,7 +225,11 @@ export default function EventCard({ event, isNewest, children }: EventCardProps)
       return (
         <Card
           {...commonProps}
-          headerContent={<span className={styles.url}>{data.url}</span>}
+          headerContent={
+            <span className={styles.url} title={data.url}>
+              {data.url}
+            </span>
+          }
         />
       )
 
@@ -222,7 +243,11 @@ export default function EventCard({ event, isNewest, children }: EventCardProps)
           type={data.label}
           headerContent={
             <>
-              {data.name && <span className={styles.vitalName}>{data.name}</span>}
+              {data.name && (
+                <span className={styles.vitalName} title={data.name}>
+                  {data.name}
+                </span>
+              )}
               {data.detail && (
                 <span className={styles.vitalDetail} data-vital-status={data.status}>
                   {data.detail}
