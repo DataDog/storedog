@@ -201,7 +201,7 @@ services:
     image: ghcr.io/datadog/storedog/nginx:1.4.0
     restart: always
     ports:
-      - '80:80'
+      - '443:443'
     networks:
       - storedog-network
     depends_on:
@@ -215,6 +215,7 @@ services:
       - DD_AGENT_HOST=dd-agent
       - DD_SERVICE=service-proxy
       - DD_VERSION=1.0.0
+      - ENABLE_SSL=${ENABLE_SSL}
     labels:
       com.datadoghq.ad.logs: '[{"source": "nginx"}]'
       com.datadoghq.ad.check_names: '["nginx"]'
@@ -275,7 +276,7 @@ services:
     - ./services/puppeteer/scripts/puppeteer.sh:/home/pptruser/puppeteer.sh
     command: "bash puppeteer.sh"
     environment:
-      - STOREDOG_URL=${STOREDOG_URL-http://service-proxy:80}
+      - STOREDOG_URL=${STOREDOG_URL:-http://service-proxy:80}
       - PUPPETEER_TIMEOUT=${PUPPETEER_TIMEOUT:-30000}
     networks:
       - storedog-network
