@@ -1,10 +1,6 @@
 services:
   dd-agent:
-<<<<<<< HEAD
     image: gcr.io/datadoghq/agent:7.56.0
-=======
-    image: registry.datadoghq.com/agent:${DD_AGENT_VERSION:-latest}
->>>>>>> b47679ee (updated registry for dd-agent)
     pid: host
     environment:
       - DD_API_KEY=${DD_API_KEY}
@@ -61,16 +57,9 @@ services:
       - DD_VERSION=${FRONTEND_VERSION-1.0.0}
       - DD_SERVICE=store-frontend
       - DD_AGENT_HOST=dd-agent
-<<<<<<< HEAD
       - DD_LOGS_INJECTION=true
-=======
-      - DD_ENV=${DD_ENV:-production}
-      - DD_SERVICE=store-frontend-api # used for Next.js API routes
-      - DD_VERSION=${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}
->>>>>>> 1875d967 (added DD_ENV)
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
-<<<<<<< HEAD
       # Application Environment
       - DD_API_KEY=${DD_API_KEY}
       - DD_APP_KEY=${DD_APP_KEY}
@@ -84,20 +73,10 @@ services:
       - NEXT_PUBLIC_DD_APPLICATION_ID=${RUM_APPLICATION_ID}
       - NEXT_PUBLIC_DD_CLIENT_TOKEN=${RUM_CLIENT_TOKEN}
       - NEXT_PUBLIC_DD_VERSION_FRONTEND=${FRONTEND_VERSION}
-=======
-      - DD_PROFILING_TIMELINE_ENABLED=true
-      - DD_PROFILING_ALLOCATION_ENABLED=true
-      - NEXT_PUBLIC_DD_APPLICATION_ID=${NEXT_PUBLIC_DD_APPLICATION_ID:-DD_APPLICATION_ID-not-set}
-      - NEXT_PUBLIC_DD_CLIENT_TOKEN=${NEXT_PUBLIC_DD_CLIENT_TOKEN:-DD_CLIENT_TOKEN-not-set}
-      - NEXT_PUBLIC_DD_SITE=${NEXT_PUBLIC_DD_SITE:-datadoghq.com}
-      - NEXT_PUBLIC_DD_SERVICE_FRONTEND=store-frontend # used for client-side Next.js RUM configuration
-      - NEXT_PUBLIC_DD_ENV=${DD_ENV:-production}
-      - NEXT_PUBLIC_DD_VERSION_FRONTEND=${NEXT_PUBLIC_DD_VERSION_FRONTEND:-1.0.0}
->>>>>>> 05b1a60d (Fix frontend RUM version env var name in docker-compose files)
     labels:
       com.datadoghq.ad.logs: '[{"source": "nodejs", "service": "store-frontend", "auto_multi_line_detection":true }]'
   backend:
-<<<<<<< HEAD
+    image: storedog-backend
     build:
       context: ./services/backend
     command: bundle exec rails s -b 0.0.0.0 -p 4000 --pid /app/tmp/pids/server.pid
@@ -105,10 +84,6 @@ services:
       test: ["CMD", "nc", "-z", "localhost", "4000"]
       interval: 3s
       start_period: 60s
-=======
-    image: ghcr.io/datadog/storedog/backend:${STOREDOG_IMAGE_VERSION:-latest}
-    command: bundle exec ddprofrb exec rails s -b 0.0.0.0 -p 4000 --pid /app/tmp/pids/server.pid
->>>>>>> 393f4864 (Add Postgres healthcheck and gate dependents on service_healthy)
     depends_on:
       postgres:
         condition: service_healthy
@@ -118,14 +93,12 @@ services:
         condition: service_started
     networks:
       - storedog-network
+    volumes:
+      - './services/backend:/app'
     environment:
       - DB_HOST=postgres 
       - DD_AGENT_HOST=dd-agent
-<<<<<<< HEAD
       - DD_VERSION=1.0.0
-=======
-      - DD_ENV=${DD_ENV:-production}
->>>>>>> 1875d967 (added DD_ENV)
       - DD_SERVICE=store-backend
       - DD_ENV=${DD_ENV}
       - DD_LOGS_INJECTION=true
@@ -138,20 +111,11 @@ services:
       com.datadoghq.tags.service: 'store-backend'
       com.datadoghq.tags.version: '1.0.0'
   worker:
-<<<<<<< HEAD
-    build:
-      context: ./services/backend
+    image: storedog-backend
     command: bundle exec sidekiq -C config/sidekiq.yml
     depends_on:
       postgres:
         condition: service_started
-=======
-    image: ghcr.io/datadog/storedog/backend:${STOREDOG_IMAGE_VERSION:-latest}
-    command: bundle exec ddprofrb exec sidekiq -C config/sidekiq.yml
-    depends_on:
-      postgres:
-        condition: service_healthy
->>>>>>> 393f4864 (Add Postgres healthcheck and gate dependents on service_healthy)
       redis:
         condition: service_started
       backend:
@@ -163,7 +127,6 @@ services:
     environment:
       - WORKER=true
       - DD_AGENT_HOST=dd-agent
-      - DD_ENV=${DD_ENV:-production}
       - DD_SERVICE=store-worker
       - DD_VERSION=1.0.0
       - DD_LOGS_INJECTION=true
@@ -177,7 +140,6 @@ services:
       com.datadoghq.tags.service: 'store-worker'
       com.datadoghq.tags.version: '1.0.0'
   discounts:
-<<<<<<< HEAD
     build:
       context: ./services/discounts
     command: ddtrace-run flask run --port=2814 --host=0.0.0.0
@@ -185,20 +147,13 @@ services:
       test: ["CMD", "nc", "-z", "localhost", "2814"]
       interval: 3s
       start_period: 60s
-    depends_on:
-      postgres:
-        condition: service_started
-=======
-    image: ghcr.io/datadog/storedog/discounts:${STOREDOG_IMAGE_VERSION:-latest}
-    command: ddtrace-run flask run --port=2814 --host=0.0.0.0
+    restart: on-failure
     depends_on:
       postgres:
         condition: service_healthy
->>>>>>> 393f4864 (Add Postgres healthcheck and gate dependents on service_healthy)
       dd-agent:
         condition: service_started
     environment:
-<<<<<<< HEAD
       - FLASK_APP=discounts.py
       - FLASK_DEBUG=0
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -229,33 +184,6 @@ services:
         condition: service_started
     environment:
       - DD_AGENT_HOST=dd-agent
-=======
-      - DD_AGENT_HOST=dd-agent
-      - DD_ENV=${DD_ENV:-production}
-      - DD_SERVICE=store-discounts
-      - DD_VERSION=${DD_VERSION_DISCOUNTS:-1.0.0}
-      - DD_RUNTIME_METRICS_ENABLED=true
-      - DD_PROFILING_ENABLED=true
-      - DD_PROFILING_TIMELINE_ENABLED=true
-      - DD_PROFILING_ALLOCATION_ENABLED=true
-    networks:
-      - storedog-network
-    labels:
-      com.datadoghq.ad.logs: '[{"source": "python"}]'
-  ads:
-    image: ghcr.io/datadog/storedog/ads-java:${STOREDOG_IMAGE_VERSION:-latest}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      dd-agent:
-        condition: service_started
-    environment:
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_HOST=postgres
-      - DD_AGENT_HOST=dd-agent
-      - DD_ENV=${DD_ENV:-production}
->>>>>>> 1875d967 (added DD_ENV)
       - DD_SERVICE=store-ads
       - DD_VERSION=1.0.0
       - DD_ENV=${DD_ENV}
@@ -271,12 +199,17 @@ services:
       com.datadoghq.tags.service: 'store-ads'
       com.datadoghq.tags.version: '1.0.0'
   service-proxy:
-    image: ghcr.io/datadog/storedog/nginx:1.4.0
+    image: ghcr.io/datadog/storedog/nginx:1.5.2
+    platform: linux/amd64
     restart: always
     ports:
+      - '80:80'
       - '443:443'
     networks:
       - storedog-network
+    # Comment this out if you are not using SSL
+    volumes:
+      - ./certs:/etc/nginx/certs:ro
     depends_on:
       dd-agent:
         condition: service_started
@@ -286,7 +219,6 @@ services:
         condition: service_started
     environment:
       - DD_AGENT_HOST=dd-agent
-      - DD_ENV=${DD_ENV:-production}
       - DD_SERVICE=service-proxy
       - DD_VERSION=1.0.0
       - ENABLE_SSL=${ENABLE_SSL}
@@ -303,17 +235,8 @@ services:
       interval: 3s
     restart: always
     depends_on:
-<<<<<<< HEAD
       dd-agent:
         condition: service_started
-=======
-      - dd-agent
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
->>>>>>> 393f4864 (Add Postgres healthcheck and gate dependents on service_healthy)
     volumes:
       - postgres_logs:/var/log/pg_log:rw
     networks:
@@ -352,23 +275,30 @@ services:
       com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":6379}]'
       com.datadoghq.ad.logs: '[{"source": "redis", "service": "redis"}]'
   puppeteer:
-    image: ghcr.io/puppeteer/puppeteer:20.9.0
+    build:
+      context: ./services/puppeteer
     platform: linux/amd64
-    volumes: 
-    - ./services/puppeteer/scripts/puppeteer.js:/home/pptruser/puppeteer.js
-    - ./services/puppeteer/scripts/puppeteer.sh:/home/pptruser/puppeteer.sh
-    command: "bash puppeteer.sh"
-    environment:
-      - STOREDOG_URL=${STOREDOG_URL:-http://service-proxy:80}
-      - PUPPETEER_TIMEOUT=${PUPPETEER_TIMEOUT:-30000}
+    shm_size: '4gb'
+    cap_add:
+      - SYS_ADMIN
     networks:
       - storedog-network
     depends_on:
       frontend:
         condition: service_healthy
-    shm_size: '4gb' # Increase shared memory size
-    cap_add:
-      - 'SYS_ADMIN' # Required for Puppeteer to run in Docker
+    environment:
+      - STOREDOG_URL=${STOREDOG_URL:-http://service-proxy:80}
+      - PUPPETEER_TIMEOUT=${PUPPETEER_TIMEOUT:-30000}
+      - PUPPETEER_ENABLE_CACHE=${PUPPETEER_ENABLE_CACHE:-false}
+      - PUPPETEER_SYSTEM_MEMORY=${PUPPETEER_SYSTEM_MEMORY:-8GB}
+      - PUPPETEER_MAX_CONCURRENT=${PUPPETEER_MAX_CONCURRENT:-4}
+      - PUPPETEER_BROWSER_POOL_SIZE=${PUPPETEER_BROWSER_POOL_SIZE:-4}
+      - PUPPETEER_STARTUP_DELAY=${PUPPETEER_STARTUP_DELAY:-10000}
+      - PUPPETEER_RAMP_INTERVAL=${PUPPETEER_RAMP_INTERVAL:-30000}
+      - PUPPETEER_DEBUG=${PUPPETEER_DEBUG:-false}
+      - PUPPETEER_DEBUG_SESSIONS=${PUPPETEER_DEBUG_SESSIONS:-false}
+      - PUPPETEER_LOOP=${PUPPETEER_LOOP:-infinite}
+      - PUPPETEER_SESSION_TYPES=${PUPPETEER_SESSION_TYPES:-homepage,aboutus,browsing,vip,taxonomy,frustration}
 
 volumes:
   redis:

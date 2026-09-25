@@ -44,8 +44,6 @@ ENV BUNDLE_GEMFILE=/app/Gemfile \
 
 ENV PATH="${BUNDLE_BIN}:${PATH}"
 
-COPY . .
-
 # Upgrade RubyGems and Bundler
 # When upgrading RubyGems
 #  * upgrade Bundler to match the new RubyGems version
@@ -53,8 +51,13 @@ COPY . .
 RUN gem update --system 3.5.23 --quiet
 RUN gem install bundler -v 2.5.23 --quiet
 
+COPY Gemfile Gemfile.lock ./
 RUN bundle install || exit 1
-RUN npm install
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
 RUN npm run build
 
 # Precompile assets - use dummy secret key base and nulldb adapter to avoid database connection

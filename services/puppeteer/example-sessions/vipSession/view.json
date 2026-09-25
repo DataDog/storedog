@@ -1,0 +1,175 @@
+{
+  "os": {
+    "name": "iOS",
+    "version": "17.0",
+    "version_major": "17"
+  },
+  "session": {
+    "is_replay_available": false,
+    "ip": "174.54.119.247",
+    "useragent": "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+    "retention_reason": "rum_retention_filter",
+    "id": "3cdb90b9-1cd4-441b-9d46-ec7e78125cd6",
+    "has_replay": true,
+    "matching_retention_filter": {
+      "name": "Sessions",
+      "id": "default_sessions"
+    },
+    "type": "user",
+    "has_full_snapshot": false
+  },
+  "display": {
+    "viewport": {
+      "width": 1024,
+      "height": 1366
+    },
+    "scroll": {
+      "max_depth": 1366,
+      "fold_pct": 47,
+      "max_scroll_height_time": 4056600000,
+      "max_depth_pct": 47,
+      "max_scroll_height": 2899,
+      "max_depth_scroll_top": 0
+    }
+  },
+  "privacy": {
+    "replay_level": "mask-user-input"
+  },
+  "type": "view",
+  "geo": {
+    "continent": "North America",
+    "country": "United States",
+    "as": {
+      "domain": "comcast.com",
+      "name": "Comcast Cable Communications, LLC",
+      "type": "isp"
+    },
+    "country_iso_code": "US",
+    "city": "Spry",
+    "latitude": 39.91843,
+    "continent_code": "NA",
+    "country_subdivision_iso_code": "US-PA",
+    "location": [
+      -76.68497,
+      39.91843
+    ],
+    "country_subdivision": "Pennsylvania",
+    "longitude": -76.68497
+  },
+  "view": {
+    "url_query": {
+      "utm_campaign": "clothing_sale",
+      "utm_medium": "facebook",
+      "utm_source": "email"
+    },
+    "load_event": 3121600000,
+    "long_task": {
+      "count": 2
+    },
+    "cumulative_layout_shift": 0.0003,
+    "error": {
+      "count": 0
+    },
+    "dom_content_loaded": 3054400000,
+    "time_spent": 4836000000,
+    "first_contentful_paint": 3236000000,
+    "first_byte": 2770900000,
+    "url_path_group": "/",
+    "loading_time": 3579000000,
+    "action": {
+      "count": 0
+    },
+    "id": "4ab1b621-c30f-42f5-88b7-83ddf280f178",
+    "cumulative_layout_shift_time": 3365000000,
+    "url_host": "localhost",
+    "url_path": "/",
+    "largest_contentful_paint_target_selector": "#__next>DIV>MAIN.fit>DIV>A:nth-of-type(1)>DIV>DIV>SPAN>IMG.ProductCard_productImage__nbfNy",
+    "is_active": false,
+    "in_foreground_periods": [
+      {
+        "duration": 4836000000,
+        "start": 0
+      }
+    ],
+    "dom_interactive": 2851200000,
+    "resource": {
+      "count": 44
+    },
+    "frustration": {
+      "count": 0
+    },
+    "largest_contentful_paint": 3236000000,
+    "dom_complete": 3121600000,
+    "url": "http://localhost/?utm_campaign=clothing_sale&utm_medium=facebook&utm_source=email",
+    "url_scheme": "http",
+    "performance": {
+      "fcp": {
+        "timestamp": 3236000000
+      },
+      "lcp": {
+        "resource_url": "http://localhost/_next/image?url=http%3A%2F%2Fservice-proxy%2Fservices%2Fbackend%2Frails%2Factive_storage%2Fblobs%2Fproxy%2FeyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBWDQ9IiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--b64fb5823f718f360831afb4cbd856c63c7f63d5%2Fwhite-shirt-circle.jpeg&w=2048&q=85",
+        "target_selector": "#__next>DIV>MAIN.fit>DIV>A:nth-of-type(1)>DIV>DIV>SPAN>IMG.ProductCard_productImage__nbfNy",
+        "timestamp": 3236000000
+      },
+      "cls": {
+        "score": 0.0003,
+        "previous_rect": {
+          "x": 349,
+          "width": 326,
+          "y": 98,
+          "height": 24
+        },
+        "current_rect": {
+          "x": 292,
+          "width": 440,
+          "y": 98,
+          "height": 24
+        },
+        "target_selector": "#__next>DIV>DIV.flex>SPAN",
+        "timestamp": 3365000000
+      }
+    },
+    "name": "/",
+    "url_domain": "unknown",
+    "loading_type": "initial_load",
+    "cumulative_layout_shift_target_selector": "#__next>DIV>DIV.flex>SPAN"
+  },
+  "application": {
+    "name": "Retention Filters 1",
+    "short_name": "retention_filters_1",
+    "id": "35649584-ef6a-4096-9c28-344f8ce8cec2"
+  },
+  "connectivity": {
+    "effective_type": "4g",
+    "status": "connected"
+  },
+  "usr": {
+    "anonymous_id": "5b96dfd2-3daf-4b59-8cdf-4c12af6d94bb",
+    "name": "Isabella Montrose",
+    "id": "9c8d7e6f-3b4a-4f2e-9d8c-6b5a4e3f2d1a",
+    "email": "imontrose@vip.example.com"
+  },
+  "service": "store-frontend",
+  "browser": {
+    "name": "Mobile Safari",
+    "version": "17.0",
+    "version_major": "17"
+  },
+  "context": {
+    "cart_status": {
+      "cartTotal": 0
+    }
+  },
+  "device": {
+    "locales": [
+      "en-US",
+      "en"
+    ],
+    "name": "iPad",
+    "model": "iPad",
+    "locale": "en-US",
+    "time_zone": "America/New_York",
+    "type": "Tablet",
+    "brand": "Apple"
+  }
+}

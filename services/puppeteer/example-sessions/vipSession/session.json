@@ -1,0 +1,127 @@
+{
+  "os": {
+    "name": "iOS",
+    "version": "17.0",
+    "version_major": "17"
+  },
+  "session": {
+    "is_active": false,
+    "resource": {
+      "count": 75
+    },
+    "ip": "174.54.119.247",
+    "frustration": {
+      "count": 0
+    },
+    "useragent": "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+    "long_task": {
+      "count": 3
+    },
+    "retention_reason": "rum_retention_filter",
+    "has_replay": true,
+    "type": "user",
+    "error": {
+      "count": 0
+    },
+    "has_full_snapshot": true,
+    "time_spent": 23573000000,
+    "last_view": {
+      "url_path_group": "/products/bits-by-dre",
+      "name": "/products/bits-by-dre",
+      "id": "b014c4d2-8b73-4d1c-891e-8a2cf0f96a16",
+      "url_host": "localhost",
+      "url_path": "/products/bits-by-dre",
+      "url_scheme": "http"
+    },
+    "crash": {
+      "count": 0
+    },
+    "view": {
+      "count": 3
+    },
+    "sampled_for_replay": true,
+    "is_replay_available": true,
+    "initial_view": {
+      "url_query": {
+        "utm_campaign": "clothing_sale",
+        "utm_medium": "facebook",
+        "utm_source": "email"
+      },
+      "url_path_group": "/",
+      "name": "/",
+      "id": "4ab1b621-c30f-42f5-88b7-83ddf280f178",
+      "url_host": "localhost",
+      "url_path": "/",
+      "url_scheme": "http"
+    },
+    "action": {
+      "count": 8
+    },
+    "has_forced_replay": false,
+    "id": "3cdb90b9-1cd4-441b-9d46-ec7e78125cd6",
+    "matching_retention_filter": {
+      "name": "Sessions",
+      "id": "default_sessions"
+    },
+    "plan": "replay"
+  },
+  "display": {
+    "viewport": {
+      "width": 1024,
+      "height": 1366
+    }
+  },
+  "type": "session",
+  "last_user_interaction_time": 1761916221098,
+  "geo": {
+    "continent": "North America",
+    "country": "United States",
+    "as": {
+      "domain": "comcast.com",
+      "name": "Comcast Cable Communications, LLC",
+      "type": "isp"
+    },
+    "country_iso_code": "US",
+    "city": "Spry",
+    "latitude": 39.91843,
+    "continent_code": "NA",
+    "country_subdivision_iso_code": "US-PA",
+    "location": [
+      -76.68497,
+      39.91843
+    ],
+    "country_subdivision": "Pennsylvania",
+    "longitude": -76.68497
+  },
+  "application": {
+    "name": "Retention Filters 1",
+    "short_name": "retention_filters_1",
+    "id": "35649584-ef6a-4096-9c28-344f8ce8cec2"
+  },
+  "connectivity": {
+    "effective_type": "4g"
+  },
+  "usr": {
+    "anonymous_id": "5b96dfd2-3daf-4b59-8cdf-4c12af6d94bb",
+    "name": "Isabella Montrose",
+    "id": "9c8d7e6f-3b4a-4f2e-9d8c-6b5a4e3f2d1a",
+    "email": "imontrose@vip.example.com"
+  },
+  "service": "store-frontend",
+  "browser": {
+    "name": "Mobile Safari",
+    "version": "17.0",
+    "version_major": "17"
+  },
+  "context": {
+    "cart_status": {
+      "cartTotal": 0
+    }
+  },
+  "device": {
+    "name": "iPad",
+    "model": "iPad",
+    "type": "Tablet",
+    "brand": "Apple"
+  }
+}
