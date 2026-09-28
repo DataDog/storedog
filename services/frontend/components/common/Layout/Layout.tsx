@@ -17,7 +17,6 @@ import Discount from '@components/common/Discount'
 import Ad from '@components/common/Ad'
 import type { Page } from '@customTypes/page'
 import type { Link as LinkProps } from '../UserNav/MenuSidebarView'
-import Pages from 'pages/[...pages]'
 
 const Loading = () => (
   <div className="w-80 h-80 flex items-center text-center justify-center p-3">
@@ -65,7 +64,8 @@ const ModalUI: React.FC = () => {
 const SidebarView: React.FC<{
   sidebarView: string
   closeSidebar(): any
-}> = ({ sidebarView, closeSidebar }) => {
+  links: LinkProps[]
+}> = ({ sidebarView, closeSidebar, links }) => {
   return (
     <Sidebar onClose={closeSidebar}>
       {sidebarView === 'CART_VIEW' && <CartSidebarView />}
@@ -78,10 +78,14 @@ const SidebarView: React.FC<{
   )
 }
 
-const SidebarUI: React.FC<{}> = ({}) => {
+const SidebarUI: React.FC<{ links: LinkProps[] }> = ({ links }) => {
   const { displaySidebar, closeSidebar, sidebarView } = useUI()
   return displaySidebar ? (
-    <SidebarView sidebarView={sidebarView} closeSidebar={closeSidebar} />
+    <SidebarView
+      sidebarView={sidebarView}
+      closeSidebar={closeSidebar}
+      links={links}
+    />
   ) : null
 }
 
@@ -111,6 +115,11 @@ const Layout: React.FC<Props> = ({ children, pageProps: { ...pageProps } }) => {
     }
   }
 
+  const links: LinkProps[] = pages.map((page) => ({
+    href: page.url,
+    label: page.name,
+  }))
+
   return (
     <div className={cn(s.root)}>
       <Navbar />
@@ -120,7 +129,7 @@ const Layout: React.FC<Props> = ({ children, pageProps: { ...pageProps } }) => {
       <Footer pages={pages} />
       <ModalUI />
       <CheckoutProvider>
-        <SidebarUI />
+        <SidebarUI links={links} />
       </CheckoutProvider>
     </div>
   )
