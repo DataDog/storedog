@@ -12,6 +12,19 @@ module.exports = {
   images: {
     domains: [process.env.NEXT_PUBLIC_SPREE_ALLOWED_IMAGE_DOMAIN],
   },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Document-Policy',
+            value: 'js-profiling',
+          },
+        ],
+      },
+    ]
+  },
   webpack: (
     config,
     { buildId, dev, isServer, defaultLoaders, nextRuntime, webpack }

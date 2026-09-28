@@ -32,6 +32,7 @@ datadogRum.init({
   trackLongTasks: true,
   sessionSampleRate: 100,
   sessionReplaySampleRate: 100,
+  profilingSampleRate: 100,
   silentMultipleInit: true,
   defaultPrivacyLevel: 'mask-user-input',
   allowedTracingUrls: [
