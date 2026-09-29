@@ -204,12 +204,12 @@ services:
     restart: always
     ports:
       - '80:80'
-      - '443:443'
+      # - '443:443'
     networks:
       - storedog-network
     # Comment this out if you are not using SSL
-    volumes:
-      - ./certs:/etc/nginx/certs:ro
+    # volumes:
+      # - ./certs:/etc/nginx/certs:ro
     depends_on:
       dd-agent:
         condition: service_started
