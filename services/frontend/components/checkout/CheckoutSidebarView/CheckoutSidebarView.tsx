@@ -1,4 +1,4 @@
-import { FC, useState } from 'react'
+import { FC, useRef, useState } from 'react'
 import cn from 'clsx'
 import { datadogRum } from '@datadog/browser-rum'
 
@@ -20,8 +20,11 @@ const CheckoutSidebarView: FC = () => {
   const [checkoutError, setCheckoutError] = useState(null)
   const { setSidebarView, closeSidebar } = useUI()
   const { cart: cartData, cartEmpty, cartInit, applyDiscount } = useCart()
-  const { shippingRate, addressStatus, paymentStatus, handleCompleteCheckout } =
+  const { shippingRate, shippingReady, addressStatus, paymentStatus, handleCompleteCheckout } =
     useCheckoutContext()
+  const shippingReadyRef = useRef(shippingReady)
+  shippingReadyRef.current = shippingReady
+  const discountRequest = useRef<'idle' | 'pending' | 'applied'>('idle')
 
   const { price: subTotal } = usePrice(
     cartData && {
@@ -84,6 +87,12 @@ const CheckoutSidebarView: FC = () => {
       return
     }
 
+    if (discountRequest.current !== 'idle') {
+      return
+    }
+
+    discountRequest.current = 'pending'
+
     try {
       const discountPath = process.env.NEXT_PUBLIC_DISCOUNTS_ROUTE || `/services/discounts`
       const discountCode = discountInput.toUpperCase()
@@ -93,15 +102,29 @@ const CheckoutSidebarView: FC = () => {
 
       const discount = await res.json()
 
-      if (discount.status === 0) {
+      if (!res.ok || discount.status !== 1) {
         console.log('Discount not found')
+        discountRequest.current = 'idle'
         return
       }
 
-      await applyDiscount('FREESHIP')
+      const shippingReadyAt = Date.now()
+      while (!shippingReadyRef.current) {
+        if (Date.now() - shippingReadyAt > 10000) {
+          throw new Error('Shipping is not ready yet')
+        }
+        await new Promise((resolve) => setTimeout(resolve, 200))
+      }
+
+      const applied = await applyDiscount('FREESHIP')
+      if (!applied) {
+        throw new Error('Could not apply discount')
+      }
+      discountRequest.current = 'applied'
 
       setDiscountInput('')
     } catch (err) {
+      discountRequest.current = 'idle'
       datadogRum.addError(err, {
         discount_code: discountInput,
       })

@@ -20,7 +20,6 @@ import { useCart } from '@lib/CartContext'
 import type {
   PaymentAttributes,
   AddressAttributes,
-  ShippingRateAttributes,
 } from '@customTypes/checkout'
 
 export type State = {
@@ -119,7 +118,9 @@ export const CheckoutProvider: FC = (props) => {
   } | null>(null)
   const [addressStatus, setAddressError] = useState({ ok: null, message: null })
   const [paymentStatus, setPaymentError] = useState({ ok: null, message: null })
+  const [shippingReady, setShippingReady] = useState(false)
   const { cart, cartToken, cartUser } = useCart()
+  const hasLineItems = Boolean(cart?.lineItems.length)
 
   const getPaymentMethods = useCallback(async () => {
     // get payment methods
@@ -128,42 +129,71 @@ export const CheckoutProvider: FC = (props) => {
     setPaymentMethods(paymentMethods)
   }, [cartToken, setPaymentMethods])
 
-  const getShippingRates = useCallback(async () => {
-    // get shipping rates
-    const shippingRates = await listShippingRates({ order_token: cartToken })
-    setShippingRate({
-      id: shippingRates.data[0].id,
-      selected_rate_id:
-        shippingRates.data[0].relationships.selected_shipping_rate.data.id,
-      price: Number(shippingRates.data[0].attributes.final_price).toFixed(2),
-    })
-  }, [cartToken, setShippingRate])
+  const checkoutChain = useRef(Promise.resolve())
 
-  const updateAddress = useCallback(
-    async (address: AddressAttributes) => {
-      try {
-        const updatedCheckout = await updateCheckout({
+  const syncCheckout = useCallback(
+    async (address: AddressAttributes, payment: PaymentAttributes) => {
+      setShippingReady(false)
+      setPaymentError({ ok: null, message: null })
+
+      const updatedAddress = await updateCheckout({
+        order_token: cartToken,
+        order: {
+          email: address.email,
+          bill_address_attributes: address,
+          ship_address_attributes: address,
+        },
+      })
+
+      if (updatedAddress.error) {
+        throw updatedAddress.error
+      }
+
+      const shippingRates = await listShippingRates({ order_token: cartToken })
+      const rate = {
+        id: shippingRates.data[0].id,
+        selected_rate_id:
+          shippingRates.data[0].relationships.selected_shipping_rate.data.id,
+        price: Number(shippingRates.data[0].attributes.final_price).toFixed(2),
+      }
+      setShippingRate(rate)
+
+      const updatedShipping = await updateCheckout({
+        order_token: cartToken,
+        order: {
+          shipments_attributes: [
+            {
+              id: rate.id,
+              selected_shipping_rate_id: rate.selected_rate_id,
+            },
+          ],
+        },
+      })
+
+      if (updatedShipping.error) {
+        throw updatedShipping.error
+      }
+
+      setAddressError({ ok: true, message: null })
+
+      if (payment.source_attributes.number) {
+        const updatedPayment = await updateCheckout({
           order_token: cartToken,
           order: {
-            email: address.email,
-            bill_address_attributes: address,
-            ship_address_attributes: address,
+            payments_attributes: [payment],
           },
         })
 
-        if (updatedCheckout.error) {
-          throw updatedCheckout.error
+        if (updatedPayment?.error) {
+          throw updatedPayment.error
         }
 
-        await getShippingRates()
-
-        setAddressError({ ok: true, message: null })
-      } catch (error) {
-        console.log(error)
-        setAddressError({ ok: false, message: error })
+        setPaymentError({ ok: true, message: null })
       }
+
+      setShippingReady(true)
     },
-    [cartToken, getShippingRates]
+    [cartToken]
   )
 
   const handleCompleteCheckout = useCallback(async () => {
@@ -176,46 +206,6 @@ export const CheckoutProvider: FC = (props) => {
       console.log(error)
     }
   }, [cartToken])
-
-  const updatePayment = useCallback(
-    async (payment: PaymentAttributes) => {
-      try {
-        const updatedCheckout = await updateCheckout({
-          order_token: cartToken,
-          order: {
-            payments_attributes: [payment],
-          },
-        })
-        setPaymentError({ ok: true, message: null })
-      } catch (error) {
-        console.log(error)
-        setPaymentError({ ok: false, message: error })
-      }
-    },
-    [cartToken]
-  )
-
-  const updateShipping = useCallback(
-    async (shippingRate: ShippingRateAttributes) => {
-      try {
-        const updatedCheckout = await updateCheckout({
-          order_token: cartToken,
-          order: {
-            shipments_attributes: [
-              {
-                id: shippingRate.id,
-                selected_shipping_rate_id:
-                  shippingRate.selected_shipping_rate_id,
-              },
-            ],
-          },
-        })
-      } catch (error) {
-        console.log(error)
-      }
-    },
-    [cartToken]
-  )
 
   const setCardFields = useCallback(
     (card: PaymentAttributes) => dispatch({ type: 'SET_CARD_FIELDS', card }),
@@ -247,25 +237,21 @@ export const CheckoutProvider: FC = (props) => {
   }, [cartToken, getPaymentMethods])
 
   useEffect(() => {
-    if (cartToken && cart?.lineItems.length && addressFields.country_iso) {
-      updateAddress(addressFields)
+    if (!cartToken || !hasLineItems || !addressFields.country_iso) {
+      return
     }
-  }, [cart, cartToken, addressFields, updateAddress])
 
-  useEffect(() => {
-    if (cartToken && cardFields.source_attributes.number) {
-      updatePayment(cardFields)
-    }
-  }, [cartToken, cardFields, updatePayment])
-
-  useEffect(() => {
-    if (cartToken && shippingRate?.id) {
-      updateShipping({
-        id: shippingRate.id,
-        selected_shipping_rate_id: shippingRate.selected_rate_id,
+    const address = addressFields
+    const payment = cardFields
+    checkoutChain.current = checkoutChain.current
+      .then(() => syncCheckout(address, payment))
+      .catch((error) => {
+        console.log(error)
+        setAddressError({ ok: false, message: error })
+        setPaymentError({ ok: false, message: error })
+        setShippingReady(false)
       })
-    }
-  }, [cartToken, shippingRate, updateShipping])
+  }, [hasLineItems, cartToken, addressFields, cardFields, syncCheckout])
 
   // set user name and email based on rum user
   useEffect(() => {
@@ -284,6 +270,7 @@ export const CheckoutProvider: FC = (props) => {
       cardFields,
       addressFields,
       shippingRate,
+      shippingReady,
       addressStatus,
       paymentStatus,
       setCardFields,
@@ -295,6 +282,7 @@ export const CheckoutProvider: FC = (props) => {
       cardFields,
       addressFields,
       shippingRate,
+      shippingReady,
       addressStatus,
       paymentStatus,
       setCardFields,

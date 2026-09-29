@@ -248,16 +248,19 @@ export const CartProvider = ({ children }: CartProviderProps) => {
 
         console.log('Discount Applied response', cart)
         if (!cart?.id) {
-          throw new Error(cart)
+          throw new Error('Could not apply discount')
         }
         setCart(cart)
         setCartError(null)
+        return true
       } else {
         setCartError('Cart not found')
+        return false
       }
     } catch (error) {
       console.log(error)
       setCartError(error)
+      return false
     }
   }
 
