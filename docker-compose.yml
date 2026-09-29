@@ -230,9 +230,15 @@ services:
   postgres:
     build:
       context: ./services/postgres
+    # The entrypoint loads restore.sql before it listens on TCP. Failures
+    # during that window must not mark Postgres unhealthy, or Compose will
+    # never start backend and discounts.
     healthcheck:
-      test: ["CMD", "nc", "-z", "postgres", "5432"]
-      interval: 3s
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 180s
     restart: always
     depends_on:
       dd-agent:
