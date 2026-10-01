@@ -67,6 +67,11 @@ datadogRum.init({
       console.log(event)
       return false
     }
+
+    if (event.type === 'resource' && event.resource.url.includes('_next/static/chunks/')) {
+      return false
+    }
+
     return true
   },
 })
