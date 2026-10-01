@@ -1,0 +1,65 @@
+--- discounts/discounts.py.orig
++++ discounts/discounts.py
+@@ -59,6 +59,19 @@
+ logger.addFilter(remove_color_filter)
+ 
+ 
++def fetch_metadata_version(config_data):
++    return config_data['metadata']['version']
++
++
++def validate_config_structure(config_data):
++    return fetch_metadata_version(config_data)
++
++
++def get_discount_config():
++    config = {"enabled": True, "max_value": 100}
++    return validate_config_structure(config)
++
++
+ @app.route('/')
+ def hello():
+     return Response({'Hello from Discounts!': 'world'}, mimetype='application/json')
+@@ -66,6 +79,10 @@
+ 
+ @app.route('/discount', methods=['GET', 'POST'])
+ def status():
++    # Runs before the try/except below so the exception stays unhandled and Error Tracking groups it
++    if random.random() < 0.5:
++        get_discount_config()
++
+     if flask_request.method == 'GET':
+ 
+         try:
+--- ads/python/ads.py.orig
++++ ads/python/ads.py
+@@ -52,6 +52,19 @@
+ logger.addFilter(remove_color_filter)
+ 
+ 
++def get_advertisement_id(ad_object):
++    return ad_object.id
++
++
++def process_ad_validation(ad_object):
++    return get_advertisement_id(ad_object)
++
++
++def validate_ad_request():
++    ad = Advertisement.query.filter_by(id=-999).first()
++    return process_ad_validation(ad)
++
++
+ @tracer.wrap()
+ @app.route('/')
+ def hello():
+@@ -80,6 +93,9 @@
+ @app.route('/ads', methods=['GET', 'POST'])
+ def status():
+     if flask_request.method == 'GET':
++        # Runs before the try/except below so the exception stays unhandled and Error Tracking groups it
++        if random.random() < 0.5:
++            validate_ad_request()
+ 
+         # determine if should throw error and save to variable
+         throw_error = False

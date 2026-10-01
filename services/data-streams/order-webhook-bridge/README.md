@@ -164,17 +164,17 @@ curl http://localhost:8081/health
 
 ```bash
 # Check messages in order-events topic
-kubectl exec -it kafka-0 -n storedog -- \
-  kafka-console-consumer.sh \
+docker compose exec kafka \
+  kafka-console-consumer \
   --bootstrap-server localhost:9092 \
   --topic order-events \
   --from-beginning \
   --max-messages 5
 ```
 
-## Kubernetes Deployment
+## Docker Compose
 
-See: `k8s-manifests/storedog-app/deployments/order-webhook-bridge.yaml`
+The `order-webhook-bridge` service is defined in the root `docker-compose.yml` and `docker-compose.dev.yml` files.
 
 ## Distributed Tracing
 
@@ -191,10 +191,10 @@ Result: Single flame graph from user click → notification!
 ## Dependencies
 
 - Java 21
-- Spring Boot 3.4.1
+- Spring Boot 3.5.16
 - Spring Kafka
-- Apache Kafka 3.9.0
-- Protobuf 4.29.2
+- Apache Kafka (managed by Spring Boot)
+- Protobuf 4.36.2
 
 ## Related Services
 

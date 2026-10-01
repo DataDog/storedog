@@ -4,7 +4,7 @@ FROM node:24 AS builder
 RUN apt-get update && apt-get install -y wait-for-it
 
 # install datadog-ci 
-RUN npm install -g @datadog/datadog-ci
+RUN npm install -g @datadog/datadog-ci@5.24.1
 
 ARG DD_GIT_REPOSITORY_URL
 ARG DD_GIT_COMMIT_SHA

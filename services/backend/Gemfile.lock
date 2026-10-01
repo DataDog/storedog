@@ -167,7 +167,7 @@ GEM
       activerecord (>= 5.a)
       database_cleaner-core (~> 2.0.0)
     database_cleaner-core (2.0.1)
-    datadog (2.42.0)
+    datadog (2.43.0)
       cgi
       datadog-ruby_core_source (~> 3.5, >= 3.5.5)
       libdatadog (~> 40.0.0.2.0)
@@ -694,7 +694,7 @@ DEPENDENCIES
   aws-sdk-s3
   bootsnap
   dalli
-  datadog (~> 2.42.0)
+  datadog (~> 2.43.0)
   dogstatsd-ruby (~> 5.7.1)
   dotenv-rails (~> 2.1, >= 2.1.1)
   font_assets

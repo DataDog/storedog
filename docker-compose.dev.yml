@@ -14,6 +14,7 @@ services:
       - DD_CLOUD_PROVIDER_METADATA=[]
       - DD_HOSTNAME=${DD_HOSTNAME-development-host}
       - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
+      - DD_APM_MAX_TPS=1000
     networks:
       - storedog-network
     volumes:
@@ -41,6 +42,7 @@ services:
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV:-development}
       - DD_SERVICE=store-frontend-api # used for Next.js API routes
+      - DD_TRACE_SAMPLE_RATE=1
       - DD_VERSION=${NEXT_PUBLIC_DD_VERSION_FRONTEND-1.0.0}
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
@@ -75,10 +77,15 @@ services:
         condition: service_started
       dd-agent:
         condition: service_started
+      order-webhook-bridge:
+        condition: service_healthy
+      pricing:
+        condition: service_started
     networks:
       - storedog-network
     volumes:
       - './services/backend:/app'
+      - /app/public/assets
     environment:
       - REDIS_URL=redis://redis:6379/0
       - DB_HOST=postgres
@@ -92,6 +99,10 @@ services:
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV:-development}
       - DD_SERVICE=store-backend
+      - DD_TRACE_SAMPLE_RATE=1
+      - ORDER_WEBHOOK_ENABLED=${ORDER_WEBHOOK_ENABLED:-true}
+      - ORDER_WEBHOOK_URL=${ORDER_WEBHOOK_URL:-http://order-webhook-bridge:8081}
+      - PRICING_SERVICE_URL=${PRICING_SERVICE_URL:-http://pricing:5001}
       - DD_VERSION=${DD_VERSION_BACKEND:-1.0.0}
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
@@ -114,10 +125,15 @@ services:
         condition: service_started
       dd-agent:
         condition: service_started
+      order-webhook-bridge:
+        condition: service_healthy
+      pricing:
+        condition: service_started
     networks:
       - storedog-network
     volumes:
       - ./services/backend:/app
+      - /app/public/assets
     environment:
       # this will never not be true
       - WORKER=true
@@ -132,6 +148,10 @@ services:
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV:-development}
       - DD_SERVICE=store-worker
+      - DD_TRACE_SAMPLE_RATE=1
+      - ORDER_WEBHOOK_ENABLED=${ORDER_WEBHOOK_ENABLED:-true}
+      - ORDER_WEBHOOK_URL=${ORDER_WEBHOOK_URL:-http://order-webhook-bridge:8081}
+      - PRICING_SERVICE_URL=${PRICING_SERVICE_URL:-http://pricing:5001}
       - DD_VERSION=${DD_VERSION_BACKEND:-1.0.0}
       - DD_RUNTIME_METRICS_ENABLED=true
       - DD_PROFILING_ENABLED=true
@@ -194,6 +214,33 @@ services:
     labels:
       com.datadoghq.ad.logs: '[{"source": "java"}]'
 
+  # Advertisement service (Python)
+  ads-python:
+    build:
+      context: ./services/ads/python
+    command: wait-for-it postgres:5432 -- ddtrace-run flask run --port=3030 --host=0.0.0.0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      dd-agent:
+        condition: service_started
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_HOST=postgres
+      - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-development}
+      - DD_SERVICE=store-ads-python
+      - DD_VERSION=${DD_VERSION_ADS_PYTHON:-1.0.0}
+      - DD_RUNTIME_METRICS_ENABLED=true
+      - DD_PROFILING_ENABLED=true
+      - DD_PROFILING_TIMELINE_ENABLED=true
+      - DD_PROFILING_ALLOCATION_ENABLED=true
+    networks:
+      - storedog-network
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "python"}]'
+
   # Web server and reverse proxy
   service-proxy:
     build:
@@ -205,12 +252,18 @@ services:
       - storedog-network
     depends_on:
       - frontend
+      - ads
+      - ads-python
       - dd-agent
     environment:
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV:-development}
       - DD_SERVICE=service-proxy
+      - DD_TRACE_SAMPLE_RATE=1
       - DD_VERSION=${DD_VERSION_NGINX:-1.28.0}
+      - ADS_A_UPSTREAM=${ADS_A_UPSTREAM:-ads:3030}
+      - ADS_B_UPSTREAM=${ADS_B_UPSTREAM:-ads-python:3030}
+      - ADS_B_PERCENT=${ADS_B_PERCENT:-50}
     labels:
       com.datadoghq.ad.logs: '[{"source": "nginx"}]'
       com.datadoghq.ad.check_names: '["nginx"]'
@@ -280,7 +333,338 @@ services:
     cap_add:
       - 'SYS_ADMIN' # Required for Puppeteer to run in Docker
 
+  # Kafka broker (KRaft mode) for the order pipeline
+  kafka:
+    image: confluentinc/cp-kafka:8.2.4
+    hostname: kafka
+    depends_on:
+      - dd-agent
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - storedog-network
+    environment:
+      - KAFKA_NODE_ID=1
+      - KAFKA_PROCESS_ROLES=broker,controller
+      - KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+      - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
+      - CLUSTER_ID=MkU3OEVBNTcwNTJENDM2Qk
+      - KAFKA_JMX_PORT=9999
+      - KAFKA_JMX_HOSTNAME=kafka
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    labels:
+      com.datadoghq.ad.check_names: '["kafka", "kafka_consumer"]'
+      com.datadoghq.ad.init_configs: '[{},{}]'
+      com.datadoghq.ad.instances: '[{"host": "%%host%%", "port": "9999"}, {"kafka_connect_str": "%%host%%:9092", "monitor_unlisted_consumer_groups": "true"}]'
+
+  # Synthetic order generator (baseline pipeline traffic)
+  order-producer:
+    build:
+      context: ./services/data-streams/kafka-producer
+    depends_on:
+      kafka:
+        condition: service_healthy
+      dd-agent:
+        condition: service_started
+    networks:
+      - storedog-network
+    environment:
+      - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-development}
+      - DD_SERVICE=store-order-producer
+      - DD_TRACE_SAMPLE_RATE=1
+      - DD_SERVICE_NAME=store-order-producer
+      - DD_VERSION=${DD_VERSION_PIPELINE:-1.0.0}
+      - DD_DATA_STREAMS_ENABLED=true
+      - DD_LOGS_INJECTION=true
+      - DD_SERVICE_MAPPING=kafka:store-order-producer
+      - DD_TAGS=service_type:producer,pipeline_stage:order_creation
+      - BOOTSTRAP=kafka:9092
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - TOPICS_OUT=order-events
+      - MESSAGES_PER_MINUTE=${PIPELINE_MESSAGES_PER_MINUTE:-60}
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "java"}]'
+
+  # Receives Storedog order webhooks and publishes them to Kafka
+  order-webhook-bridge:
+    build:
+      context: ./services/data-streams/order-webhook-bridge
+    depends_on:
+      kafka:
+        condition: service_healthy
+      dd-agent:
+        condition: service_started
+    networks:
+      - storedog-network
+    environment:
+      - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-development}
+      - DD_SERVICE=store-order-webhook-bridge
+      - DD_SERVICE_NAME=store-order-webhook-bridge
+      - DD_VERSION=${DD_VERSION_PIPELINE:-1.0.0}
+      - DD_DATA_STREAMS_ENABLED=true
+      - DD_LOGS_INJECTION=true
+      - DD_SERVICE_MAPPING=kafka:store-order-webhook-bridge
+      - DD_TAGS=service_type:bridge,pipeline_stage:ingestion
+      - SERVER_PORT=8081
+      - BOOTSTRAP=kafka:9092
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - TOPICS_OUT=order-events
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8081 && printf 'GET /health HTTP/1.0\\r\\n\\r\\n' >&3 && head -1 <&3 | grep -q 200"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "java"}]'
+
+  order-validator:
+    build:
+      context: ./services/data-streams/kafka-consumer
+    depends_on:
+      kafka:
+        condition: service_healthy
+      dd-agent:
+        condition: service_started
+    networks:
+      - storedog-network
+    environment:
+      - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-development}
+      - DD_SERVICE=store-order-validator
+      - DD_SERVICE_NAME=store-order-validator
+      - DD_VERSION=${DD_VERSION_PIPELINE:-1.0.0}
+      - DD_DATA_STREAMS_ENABLED=true
+      - DD_LOGS_INJECTION=true
+      - DD_SERVICE_MAPPING=kafka:store-order-validator
+      - DD_TAGS=service_type:validation,pipeline_stage:order_validation
+      - KAFKA_CONSUME_SERVER=kafka:9092
+      - KAFKA_PRODUCE_SERVER=kafka:9092
+      - TOPICS_IN=order-events
+      - TOPICS_OUT=validated-orders,invalid-orders
+      - CONSUMER_GROUP=order-validator-group
+      - PROCESSING_TIME_MS_MIN=50
+      - PROCESSING_TIME_MS_MAX=100
+      - ERROR_RATE_PERCENT=0
+      - VALIDATION_MODE=shipping-country
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "java"}]'
+
+  inventory-service:
+    build:
+      context: ./services/data-streams/kafka-consumer
+    depends_on:
+      kafka:
+        condition: service_healthy
+      dd-agent:
+        condition: service_started
+    networks:
+      - storedog-network
+    environment:
+      - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-development}
+      - DD_SERVICE=store-inventory-service
+      - DD_SERVICE_NAME=store-inventory-service
+      - DD_VERSION=${DD_VERSION_PIPELINE:-1.0.0}
+      - DD_DATA_STREAMS_ENABLED=true
+      - DD_LOGS_INJECTION=true
+      - DD_SERVICE_MAPPING=kafka:store-inventory-service
+      - DD_TAGS=service_type:inventory,pipeline_stage:inventory_reservation
+      - KAFKA_CONSUME_SERVER=kafka:9092
+      - KAFKA_PRODUCE_SERVER=kafka:9092
+      - TOPICS_IN=validated-orders
+      - TOPICS_OUT=inventory-reserved,inventory-unavailable
+      - CONSUMER_GROUP=inventory-service-group
+      - PROCESSING_TIME_MS_MIN=100
+      - PROCESSING_TIME_MS_MAX=200
+      - ERROR_RATE_PERCENT=0
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "java"}]'
+
+  payment-processor:
+    build:
+      context: ./services/data-streams/kafka-consumer
+    depends_on:
+      kafka:
+        condition: service_healthy
+      dd-agent:
+        condition: service_started
+    networks:
+      - storedog-network
+    environment:
+      - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-development}
+      - DD_SERVICE=store-payment-processor
+      - DD_SERVICE_NAME=store-payment-processor
+      - DD_VERSION=${DD_VERSION_PIPELINE:-1.0.0}
+      - DD_DATA_STREAMS_ENABLED=true
+      - DD_LOGS_INJECTION=true
+      - DD_SERVICE_MAPPING=kafka:store-payment-processor
+      - DD_TAGS=service_type:payment,pipeline_stage:payment_processing,pci_compliant:true
+      - KAFKA_CONSUME_SERVER=kafka:9092
+      - KAFKA_PRODUCE_SERVER=kafka:9092
+      - TOPICS_IN=inventory-reserved
+      - TOPICS_OUT=payment-confirmed,payment-failed
+      - CONSUMER_GROUP=payment-processor-group
+      - PROCESSING_TIME_MS_MIN=200
+      - PROCESSING_TIME_MS_MAX=500
+      - ERROR_RATE_PERCENT=0
+      - VALIDATION_MODE=payment-amount
+      - MAX_PAYMENT_AMOUNT_CENTS=30000
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "java"}]'
+
+  fraud-detector:
+    build:
+      context: ./services/data-streams/kafka-consumer
+    depends_on:
+      kafka:
+        condition: service_healthy
+      dd-agent:
+        condition: service_started
+    networks:
+      - storedog-network
+    environment:
+      - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-development}
+      - DD_SERVICE=store-fraud-detector
+      - DD_SERVICE_NAME=store-fraud-detector
+      - DD_VERSION=${DD_VERSION_PIPELINE:-1.0.0}
+      - DD_DATA_STREAMS_ENABLED=true
+      - DD_LOGS_INJECTION=true
+      - DD_SERVICE_MAPPING=kafka:store-fraud-detector
+      - DD_TAGS=service_type:security,pipeline_stage:fraud_detection,ml_enabled:true
+      - KAFKA_CONSUME_SERVER=kafka:9092
+      - KAFKA_PRODUCE_SERVER=kafka:9092
+      - TOPICS_IN=order-events,payment-confirmed
+      - TOPICS_OUT=fraud-alerts,order-events-analyzed
+      - CONSUMER_GROUP=fraud-detector-group
+      - PROCESSING_TIME_MS_MIN=50
+      - PROCESSING_TIME_MS_MAX=150
+      - ERROR_RATE_PERCENT=0
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "java"}]'
+
+  fulfillment-service:
+    build:
+      context: ./services/data-streams/kafka-consumer
+    depends_on:
+      kafka:
+        condition: service_healthy
+      dd-agent:
+        condition: service_started
+    networks:
+      - storedog-network
+    environment:
+      - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-development}
+      - DD_SERVICE=store-fulfillment-service
+      - DD_SERVICE_NAME=store-fulfillment-service
+      - DD_VERSION=${DD_VERSION_PIPELINE:-1.0.0}
+      - DD_DATA_STREAMS_ENABLED=true
+      - DD_LOGS_INJECTION=true
+      - DD_SERVICE_MAPPING=kafka:store-fulfillment-service
+      - DD_TAGS=service_type:fulfillment,pipeline_stage:order_fulfillment
+      - KAFKA_CONSUME_SERVER=kafka:9092
+      - KAFKA_PRODUCE_SERVER=kafka:9092
+      - TOPICS_IN=payment-confirmed
+      - TOPICS_OUT=order-fulfilled,shipment-created,warehouse-assigned
+      - CONSUMER_GROUP=fulfillment-service-group
+      - PROCESSING_TIME_MS_MIN=150
+      - PROCESSING_TIME_MS_MAX=300
+      - ERROR_RATE_PERCENT=0
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "java"}]'
+
+  notification-service:
+    build:
+      context: ./services/data-streams/kafka-consumer
+    depends_on:
+      kafka:
+        condition: service_healthy
+      dd-agent:
+        condition: service_started
+    networks:
+      - storedog-network
+    environment:
+      - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-development}
+      - DD_SERVICE=store-notification-service
+      - DD_SERVICE_NAME=store-notification-service
+      - DD_VERSION=${DD_VERSION_PIPELINE:-1.0.0}
+      - DD_DATA_STREAMS_ENABLED=true
+      - DD_LOGS_INJECTION=true
+      - DD_SERVICE_MAPPING=kafka:store-notification-service
+      - DD_TAGS=service_type:notification,pipeline_stage:customer_communication
+      - KAFKA_CONSUME_SERVER=kafka:9092
+      - TOPICS_IN=order-fulfilled,shipment-created,payment-failed,inventory-unavailable,fraud-alerts
+      - CONSUMER_GROUP=notification-service-group
+      - PROCESSING_TIME_MS_MIN=300
+      - PROCESSING_TIME_MS_MAX=800
+      - ERROR_RATE_PERCENT=0
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "java"}]'
+
+  analytics-aggregator:
+    build:
+      context: ./services/data-streams/kafka-consumer
+    depends_on:
+      kafka:
+        condition: service_healthy
+      dd-agent:
+        condition: service_started
+    networks:
+      - storedog-network
+    environment:
+      - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-development}
+      - DD_SERVICE=store-analytics-aggregator
+      - DD_SERVICE_NAME=store-analytics-aggregator
+      - DD_VERSION=${DD_VERSION_PIPELINE:-1.0.0}
+      - DD_DATA_STREAMS_ENABLED=true
+      - DD_LOGS_INJECTION=true
+      - DD_SERVICE_MAPPING=kafka:store-analytics-aggregator
+      - DD_TAGS=service_type:analytics,pipeline_stage:data_aggregation,consumer_only:true
+      - KAFKA_CONSUME_SERVER=kafka:9092
+      - TOPICS_IN=order-events,order-fulfilled,payment-confirmed,fraud-alerts
+      - CONSUMER_GROUP=analytics-aggregator-group
+      - PROCESSING_TIME_MS_MIN=500
+      - PROCESSING_TIME_MS_MAX=1000
+      - ERROR_RATE_PERCENT=0
+      - KAFKA_CONSUMER_FETCH_MIN_BYTES=5120
+      - KAFKA_CONSUMER_FETCH_MAX_WAIT_MS=5000
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "java"}]'
+
+  # Pricing microservice (bulk discount calculations used by the backend)
+  pricing:
+    build:
+      context: ./services/pricing
+    networks:
+      - storedog-network
+    environment:
+      - PORT=5001
+      - DD_AGENT_HOST=dd-agent
+      - DD_ENV=${DD_ENV:-development}
+      - DD_SERVICE=store-pricing
+      - DD_VERSION=${DD_VERSION_PRICING:-1.0.0}
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "go"}]'
+
 volumes:
+  kafka_data: # Kafka broker data
   redis: # Redis data persistence
   postgres_logs: # PostgreSQL logs storage
 

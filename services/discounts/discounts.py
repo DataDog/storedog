@@ -59,6 +59,19 @@ remove_color_filter = NoEscape()
 logger.addFilter(remove_color_filter)
 
 
+def fetch_metadata_version(config_data):
+    return config_data['metadata']['version']
+
+
+def validate_config_structure(config_data):
+    return fetch_metadata_version(config_data)
+
+
+def get_discount_config():
+    config = {"enabled": True, "max_value": 100}
+    return validate_config_structure(config)
+
+
 @app.route('/')
 def hello():
     return Response({'Hello from Discounts!': 'world'}, mimetype='application/json')
@@ -66,6 +79,10 @@ def hello():
 
 @app.route('/discount', methods=['GET', 'POST'])
 def status():
+    # Runs before the try/except below so the exception stays unhandled and Error Tracking groups it
+    if random.random() < 0.5:
+        get_discount_config()
+
     if flask_request.method == 'GET':
 
         try:

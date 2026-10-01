@@ -1,8 +1,8 @@
 certifi==2026.7.22
 chardet==4.0.0
 click==8.5.0
-ddtrace==4.14.0
-Flask==3.1.2
+ddtrace==4.15.3
+Flask==3.1.3
 Flask-Cors==6.0.5
 Flask-SQLAlchemy==3.1.1
 idna==3.20
@@ -12,7 +12,7 @@ Jinja2==3.1.6
 MarkupSafe==2.1.5
 names==0.3.0
 nose==1.3.7
-protobuf==7.36.1
+protobuf==7.36.2
 psutil==5.8.0
 psycopg2==2.9.13
 PyDispatcher==2.0.5
@@ -20,8 +20,8 @@ PyYAML==6.0.2
 requests==2.34.2
 six==1.15.0
 sortedcontainers==2.3.0
-SQLAlchemy==2.0.53
+SQLAlchemy==2.0.54
 tenacity==6.3.1
-urllib3==2.7.0
-Werkzeug==3.1.8
+urllib3==2.8.0
+Werkzeug==3.1.9
 JSON-log-formatter==0.5.2

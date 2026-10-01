@@ -1,6 +1,9 @@
 package datadog.kafka.example.consumer;
 
 import com.storedog.kafka.proto.OrderEvent;
+import datadog.kafka.example.consumer.validation.OrderValidation;
+import datadog.kafka.example.consumer.validation.OrderValidations;
+import datadog.trace.api.Trace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +29,8 @@ public class MessageListener {
     private final int processingTimeMax = getEnvInt("PROCESSING_TIME_MS_MAX", 100);
     private final int errorRatePercent = getEnvInt("ERROR_RATE_PERCENT", 0);
     
+    private final OrderValidation orderValidation = OrderValidations.fromEnvironment();
+
     private final Random random = new Random();
     
     // Public getters for SpEL access in @KafkaListener
@@ -41,42 +46,46 @@ public class MessageListener {
                    topics = "#{__listener.inTopics.split(',')}")
     public void listen(byte[] messageBytes) {
         String messageId = UUID.randomUUID().toString().substring(0, 8);
-        long startTime = System.currentTimeMillis();
-        
+
         try {
-            log.info("[{}] Received message ({} bytes)", messageId, messageBytes.length);
-            
-            // Deserialize the protobuf message
-            OrderEvent message = deserializeMessage(messageBytes);
-            if (message == null) {
-                log.error("[{}] Failed to deserialize message, skipping", messageId);
-                return;
-            }
-            
-            // Log order details
-            log.info("[{}] Processing order: {} for customer: {}", 
-                messageId, message.getOrderId(), message.getCustomerId());
-            
-            // Simulate processing time
-            simulateProcessing();
-            
-            // Simulate errors based on configuration
-            if (shouldSimulateError()) {
-                log.error("[{}] Simulated error during processing (error rate: {}%)", 
-                    messageId, errorRatePercent);
-                // In real scenario, would route to error topic
-                return;
-            }
-            
-            // Forward message to downstream topics
-            forwardMessageToDownstreamTopics(messageBytes, message.getOrderId());
-            
-            long processingTime = System.currentTimeMillis() - startTime;
-            log.info("[{}] Successfully processed in {}ms", messageId, processingTime);
-            
+            processOrder(messageId, messageBytes);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            // Validation failures must reach the Kafka error handler so the span is marked as an error
+            throw e;
         } catch (Exception e) {
             log.error("[{}] Error processing message", messageId, e);
         }
+    }
+
+    @Trace(operationName = "order.process", resourceName = "MessageListener.processOrder")
+    void processOrder(String messageId, byte[] messageBytes) throws Exception {
+        long startTime = System.currentTimeMillis();
+
+        log.info("[{}] Received message ({} bytes)", messageId, messageBytes.length);
+
+        OrderEvent message = deserializeMessage(messageBytes);
+        if (message == null) {
+            log.error("[{}] Failed to deserialize message, skipping", messageId);
+            return;
+        }
+
+        log.info("[{}] Processing order: {} for customer: {}",
+            messageId, message.getOrderId(), message.getCustomerId());
+
+        orderValidation.validate(message);
+
+        simulateProcessing();
+
+        if (shouldSimulateError()) {
+            log.error("[{}] Simulated error during processing (error rate: {}%)",
+                messageId, errorRatePercent);
+            return;
+        }
+
+        forwardMessageToDownstreamTopics(messageBytes, message.getOrderId());
+
+        long processingTime = System.currentTimeMillis() - startTime;
+        log.info("[{}] Successfully processed in {}ms", messageId, processingTime);
     }
 
     /**

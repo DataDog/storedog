@@ -22,8 +22,11 @@ WORKDIR /app
 # Copy built JAR from build stage
 COPY --from=build /app/build/libs/*.jar app.jar
 
+# Datadog Java tracer (same source as services/ads/java)
+ADD https://dtdg.co/latest-java-tracer /app/dd-java-agent.jar
+
 # Expose application port
 EXPOSE 8081
 
 # Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-javaagent:/app/dd-java-agent.jar", "-jar", "app.jar"]

@@ -11,6 +11,12 @@ Storedog is a Dockerized e-commerce site used primarily in labs run at [learn.da
 - **DBM**: An optional Python service that runs a long-running query to demonstrate Database Monitoring. See [the DBM service's README](./services/dbm/README.md) for details on how to run this service.
 - **The Datadog Agent**: collects metrics and traces from the other services and sends them to Datadog.
 - **Puppeteer**: A Node.js service that runs a headless browser to generate RUM data for the frontend.
+- **Order pipeline**: A Kafka broker, an order webhook bridge, and consumer services that process completed orders. See [the order pipeline README](./services/data-streams/README.md).
+- **Pricing**: A Go service that calculates bulk discounts for the backend.
+- **Ads (Python)**: A second ads service. The service proxy sends it 50% of ad requests by default (`ADS_B_PERCENT`).
+
+> [!NOTE]
+> This branch is the APM Error Tracking course version of Storedog. It runs only on Docker Compose and contains four intentional error groups: a `KeyError` in `store-discounts`, an `AttributeError` in `store-ads-python`, a cross-service failure that starts in `order-webhook-bridge` and surfaces in `store-order-validator`, and a validation failure in `store-payment-processor`. See [the patches README](./services/patches/README.md).
 
 > [!NOTE]
 > This application is built and tested to run within [Datadog Learning Center](https://learn.datadoghq.com/) lab environments. This application can be run outside of the Datadog Learning Center lab environments, but some features may not work as expected. 

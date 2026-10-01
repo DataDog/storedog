@@ -1,112 +1,69 @@
-# Data Streams - Kafka Event Processing for Storedog
+# Storedog order pipeline
 
-This directory contains generic Kafka producer and consumer services that simulate an e-commerce event-driven architecture for the Storedog application.
+The order pipeline turns completed Storedog orders into a chain of Kafka events. It runs entirely in Docker Compose next to the rest of Storedog. Every service reports traces, logs, and Data Streams Monitoring (DSM) metrics to the `dd-agent` container.
 
-## Architecture
+## How an order flows
 
-The system uses a generic codebase approach where service behavior is defined through configuration files rather than separate codebases:
+1. A customer completes checkout in `store-backend`.
+1. The backend queues an `OrderWebhookJob` in Sidekiq.
+1. `store-worker` runs the job and sends the order to `store-order-webhook-bridge` over HTTP.
+1. The bridge converts the JSON payload to a protobuf `OrderEvent` and publishes it to the `order-events` topic.
+1. The Kafka consumers pass the event along the pipeline:
 
-- **kafka-producer**: Generic producer service that can be configured to produce events to any topic
-- **kafka-consumer**: Generic consumer service that can consume from topics, process messages, and forward to downstream topics
-- **service-definitions**: YAML files that define the behavior and configuration of each service instance
+    | Service | Reads | Writes |
+    |---------|-------|--------|
+    | `store-order-validator` | `order-events` | `validated-orders`, `invalid-orders` |
+    | `store-inventory-service` | `validated-orders` | `inventory-reserved`, `inventory-unavailable` |
+    | `store-payment-processor` | `inventory-reserved` | `payment-confirmed`, `payment-failed` |
+    | `store-fraud-detector` | `order-events`, `payment-confirmed` | `fraud-alerts`, `order-events-analyzed` |
+    | `store-fulfillment-service` | `payment-confirmed` | `order-fulfilled`, `shipment-created`, `warehouse-assigned` |
+    | `store-notification-service` | `order-fulfilled`, `shipment-created`, `payment-failed`, `inventory-unavailable`, `fraud-alerts` | none |
+    | `store-analytics-aggregator` | `order-events`, `order-fulfilled`, `payment-confirmed`, `fraud-alerts` | none |
 
-## Service Definitions
+`store-order-producer` also publishes synthetic orders to `order-events` (60 per minute by default), so the pipeline stays busy without real checkouts.
 
-Services are defined in `service-definitions/` directory. Each YAML file defines:
+See [PIPELINE_DIAGRAM.md](./PIPELINE_DIAGRAM.md) for a diagram and [SERVICE_DEFINITIONS.md](./SERVICE_DEFINITIONS.md) for the per-service settings.
 
-- Service name and metadata
-- Input/output topics
-- Message processing behavior
-- Consumer group configuration
-- Error handling rules
+## Services
 
-## E-commerce Pipeline Flow
+| Directory | Compose service | Purpose |
+|-----------|-----------------|---------|
+| `kafka-producer/` | `order-producer` | Publishes synthetic orders |
+| `order-webhook-bridge/` | `order-webhook-bridge` | Receives Storedog order webhooks and publishes them to Kafka |
+| `kafka-consumer/` | `order-validator`, `inventory-service`, `payment-processor`, `fraud-detector`, `fulfillment-service`, `notification-service`, `analytics-aggregator` | One JAR, configured per stage with environment variables |
 
-```
-Order Processing Flow:
-1. order-created-producer → order-events (topic)
-2. order-validator (consumer/producer) → validated-orders (topic)
-3. inventory-service (consumer/producer) → inventory-reserved (topic)
-4. payment-processor (consumer/producer) → payment-confirmed (topic)
-5. fraud-detector (consumer/producer) → fraud-alerts (topic)
-6. fulfillment-service (consumer/producer) → order-fulfilled (topic)
-7. notification-service (consumer) → sends notifications
+The pricing service lives in [`services/pricing`](../pricing/) and is called by the backend for cart and product pricing.
 
-Analytics Flow:
-- order-events → analytics-aggregator (consumer only)
-- inventory-reserved → warehouse-allocation (topic)
-```
+## Run it
 
-## Technology Stack
-
-- **Java 21** (LTS)
-- **Spring Boot 3.4.1**
-- **Spring Kafka 3.3.0**
-- **Apache Kafka 3.9.0**
-- **Protobuf 4.29.2**
-- **Gradle 8.x**
-
-## Message Format
-
-All messages use Protocol Buffers (Protobuf) for efficient serialization and schema evolution.
-
-## Datadog Integration
-
-Services are instrumented for Datadog Data Streams Monitoring to track:
-- End-to-end latency between services
-- Consumer lag per topic
-- Throughput and message rates
-- Pipeline health and bottlenecks
-
-**Note**: Datadog APM agent is NOT included in the base images. This will be added via Kubernetes injection in the deployment phase.
-
-## Building Services
-
-### Prerequisites
-- Docker installed
-- Local registry running (e.g., `localhost:5000`) or remote registry access
-- Set `REGISTRY_URL` environment variable
-
-### Build and Push Commands
+Start everything from the repository root:
 
 ```bash
-cd /path/to/storedog
-
-# Set your registry URL (default: localhost:5000)
-export REGISTRY_URL=localhost:5000
-
-# Build Kafka Producer
-docker build -t "$REGISTRY_URL/kafka-producer:1.0.0" ./services/data-streams/kafka-producer
-docker push "$REGISTRY_URL/kafka-producer:1.0.0"
-
-# Build Kafka Consumer
-docker build -t "$REGISTRY_URL/kafka-consumer:1.0.0" ./services/data-streams/kafka-consumer
-docker push "$REGISTRY_URL/kafka-consumer:1.0.0"
-
-# Build Order Webhook Bridge
-docker build -t "$REGISTRY_URL/order-webhook-bridge:1.0.0" ./services/data-streams/order-webhook-bridge
-docker push "$REGISTRY_URL/order-webhook-bridge:1.0.0"
+docker compose -f docker-compose.dev.yml up -d --build
 ```
 
-### Build All at Once
+The `docker-compose.yml` file runs the same services from published images.
 
-```bash
-cd /path/to/storedog
-export REGISTRY_URL=localhost:5000
+## Consumer configuration
 
-# Build and push all data streams images
-docker build -t "$REGISTRY_URL/kafka-producer:1.0.0" ./services/data-streams/kafka-producer && \
-docker push "$REGISTRY_URL/kafka-producer:1.0.0" && \
-docker build -t "$REGISTRY_URL/kafka-consumer:1.0.0" ./services/data-streams/kafka-consumer && \
-docker push "$REGISTRY_URL/kafka-consumer:1.0.0" && \
-docker build -t "$REGISTRY_URL/order-webhook-bridge:1.0.0" ./services/data-streams/order-webhook-bridge && \
-docker push "$REGISTRY_URL/order-webhook-bridge:1.0.0"
-```
+All consumers share one image. These environment variables select the behavior:
 
-## Running in Kubernetes
+| Variable | Purpose |
+|----------|---------|
+| `TOPICS_IN` | Comma-separated topics to read |
+| `TOPICS_OUT` | Comma-separated topics to forward each event to |
+| `CONSUMER_GROUP` | Kafka consumer group |
+| `PROCESSING_TIME_MS_MIN`, `PROCESSING_TIME_MS_MAX` | Simulated processing time range |
+| `ERROR_RATE_PERCENT` | Percent of events that log a simulated error and stop (default `0`) |
+| `VALIDATION_MODE` | Stage-specific validation: `shipping-country`, `payment-amount`, or `none` |
+| `MAX_PAYMENT_AMOUNT_CENTS` | Limit used by the `payment-amount` validation |
 
-See `../../k8s-manifests/README.md#data-streams-monitoring` for Kubernetes deployment manifests and instructions.
+## Tracing
 
-## Running with Docker Compose (Alternative)
+Each Java service starts with the Datadog Java tracer (`-javaagent:/app/dd-java-agent.jar`). The Docker build downloads the latest tracer from `https://dtdg.co/latest-java-tracer`, the same way `services/ads/java` does. Set these variables on every service:
 
-See `DOCKER_COMPOSE.md` for Docker Compose deployment instructions (useful for local development).
+- `DD_AGENT_HOST=dd-agent`
+- `DD_SERVICE`, `DD_ENV`, `DD_VERSION`
+- `DD_DATA_STREAMS_ENABLED=true`
+
+The backend and worker propagate trace context through Sidekiq, so one trace covers checkout, the webhook call, the Kafka hop, and the consumers.

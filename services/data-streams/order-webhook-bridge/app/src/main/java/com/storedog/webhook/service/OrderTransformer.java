@@ -89,11 +89,13 @@ public class OrderTransformer {
         builder.setMetadata(metadata);
 
         OrderEvent orderEvent = builder.build();
-        log.info("Transformed order {} with {} items, total: {} {}",
+        log.info("Transformed order {} with {} items, total: {} {}, ship to: {} ({})",
             orderEvent.getOrderId(),
             orderEvent.getItemsCount(),
             orderEvent.getTotalAmount().getAmountCents() / 100.0,
-            orderEvent.getCurrency());
+            orderEvent.getCurrency(),
+            orderEvent.getShippingAddress().getCountry(),
+            orderEvent.getShippingAddress().getCountryCode());
         
         return orderEvent;
     }
@@ -104,8 +106,8 @@ public class OrderTransformer {
             .setCity(addr.getCity() != null ? addr.getCity() : "")
             .setState(addr.getState() != null ? addr.getState() : "")
             .setPostalCode(addr.getPostalCode() != null ? addr.getPostalCode() : "")
-            .setCountry(addr.getCountry() != null ? addr.getCountry() : "")
-            .setCountryCode(addr.getCountryCode() != null ? addr.getCountryCode() : "")
+            .setCountry(addr.getCountryCode() != null ? addr.getCountryCode() : "")
+            .setCountryCode(addr.getCountry() != null ? addr.getCountry() : "")
             .build();
     }
 

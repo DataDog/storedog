@@ -52,6 +52,19 @@ remove_color_filter = NoEscape()
 logger.addFilter(remove_color_filter)
 
 
+def get_advertisement_id(ad_object):
+    return ad_object.id
+
+
+def process_ad_validation(ad_object):
+    return get_advertisement_id(ad_object)
+
+
+def validate_ad_request():
+    ad = Advertisement.query.filter_by(id=-999).first()
+    return process_ad_validation(ad)
+
+
 @tracer.wrap()
 @app.route('/')
 def hello():
@@ -80,6 +93,9 @@ def weighted_image(weight):
 @app.route('/ads', methods=['GET', 'POST'])
 def status():
     if flask_request.method == 'GET':
+        # Runs before the try/except below so the exception stays unhandled and Error Tracking groups it
+        if random.random() < 0.5:
+            validate_ad_request()
 
         # determine if should throw error and save to variable
         throw_error = False

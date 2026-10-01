@@ -1,5 +1,5 @@
 plugins {
-    id 'org.springframework.boot' version '3.4.1'
+    id 'org.springframework.boot' version '3.5.16'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'java'
     id 'com.google.protobuf' version '0.9.4'
@@ -16,39 +16,35 @@ java {
 
 repositories {
     mavenCentral()
-    maven {
-        url = uri('https://packages.confluent.io/maven/')
-    }
 }
 
 dependencies {
     // Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.kafka:spring-kafka'
-    
+
     // Kafka
-    implementation 'org.apache.kafka:kafka-clients:3.9.0'
-    
+    implementation 'org.apache.kafka:kafka-clients'
+
     // Protobuf
-    implementation 'com.google.protobuf:protobuf-java:4.29.2'
-    implementation 'io.confluent:kafka-protobuf-serializer:7.8.0'
-    
+    implementation 'com.google.protobuf:protobuf-java:4.36.2'
+
     // JSON processing
     implementation 'com.fasterxml.jackson.core:jackson-databind'
-    
+
     // Logging
     implementation 'org.slf4j:slf4j-api'
     implementation 'ch.qos.logback:logback-classic'
-    
+
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
 protobuf {
     protoc {
-        artifact = 'com.google.protobuf:protoc:4.29.2'
+        artifact = 'com.google.protobuf:protoc:4.36.2'
     }
-    
+
     generateProtoTasks {
         all().each { task ->
             task.builtins {
