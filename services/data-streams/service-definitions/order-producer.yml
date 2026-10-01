@@ -1,0 +1,59 @@
+# Order Producer Service Definition
+# Generates order events (simulates order creation from Storedog backend)
+
+name: order-producer
+type: producer
+description: Produces order events to simulate orders created in Storedog application
+
+kafka:
+  producer:
+    topics:
+      - order-events
+    batch_size: 16384
+    linger_ms: 10
+    compression_type: snappy
+
+generation:
+  # Message production rate
+  rate:
+    messages_per_minute: 60
+    burst_enabled: true
+    burst_multiplier: 5
+    burst_probability: 0.1
+  
+  # Order characteristics
+  order_data:
+    customer_pool_size: 1000
+    products_per_order: 1-5
+    order_value_range: 10-500
+    currencies:
+      - USD
+      - EUR
+      - GBP
+  
+  locations:
+    - city: "New York"
+      country: "USA"
+      weight: 30
+    - city: "Los Angeles" 
+      country: "USA"
+      weight: 25
+    - city: "London"
+      country: "UK"
+      weight: 15
+    - city: "Paris"
+      country: "France"
+      weight: 10
+    - city: "Tokyo"
+      country: "Japan"
+      weight: 10
+    - city: "Sydney"
+      country: "Australia"
+      weight: 10
+
+metrics:
+  track_production_rate: true
+  track_message_size: true
+  custom_tags:
+    - service_type:producer
+    - pipeline_stage:order_creation

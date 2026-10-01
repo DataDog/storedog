@@ -1,0 +1,52 @@
+# Fraud Detection Service Definition
+# Analyzes orders for potential fraud in parallel with main flow
+
+name: fraud-detector
+type: consumer-producer
+description: Analyzes orders for fraudulent patterns and suspicious activity
+
+kafka:
+  consumer:
+    topics:
+      - order-events        # Listens to all orders from the start
+      - payment-confirmed   # Also analyzes confirmed payments
+    group_id: fraud-detector-group
+    fetch_min_bytes: 1024
+    fetch_max_wait_ms: 100
+  
+  producer:
+    topics:
+      - fraud-alerts
+      - order-events-analyzed
+
+processing:
+  validation_rules:
+    - check_velocity_rules
+    - analyze_customer_patterns
+    - check_billing_shipping_mismatch
+    - validate_device_fingerprint
+    - check_blacklist
+  
+  routing:
+    fraud_detected_topic: fraud-alerts
+    clean_order_topic: order-events-analyzed
+  
+  # Fraud detection needs to be fast
+  processing_time_ms: 50-150
+  error_rate_percent: 1
+  
+  # Fraud scoring
+  fraud_threshold: 0.75
+  high_risk_actions:
+    - flag_for_review
+    - notify_security_team
+    - hold_order
+
+metrics:
+  track_latency: true
+  track_throughput: true
+  track_fraud_scores: true
+  custom_tags:
+    - service_type:security
+    - pipeline_stage:fraud_detection
+    - ml_enabled:true

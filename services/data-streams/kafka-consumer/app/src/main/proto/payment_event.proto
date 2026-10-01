@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package storedog.events;
+
+option java_package = "com.storedog.kafka.proto";
+option java_outer_classname = "PaymentProto";
+option java_multiple_files = true;
+
+import "order_event.proto";
+
+// Payment processing event
+message PaymentEvent {
+  string payment_id = 1;
+  string order_id = 2;
+  int64 timestamp = 3;
+  PaymentStatus status = 4;
+  Money amount = 5;
+  PaymentMethod method = 6;
+  string transaction_id = 7;
+  string authorization_code = 8;
+  PaymentError error = 9;
+}
+
+// Payment error details
+message PaymentError {
+  string code = 1;
+  string message = 2;
+  ErrorType type = 3;
+}
+
+// Payment status
+enum PaymentStatus {
+  PAYMENT_STATUS_UNKNOWN = 0;
+  PAYMENT_STATUS_PENDING = 1;
+  PAYMENT_STATUS_AUTHORIZED = 2;
+  PAYMENT_STATUS_CAPTURED = 3;
+  PAYMENT_STATUS_DECLINED = 4;
+  PAYMENT_STATUS_FAILED = 5;
+  PAYMENT_STATUS_REFUNDED = 6;
+  PAYMENT_STATUS_CANCELLED = 7;
+}
+
+// Error type
+enum ErrorType {
+  ERROR_TYPE_UNKNOWN = 0;
+  ERROR_TYPE_INSUFFICIENT_FUNDS = 1;
+  ERROR_TYPE_INVALID_CARD = 2;
+  ERROR_TYPE_EXPIRED_CARD = 3;
+  ERROR_TYPE_FRAUD_SUSPECTED = 4;
+  ERROR_TYPE_PROCESSOR_ERROR = 5;
+  ERROR_TYPE_NETWORK_ERROR = 6;
+}

@@ -1,0 +1,45 @@
+# Analytics Aggregator Service Definition
+# Consumes order events for analytics and reporting (no forwarding)
+
+name: analytics-aggregator
+type: consumer
+description: Aggregates order data for analytics, reporting, and business intelligence
+
+kafka:
+  consumer:
+    topics:
+      - order-events
+      - order-fulfilled
+      - payment-confirmed
+      - fraud-alerts
+    group_id: analytics-aggregator-group
+    fetch_min_bytes: 5120
+    fetch_max_wait_ms: 5000
+
+processing:
+  aggregations:
+    - order_volume_by_hour
+    - revenue_by_product
+    - customer_purchase_patterns
+    - fraud_rate_by_region
+    - fulfillment_time_metrics
+  
+  # Analytics can process in batches
+  batch_size: 100
+  processing_time_ms: 500-1000
+  error_rate_percent: 1
+  
+  # Data sink (simulated)
+  destinations:
+    - data_warehouse
+    - real_time_dashboard
+    - ml_training_pipeline
+
+metrics:
+  track_latency: true
+  track_throughput: true
+  track_batch_size: true
+  custom_tags:
+    - service_type:analytics
+    - pipeline_stage:data_aggregation
+    - consumer_only:true

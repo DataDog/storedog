@@ -1,0 +1,42 @@
+# Payment Processor Service Definition
+# Processes payments for orders with reserved inventory
+
+name: payment-processor
+type: consumer-producer
+description: Authorizes and captures payments for orders
+
+kafka:
+  consumer:
+    topics:
+      - inventory-reserved
+    group_id: payment-processor-group
+    fetch_min_bytes: 2048
+    fetch_max_wait_ms: 500
+  
+  producer:
+    topics:
+      - payment-confirmed
+      - payment-failed
+
+processing:
+  validation_rules:
+    - validate_payment_method
+    - authorize_payment
+    - capture_payment
+    - update_order_status
+  
+  routing:
+    success_topic: payment-confirmed
+    failure_topic: payment-failed
+  
+  # Payment processing is typically slower
+  processing_time_ms: 200-500
+  error_rate_percent: 3
+
+metrics:
+  track_latency: true
+  track_throughput: true
+  custom_tags:
+    - service_type:payment
+    - pipeline_stage:payment_processing
+    - pci_compliant:true

@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package storedog.events;
+
+option java_package = "com.storedog.kafka.proto";
+option java_outer_classname = "FulfillmentProto";
+option java_multiple_files = true;
+
+// Fulfillment event
+message FulfillmentEvent {
+  string fulfillment_id = 1;
+  string order_id = 2;
+  int64 timestamp = 3;
+  FulfillmentStatus status = 4;
+  string warehouse_id = 5;
+  ShipmentDetails shipment = 6;
+  repeated string tracking_numbers = 7;
+}
+
+// Shipment details
+message ShipmentDetails {
+  string carrier = 1;
+  string service_level = 2;
+  string tracking_number = 3;
+  int64 estimated_delivery_date = 4;
+  int64 actual_ship_date = 5;
+  ShippingAddress destination = 6;
+}
+
+// Shipping address
+message ShippingAddress {
+  string name = 1;
+  string street = 2;
+  string city = 3;
+  string state = 4;
+  string postal_code = 5;
+  string country = 6;
+  string phone = 7;
+}
+
+// Fulfillment status
+enum FulfillmentStatus {
+  FULFILLMENT_STATUS_UNKNOWN = 0;
+  FULFILLMENT_STATUS_PENDING = 1;
+  FULFILLMENT_STATUS_PROCESSING = 2;
+  FULFILLMENT_STATUS_PICKED = 3;
+  FULFILLMENT_STATUS_PACKED = 4;
+  FULFILLMENT_STATUS_SHIPPED = 5;
+  FULFILLMENT_STATUS_IN_TRANSIT = 6;
+  FULFILLMENT_STATUS_OUT_FOR_DELIVERY = 7;
+  FULFILLMENT_STATUS_DELIVERED = 8;
+  FULFILLMENT_STATUS_FAILED = 9;
+  FULFILLMENT_STATUS_RETURNED = 10;
+}

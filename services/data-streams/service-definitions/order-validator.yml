@@ -1,0 +1,43 @@
+# Order Validator Service Definition
+# Validates incoming orders and routes to appropriate downstream services
+
+name: order-validator
+type: consumer-producer
+description: Validates order structure, customer data, and business rules
+
+kafka:
+  consumer:
+    topics:
+      - order-events
+    group_id: order-validator-group
+    fetch_min_bytes: 1024
+    fetch_max_wait_ms: 500
+  
+  producer:
+    topics:
+      - validated-orders    # Valid orders go here
+      - invalid-orders      # Rejected orders go here
+
+processing:
+  # Simulated validation logic
+  validation_rules:
+    - check_customer_exists
+    - validate_order_items
+    - check_inventory_availability
+    - validate_shipping_address
+  
+  # Message routing based on validation
+  routing:
+    success_topic: validated-orders
+    failure_topic: invalid-orders
+  
+  # Performance characteristics
+  processing_time_ms: 50-100
+  error_rate_percent: 2
+
+metrics:
+  track_latency: true
+  track_throughput: true
+  custom_tags:
+    - service_type:validation
+    - pipeline_stage:order_validation

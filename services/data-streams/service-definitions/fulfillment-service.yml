@@ -1,0 +1,43 @@
+# Fulfillment Service Definition
+# Coordinates order fulfillment and shipping
+
+name: fulfillment-service
+type: consumer-producer
+description: Creates shipments and coordinates warehouse fulfillment
+
+kafka:
+  consumer:
+    topics:
+      - payment-confirmed
+    group_id: fulfillment-service-group
+    fetch_min_bytes: 2048
+    fetch_max_wait_ms: 1000
+  
+  producer:
+    topics:
+      - order-fulfilled
+      - shipment-created
+      - warehouse-assigned
+
+processing:
+  validation_rules:
+    - select_warehouse
+    - create_pick_list
+    - generate_shipping_label
+    - notify_warehouse
+  
+  routing:
+    success_topic: order-fulfilled
+    shipment_topic: shipment-created
+    warehouse_topic: warehouse-assigned
+  
+  # Fulfillment has complex logic
+  processing_time_ms: 150-300
+  error_rate_percent: 4
+
+metrics:
+  track_latency: true
+  track_throughput: true
+  custom_tags:
+    - service_type:fulfillment
+    - pipeline_stage:order_fulfillment

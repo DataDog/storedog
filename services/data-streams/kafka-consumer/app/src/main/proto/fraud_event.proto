@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package storedog.events;
+
+option java_package = "com.storedog.kafka.proto";
+option java_outer_classname = "FraudProto";
+option java_multiple_files = true;
+
+// Fraud detection event
+message FraudDetectionEvent {
+  string detection_id = 1;
+  string order_id = 2;
+  int64 timestamp = 3;
+  FraudStatus status = 4;
+  double fraud_score = 5;  // 0.0 to 1.0
+  repeated FraudIndicator indicators = 6;
+  FraudDecision decision = 7;
+  string customer_id = 8;
+}
+
+// Individual fraud indicator
+message FraudIndicator {
+  string rule_id = 1;
+  string rule_name = 2;
+  double score = 3;
+  string description = 4;
+  IndicatorSeverity severity = 5;
+}
+
+// Fraud decision
+message FraudDecision {
+  DecisionType type = 1;
+  string reason = 2;
+  string reviewer_id = 3;  // If manually reviewed
+  int64 decision_timestamp = 4;
+}
+
+// Fraud status
+enum FraudStatus {
+  FRAUD_STATUS_UNKNOWN = 0;
+  FRAUD_STATUS_PENDING = 1;
+  FRAUD_STATUS_CLEAN = 2;
+  FRAUD_STATUS_SUSPICIOUS = 3;
+  FRAUD_STATUS_FRAUD_DETECTED = 4;
+  FRAUD_STATUS_UNDER_REVIEW = 5;
+}
+
+// Decision type
+enum DecisionType {
+  DECISION_TYPE_UNKNOWN = 0;
+  DECISION_TYPE_APPROVE = 1;
+  DECISION_TYPE_DECLINE = 2;
+  DECISION_TYPE_MANUAL_REVIEW = 3;
+  DECISION_TYPE_CHALLENGE = 4;
+}
+
+// Indicator severity
+enum IndicatorSeverity {
+  INDICATOR_SEVERITY_UNKNOWN = 0;
+  INDICATOR_SEVERITY_LOW = 1;
+  INDICATOR_SEVERITY_MEDIUM = 2;
+  INDICATOR_SEVERITY_HIGH = 3;
+  INDICATOR_SEVERITY_CRITICAL = 4;
+}

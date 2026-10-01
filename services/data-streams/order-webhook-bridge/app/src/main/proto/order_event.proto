@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package storedog.events;
+
+option java_package = "com.storedog.kafka.proto";
+option java_outer_classname = "OrderProto";
+option java_multiple_files = true;
+
+// Main order event message
+message OrderEvent {
+  string order_id = 1;
+  string customer_id = 2;
+  int64 timestamp = 3;
+  OrderStatus status = 4;
+  repeated LineItem items = 5;
+  Money total_amount = 6;
+  Address shipping_address = 7;
+  Address billing_address = 8;
+  PaymentMethod payment_method = 9;
+  string currency = 10;
+  Metadata metadata = 11;
+}
+
+// Line item in an order
+message LineItem {
+  string product_id = 1;
+  string product_name = 2;
+  string sku = 3;
+  int32 quantity = 4;
+  Money unit_price = 5;
+  Money total_price = 6;
+}
+
+// Money representation
+message Money {
+  int64 amount_cents = 1;  // Amount in smallest currency unit (e.g., cents)
+  string currency = 2;     // ISO 4217 currency code (USD, EUR, etc.)
+}
+
+// Address information
+message Address {
+  string street = 1;
+  string city = 2;
+  string state = 3;
+  string postal_code = 4;
+  string country = 5;
+  string country_code = 6;  // ISO 3166-1 alpha-2
+}
+
+// Payment method information
+message PaymentMethod {
+  PaymentType type = 1;
+  string last_four = 2;  // Last 4 digits of card/account
+  string brand = 3;      // Visa, Mastercard, PayPal, etc.
+}
+
+// Additional metadata
+message Metadata {
+  string source = 1;           // web, mobile, api
+  string session_id = 2;
+  string user_agent = 3;
+  string ip_address = 4;
+  string referrer = 5;
+  map<string, string> custom_fields = 6;
+}
+
+// Order status enum
+enum OrderStatus {
+  ORDER_STATUS_UNKNOWN = 0;
+  ORDER_STATUS_CREATED = 1;
+  ORDER_STATUS_VALIDATED = 2;
+  ORDER_STATUS_INVENTORY_RESERVED = 3;
+  ORDER_STATUS_PAYMENT_PENDING = 4;
+  ORDER_STATUS_PAYMENT_CONFIRMED = 5;
+  ORDER_STATUS_PAYMENT_FAILED = 6;
+  ORDER_STATUS_FRAUD_CHECK_PENDING = 7;
+  ORDER_STATUS_FRAUD_DETECTED = 8;
+  ORDER_STATUS_FULFILLMENT_PENDING = 9;
+  ORDER_STATUS_SHIPPED = 10;
+  ORDER_STATUS_DELIVERED = 11;
+  ORDER_STATUS_CANCELLED = 12;
+  ORDER_STATUS_REFUNDED = 13;
+}
+
+// Payment type enum
+enum PaymentType {
+  PAYMENT_TYPE_UNKNOWN = 0;
+  PAYMENT_TYPE_CREDIT_CARD = 1;
+  PAYMENT_TYPE_DEBIT_CARD = 2;
+  PAYMENT_TYPE_PAYPAL = 3;
+  PAYMENT_TYPE_APPLE_PAY = 4;
+  PAYMENT_TYPE_GOOGLE_PAY = 5;
+  PAYMENT_TYPE_BANK_TRANSFER = 6;
+  PAYMENT_TYPE_CRYPTOCURRENCY = 7;
+}
