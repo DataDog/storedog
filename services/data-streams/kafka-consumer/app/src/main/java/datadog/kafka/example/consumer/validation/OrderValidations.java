@@ -14,6 +14,8 @@ public final class OrderValidations {
             case "shipping-country":
                 return new ShippingCountryValidation();
             case "payment-amount":
+                // The limit is a deployment setting. Raise MAX_PAYMENT_AMOUNT_CENTS in the
+                // environment configuration instead of changing this code.
                 long maxAmountCents = Utils.getEnvInt("MAX_PAYMENT_AMOUNT_CENTS", (int) DEFAULT_MAX_PAYMENT_AMOUNT_CENTS);
                 return new PaymentAmountValidation(maxAmountCents);
             default:

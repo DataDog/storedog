@@ -444,7 +444,7 @@ services:
       - DD_DATA_STREAMS_ENABLED=true
       - DD_LOGS_INJECTION=true
       - DD_SERVICE_MAPPING=kafka:store-payment-processor
-      - DD_TAGS=service_type:payment,pipeline_stage:payment_processing,pci_compliant:true
+      - DD_TAGS=service_type:payment,pipeline_stage:payment_processing
       - KAFKA_CONSUME_SERVER=kafka:9092
       - KAFKA_PRODUCE_SERVER=kafka:9092
       - TOPICS_IN=inventory-reserved
@@ -454,6 +454,7 @@ services:
       - PROCESSING_TIME_MS_MAX=500
       - ERROR_RATE_PERCENT=0
       - VALIDATION_MODE=payment-amount
+      # Set per environment. 30000 cents (300 dollars) is only the launch default.
       - MAX_PAYMENT_AMOUNT_CENTS=30000
     labels:
       com.datadoghq.ad.logs: '[{"source": "java"}]'
