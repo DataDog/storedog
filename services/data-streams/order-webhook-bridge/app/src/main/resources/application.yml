@@ -6,6 +6,9 @@ spring:
     name: order-webhook-bridge
   
 logging:
+  structured:
+    format:
+      console: logstash
   level:
     com.storedog.webhook: INFO
     org.springframework.kafka: WARN
