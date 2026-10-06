@@ -21,6 +21,9 @@ server:
   port: 8080
 
 logging:
+  structured:
+    format:
+      console: logstash
   level:
     datadog.kafka.example: INFO
     org.springframework.kafka: WARN
