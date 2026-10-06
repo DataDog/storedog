@@ -14,7 +14,8 @@ public class PaymentAmountValidation implements OrderValidation {
         long amountCents = order.getTotalAmount().getAmountCents();
         if (amountCents > maxAmountCents) {
             throw new IllegalArgumentException(
-                "Payment amount " + amountCents + " exceeds the single-authorization limit of " + maxAmountCents);
+                "Payment amount " + amountCents + " cents exceeds the single-authorization limit of "
+                    + maxAmountCents + " cents");
         }
     }
 }
