@@ -23,4 +23,4 @@ tenacity==6.2.0
 urllib3==2.8.0
 gunicorn==26.2.0
 Faker==18.3.2
-Werkzeug==3.1.8
+Werkzeug==3.1.9
