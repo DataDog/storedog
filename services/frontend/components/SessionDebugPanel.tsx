@@ -188,14 +188,30 @@ export default function SessionDebugPanel() {
   }, [])
 
   // useLayoutEffect runs synchronously after DOM mutations (before paint), so the
-  // new EventCard has already been laid out and scrollHeight reflects the true bottom.
-  // Keying on events.length (rather than newestEventId) guarantees this fires for
-  // every appended event, even if an event id were ever repeated.
+  // new EventCard has already been laid out. Scrolling to the newest card rather
+  // than the bottom matters because a view's events can land above an Operation
+  // card. Keying on events.length as well as newestEventId guarantees this
+  // fires for every appended event, even if an event id were ever repeated.
   useLayoutEffect(() => {
-    if (contentRef.current) {
-      contentRef.current.scrollTop = contentRef.current.scrollHeight
+    const content = contentRef.current
+    if (!content) {
+      return
     }
-  }, [events.length])
+    // Events left out of the tree (e.g. Operation start steps) have no card, so
+    // there's nothing new to bring into view.
+    const newestCard = content.querySelector<HTMLElement>(
+      `[data-event-id="${CSS.escape(newestEventId)}"]`
+    )
+    if (!newestCard) {
+      return
+    }
+    // Done by hand rather than scrollIntoView, which can also scroll the store.
+    const overflow =
+      newestCard.getBoundingClientRect().bottom - content.getBoundingClientRect().bottom
+    if (overflow > 0) {
+      content.scrollTop += overflow
+    }
+  }, [events.length, newestEventId])
 
   if (!isVisible) {
     return (
@@ -213,7 +229,7 @@ export default function SessionDebugPanel() {
     )
   }
 
-  const { session, views } = buildSessionTree(events)
+  const { session, children: sessionChildren } = buildSessionTree(events)
 
   return (
     <aside 
@@ -253,17 +269,29 @@ export default function SessionDebugPanel() {
           </div>
         ) : (
           <EventCard event={session} isNewest={session.id === newestEventId}>
-            {views.map(({ view, children }) => (
-              <EventCard key={view.id} event={view} isNewest={view.id === newestEventId}>
-                {children.map(child => (
-                  <EventCard
-                    key={child.id}
-                    event={child}
-                    isNewest={child.id === newestEventId}
-                  />
-                ))}
-              </EventCard>
-            ))}
+            {sessionChildren.map(node =>
+              node.kind === 'operation' ? (
+                <EventCard
+                  key={node.event.id}
+                  event={node.event}
+                  isNewest={node.event.id === newestEventId}
+                />
+              ) : (
+                <EventCard
+                  key={node.view.id}
+                  event={node.view}
+                  isNewest={node.view.id === newestEventId}
+                >
+                  {node.children.map(child => (
+                    <EventCard
+                      key={child.id}
+                      event={child}
+                      isNewest={child.id === newestEventId}
+                    />
+                  ))}
+                </EventCard>
+              )
+            )}
           </EventCard>
         )}
       </div>

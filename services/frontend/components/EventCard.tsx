@@ -1,6 +1,7 @@
 import type { RumEvent } from '@lib/sessionMocking.types'
 import { formatUrl, truncateMessage, formatVitalDuration } from '@lib/sessionFormatting'
 import { MESSAGE_TRUNCATE_LENGTH } from '@lib/sessionMocking.constants'
+import { isOperationStep } from '@lib/sessionEventTree'
 import styles from './SessionDebugPanel.module.css'
 
 interface EventCardProps {
@@ -97,12 +98,12 @@ function useEventDisplayData(event: RumEvent): EventDisplayData {
       }
 
     case 'vital': {
-      const { name, vitalType, duration, description, stepType, failureReason } = event.data
+      const { name, duration, description, stepType, failureReason } = event.data
 
       // Operations arrive as two vital events (a start step and an end step)
       // rather than one event carrying a duration.
-      const isOperationStep = vitalType === 'operation_step'
-      const status = !isOperationStep
+      const isOperation = isOperationStep(event)
+      const status = !isOperation
         ? null
         : stepType === 'start'
         ? 'start'
@@ -110,7 +111,7 @@ function useEventDisplayData(event: RumEvent): EventDisplayData {
         ? 'failed'
         : 'success'
 
-      const detail = isOperationStep
+      const detail = isOperation
         ? failureReason
           ? `${status} · ${failureReason}`
           : status
@@ -120,7 +121,7 @@ function useEventDisplayData(event: RumEvent): EventDisplayData {
 
       return {
         type: 'vital',
-        label: isOperationStep ? 'operation' : 'vital',
+        label: isOperation ? 'operation' : 'vital',
         name: name ?? null,
         detail: detail ?? null,
         // The ad vital sets description to the slot, which duplicates the name
@@ -133,6 +134,7 @@ function useEventDisplayData(event: RumEvent): EventDisplayData {
 }
 
 interface CardProps {
+  eventId: string
   type: string
   isNewest: boolean
   timestamp: string
@@ -140,9 +142,10 @@ interface CardProps {
   children?: React.ReactNode
 }
 
-function Card({ type, isNewest, timestamp, headerContent, children }: CardProps) {
+function Card({ eventId, type, isNewest, timestamp, headerContent, children }: CardProps) {
   return (
     <article
+      data-event-id={eventId}
       className={`${styles.card} ${isNewest ? styles.newEvent : ''}`}
       data-event-type={type}
       aria-label={`${type} event`}
@@ -166,6 +169,7 @@ export default function EventCard({ event, isNewest, children }: EventCardProps)
   const data = useEventDisplayData(event)
 
   const commonProps = {
+    eventId: event.id,
     type: data.type,
     isNewest,
     timestamp: event.timestamp,
