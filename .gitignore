@@ -63,3 +63,5 @@ Gemfile.lock
 settings.json
 
 docker-compose.dev.frontend-prod.yml
+
+certs/*
