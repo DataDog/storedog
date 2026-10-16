@@ -742,10 +742,15 @@ const generateRageClicks = async (session) => {
     
     let targetElement = null;
     for (const selector of clickableSelectors) {
-      targetElement = await session.page.$(selector);
+      for (const element of await session.page.$$(selector)) {
+        if (await element.isVisible()) {
+          targetElement = element;
+          break;
+        }
+      }
       if (targetElement) break;
     }
-    
+
     if (targetElement) {
       for (let i = 0; i < 4; i++) {
         await targetElement.click();
@@ -757,7 +762,6 @@ const generateRageClicks = async (session) => {
     }
   } catch (error) {
     session.log(`Rage clicks generation failed: ${error.message}`);
-    console.log(await session.page.content());
   }
 };
 
