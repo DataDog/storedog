@@ -269,7 +269,7 @@ services:
     networks:
       - storedog-network
     environment:
-      - STOREDOG_URL=http://service-proxy:80
+      - STOREDOG_URL=${STOREDOG_URL:-http://service-proxy:80}
       - PUPPETEER_LOOP=${PUPPETEER_LOOP:-infinite}
       - PUPPETEER_SESSION_TYPES=${PUPPETEER_SESSION_TYPES:-browsing,vip,frustration,homepage,short,taxonomy}
 volumes:
