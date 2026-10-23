@@ -5,6 +5,7 @@ Requires Instruqt authentication and a dedicated SSH key. Never copies credentia
 out of the sandbox. Serial invocations keep sandbox acceptance independent.
 """
 import argparse
+import datetime
 import json
 import os
 from pathlib import Path
@@ -27,6 +28,7 @@ def main():
     key=Path(a.key).resolve();public=Path(str(key)+'.pub').read_text().strip()
     parameters={'PUP_DEV_INTEGRATION':'1','PUP_DEV_HOLD_SECONDS':'3600','PUP_SCENARIO_MODE':'validation',
                 'PUP_CATALOG_PRODUCTS':str(a.products),'PUP_RATE':str(a.rate),'PUP_DEV_SSH_PUBLIC_KEY':public}
+    started_at=datetime.datetime.now(datetime.timezone.utc).isoformat()
     lifecycle=subprocess.Popen(['instruqt','track','test',a.track,'--skip-fail-check',
         '--runtime-parameters='+','.join(k+'='+v for k,v in parameters.items())],
         stdout=open(out/'lifecycle.log','w'),stderr=subprocess.STDOUT)
@@ -43,10 +45,25 @@ def main():
         log_process=subprocess.Popen(['instruqt','track','logs','--participant-id',participant,'--since=-15m'],
             stdout=open(out/'setup.log','w'),stderr=subprocess.STDOUT)
         host='lab-host.'+participant+'.instruqt.io'
+        next_history=time.monotonic()+60
         # Verify the SSH fingerprint against authenticated platform logs.
         while time.monotonic()<deadline:
             if lifecycle.poll() is not None:raise RuntimeError('Lifecycle stopped before SSH')
-            fingerprints=re.findall(r'SHA256:[A-Za-z0-9+/]+', (out/'setup.log').read_text())
+            history=out/'setup-history.log'
+            log_text=(out/'setup.log').read_text()+(history.read_text() if history.exists() else '')
+            fingerprints=re.findall(r'SHA256:[A-Za-z0-9+/]+',log_text)
+            if not fingerprints and time.monotonic()>=next_history:
+                # Live platform streams can omit early bootstrap records. Requery
+                # authenticated history without relaxing host-key verification.
+                try:
+                    result=subprocess.run(['instruqt','track','logs','--participant-id',participant,
+                                           '--since='+started_at],capture_output=True,timeout=10)
+                    snapshot=result.stdout
+                except subprocess.TimeoutExpired as exc:
+                    snapshot=exc.stdout or b''
+                history.write_bytes(snapshot)
+                next_history=time.monotonic()+60
+                fingerprints=re.findall(r'SHA256:[A-Za-z0-9+/]+',snapshot.decode(errors='replace'))
             addresses=subprocess.check_output(['dig','+short',host,'@ns-cloud-e1.googledomains.com'],text=True).splitlines()
             if fingerprints and addresses:
                 address=next((s for s in addresses if re.fullmatch(r'[0-9.]+',s)),None)
