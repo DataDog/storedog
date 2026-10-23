@@ -2,9 +2,28 @@
 # Run as a detached systemd service on disposable lab-host.
 set -euo pipefail
 # GNU timeout signals the whole controller process group, including an active
-# calibration subprocess, then allows three minutes for restoration and export.
+# calibration subprocess, then allows four minutes for restoration and export.
 if [[ ${PUP_CONTROLLER_CHILD:-0} != 1 ]]; then
-  exec timeout --signal=TERM --kill-after=180s 3300 env PUP_CONTROLLER_CHILD=1 bash "$0"
+  seconds=3300
+  if [[ ${PUP_RUN_MODE:-cycles} == calibrate ]]; then
+    seconds=$(python3 - <<'PY'
+import json,pathlib,time
+path=pathlib.Path('/root/pup-poc/evidence/prewarm.jsonl')
+seconds=2700
+age=None
+if path.exists():
+    summary=json.loads(path.read_text().splitlines()[-1])
+    assert summary['type']=='prewarm-summary' and summary['requests']==summary['valid']
+    age=time.time()-path.stat().st_mtime+summary['elapsed_s']
+    seconds=min(seconds,int(3600-age-180))
+assert seconds>=300, 'Insufficient normal cache lifetime: resume calibration in a fresh sandbox'
+path.parent.mkdir(parents=True,exist_ok=True)
+(path.parent/'calibration-budget.json').write_text(json.dumps({'seconds':seconds,'cache_age_s':age,'cache_ttl_s':3600,'margin_s':180})+'\n')
+print(seconds)
+PY
+    )
+  fi
+  exec timeout --signal=TERM --kill-after=240s "$seconds" env PUP_CONTROLLER_CHILD=1 bash "$0"
 fi
 export KUBECONFIG=/root/.kube/config
 cd /root/pup-recovery

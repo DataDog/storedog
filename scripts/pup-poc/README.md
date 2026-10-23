@@ -84,7 +84,11 @@ Run the detached `run-live.sh` controller with a private EnvironmentFile contain
 
 Use `collect-live.py SSH_HELPER OUTPUT --seconds 3600` independently of the
 controller. The setup exporter can run for two hours to cover cold-cache setup;
-validation restarts its export deadline at one hour. The controller has a 55-minute watchdog, restores PostgreSQL CPU,
+validation restarts its export deadline at one hour. Cycles and soak have a
+55-minute watchdog. Calibration uses at most 45 minutes, shortened further
+when needed to stay three minutes inside the normal one-hour cache lifetime;
+its checkpoint is resumed in a fresh sandbox. Cache expiry remains part of the
+full acceptance soak. The controller restores PostgreSQL CPU,
 exports lifecycle status and waits for export acknowledgement before releasing
 the development hold. The course hold accepts 60–3,600 seconds, development only.
 Missing evidence fails acceptance even when lifecycle cleanup succeeds.

@@ -36,7 +36,11 @@ try:
   result['fault_symptom_pass']=len(fault_rows)==fault_minutes*60*rate and result['steady_fault_ok']>=.95*len(fault_rows) and 1<=(result['steady_fault_p95_s'] or 0)<=3
   fault_normalized=[dict(x,index=x['index']-round(fault_lo*rate)) for x in fault_rows]
   result['fault_windows']=gates.assess(fault_normalized,rate,'fault',windows=fault_minutes)
-  result['fault_symptom_pass']=fault_minutes>=1 and result['fault_symptom_pass'] and result['fault_windows']['pass']
+  # Cover the trailing partial minute as well as the aligned whole windows.
+  tail_start=math.ceil((fault_end-60)*rate);tail_end=math.ceil(fault_end*rate)
+  tail_rows=[dict(x,index=x['index']-tail_start) for x in traffic if x.get('type')=='request' and tail_start<=x['index']<tail_end]
+  result['fault_tail_window']=gates.assess(tail_rows,rate,'fault',windows=1)
+  result['fault_symptom_pass']=fault_minutes>=1 and result['fault_symptom_pass'] and result['fault_windows']['pass'] and result['fault_tail_window']['pass']
   per_monitor=[]
   for id in ids:
    alerted=any(x.get('overall_state')=='Alert' and epoch(fault['at'])<=epoch(x['at'])<=epoch(restore['at'])+180 for x in states if x.get('id')==id and 'at' in x)

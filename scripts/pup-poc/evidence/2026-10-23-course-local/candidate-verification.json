@@ -1,0 +1,12 @@
+{
+  "candidate": {
+    "revision": "b8426ca64391474ac2416254fd82caf055f756fa",
+    "digest": "sha256:5f29264f192cd3ca4fb6a85809ed47ee88881cb6fa609c1d186411deb92d1aa2",
+    "image": "ghcr.io/datadog/storedog/backend:pup-course-b8426ca64391474ac2416254fd82caf055f756fa"
+  },
+  "workflow": "https://github.com/DataDog/storedog/actions/runs/40027519105",
+  "build_revision_and_label_match": true,
+  "pinned_base_match": true,
+  "driver_source_checksum_match": true,
+  "other_service_digests_unchanged": true
+}
