@@ -1,0 +1,60 @@
+{
+  "apiVersion": "v1",
+  "kind": "Pod",
+  "metadata": {
+    "name": "pup-traffic",
+    "namespace": "storedog",
+    "labels": {
+      "app": "pup-traffic"
+    }
+  },
+  "spec": {
+    "automountServiceAccountToken": false,
+    "nodeSelector": {
+      "node-role.kubernetes.io/control-plane": ""
+    },
+    "tolerations": [
+      {
+        "key": "node-role.kubernetes.io/control-plane",
+        "operator": "Exists",
+        "effect": "NoSchedule"
+      }
+    ],
+    "containers": [
+      {
+        "name": "traffic",
+        "image": "ghcr.io/datadog/storedog/discounts@sha256:cfbed3797c2c2cd55a286a5367f77d5d1b0077f67511cfc1ebce6318945daae0",
+        "command": [
+          "python3",
+          "-c",
+          "import time; time.sleep(7200)"
+        ],
+        "resources": {
+          "requests": {
+            "cpu": "250m",
+            "memory": "128Mi"
+          },
+          "limits": {
+            "cpu": "1",
+            "memory": "512Mi"
+          }
+        },
+        "volumeMounts": [
+          {
+            "name": "probe",
+            "mountPath": "/probe",
+            "readOnly": true
+          }
+        ]
+      }
+    ],
+    "volumes": [
+      {
+        "name": "probe",
+        "configMap": {
+          "name": "pup-traffic"
+        }
+      }
+    ]
+  }
+}

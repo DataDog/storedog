@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "status": "uncalibrated",
+  "source_revision": "e4cc63f5e7547f770c16c1a8e65bacd4a4873ddd",
+  "combinations": [[5000, 5], [10000, 5], [5000, 10], [10000, 10]],
+  "cpu_candidates_m": [250, 125, 60, 30, 20, 10],
+  "healthy_cpu": "1",
+  "memory": "2Gi",
+  "timeouts": {"PUP_DB_STATEMENT_TIMEOUT_MS": "5000", "PUP_DB_LOCK_TIMEOUT_MS": "1000", "PUP_DB_CONNECT_TIMEOUT": "3"},
+  "fault_seconds": 180,
+  "recovery_seconds": 360,
+  "soak_seconds": 2400,
+  "sandboxes": 3,
+  "cycles_per_sandbox": 3
+}

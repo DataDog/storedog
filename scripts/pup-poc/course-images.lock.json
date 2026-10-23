@@ -1,0 +1,40 @@
+{
+  "checked_at": "2026-10-22",
+  "status": "Candidate only; scenario acceptance pending",
+  "images": [
+    {
+      "reference": "ghcr.io/datadog/storedog/ads-java:1.5.0",
+      "digest": "sha256:28a42dedb6423814236991231df08a8759306ffae30516fee33df70ee4f685ac"
+    },
+    {
+      "reference": "ghcr.io/datadog/storedog/backend:1.5.0",
+      "digest": "sha256:134d8eb0d8833fc4f4a379cc041454e5daad387aed0c10d6861e538b0126a146"
+    },
+    {
+      "reference": "ghcr.io/datadog/storedog/discounts:1.5.0",
+      "digest": "sha256:cfbed3797c2c2cd55a286a5367f77d5d1b0077f67511cfc1ebce6318945daae0"
+    },
+    {
+      "reference": "ghcr.io/datadog/storedog/frontend:1.5.0",
+      "digest": "sha256:fb1473a12d87cbb6509bad75a497e31b15d94543a2cea24aae592e19efab61fc"
+    },
+    {
+      "reference": "ghcr.io/datadog/storedog/nginx:1.5.0",
+      "digest": "sha256:365a4066db8430a6bbed57f9185d18e88aef6e155b0291cf5755753e38ab8700"
+    },
+    {
+      "reference": "ghcr.io/datadog/storedog/puppeteer:1.5.0",
+      "digest": "sha256:0ab8ef8fede0c9f7d12c7adbd6aaa1a5effe0b64831c20a24241941b7b50b669"
+    },
+    {
+      "reference": "ghcr.io/datadog/storedog/postgres:1.5.0",
+      "digest": "sha256:e08dd6d1ae3b79f510dbd125b1a2ebddc52b78c2906119b760b404fa2762395f",
+      "platform": "linux/amd64"
+    }
+  ],
+  "candidate": {
+    "revision": "383df3ed9b69ac6801b793b6db198f7eeb1b4202",
+    "digest": "sha256:134d8eb0d8833fc4f4a379cc041454e5daad387aed0c10d6861e538b0126a146",
+    "image": "ghcr.io/datadog/storedog/backend:pup-course-383df3ed9b69ac6801b793b6db198f7eeb1b4202"
+  }
+}

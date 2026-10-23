@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "catalog": "catalog-v1.json",
+  "endpoint": "http://service-proxy/services/backend/api/v2/storefront/products",
+  "rate": 5
+}

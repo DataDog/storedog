@@ -1,0 +1,5 @@
+{
+  "revision": "383df3ed9b69ac6801b793b6db198f7eeb1b4202",
+  "digest": "sha256:134d8eb0d8833fc4f4a379cc041454e5daad387aed0c10d6861e538b0126a146",
+  "image": "ghcr.io/datadog/storedog/backend:pup-course-383df3ed9b69ac6801b793b6db198f7eeb1b4202"
+}

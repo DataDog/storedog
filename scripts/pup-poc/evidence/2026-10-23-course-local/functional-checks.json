@@ -1,0 +1,21 @@
+{
+  "platform": "AMD64 backend emulated on ARM64; PostgreSQL 17 local functional tests",
+  "catalog_products": 40,
+  "seed_interruption_after": 7,
+  "seed_resume": true,
+  "seed_idempotency": true,
+  "deterministic_manifest": true,
+  "association_integrity": true,
+  "postgres_statement_cancellation": true,
+  "postgres_lock_cancellation": true,
+  "same_connection_reused": true,
+  "default_config_unchanged": true,
+  "api_requests_validated": 100,
+  "healthy_restart_rate": 1,
+  "healthy_restart_final_successes": 60,
+  "scenario_acceptance": false,
+  "limitations": [
+    "Native PostgreSQL 15 calibration and full 5000/10000 catalog scale not yet tested",
+    "Datadog monitor/span/resource evidence not part of local functional tests"
+  ]
+}

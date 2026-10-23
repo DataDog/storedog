@@ -1,0 +1,22 @@
+{
+  "name": "[Pup POC 137] Product API latency",
+  "type": "query alert",
+  "query": "percentile(last_1m):p95:trace.rack.request{env:monitor-investigation-with-pup,service:store-backend} > 0.5",
+  "message": "Training sandbox only. Investigate product API health with Pup; verify database CPU and fresh traces. Recovery requires both latency and errors to be healthy.",
+  "tags": [
+    "project:pup-course",
+    "task:137",
+    "env:monitor-investigation-with-pup",
+    "service:store-backend"
+  ],
+  "options": {
+    "thresholds": {
+      "critical": 0.5,
+      "critical_recovery": 0.2
+    },
+    "require_full_window": false,
+    "include_tags": true,
+    "new_host_delay": 0,
+    "on_missing_data": "show_no_data"
+  }
+}

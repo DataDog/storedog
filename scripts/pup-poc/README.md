@@ -1,7 +1,284 @@
 # Task 137 preflight
 
-Status: live Instruqt setup passed on 2026-10-22; DB failure/recovery POC remains unvalidated.
+## Course candidate (task 137, 2026-10-23)
+
+The new candidate is **not accepted**. The older 16-product experiments below
+remain historical evidence; they do not validate this catalog or resolve the
+connection-pool failure.
+
+Backend source: `383df3ed9b69ac6801b793b6db198f7eeb1b4202`.
+[Candidate workflow](https://github.com/DataDog/storedog/actions/runs/39986537862)
+published `pup-course-383df3ed9b69ac6801b793b6db198f7eeb1b4202` with digest
+`sha256:134d8eb0d8833fc4f4a379cc041454e5daad387aed0c10d6861e538b0126a146`.
+`Dockerfile.pup-course` layers only the opt-in catalog and database configuration
+onto the previously pinned backend digest. No general release or `latest` tag
+is changed. `course-images.lock.json` differs from `images.lock.json` only in the
+backend entry plus candidate metadata. The course renderer retains every other
+service digest and the existing Kubernetes topology, OpenCode/Bedrock and disabled MCP.
+
+The explicit `bundle exec rake pup_course:seed` task defaults to 5,000 products,
+20 category children, two non-master variants, USD prices, stock and a shared
+bundled image fixture. Its namespace is `pup-course-v1`; existing sample products
+are preserved. Per-product transactions support interrupted seed recovery;
+`ANALYZE` and atomic manifest publication happen after completion. Use
+`PUP_CATALOG_PRODUCTS=10000` for the alternate profile. Use fresh databases when
+moving to a smaller catalog. No seed runs during ordinary backend startup.
+
+`prepare-workload.sh` runs once during healthy course setup and installs the
+catalog and workload in the generator. Catalog manifests are transferred to
+`/tmp` rather than ConfigMaps because 10,000-product manifests exceed the
+ConfigMap size limit. Traffic rotates three catalog pages then two category
+pages, using 25 products/page and `default_variant,images,primary_variant,taxons`.
+Catalog browsing is scoped to the course taxonomy root so the manifest can
+validate exact IDs without depending on the pre-existing sample inventory.
+
+`PUP_DB_STATEMENT_TIMEOUT_MS=5000`, `PUP_DB_LOCK_TIMEOUT_MS=1000`, and
+`PUP_DB_CONNECT_TIMEOUT=3` affect new database connections only. Unset variables
+preserve default configuration. The 15-second Rack timeout, pool, indexes,
+prepared statements and caching are unchanged.
+
+### Development validation
+
+The private development course runs `setup-course.sh` in validation mode when
+`PUP_DEV_INTEGRATION=1`; this starts healthy and requires three clean one-minute
+windows below 200 ms. Learner mode requires an accepted `frozen-profile.json`,
+then sustained fault symptoms and latency Alert before publishing readiness.
+No accepted profile exists yet. The learner traffic service lasts one hour.
+
+Run the detached `run-live.sh` controller with a private EnvironmentFile containing
+`DD_ENV` (the unique sandbox environment), required Pup credentials and:
+
+- `PUP_RUN_MODE=calibrate`, `PUP_RATE=5`: test one catalog/rate combination.
+- `PUP_RUN_MODE=cycles`, `PUP_FAULT_CPU=<calibrated limit>`, `PUP_RATE=<frozen rate>`:
+  three continuous 180-second fault / 360-second recovery cycles.
+- `PUP_RUN_MODE=soak`: one continuous 2,400-second fault and 360-second recovery.
+
+Use `collect-live.py SSH_HELPER OUTPUT --seconds 3600` independently of the
+controller. The controller has a 58-minute watchdog, restores PostgreSQL CPU,
+exports lifecycle status and waits for export acknowledgement before releasing
+the development hold. The course hold accepts 60–3,600 seconds, development only.
+Missing evidence fails acceptance even when lifecycle cleanup succeeds.
+
+Calibration tries 250m, 125m, 60m, 30m, 20m and 10m, excluding the first minute
+**after rollout readiness**, then requires three consecutive minutes with p95
+1–3 seconds, at least 95% valid responses, no drops or queued arrivals, and no
+application/pool timeout errors. It tests integer CPU limits above the first
+qualifying boundary from highest to lowest. This can exceed a single development
+hold; an interrupted sweep is inconclusive and must not be promoted. The ordered
+catalog/rate combinations are in `course-profile.json`; use a fresh sandbox for
+each combination, stopping at the first qualifying combination. A calibration
+HTTP candidate is not scenario acceptance.
+
+Before acceptance, freeze the candidate image, catalog checksum, rate, CPU,
+timeouts, request code and monitor definitions. `acceptance.py DIR1 DIR2 DIR3
+--soak SOAK_DIR --output acceptance.json` requires three distinct sandbox environments,
+matching workload settings, complete exports, per-minute fault gates, final healthy
+HTTP windows, latency Alert, both monitors sustained OK, correlated product SQL,
+container/node headroom, DB throttling, unchanged PVC/backend identity and no pool
+or application timeout errors. Do not create an accepted learner profile until all
+checks pass. Reset with `postgres-healthy-patch.json`; never delete PVCs or restart
+the backend as a recovery workaround.
+
+Local functional evidence is in `evidence/2026-10-23-course-local/`: 40 products,
+interruption after product 7, repeat seed/manifests/associations, database-native
+statement and lock cancellation followed by connection reuse, unchanged default
+configuration, 100 real API requests across all categories, and a healthy DB
+restart under continuous 1 rps (final 60/60 valid, zero drops). This used AMD64
+emulation and PostgreSQL 17, so it establishes neither native PostgreSQL 15 CPU
+calibration nor the 5,000-product scenario. Run `tests/integration.sh` for disposable
+seed/safeguard checks and `python3 -m unittest discover -s tests -v` for workload
+and window-gate tests.
+
+
+Status: live integration and telemetry verified. Three continuous cycles completed
+on 2026-10-23 with clean recovery, but the 30m CPU fault failed sustained-symptom
+acceptance. Fault calibration and course acceptance remain open.
 Read backlog 137 and mem 286 before changing the scenario.
+
+## Latest repeat result: fault calibration failed
+
+Sandbox `x1vujnl5hlqu`, 2026-10-23 13:46–14:08 UTC. All 6600 offered requests
+were recorded at fixed 5 rps with zero dropped arrivals, through three unchanged
+120-second PostgreSQL 30m CPU phases and 300-second 1-CPU recovery phases.
+Memory stayed at 2 GiB. PVC identities and the backend pod/restart count stayed
+unchanged. The API gate passed 150/150 requests before the continuous run.
+
+| Cycle | Final fault minute | Fault p95 | Final recovery 2 minutes | Recovery p95 |
+| --- | --- | --- | --- | --- |
+| 1 | 300/300 HTTP 200 | 138 ms | 600/600 HTTP 200 | 38 ms |
+| 2 | 300/300 HTTP 200 | 111 ms | 600/600 HTTP 200 | 36 ms |
+| 3 | 300/300 HTTP 200 | 82 ms | 600/600 HTTP 200 | 37 ms |
+
+Both frozen monitors alerted and returned to sustained OK, and fresh PostgreSQL
+spans matched successful recorded product request trace IDs after every restore.
+Prepared-statement spans can have resources such as `a4`; correlation uses the
+trace ID and `pg.*` operation, rather than requiring literal SQL in the resource.
+No connection-pool checkout errors were captured. The earlier pool failure has
+not been diagnosed or fixed; this weaker fault is not evidence of resilience to
+the earlier sustained overload.
+
+The steady fault windows used approximately 0.016 CPU with only 11.6–13.8% of
+PostgreSQL CPU periods throttled, versus approximately 98% in earlier sandboxes.
+Backend/generator/node headroom remained available, with no sampled OOM kills.
+The strongest errors were rollout interruptions. **Do not count these as three
+passing scenario acceptance cycles:** 30m is not a dependable sustained fault
+across the observed runs. Recalibrate using warmed steady windows separately from
+rollout transitions before freezing the learner scenario.
+
+The detached runner, 15-second collector, final export acknowledgment, healthy
+resource restoration, and integration-hold release all completed automatically.
+Lifecycle test success still does not imply scenario acceptance because challenge
+checks are unimplemented. Evidence and assessments:
+`evidence/2026-10-23-x1vujnl5hlqu/`. The failed startup attempts `beuoffpzfmzf`
+and `yheiyyzgg3f9` also have exported failure evidence; their harness issues
+(systemd kubeconfig and duplicate monitor creation) were corrected before this run.
+
+## Detached validation and evidence collection
+
+`run-live.sh` runs on lab-host as a bounded systemd service, with an explicit
+`KUBECONFIG=/root/.kube/config`. Provision only the required Datadog environment
+variables through a private mode-600 EnvironmentFile on that VM. Do not copy
+credentials into this repository or the evidence directory.
+
+The runner applies healthy resources, validates/reuses exact-name monitors tagged
+for this project/task/environment/service, checks API health, then runs three
+unchanged 5-rps cycles: 120 seconds at 30m PostgreSQL CPU followed by 300 seconds
+at 1 CPU. `watch-monitors.py`, `watch-resources.py`, and `watch-telemetry.py` save
+observations throughout. Monitor definitions and input hashes are saved before
+traffic testing; definitions stay unchanged throughout the cycles. Existing
+monitors survive sandbox teardown, so creation must be idempotent.
+
+Run `collect-live.py SSH_HELPER OUTPUT_DIRECTORY` independently of the chat
+session (on macOS, `nohup caffeinate -i python3 ...`). It snapshots the dedicated
+evidence directory every 15 seconds, atomically replaces local files, and
+acknowledges the final export. This survives chat interruption while the local
+collector and network remain available; it cannot guarantee export if the
+laptop shuts down or loses network access. The remote runner restores healthy
+database resources and releases the integration hold even if export is unavailable.
+Bound the runner with `timeout --signal=TERM --kill-after=90 1600` and allow
+systemd at least 100 seconds for cleanup. Start promptly after lifecycle readiness
+to stay inside the 30-minute integration hold.
+
+`assess-run.py OUTPUT_DIRECTORY` rejects missing evidence, dropped arrivals,
+changed PVCs/backend pods, unsuccessful final recovery windows, missing monitor
+alerts/sustained OK, and absent fresh product SQL spans. Its result covers HTTP,
+monitor and trace gates; resource headroom still needs review. A completed
+lifecycle or zero runner exit code alone is not scenario acceptance.
+
+## Recovery investigation checkpoint, 2026-10-23
+
+Sandbox `kwz2bxq7u0qw` ran uninterrupted 5 rps through a healthy PostgreSQL
+restart, a 120-second 30m CPU fault, and resource restoration. The deployed
+backend uses Rails 6.1.4.4, Puma 5.6.2, pg 1.3.0 and Rack::Timeout 0.6.0,
+with a 25-connection pool and five request threads per worker (two workers).
+
+- Baseline: 300/300 successful, p95 58 ms.
+- Healthy restart: 15 failures in the transition; subsequent 900/900 successful.
+- CPU fault: 6/600 successful, p95 approximately 10 seconds.
+- Restore: 51 failures in the transition; subsequent 1200/1200 successful,
+  p95 62 ms, without restarting the backend.
+
+This run did not reproduce the previous persistent pool failure. Rack timeout
+exceptions occurred during the fault, but the precise cause of the earlier
+pool exhaustion is **not established or fixed**. Do not increase pool size
+based solely on the earlier error message.
+
+Pup verified `trace.rack.request` latency distributions and `.hits`/`.errors`
+counts. Both trial monitors alerted. Definitions in `monitors/` are candidates:
+500 ms p95 and 1% error rate, with separate recovery thresholds. Missing-data
+handling was revised during the experiment, so these are not frozen acceptance
+results. The error ratio uses a 60-second evaluation delay; latency missing data
+must remain distinguishable from healthy traffic. Relevant guidance:
+[trace metrics](https://docs.datadoghq.com/tracing/metrics/metrics_namespace/),
+[missing-data options](https://docs.datadoghq.com/monitors/guide/on_missing_data/),
+[Rack::Timeout risks](https://github.com/zombocom/rack-timeout/blob/main/doc/risks.md).
+
+The agent session was interrupted and the sandbox hold expired at approximately
+04:59 UTC. The completed control summary survived in local SSH output, but only
+3344/3600 raw request records had been exported. Two queued repeat cycles have
+no recoverable outcome and must not count toward acceptance. See
+`evidence/2026-10-23/evidence-status.json` for provenance and limitations.
+Before the next live run, automate evidence export and hold release independently
+of agent interaction; then repeat with unchanged monitor definitions and traffic.
+
+## CPU calibration checkpoint
+
+Sandbox `9nwkhutoskyr`, 2026-10-22. The generator runs on the control-plane
+node using the locked discounts image's Python interpreter, targets the
+`service-proxy` service, and offers 5 requests/second independently of response
+latency. It records every arrival, timeout and dropped arrival. Requests use
+explicit trace IDs and sampling priority 2. Every successful response contained
+the same 16 products. Five recorded successful product requests matched ingested
+PostgreSQL spans, including SQL against `spree_products`.
+
+Healthy resource limits: PostgreSQL 1 CPU/2 GiB (requests 500m/512 MiB), backend
+1 CPU/2 GiB (requests 250m/512 MiB), generator 1 CPU/512 MiB (requests 250m/128 MiB).
+The initial backend 500m limit throttled during warmup and some steady-state
+bursts, so the final baseline uses 1 CPU. Other app resources remain unchanged.
+Fault phases change only PostgreSQL CPU request/limit; memory stays constant.
+
+| Measured phase | HTTP 200 / offered | p95 | PostgreSQL throttled periods |
+| --- | --- | --- | --- |
+| Baseline, 1 CPU | 600 / 600 | 55 ms | 0% |
+| Fault, 20m CPU | 83 / 600 | 10.01 s (timeout dominated) | 98.1% |
+| Restored, 1 CPU | 600 / 600 | 56 ms | 0% |
+| Fault, 50m CPU | 600 / 600 | 175 ms | 25.0% |
+| Restored after 50m, 1 CPU | 600 / 600 | 57 ms | see resource evidence |
+| Fault, 30m CPU | 424 / 600 | 10.01 s (timeout dominated) | 98.4% |
+| Initial restore after 30m (60 s) | 285 / 300 | 117 ms | see resource evidence |
+| Restore confirmation after 30m (90 s) | 416 / 450 | 5.03 s | see resource evidence |
+
+No arrivals were dropped in these windows. During the 20m fault the backend used
+0.178 CPU, generator 0.008 CPU, and neither had material CPU throttling; the DB
+used 0.0195 CPU. No sampled container had an OOM kill. At 50m both Kubernetes
+nodes averaged approximately 0.60 CPU, with working sets below 3.5 GiB.
+Pup retrieved slow product SQL spans (up to 3.28 seconds), PostgreSQL CPU metrics,
+and throttling metrics. The queried `trace.rack.request.duration` and
+`trace.pg.exec.params.duration` metrics returned no series; monitor selection
+must use a verified signal. Retrieved backend error logs were startup messages,
+not proof of the database fault.
+
+Evidence is in [evidence/2026-10-22](evidence/2026-10-22). Each phase has request
+JSONL and resource JSONL; `summarize-phase.py DIRECTORY PHASE` recomputes latency,
+CPU use, throttling and memory summaries. Warmup windows are separate because
+rollout completion does not imply API readiness. These are calibration runs:
+traffic pauses during rollouts, warmup is 45 seconds, and main measured windows are
+120 seconds (the final recovery checks are 60 and 90 seconds as labeled). They do **not** satisfy the three continuous fault/fix/reset cycles
+or sustained monitor-OK acceptance requirement. PostgreSQL PVC identities and
+the product count were preserved.
+
+The 30m candidate had a 6.50-second median and deteriorated during the run:
+success counts per 30-second window were 150, 150, 116, then 8 (150 offered
+each window). The 20m run's final 90 seconds had no successful requests. These
+are sustained overload effects, not only initial restart failures. Neither
+30m nor 20m is a steady low-error slow-query setting; 50m is much milder.
+Keep this distinction when selecting the teaching scenario and monitor threshold.
+
+**Recovery is not yet reliable.** After the 30m fault, restoring DB CPU left
+intermittent HTTP 500s: 15/300 initially and 34/450 in the confirmation window.
+Backend logs identify `ActiveRecord::ConnectionTimeoutError` (all pooled
+connections in use; 5-second checkout timeout). Fresh DB spans were back to
+roughly 1–4 ms, all pods were Ready, and the DB resources/PVC identities were
+correct. Do not equate pod readiness or fast SQL with end-to-end recovery.
+The pool failure's underlying cause remains to be diagnosed. Error rate must
+be checked alongside latency: the first recovery window had a low p95 despite
+5% HTTP 500s. The next gate is reliable application recovery, then monitor
+thresholds and three continuous-traffic cycles. Evidence was exported and the
+integration hold was released before expiry; CLI setup success is not scenario
+acceptance.
+
+### Reproduce calibration in a disposable lab
+
+Copy `fixed-traffic.py`, `run-phase.py` and `traffic-pod.json` to lab-host. Create
+the `pup-traffic` ConfigMap from the Python file and apply the pod manifest.
+The manifest pins the generator image and isolates it on the control-plane.
+Apply resource patches with `kubectl -n storedog patch ... --type strategic
+--patch-file ...`; the healthy patch files intentionally omit PVC fields.
+Wait for rollouts, warm the API, then run `python3 run-phase.py PHASE --rate 5
+--duration 120`. Export evidence after each phase, restore healthy DB resources,
+and release `/root/pup-poc/integration-complete` before the integration deadline.
+Never reset by deleting namespaces or PVCs. CPU thresholds are still candidates;
+do not treat these results as final course acceptance.
 
 ## Live setup checkpoint
 
@@ -17,12 +294,46 @@ The control-plane VM registers as node `kubernetes`; readiness selects its
 role and retries while kubeadm initializes. Secret creation uses one JSON
 `List`, avoiding invalid JSON streams separated by YAML document markers.
 
-This passed lifecycle setup only: challenge checks are unimplemented.
+This first checkpoint passed lifecycle setup only: challenge checks are unimplemented.
 Bedrock inference, OpenCode invoking Pup, Pup API access, HTTP routing and
-actual APM ingestion still need verification. No DB fault has been injected,
+actual APM ingestion were pending; see the integration results below. No DB fault has been injected,
 and no failure/recovery cycles have been tested. Next establish fixed-rate
 traffic and searchable DB spans, then calibrate CPU pressure and run three
 fault/fix/reset cycles without changing offered traffic or deleting PVCs.
+
+## Live integration checkpoint
+
+Sandbox `p8odg1uivmyg`, 2026-10-22:
+
+- AWS identity authentication and scoped Pup monitor query succeeded. The
+  monitor result was empty, as expected before monitor creation.
+- OpenCode 1.18.18 initially rejected the pinned Sonnet 4.5 profile as not found.
+  Its catalog filters deprecated models. Explicit `status: active` for the same
+  profile in both global and work-directory configurations restored selection.
+  The course setup now includes that override; no model/IAM scope was changed.
+- Bedrock returned a response and OpenCode completed `pup version`,
+  `kubectl -n storedog get pods`, and the scoped read-only Pup monitor query,
+  each with exit 0. Effective Datadog MCP was disabled. Session:
+  `ses_e9a4e5512ffe2aPxwprhmxXVXH`.
+- Agent and Pup API keys matched (compared in memory; no key saved here).
+- From 22:18:39 to 22:19:09 UTC, 30 post-startup requests through
+  `http://worker/services/backend/api/v2/storefront/products?per_page=25&include=images`
+  returned 30 HTTP 200 responses and 16 products each. Median latency was
+  67.9 ms; nearest-rank p95 was 335.8 ms. This sequential, paced smoke batch
+  is not a fixed-arrival-rate capacity baseline.
+- Pup retrieved ingested `store-backend` spans with `component=pg` and
+  `db.system=postgresql`. Example: trace `6ada8a9a0000000022b01c72015d17ef`,
+  span `1750605069761055204`, timestamp 22:13:46.041 UTC, duration 3.478 ms.
+  This was a schema query; a targeted `spree_products` span search returned
+  no results. Product-request-to-DB trace correlation remains open.
+
+The integration hold expired at 22:44:35 UTC (exit 124), and Instruqt cleaned up
+the sandbox. The overall CLI test therefore failed despite the checks above.
+Raw evidence stayed on the disposable VM; this checkpoint records results
+captured through SSH. Future sessions must export redacted evidence and release
+the hold before its deadline. No DB fault, resource patch, or recovery cycle was
+attempted. Next: fixed-rate in-cluster traffic, product DB trace correlation,
+CPU/throttling measurements, then fault calibration and three recovery cycles.
 
 ## Source baseline
 
