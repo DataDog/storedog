@@ -33,7 +33,7 @@ def assess(root, soak=False):
             stats=row['containers'][target]
             passed=not stats.get('incomplete',False) and not stats.get('counter_reset',True) and stats.get('oom_kill_counter_max',1)==0
             if passed:
-                passed=stats['max_memory_bytes'] < (.8*512*1024**2 if target=='pup-traffic' else .8*2*1024**3)
+                passed=stats['max_working_set_bytes'] < (.8*512*1024**2 if target=='pup-traffic' else .8*2*1024**3)
                 if target=='postgres-0' and row['phase']=='fault-steady':
                     passed=passed and stats['throttled_period_fraction'] is not None and stats['throttled_period_fraction']>0
                 else:

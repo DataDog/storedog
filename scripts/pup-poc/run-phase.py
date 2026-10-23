@@ -21,7 +21,7 @@ out = Path(a.output)
 out.mkdir(parents=True, exist_ok=True)
 k = ['kubectl', '--request-timeout=20s', '-n', 'storedog']
 targets = ['postgres-0', 'deployment/backend', 'pup-traffic', 'node/worker', 'node/kubernetes']
-read = 'cat /sys/fs/cgroup/cpu.stat; echo memory_current $(cat /sys/fs/cgroup/memory.current); cat /sys/fs/cgroup/memory.events'
+read = 'cat /sys/fs/cgroup/cpu.stat; echo memory_current $(cat /sys/fs/cgroup/memory.current); cat /sys/fs/cgroup/memory.events; cat /sys/fs/cgroup/memory.stat'
 
 def sample(target):
     try:

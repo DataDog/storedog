@@ -22,10 +22,10 @@ for cycle in range(start['cycles']):
    samples=[x for x in resources if x.get('target')==target and 'stats'in x and lo<=epoch(x['at'])-base<hi]
    times=[epoch(x['at'])-base for x in samples]
    complete=len(times)>=2 and times[0]<=lo+45 and times[-1]>=hi-45 and all(0<y-x<=45 for x,y in zip(times,times[1:]))
-   if not complete:row['containers'][target]={'incomplete':True};continue
+   if not complete or any('inactive_file' not in x['stats'] for x in samples):row['containers'][target]={'incomplete':True};continue
    first,last=samples[0],samples[-1];dt=epoch(last['at'])-epoch(first['at']);s,e=first['stats'],last['stats'];periods=e['nr_periods']-s['nr_periods']
    reset=any(y['stats']['usage_usec']<x['stats']['usage_usec'] for x,y in zip(samples,samples[1:]))
-   row['containers'][target]={'samples':len(samples),'counter_reset':reset,'average_cpu':None if reset else (e['usage_usec']-s['usage_usec'])/dt/1e6,'throttled_period_fraction':(e['nr_throttled']-s['nr_throttled'])/periods if periods>0 and not reset else None,'max_memory_bytes':max(x['stats']['memory_current'] for x in samples),'oom_kill_counter_max':max(x['stats']['oom_kill'] for x in samples)}
+   row['containers'][target]={'samples':len(samples),'counter_reset':reset,'average_cpu':None if reset else (e['usage_usec']-s['usage_usec'])/dt/1e6,'throttled_period_fraction':(e['nr_throttled']-s['nr_throttled'])/periods if periods>0 and not reset else None,'max_memory_bytes':max(x['stats']['memory_current'] for x in samples),'max_working_set_bytes':max(max(0,x['stats']['memory_current']-x['stats']['inactive_file']) for x in samples),'oom_kill_counter_max':max(x['stats']['oom_kill'] for x in samples)}
   for target in ('worker','kubernetes'):
    samples=[x for x in nodes if x.get('node')==target and 'at'in x and lo<=epoch(x['at'])-base<hi]
    times=[epoch(x['at'])-base for x in samples]

@@ -105,7 +105,8 @@ timeouts, request code and monitor definitions. `acceptance.py DIR1 DIR2 DIR3
 --soak SOAK_DIR --output acceptance.json` requires three distinct sandbox environments,
 matching workload settings, complete exports, per-minute fault gates, final healthy
 HTTP windows, latency Alert, both monitors sustained OK, correlated product SQL,
-container/node headroom, DB throttling, unchanged PVC/backend identity and no pool
+container/node headroom (80% CPU and working-set memory limits, with total
+cgroup memory and OOM counters retained), DB throttling, unchanged PVC/backend identity and no pool
 or application timeout errors. Do not create an accepted learner profile until all
 checks pass. Reset with `postgres-healthy-patch.json`; never delete PVCs or restart
 the backend as a recovery workaround.

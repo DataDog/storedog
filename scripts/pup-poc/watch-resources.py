@@ -1,6 +1,6 @@
 import subprocess,json,time,datetime,concurrent.futures,pathlib
 k=['kubectl','--request-timeout=12s','-n','storedog']
-read='cat /sys/fs/cgroup/cpu.stat; echo memory_current $(cat /sys/fs/cgroup/memory.current); cat /sys/fs/cgroup/memory.events'
+read='cat /sys/fs/cgroup/cpu.stat; echo memory_current $(cat /sys/fs/cgroup/memory.current); cat /sys/fs/cgroup/memory.events; cat /sys/fs/cgroup/memory.stat'
 def sample(target):
  try:
   raw=subprocess.check_output(k+['exec',target,'--','sh','-c',read],text=True,stderr=subprocess.DEVNULL,timeout=15)
