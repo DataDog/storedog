@@ -62,8 +62,9 @@ Missing evidence fails acceptance even when lifecycle cleanup succeeds.
 Calibration tries 250m, 125m, 60m, 30m, 20m and 10m, excluding the first minute
 **after rollout readiness**, then requires three consecutive minutes with p95
 1–3 seconds, at least 95% valid responses, no drops or queued arrivals, and no
-application/pool timeout errors. It tests integer CPU limits above the first
-qualifying boundary from highest to lowest. This can exceed a single development
+application/pool timeout errors. It bisects each promising fast-to-slow boundary to 1m resolution, including
+when coarse steps skip the 1–3 second band. CPU monotonicity is a search heuristic;
+the selected integer still requires independent acceptance and soak validation. This can exceed a single development
 hold; an interrupted sweep is inconclusive and must not be promoted. Resume using `calibrate.py --resume EXPORTED/calibration-state.json` with the same catalog checksum and rate. The ordered
 catalog/rate combinations are in `course-profile.json`; use a fresh sandbox for
 each combination, stopping at the first qualifying combination. A calibration

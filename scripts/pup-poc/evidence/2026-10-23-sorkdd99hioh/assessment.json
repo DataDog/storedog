@@ -1,0 +1,13 @@
+{
+  "accepted": false,
+  "candidate": "599326a3",
+  "phase": "healthy setup",
+  "seed_completed": true,
+  "seed_setup_elapsed_seconds": 41,
+  "warmup_attempts": 5,
+  "healthy_gate_passed": false,
+  "observed_p95_seconds": 10.01,
+  "fault_injected": false,
+  "raw_request_and_resource_export_complete": false,
+  "finding": "Healthy5rps baseline failed; cause unknown. Native capacity/routing/DB evidence needed. Earlier connection-pool failure remains unresolved."
+}

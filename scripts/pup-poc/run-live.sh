@@ -1,6 +1,11 @@
 #!/bin/bash
 # Run as a detached systemd service on disposable lab-host.
 set -euo pipefail
+# GNU timeout signals the whole controller process group, including an active
+# calibration subprocess, then allows three minutes for restoration and export.
+if [[ ${PUP_CONTROLLER_CHILD:-0} != 1 ]]; then
+  exec timeout --signal=TERM --kill-after=180s 3300 env PUP_CONTROLLER_CHILD=1 bash "$0"
+fi
 export KUBECONFIG=/root/.kube/config
 cd /root/pup-recovery
 evidence=/root/pup-poc/evidence
@@ -12,13 +17,10 @@ mkdir -p "$evidence/monitors"
 [[ $PUP_RUN_MODE == cycles || $PUP_RUN_MODE == soak || $PUP_RUN_MODE == calibrate ]] || exit 2
 if [[ $PUP_RUN_MODE != calibrate ]]; then : "${PUP_FAULT_CPU:?Use the frozen calibrated CPU limit}"; fi
 watchers=()
-( sleep 3300; kill -TERM $$ ) &
-watchdog=$!
 finish() {
   result=$?
   trap - EXIT TERM INT
   set +e
-  kill "$watchdog" 2>/dev/null
   timeout 25 kubectl -n storedog patch statefulset postgres --type strategic --patch-file postgres-healthy-patch.json >> "$evidence/run.log" 2>&1
   restore_result=$?
   if [[ $restore_result == 0 ]]; then

@@ -11,6 +11,29 @@ import hashlib
 spec=importlib.util.spec_from_file_location('gates',Path(__file__).with_name('window-gates.py'))
 gates=importlib.util.module_from_spec(spec);spec.loader.exec_module(gates)
 
+def search(test):
+    """Refine the fast/slow boundary, including when coarse steps skip the band.
+
+    CPU-vs-latency monotonicity is only a calibration search heuristic; acceptance
+    and the soak must independently validate the chosen integer limit.
+    """
+    upper = 1000  # Proven healthy by the initial warmup.
+    for cpu in (250, 125, 60, 30, 20, 10):
+        result = test(cpu)
+        if result['fast']:
+            upper = cpu
+            continue
+        low, high = cpu, upper
+        while high - low > 1:
+            middle = (high + low) // 2
+            if test(middle)['fast']:
+                high = middle
+            else:
+                low = middle
+        if test(low)['pass']:
+            return low
+    return None
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--rate',type=float,default=5)
@@ -26,7 +49,7 @@ def main():
         saved=json.loads(Path(a.resume).read_text())
         if saved['profile']!=profile:raise RuntimeError('Resume profile mismatch')
         results=saved['results']
-    cached={r['name']:r['pass'] for r in results if r['name'].startswith(('candidate-','refined-'))}
+    cached={int(r['name'].split('-')[-1]):r for r in results if r['name'].startswith('candidate-')}
     signal.signal(signal.SIGTERM, lambda *_: (_ for _ in ()).throw(SystemExit(124)))
     def resize(cpu):
         patch={'spec':{'template':{'spec':{'containers':[{'name':'postgres','resources':{'requests':{'cpu':cpu},'limits':{'cpu':cpu}}}]}}}}
@@ -41,43 +64,33 @@ def main():
         logs=subprocess.check_output(k+['logs','deployment/backend','--since-time='+started],text=True)
         errors=[term for term in ('ConnectionTimeoutError','RequestTimeoutException','RequestTimeoutError') if term in logs]
         result.update(name=name,errors=errors)
+        result['fast']=not errors and all(w['complete'] and w['dropped']==0 and
+            w['valid']==w['expected'] and w['p95_s'] is not None and w['p95_s']<1 and
+            w['max_dispatch_lag_s']<1/a.rate for w in result['windows'])
         result['pass']=result['pass'] and not errors
         results.append(result)
         (out/'calibration.json').write_text(json.dumps(results,indent=2)+'\n')
         (out/'calibration-state.json').write_text(json.dumps({'profile':profile,'results':results},indent=2)+'\n')
-        return result['pass']
+        return result
     def healthy(name):
         resize('1')
         for attempt in range(5):
-            if phase(name+'-'+str(attempt),180,'healthy'):return
+            if phase(name+'-'+str(attempt),180,'healthy')['pass']:return
         raise RuntimeError('healthy warmup did not qualify within 15 minutes')
     selected=None
     try:
         healthy('initial-warmup')
-        previous=250
-        for cpu in (250,125,60,30,20,10):
-            name='candidate-'+str(cpu)
-            if name in cached:
-                qualifies=cached[name]
-            else:
-                resize(str(cpu)+'m')
-                qualifies=phase(name,240,'fault',skip=1)
-            if qualifies:
-                selected=cpu
-                # Check every integer above the first qualifying boundary, highest first.
-                for refined in range(previous-1,cpu,-1):
-                    name='refined-'+str(refined)
-                    if name in cached:
-                        qualifies=cached[name]
-                    else:
-                        healthy('refine-warmup-'+str(refined))
-                        resize(str(refined)+'m')
-                        qualifies=phase(name,240,'fault',skip=1)
-                    if qualifies:
-                        selected=refined;break
-                break
-            previous=cpu
-            if 'candidate-'+str(cpu) not in cached:healthy('warmup-'+str(cpu))
+        dirty=False
+        def test(cpu):
+            nonlocal dirty
+            if cpu in cached:return cached[cpu]
+            if dirty:healthy('warmup-'+str(cpu))
+            resize(str(cpu)+'m')
+            dirty=True
+            result=phase('candidate-'+str(cpu),240,'fault',skip=1)
+            cached[cpu]=result
+            return result
+        selected=search(test)
         (out/'calibration-result.json').write_text(json.dumps({'cpu_m':selected,'rate':a.rate,
             'http_candidate':selected is not None,'scenario_accepted':False,
             'requires':'resource, monitor, span evidence; three fresh sandboxes and 40-minute soak'},indent=2)+'\n')

@@ -23,7 +23,8 @@ def assess(rows, rate, mode, windows=3, skip=0):
         passed = passed and (ok == hi-lo and p95 < .2 if mode == 'healthy' else
                              ok >= .95*(hi-lo) and 1 <= p95 <= 3)
         results.append({'minute': minute, 'expected': hi-lo, 'valid': ok, 'p95_s': p95,
-                        'max_dispatch_lag_s': lag, 'pass': bool(passed)})
+                        'max_dispatch_lag_s': lag, 'complete': complete,
+                        'dropped': sum(bool(r.get('dropped')) for r in selected), 'pass': bool(passed)})
     return {'pass': all(w['pass'] for w in results), 'windows': results}
 
 if __name__ == '__main__':
