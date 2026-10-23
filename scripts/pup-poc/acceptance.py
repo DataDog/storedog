@@ -48,6 +48,9 @@ def assess(root, soak=False):
     inputs={}
     candidate=read('candidate.json')
     checks['candidate_image']=(root/'backend-image.txt').read_text().strip()=='ghcr.io/datadog/storedog/backend@'+candidate['digest']
+    backend=read('backend-config.json')
+    checks['deployed_safeguards']=backend['timeouts']==read('course-profile.json')['timeouts']
+    checks['backend_limits']=backend['resources']['limits']=={'cpu':'1','memory':'2Gi'}
     for line in hashes:
         digest,name=line.split(maxsplit=1)
         path=root/name
