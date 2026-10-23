@@ -20,7 +20,7 @@ for _ in $(seq 1 60); do
 done
 [[ $ready == 1 ]]
 docker run --rm --name "$name-backend" --network "$name" -e DB_HOST="$name-db" -e DD_TRACE_ENABLED=false \
-  -e PUP_DB_STATEMENT_TIMEOUT_MS=5000 -e PUP_DB_LOCK_TIMEOUT_MS=1000 -e PUP_DB_CONNECT_TIMEOUT=3 \
+  -e PUP_TEST_SCALE="${PUP_TEST_SCALE:-5000}" -e PUP_DB_STATEMENT_TIMEOUT_MS=5000 -e PUP_DB_LOCK_TIMEOUT_MS=1000 -e PUP_DB_CONNECT_TIMEOUT=3 \
   -v "$root/services/backend/lib/pup_course:/app/lib/pup_course:ro" \
   -v "$root/services/backend/config/database.yml:/app/config/database.yml:ro" \
   "$image" bash -c 'ruby /app/lib/pup_course/verify_default.rb && bundle exec rails runner /app/lib/pup_course/verify.rb'

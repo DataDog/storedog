@@ -3,12 +3,13 @@ require Rails.root.join('lib/pup_course/catalog')
 output = '/tmp/pup-catalog-test.json'
 before = Spree::Product.where.not('slug LIKE ?', "#{PupCourse::Catalog::PREFIX}-%").count
 begin
-  PupCourse::Catalog.seed(count: 40, output: output, interrupt_after: 7)
+  PupCourse::Catalog.seed(count: 140, output: output, interrupt_after: 107)
 rescue RuntimeError => e
   raise unless e.message == 'intentional seed interruption'
 end
-first = PupCourse::Catalog.seed(count: 40, output: output)
-second = PupCourse::Catalog.seed(count: 40, output: output)
+raise 'completed batch was not retained' unless Spree::Product.where('slug LIKE ?', "#{PupCourse::Catalog::PREFIX}-%").count == 100
+first = PupCourse::Catalog.seed(count: 140, output: output)
+second = PupCourse::Catalog.seed(count: 140, output: output)
 raise 'manifest changed' unless first == second
 raise 'sample changed' unless before == Spree::Product.where.not('slug LIKE ?', "#{PupCourse::Catalog::PREFIX}-%").count
 first[:products].each do |row|
@@ -52,3 +53,29 @@ ensure
   holder.close
 end
 puts 'PASS: lock cancellation and connect timeout configuration'
+client = ActionDispatch::Integration::Session.new(Rails.application)
+requests = first[:categories].map { |category| [category[:id], first[:products].select { |p| p[:category] == category[:key] }, 1] }
+(1..6).each { |page| requests << [first[:catalog_taxon_id], first[:products], page] }
+requests.each do |taxon, products, page|
+  client.get('/api/v2/storefront/products', params: { filter: { taxons: taxon }, sort: 'name', per_page: 25, page: page,
+             include: 'default_variant,images,primary_variant,taxons' })
+  raise "API status #{client.response.status}: #{client.response.body[0,200]}" unless client.response.status == 200
+  actual = JSON.parse(client.response.body)['data'].map { |product| product['id'] }
+  expected = products.sort_by { |p| p[:key] }.slice((page - 1) * 25, 25).map { |p| p[:id] }
+  raise 'API pagination mismatch' unless actual == expected
+end
+puts 'PASS: real Rack API, all categories and full/partial catalog pages'
+if ENV['PUP_TEST_SCALE']
+  size = Integer(ENV.fetch('PUP_TEST_SCALE'))
+  started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+  large = PupCourse::Catalog.seed(count: size, output: output)
+  elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+  raise 'scaled manifest changed' unless large == PupCourse::Catalog.seed(count: size, output: output)
+  ids = large[:products].map { |row| row[:id] }
+  raise 'scaled variant counts' unless Spree::Variant.where(product_id: ids).count == size * 3
+  raise 'scaled image counts' unless Spree::Image.where(viewable_type: 'Spree::Variant', viewable_id: Spree::Variant.where(product_id: ids, is_master: true)).count == size
+  client.get('/api/v2/storefront/products', params: { filter: { taxons: large[:catalog_taxon_id] }, sort: 'name', per_page: 25, page: (size / 25.0).ceil,
+             include: 'default_variant,images,primary_variant,taxons' })
+  raise 'scaled final page' unless client.response.status == 200 && JSON.parse(client.response.body)['data'].last['id'] == large[:products].last[:id]
+  puts "PASS: #{size}-product seed in #{elapsed.round(2)} seconds; repeat manifest, counts and final API page"
+end
