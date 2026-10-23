@@ -47,10 +47,10 @@ kubectl -n storedog rollout status deployment/backend --timeout=120s
 [[ -f catalog-v1.json ]] || bash prepare-workload.sh
 cp -R monitors "$evidence/definitions"
 cp monitors/*.json "$evidence/monitors/"
-cp fixed-traffic.py workload.py warm-workload.py repeat-cycles.py run-live.sh backend-healthy-patch.json postgres-healthy-patch.json "$evidence/"
+cp fixed-traffic.py workload.py backlog-gate.py warm-workload.py repeat-cycles.py run-live.sh backend-healthy-patch.json postgres-healthy-patch.json "$evidence/"
 cp catalog-v1.json workload.json course-profile.json candidate.json "$evidence/"
 kubectl -n storedog get deployment backend -o jsonpath='{.spec.template.spec.containers[?(@.name=="backend")].image}' > "$evidence/backend-image.txt"
-sha256sum monitors/*.json fixed-traffic.py workload.py warm-workload.py workload.json catalog-v1.json course-profile.json repeat-cycles.py run-live.sh backend-healthy-patch.json postgres-healthy-patch.json > "$evidence/frozen-inputs.sha256"
+sha256sum monitors/*.json fixed-traffic.py workload.py backlog-gate.py warm-workload.py workload.json catalog-v1.json course-profile.json repeat-cycles.py run-live.sh backend-healthy-patch.json postgres-healthy-patch.json > "$evidence/frozen-inputs.sha256"
 kubectl get nodes -o json > "$evidence/node-capacity.json"
 pup version > "$evidence/pup-version.txt"
 python3 ensure-monitors.py

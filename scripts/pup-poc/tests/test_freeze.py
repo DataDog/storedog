@@ -17,6 +17,8 @@ class FreezeProvenance(unittest.TestCase):
             catalog={'counts':{'products':5000},'content_sha256':'catalog-checksum'}
             calibration={'http_candidate':True,'cpu_m':170,'rate':5,'profile':{
                 'candidate':candidate['digest'],'catalog_checksum':catalog['content_sha256'],'rate':5,'inputs':inputs}}
+            (root/'candidate-170.traffic.jsonl').write_text(''.join(json.dumps({'type':'request','index':i,'latency_s':1.5})+'\n' for i in range(1200)))
+            (root/'workload.json').write_bytes((ROOT/'workload.json').read_bytes())
             (root/'catalog.json').write_text(json.dumps(catalog))
             (root/'calibration.json').write_text(json.dumps(calibration))
             command=['python3',str(ROOT/'freeze-scenario.py'),str(root/'calibration.json'),str(root/'catalog.json'),str(root/'profile.json')]

@@ -98,7 +98,14 @@ the selected integer still requires independent acceptance and soak validation. 
 hold; an interrupted sweep is inconclusive and must not be promoted. Resume using `calibrate.py --resume EXPORTED/calibration-state.json` with the same catalog checksum and rate. The ordered
 catalog/rate combinations are in `course-profile.json`; use a fresh sandbox for
 each combination, stopping at the first qualifying combination. A calibration
-HTTP candidate is not scenario acceptance.
+HTTP candidate is not scenario acceptance. Before freezing, `freeze-scenario.py`
+requires the selected `candidate-<cpu>.traffic.jsonl` alongside the calibration
+result and rejects growing outstanding HTTP requests. Install the measured
+`workload.json` in this directory before freezing; the script requires an exact
+match and binds its endpoint and rate into the accepted input hashes. `backlog-gate.py` compares
+the first and last steady windows, allowing at most one additional average
+in-flight request for boundary jitter. The same criterion applies to each
+continuous fault and the full soak; timeout/pool gates remain separate.
 
 Before acceptance, freeze the candidate image, catalog checksum, rate, CPU,
 timeouts, request code and monitor definitions. `acceptance.py DIR1 DIR2 DIR3

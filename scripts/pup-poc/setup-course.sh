@@ -6,13 +6,31 @@ cd /root/pup-recovery
 mode=${PUP_SCENARIO_MODE:-learner}
 [[ $mode == learner || $mode == validation ]] || { echo 'Unknown scenario mode'; exit 1; }
 if [[ $mode == learner ]]; then
-  python3 - <<'PY'
-import json
-assert json.load(open('frozen-profile.json'))['status']=='accepted', 'Scenario has not passed acceptance'
+  settings=$(python3 - <<'PY'
+import hashlib,json,pathlib
+profile=json.load(open('frozen-profile.json'))
+assert profile['status']=='accepted', 'Scenario has not passed acceptance'
+assert profile['inputs'], 'Frozen input hashes are missing'
+for name,digest in profile['inputs'].items():
+    assert hashlib.sha256(pathlib.Path(name).read_bytes()).hexdigest()==digest, 'Frozen input changed: '+name
+assert profile['candidate']==json.load(open('candidate.json')), 'Candidate changed'
+assert profile['catalog_products'] in (5000,10000) and profile['rate'] in (5,10)
+print(profile['catalog_products'],profile['rate'])
 PY
+  )
+  read -r PUP_CATALOG_PRODUCTS PUP_RATE <<< "$settings"
+  export PUP_CATALOG_PRODUCTS PUP_RATE
 fi
 mkdir -p /root/pup-poc/evidence
 bash prepare-workload.sh
+if [[ $mode == learner ]]; then
+  python3 - <<'PY'
+import json
+profile=json.load(open('frozen-profile.json'));catalog=json.load(open('catalog-v1.json'))
+assert catalog['content_sha256']==profile['catalog_checksum'], 'Seeded catalog differs from accepted profile'
+assert json.load(open('workload.json'))['rate']==profile['rate'], 'Workload rate changed'
+PY
+fi
 python3 ensure-monitors.py
 watchers=()
 finish_setup() {
