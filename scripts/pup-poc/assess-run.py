@@ -43,7 +43,7 @@ try:
   result['fault_symptom_pass']=fault_minutes>=1 and result['fault_symptom_pass'] and result['fault_windows']['pass'] and result['fault_tail_window']['pass']
   per_monitor=[]
   for id in ids:
-   alerted=any(x.get('overall_state')=='Alert' and epoch(fault['at'])<=epoch(x['at'])<=epoch(restore['at'])+180 for x in states if x.get('id')==id and 'at' in x)
+   alerted=any(x.get('overall_state')=='Alert' and epoch(fault['at'])<=epoch(x['at'])<=base+fault_end for x in states if x.get('id')==id and 'at' in x)
    window=[x for x in states if x.get('id')==id and 'at' in x and base+lo<=epoch(x['at'])<base+recovery_end]
    healthy=[]
    for observation in reversed(window):
@@ -61,7 +61,7 @@ try:
  checks['error_polling_present']=any(x.get('polled') for x in error_rows)
  poll_times=sorted(epoch(x['at']) for x in error_rows if x.get('polled'))
  checks['error_polling_complete']=bool(poll_times) and poll_times[0]<=base+90 and poll_times[-1]>=base+summary['traffic']['duration_s']-90 and all(y-x<=90 for x,y in zip(poll_times,poll_times[1:]))
- checks['no_pool_or_app_timeout']=not any('error' in x or any(c in ('ActiveRecord::ConnectionTimeoutError','Rack::Timeout::RequestTimeoutException','Rack::Timeout::RequestTimeoutError') for c in x.get('classes',[])) for x in error_rows)
+ checks['no_pool_or_app_timeout']=not any('error' in x or any(c in ('ActiveRecord::ConnectionTimeoutError','Rack::Timeout::RequestTimeoutException','Rack::Timeout::RequestTimeoutError','Rack::Timeout::RequestExpiryError') for c in x.get('classes',[])) for x in error_rows)
  result={'checks':checks,'cycles':cycles,'http_monitor_trace_pass':all(checks.values()) and all(c['fault_symptom_pass'] and c['backlog']['pass'] and c['http_pass'] and c['fresh_product_sql'] and c['fresh_fault_product_sql'] and len(c['monitors'])==2 and all((m['alert_observed'] or not m['alert_required']) and m['sustained_recovery_ok'] for m in c['monitors']) for c in cycles),'scope':'HTTP, monitor and fresh trace gates only; resource headroom and error evidence require review.'}
 except (OSError,KeyError,ValueError,StopIteration) as e:
  result={'http_monitor_trace_pass':False,'error':type(e).__name__,'detail':str(e)}
