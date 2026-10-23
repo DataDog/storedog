@@ -20,6 +20,9 @@ class ResourceEvidence(unittest.TestCase):
                 {'kind':'fault-ready','at':stamp(70),'cycle':1}])
             rows('frozen-repeat.traffic.jsonl', [])
             rows('nodes.jsonl', [])
+            rows('pup-metrics.jsonl', [])
+            (root/'monitors').mkdir()
+            (root/'monitors/latency-created.json').write_text(json.dumps({'tags':['env:test']}))
             stats = {'usage_usec':10,'nr_periods':10,'nr_throttled':1,'memory_current':1024,'inactive_file':0,'oom_kill':0}
             rows('recovery-resources.jsonl', [
                 {'target':target,'at':stamp(t),'stats':stats}

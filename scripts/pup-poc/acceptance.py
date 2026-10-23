@@ -29,6 +29,7 @@ def assess(root, soak=False):
     checks['resources_present']=len(resources)==2*start['cycles']
     for row in resources:
         label=str(row['cycle'])+'-'+row['phase']
+        checks[label+'-pup-metrics']=bool(row.get('pup_metrics')) and all(m['pass'] for m in row['pup_metrics'].values())
         for target in ('postgres-0','deployment/backend','pup-traffic'):
             stats=row['containers'][target]
             passed=not stats.get('incomplete',False) and not stats.get('counter_reset',True) and stats.get('oom_kill_counter_max',1)==0

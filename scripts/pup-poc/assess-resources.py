@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Summarize cgroup and node headroom in steady fault and final recovery windows."""
-import argparse,datetime,json
+import argparse,datetime,json,importlib.util
 from pathlib import Path
 p=argparse.ArgumentParser(description=__doc__);p.add_argument('directory');a=p.parse_args();root=Path(a.directory)
 def epoch(s):return datetime.datetime.fromisoformat(s.replace('Z','+00:00')).timestamp()
@@ -12,12 +12,18 @@ def readlines(name):
 traffic=readlines('frozen-repeat.traffic.jsonl')
 events=readlines('frozen-repeat.events.jsonl');start=events[0];base=epoch(start['at']);resources=readlines('recovery-resources.jsonl');nodes=readlines('nodes.jsonl')
 result=[]
+spec=importlib.util.spec_from_file_location('metric_gate',Path(__file__).with_name('metric-gate.py'))
+metric_gate=importlib.util.module_from_spec(spec);spec.loader.exec_module(metric_gate)
+metrics=readlines('pup-metrics.jsonl')
+definition=json.loads((root/'monitors/latency-created.json').read_text())
+environment=next(tag[4:] for tag in definition['tags'] if tag.startswith('env:'))
 for cycle in range(start['cycles']):
  fault=60+cycle*(start['fault_seconds']+start['recovery_seconds']);end=fault+start['fault_seconds']+start['recovery_seconds']
  ready=next(x for x in events if x['kind']=='fault-ready' and x['cycle']==cycle+1)
  fault_lo=epoch(ready['at'])-base+60
  for label,lo,hi in [('fault-steady',fault_lo,fault+start['fault_seconds']),('recovery',end-120,end)]:
-  row={'cycle':cycle+1,'phase':label,'containers':{},'nodes':{}}
+  row={'cycle':cycle+1,'phase':label,'containers':{},'nodes':{},
+       'pup_metrics':metric_gate.assess(metrics,environment,base+lo,base+hi,label=='fault-steady')}
   for target in ('postgres-0','deployment/backend','pup-traffic'):
    samples=[x for x in resources if x.get('target')==target and 'stats'in x and lo<=epoch(x['at'])-base<hi]
    times=[epoch(x['at'])-base for x in samples]
