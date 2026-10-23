@@ -39,17 +39,19 @@ python3 watch-resources.py &
 watchers+=("$!")
 python3 watch-telemetry.py &
 watchers+=("$!")
+timeout 2400 kubectl -n storedog exec pup-traffic -- python3 /probe/warm-workload.py --workload /tmp/workload.json > /root/pup-poc/evidence/prewarm.jsonl
+# Prewarming is separate from the required fixed-arrival healthy gate.
+healthy=0
+for attempt in 1 2 3 4 5; do
+  kubectl -n storedog exec pup-traffic -- python3 /probe/fixed-traffic.py --workload /tmp/workload.json --duration 180 --stream > "/root/pup-poc/evidence/setup-warmup-$attempt.jsonl"
+  if python3 window-gates.py "/root/pup-poc/evidence/setup-warmup-$attempt.jsonl" --rate "${PUP_RATE:-5}" --mode healthy; then
+    healthy=1
+    break
+  fi
+done
+[[ $healthy == 1 ]] || { echo 'Healthy setup never qualified' >&2; exit 1; }
 if [[ $mode == learner ]]; then
   python3 learner-gate.py frozen-profile.json
 else
-  # Healthy setup; the detached validation controller owns subsequent fault injection.
-  for attempt in 1 2 3 4 5; do
-    kubectl -n storedog exec pup-traffic -- python3 /probe/fixed-traffic.py --workload /tmp/workload.json --duration 180 --stream > "/root/pup-poc/evidence/setup-warmup-$attempt.jsonl"
-    if python3 window-gates.py "/root/pup-poc/evidence/setup-warmup-$attempt.jsonl" --rate "${PUP_RATE:-5}" --mode healthy; then
-      touch /root/pup-poc/validation-ready
-      exit 0
-    fi
-  done
-  echo 'Healthy setup never qualified' >&2
-  exit 1
+  touch /root/pup-poc/validation-ready
 fi

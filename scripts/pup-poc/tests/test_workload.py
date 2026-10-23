@@ -36,4 +36,14 @@ class WorkloadTests(unittest.TestCase):
         self.assertFalse(self.workload.validate(request, body))
         self.assertFalse(self.workload.validate(request, {'data': []}))
 
+    def test_all_unique_pages_are_warmed(self):
+        import importlib.util
+        spec=importlib.util.spec_from_file_location('warm',Path(__file__).resolve().parents[1]/'warm-workload.py')
+        warm=importlib.util.module_from_spec(spec);spec.loader.exec_module(warm)
+        requests=warm.targets(self.workload)
+        self.assertEqual(80,len(requests))
+        self.assertEqual(80,len({r['url'] for r in requests}))
+        self.assertEqual(set(range(1,41)),{r['page'] for r in requests if r['request_class']=='catalog'})
+        self.assertEqual(40,sum(r['request_class']=='category' for r in requests))
+
 if __name__ == '__main__': unittest.main()

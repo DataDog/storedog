@@ -41,7 +41,10 @@ prepared statements and caching are unchanged.
 
 The private development course runs `setup-course.sh` in validation mode when
 `PUP_DEV_INTEGRATION=1`; this starts healthy and requires three clean one-minute
-windows below 200 ms. Learner mode requires an accepted `frozen-profile.json`,
+windows below 200 ms. Before this gate, `warm-workload.py` visits every unique
+manifest page with at most two concurrent requests, without changing application
+cache settings. Prewarm results are separate from offered-rate measurements;
+setup fails if any prewarm response is invalid. Learner mode requires an accepted `frozen-profile.json`,
 then sustained fault symptoms and latency Alert before publishing readiness.
 No accepted profile exists yet. The learner traffic service lasts one hour.
 
@@ -54,7 +57,8 @@ Run the detached `run-live.sh` controller with a private EnvironmentFile contain
 - `PUP_RUN_MODE=soak`: one continuous 2,400-second fault and 360-second recovery.
 
 Use `collect-live.py SSH_HELPER OUTPUT --seconds 3600` independently of the
-controller. The controller has a 55-minute watchdog, restores PostgreSQL CPU,
+controller. The setup exporter can run for two hours to cover cold-cache setup;
+validation restarts its export deadline at one hour. The controller has a 55-minute watchdog, restores PostgreSQL CPU,
 exports lifecycle status and waits for export acknowledgement before releasing
 the development hold. The course hold accepts 60–3,600 seconds, development only.
 Missing evidence fails acceptance even when lifecycle cleanup succeeds.

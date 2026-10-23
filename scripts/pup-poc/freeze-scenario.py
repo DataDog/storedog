@@ -16,7 +16,7 @@ result={'version':1,'status':'frozen','catalog_products':catalog['counts']['prod
         'healthy_cpu':'1','memory':'2Gi','timeouts':profile['timeouts'],
         'candidate':json.loads((root/'candidate.json').read_text()),
         'inputs':{name:hashlib.sha256((root/name).read_bytes()).hexdigest() for name in
-                  ('fixed-traffic.py','workload.py','monitors/latency.json','monitors/errors.json','course-profile.json')}}
+                  ('fixed-traffic.py','workload.py','warm-workload.py','monitors/latency.json','monitors/errors.json','course-profile.json')}}
 if a.acceptance:
     accepted=json.loads(Path(a.acceptance).read_text())
     if accepted.get('accepted') is not True or len(accepted.get('runs',[]))!=4:p.error('Complete acceptance is required')

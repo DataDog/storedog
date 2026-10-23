@@ -18,7 +18,7 @@ p.add_argument('ssh_helper')
 p.add_argument('output')
 p.add_argument('--seconds', type=int, default=3600)
 a = p.parse_args()
-if not 1 <= a.seconds <= 3600: p.error('seconds must be between 1 and 3600')
+if not 1 <= a.seconds <= 7200: p.error('seconds must be between 1 and 7200')
 out = Path(a.output).resolve()
 out.mkdir(parents=True, exist_ok=True)
 deadline = time.monotonic()+a.seconds

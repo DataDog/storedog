@@ -30,7 +30,7 @@ def main():
     lifecycle=subprocess.Popen(['instruqt','track','test',a.track,'--skip-fail-check',
         '--runtime-parameters='+','.join(k+'='+v for k,v in parameters.items())],
         stdout=open(out/'lifecycle.log','w'),stderr=subprocess.STDOUT)
-    deadline=time.monotonic()+1800
+    deadline=time.monotonic()+4500
     participant=None;log_process=None;collector=None;remote=None;started=False
     try:
         while time.monotonic()<deadline:
@@ -47,7 +47,7 @@ def main():
         while time.monotonic()<deadline:
             if lifecycle.poll() is not None:raise RuntimeError('Lifecycle stopped before SSH')
             fingerprints=re.findall(r'SHA256:[A-Za-z0-9+/]+', (out/'setup.log').read_text())
-            addresses=subprocess.check_output(['dig','+short',host,'@8.8.8.8'],text=True).splitlines()
+            addresses=subprocess.check_output(['dig','+short',host,'@ns-cloud-e1.googledomains.com'],text=True).splitlines()
             if fingerprints and addresses:
                 address=next((s for s in addresses if re.fullmatch(r'[0-9.]+',s)),None)
                 if address:
@@ -62,7 +62,7 @@ def main():
             time.sleep(10)
         if not remote:raise RuntimeError('Could not verify development SSH')
         helper=out/'ssh';helper.write_text('#!/bin/bash\nexec '+shlex.join(remote)+' "$@"\n');helper.chmod(0o700)
-        collector=subprocess.Popen(['python3',str(HERE/'collect-live.py'),str(helper),str(out),'--seconds','3600'],
+        collector=subprocess.Popen(['python3',str(HERE/'collect-live.py'),str(helper),str(out),'--seconds','7200'],
                                    stdout=open(out/'collector.log','w'),stderr=subprocess.STDOUT)
         while time.monotonic()<deadline:
             if (out/'completed.json').exists():
@@ -74,7 +74,7 @@ def main():
             time.sleep(10)
         else:raise RuntimeError('Healthy setup deadline exceeded')
         # Upload exact locally frozen helpers after setup has created the directory.
-        names=[str(p.relative_to(HERE)) for p in HERE.glob('*.py')]+['run-live.sh','course-profile.json','candidate.json']
+        names=[str(p.relative_to(HERE)) for p in HERE.glob('*.py')]+['run-live.sh','course-profile.json','candidate.json','backend-healthy-patch.json','postgres-healthy-patch.json']
         archive=subprocess.check_output(['tar','-C',str(HERE),'-cf','-',*names])
         subprocess.run(remote+['tar -C /root/pup-recovery -xf -'],input=archive,check=True,timeout=60)
         if a.resume:

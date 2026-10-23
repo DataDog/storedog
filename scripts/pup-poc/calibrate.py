@@ -43,7 +43,7 @@ def main():
     k=['kubectl','--request-timeout=20s','-n','storedog']
     profile={'rate':a.rate,'catalog_checksum':json.loads(Path('catalog-v1.json').read_text())['content_sha256'],
              'candidate':json.loads(Path('candidate.json').read_text())['digest'],
-             'inputs':{name:hashlib.sha256(Path(name).read_bytes()).hexdigest() for name in ('fixed-traffic.py','workload.py','course-profile.json','window-gates.py','calibrate.py')}}
+             'inputs':{name:hashlib.sha256(Path(name).read_bytes()).hexdigest() for name in ('fixed-traffic.py','workload.py','warm-workload.py','course-profile.json','window-gates.py','calibrate.py')}}
     results=[]
     if a.resume:
         saved=json.loads(Path(a.resume).read_text())
