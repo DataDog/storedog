@@ -92,6 +92,7 @@ def main():
             return result
         selected=search(test)
         (out/'calibration-result.json').write_text(json.dumps({'cpu_m':selected,'rate':a.rate,
+            'profile':profile,
             'http_candidate':selected is not None,'scenario_accepted':False,
             'requires':'resource, monitor, span evidence; three fresh sandboxes and 40-minute soak'},indent=2)+'\n')
         if selected is None:raise RuntimeError('No qualifying CPU; try next ordered catalog/rate combination in a fresh sandbox')
