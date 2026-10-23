@@ -20,6 +20,18 @@ default: &default
   # For details on connection pooling, see rails configuration guide
   # http://guides.rubyonrails.org/configuring.html#database-pooling
   pool: 5
+<% if ENV['PUP_DB_CONNECT_TIMEOUT'] %>
+  connect_timeout: <%= Integer(ENV.fetch('PUP_DB_CONNECT_TIMEOUT')) %>
+<% end %>
+<% if ENV['PUP_DB_STATEMENT_TIMEOUT_MS'] || ENV['PUP_DB_LOCK_TIMEOUT_MS'] %>
+  variables:
+<% if ENV['PUP_DB_STATEMENT_TIMEOUT_MS'] %>
+    statement_timeout: <%= Integer(ENV.fetch('PUP_DB_STATEMENT_TIMEOUT_MS')) %>
+<% end %>
+<% if ENV['PUP_DB_LOCK_TIMEOUT_MS'] %>
+    lock_timeout: <%= Integer(ENV.fetch('PUP_DB_LOCK_TIMEOUT_MS')) %>
+<% end %>
+<% end %>
 
 development:
   <<: *default

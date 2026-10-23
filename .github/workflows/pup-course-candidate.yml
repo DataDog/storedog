@@ -1,0 +1,51 @@
+name: Pup course candidate backend
+on:
+  push:
+    branches: [pup-course-*]
+    paths: [services/backend/**, .github/workflows/pup-course-candidate.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/backend
+          file: ./services/backend/Dockerfile.pup-course
+          platforms: linux/amd64
+          push: true
+          provenance: mode=max
+          tags: ghcr.io/datadog/storedog/backend:pup-course-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+          build-args: |
+            DD_GIT_REPOSITORY_URL=${{ github.repository }}
+            DD_GIT_COMMIT_SHA=${{ github.sha }}
+      - name: Record candidate provenance
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+          COMMIT: ${{ github.sha }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          json.dump({'revision': os.environ['COMMIT'], 'digest': os.environ['DIGEST'],
+                     'image': 'ghcr.io/datadog/storedog/backend:pup-course-' + os.environ['COMMIT']},
+                    open('candidate.json', 'w'), indent=2)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pup-course-candidate
+          path: candidate.json

@@ -1,0 +1,8 @@
+# Course-only overlay of the exact backend used by the pinned course.
+FROM ghcr.io/datadog/storedog/backend@sha256:c681ffd0e252f684a411832f3089c64a354e6c5a0eac93630ce53065997fe1e0
+ARG DD_GIT_REPOSITORY_URL
+ARG DD_GIT_COMMIT_SHA
+ENV DD_GIT_REPOSITORY_URL=${DD_GIT_REPOSITORY_URL} DD_GIT_COMMIT_SHA=${DD_GIT_COMMIT_SHA}
+COPY config/database.yml /app/config/database.yml
+COPY lib/pup_course /app/lib/pup_course
+COPY lib/tasks/pup_course.rake /app/lib/tasks/pup_course.rake
