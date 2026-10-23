@@ -1,0 +1,47 @@
+{
+  "scenario_accepted": false,
+  "catalog_products": 5000,
+  "rate": 5,
+  "candidate": "599326a3bbafe4ad3039a3f1d00e05a1d91c9f9f",
+  "healthy_after_prewarm": {
+    "valid": 900,
+    "offered": 900,
+    "p95_by_minute_s": [
+      0.118475921,
+      0.131303287,
+      0.129123095
+    ],
+    "dropped": 0
+  },
+  "prewarm": {
+    "unique_pages": 400,
+    "valid": 400,
+    "seconds": 605.886791497
+  },
+  "healthy_restart": {
+    "first_phase_valid": 896,
+    "offered": 900,
+    "initial_timeout_indices": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "second_phase_valid": 900
+  },
+  "finding": "pg1.3.0 async connect/reset ignores configured connect_timeout; timeout stacks in wait_writable/reset",
+  "calibration": "250m rollout began but calibration was intentionally interrupted before a complete candidate phase; no candidate selected",
+  "lifecycle": {
+    "process_exit": 124,
+    "restore_exit": 0,
+    "export_complete": true,
+    "instruqt_test": "succeeded; checks unimplemented"
+  },
+  "acceptance_exclusions": [
+    "diagnostic backend resource changes and restarts",
+    "paused traffic during diagnosis",
+    "application timeout exceptions",
+    "incomplete candidate phase",
+    "no cycles or soak"
+  ]
+}

@@ -11,7 +11,12 @@ Backend source: `599326a3bbafe4ad3039a3f1d00e05a1d91c9f9f`.
 published `pup-course-599326a3bbafe4ad3039a3f1d00e05a1d91c9f9f` with digest
 `sha256:27da75c3531f747c839d1a6d2933701bdcaefede54f7cd07690994c7b9ecac1a`.
 `Dockerfile.pup-course` layers only the opt-in catalog and database configuration
-onto the previously pinned backend digest. No general release or `latest` tag
+onto the previously pinned backend digest. The next candidate also pins the
+upstream `pg` 1.4.6 driver (source gem SHA-256 verified) because 1.3.0 ignores
+`connect_timeout` in asynchronous connect/reset; see
+[upstream fix #459](https://github.com/ged/ruby-pg/pull/459). The overlay changes
+only that lock entry. The general backend lockfile remains unchanged.
+No general release or `latest` tag
 is changed. `course-images.lock.json` differs from `images.lock.json` only in the
 backend entry plus candidate metadata. The course renderer retains every other
 service digest and the existing Kubernetes topology, OpenCode/Bedrock and disabled MCP.
@@ -36,6 +41,27 @@ validate exact IDs without depending on the pre-existing sample inventory.
 `PUP_DB_CONNECT_TIMEOUT=3` affect new database connections only. Unset variables
 preserve default configuration. The 15-second Rack timeout, pool, indexes,
 prepared statements and caching are unchanged.
+
+### Native healthy baseline checkpoint
+
+On 2026-10-23, sandbox `gkp8yscwzklg` passed three healthy one-minute
+windows after prewarming all 400 unique pages: 900/900 valid responses at
+5 rps, zero dropped arrivals, and p95 118/131/129 ms. Prewarming took 606 seconds.
+Both backend and PostgreSQL limits were 1 CPU/2 GiB. Recent measured CPU was
+approximately 0.33 cores for the backend and 0.16 for PostgreSQL.
+
+Before prewarming, cold-page traffic saturated backend CPU and timed out,
+including a diagnostic attempt at 2 backend CPUs. Isolated cached requests
+were fast. This sandbox had deliberate backend rollouts and a paused traffic
+process during diagnosis, so it cannot count toward fresh-sandbox acceptance.
+The successful healthy gate is separate from the earlier failed attempts.
+The first calibration baseline after a healthy database restart had four
+initial request timeouts; stack frames pointed to `PG::Connection#reset` waiting
+without a timeout in driver 1.3.0. Calibration was stopped, resources restored,
+and complete evidence exported. Testing only the `connect_timeout` configuration
+value had missed this bug; the regression now stalls actual connect and reset
+sockets. This diagnosis does not establish the cause of the earlier persistent
+pool failure. CPU calibration and all acceptance cycles remain pending. Evidence: `evidence/2026-10-23-native-baseline3-export/`.
 
 ### Development validation
 

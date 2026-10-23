@@ -53,6 +53,7 @@ ensure
   holder.close
 end
 puts 'PASS: lock cancellation and connect timeout configuration'
+load Rails.root.join('lib/pup_course/verify_connect_timeout.rb')
 client = ActionDispatch::Integration::Session.new(Rails.application)
 requests = first[:categories].map { |category| [category[:id], first[:products].select { |p| p[:category] == category[:key] }, 1] }
 (1..6).each { |page| requests << [first[:catalog_taxon_id], first[:products], page] }

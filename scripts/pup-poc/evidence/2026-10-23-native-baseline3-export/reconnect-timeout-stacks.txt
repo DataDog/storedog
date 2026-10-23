@@ -1,0 +1,68 @@
+source=rack-timeout id=fd26e7e4-8f8f-4b7b-b9cf-9a7227fea06f timeout=15000ms service=15000ms state=timed_out
+{"method":"GET","path":"/api/v2/storefront/products","format":"json","controller":"Spree::Api::V2::Storefront::ProductsController","action":"index","status":500,"error":"Rack::Timeout::RequestTimeoutException: Request ran for longer than 15000ms ","allocations":962508,"duration":14997.06,"view":0.0,"db":0.0,"dd":{"env":"pup-137-gkp8yscwzklg","service":"store-backend","version":"1.5.0","trace_id":"1593448564231701662","span_id":"4144759673731705377"},"ddsource":"ruby"}
+  
+Rack::Timeout::RequestTimeoutException (Request ran for longer than 15000ms ):
+  
+pg (1.3.0) lib/pg/connection.rb:629:in `wait_writable'
+pg (1.3.0) lib/pg/connection.rb:629:in `async_connect_or_reset'
+pg (1.3.0) lib/pg/connection.rb:546:in `reset'
+activerecord (6.1.4.4) lib/active_record/connection_adapters/postgresql_adapter.rb:286:in `block in reconnect!'
+activesupport (6.1.4.4) lib/active_support/concurrency/load_interlock_aware_monitor.rb:26:in `block (2 levels) in synchronize'
+activesupport (6.1.4.4) lib/active_support/concurrency/load_interlock_aware_monitor.rb:25:in `handle_interrupt'
+activesupport (6.1.4.4) lib/active_support/concurrency/load_interlock_aware_monitor.rb:25:in `block in synchronize'
+activesupport (6.1.4.4) lib/active_support/concurrency/load_interlock_aware_monitor.rb:21:in `handle_interrupt'
+activesupport (6.1.4.4) lib/active_support/concurrency/load_interlock_aware_monitor.rb:21:in `synchronize'
+activerecord (6.1.4.4) lib/active_record/connection_adapters/postgresql_adapter.rb:284:in `reconnect!'
+activerecord (6.1.4.4) lib/active_record/connection_adapters/abstract_adapter.rb:533:in `verify!'
+--
+source=rack-timeout id=f024c078-e835-46dd-addd-4db058efcf9b timeout=15000ms service=15000ms state=timed_out
+{"method":"GET","path":"/api/v2/storefront/products","format":"json","controller":"Spree::Api::V2::Storefront::ProductsController","action":"index","status":500,"error":"Rack::Timeout::RequestTimeoutException: Request ran for longer than 15000ms ","allocations":962977,"duration":14996.13,"view":0.0,"db":0.0,"dd":{"env":"pup-137-gkp8yscwzklg","service":"store-backend","version":"1.5.0","trace_id":"464952777128897343","span_id":"3058270925094717799"},"ddsource":"ruby"}
+  
+Rack::Timeout::RequestTimeoutException (Request ran for longer than 15000ms ):
+  
+pg (1.3.0) lib/pg/connection.rb:629:in `wait_writable'
+pg (1.3.0) lib/pg/connection.rb:629:in `async_connect_or_reset'
+pg (1.3.0) lib/pg/connection.rb:546:in `reset'
+activerecord (6.1.4.4) lib/active_record/connection_adapters/postgresql_adapter.rb:286:in `block in reconnect!'
+activesupport (6.1.4.4) lib/active_support/concurrency/load_interlock_aware_monitor.rb:26:in `block (2 levels) in synchronize'
+activesupport (6.1.4.4) lib/active_support/concurrency/load_interlock_aware_monitor.rb:25:in `handle_interrupt'
+activesupport (6.1.4.4) lib/active_support/concurrency/load_interlock_aware_monitor.rb:25:in `block in synchronize'
+activesupport (6.1.4.4) lib/active_support/concurrency/load_interlock_aware_monitor.rb:21:in `handle_interrupt'
+activesupport (6.1.4.4) lib/active_support/concurrency/load_interlock_aware_monitor.rb:21:in `synchronize'
+activerecord (6.1.4.4) lib/active_record/connection_adapters/postgresql_adapter.rb:284:in `reconnect!'
+activerecord (6.1.4.4) lib/active_record/connection_adapters/abstract_adapter.rb:533:in `verify!'
+--
+source=rack-timeout id=2ecaf6e5-dda9-4f5d-8d7b-ef830bde07dc timeout=15000ms service=15001ms state=timed_out
+{"method":"GET","path":"/api/v2/storefront/products","format":"json","controller":"Spree::Api::V2::Storefront::ProductsController","action":"index","status":500,"error":"Rack::Timeout::RequestTimeoutException: Request ran for longer than 15000ms ","allocations":1345972,"duration":14994.12,"view":0.0,"db":0.0,"dd":{"env":"pup-137-gkp8yscwzklg","service":"store-backend","version":"1.5.0","trace_id":"9124452162639847318","span_id":"2439098102781989008"},"ddsource":"ruby"}
+  
+Rack::Timeout::RequestTimeoutException (Request ran for longer than 15000ms ):
+  
+pg (1.3.0) lib/pg/connection.rb:629:in `wait_writable'
+pg (1.3.0) lib/pg/connection.rb:629:in `async_connect_or_reset'
+pg (1.3.0) lib/pg/connection.rb:546:in `reset'
+activerecord (6.1.4.4) lib/active_record/connection_adapters/postgresql_adapter.rb:286:in `block in reconnect!'
+activesupport (6.1.4.4) lib/active_support/concurrency/load_interlock_aware_monitor.rb:26:in `block (2 levels) in synchronize'
+activesupport (6.1.4.4) lib/active_support/concurrency/load_interlock_aware_monitor.rb:25:in `handle_interrupt'
+activesupport (6.1.4.4) lib/active_support/concurrency/load_interlock_aware_monitor.rb:25:in `block in synchronize'
+activesupport (6.1.4.4) lib/active_support/concurrency/load_interlock_aware_monitor.rb:21:in `handle_interrupt'
+activesupport (6.1.4.4) lib/active_support/concurrency/load_interlock_aware_monitor.rb:21:in `synchronize'
+activerecord (6.1.4.4) lib/active_record/connection_adapters/postgresql_adapter.rb:284:in `reconnect!'
+activerecord (6.1.4.4) lib/active_record/connection_adapters/abstract_adapter.rb:533:in `verify!'
+--
+source=rack-timeout id=0cbe204b-01f9-4073-ba85-b09ba2d7be83 timeout=15000ms service=15002ms state=timed_out
+{"method":"GET","path":"/api/v2/storefront/products","format":"json","controller":"Spree::Api::V2::Storefront::ProductsController","action":"index","status":500,"error":"Rack::Timeout::RequestTimeoutException: Request ran for longer than 15000ms ","allocations":1378500,"duration":14995.44,"view":0.0,"db":0.0,"dd":{"env":"pup-137-gkp8yscwzklg","service":"store-backend","version":"1.5.0","trace_id":"1236305901439124373","span_id":"1761078552560825860"},"ddsource":"ruby"}
+source=rack-timeout id=806b46a2-e6be-43f0-b747-9cb176e483a1 timeout=15000ms state=ready
+  
+Rack::Timeout::RequestTimeoutException (Request ran for longer than 15000ms ):
+  
+pg (1.3.0) lib/pg/connection.rb:629:in `wait_writable'
+pg (1.3.0) lib/pg/connection.rb:629:in `async_connect_or_reset'
+pg (1.3.0) lib/pg/connection.rb:546:in `reset'
+activerecord (6.1.4.4) lib/active_record/connection_adapters/postgresql_adapter.rb:286:in `block in reconnect!'
+activesupport (6.1.4.4) lib/active_support/concurrency/load_interlock_aware_monitor.rb:26:in `block (2 levels) in synchronize'
+activesupport (6.1.4.4) lib/active_support/concurrency/load_interlock_aware_monitor.rb:25:in `handle_interrupt'
+activesupport (6.1.4.4) lib/active_support/concurrency/load_interlock_aware_monitor.rb:25:in `block in synchronize'
+activesupport (6.1.4.4) lib/active_support/concurrency/load_interlock_aware_monitor.rb:21:in `handle_interrupt'
+activesupport (6.1.4.4) lib/active_support/concurrency/load_interlock_aware_monitor.rb:21:in `synchronize'
+activerecord (6.1.4.4) lib/active_record/connection_adapters/postgresql_adapter.rb:284:in `reconnect!'
+activerecord (6.1.4.4) lib/active_record/connection_adapters/abstract_adapter.rb:533:in `verify!'

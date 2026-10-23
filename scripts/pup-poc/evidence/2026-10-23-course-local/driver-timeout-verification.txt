@@ -1,0 +1,8 @@
+Course overlay: pg 1.4.6, source gem SHA256 d98f3dcb4a6ae29780a2219340cb0e55dbafbb7eb4ccc2b99f892f2569a7a61e
+Local AMD64 emulation; functional evidence only.
+PASS: unset course settings preserve default database config
+PASS: seed resume, idempotency, manifest, associations, cancellation and connection reuse
+PASS: lock cancellation and connect timeout configuration
+PASS: stalled connect and reconnect respect 3s; subsequent connection works
+PASS: real Rack API, all categories and full/partial catalog pages
+PASS: 5000-product seed in 24.66 seconds; repeat manifest, counts and final API page

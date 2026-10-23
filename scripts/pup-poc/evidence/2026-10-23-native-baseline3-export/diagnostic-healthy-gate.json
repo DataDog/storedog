@@ -1,0 +1,35 @@
+{
+  "pass": true,
+  "windows": [
+    {
+      "minute": 0,
+      "expected": 300,
+      "valid": 300,
+      "p95_s": 0.11847592100002657,
+      "max_dispatch_lag_s": 0.003069091999805096,
+      "complete": true,
+      "dropped": 0,
+      "pass": true
+    },
+    {
+      "minute": 1,
+      "expected": 300,
+      "valid": 300,
+      "p95_s": 0.13130328700003702,
+      "max_dispatch_lag_s": 0.007309622999855492,
+      "complete": true,
+      "dropped": 0,
+      "pass": true
+    },
+    {
+      "minute": 2,
+      "expected": 300,
+      "valid": 300,
+      "p95_s": 0.12912309500006813,
+      "max_dispatch_lag_s": 0.0034138459998303006,
+      "complete": true,
+      "dropped": 0,
+      "pass": true
+    }
+  ]
+}
