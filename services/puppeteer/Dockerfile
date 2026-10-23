@@ -1,13 +1,29 @@
-FROM ghcr.io/puppeteer/puppeteer:20.0.0
+FROM ghcr.io/puppeteer/puppeteer:24.23.0
 
+ARG RUM_APP_ID
+ARG RUM_CLIENT_TOKEN
 # Set default environment variables
 ENV STOREDOG_URL=http://service-proxy:80 \
-  PUPPETEER_TIMEOUT=30000
+  PUPPETEER_TIMEOUT=30000 \
+  PUPPETEER_ENABLE_CACHE=false \
+  PUPPETEER_SYSTEM_MEMORY=8GB \
+  PUPPETEER_STARTUP_DELAY=10000 \
+  PUPPETEER_RAMP_INTERVAL=30000 \
+  PUPPETEER_DEBUG=false \
+  PUPPETEER_DEBUG_SESSIONS=false \
+  PUPPETEER_LOOP=infinite \
+  PUPPETEER_SESSION_TYPES=browsing,vip,frustration,homepage,short,taxonomy \
+  RUM_APP_ID=${RUM_APP_ID} \
+  RUM_CLIENT_TOKEN=${RUM_CLIENT_TOKEN}
 
 USER pptruser
 WORKDIR /home/pptruser
 
-COPY ./scripts/puppeteer.sh .
-COPY ./scripts/puppeteer.js .
+# Copy package files and install dependencies
+COPY --chown=pptruser:pptruser package*.json ./
+RUN npm ci --only=production
 
-CMD ["bash", "puppeteer.sh"]
+# Copy all application files
+COPY --chown=pptruser:pptruser . .
+
+CMD ["node", "--expose-gc","./scripts/index.js"]
