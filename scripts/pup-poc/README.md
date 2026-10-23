@@ -44,6 +44,30 @@ prepared statements and caching are unchanged.
 
 ### Native healthy baseline checkpoint
 
+The current candidate passed the native healthy database restart in sandbox
+`i37njmty7xcl`: 900/900 valid requests at 5 rps, no dropped arrivals, minute p95
+112/96/92 ms, and no captured Rack timeout or pool checkout errors. Its initial
+400-page prewarm took 465 seconds; the initial healthy gate was 900/900 with
+minute p95 99/98/102 ms. This validates the measured reconnect safeguard, not
+the earlier unresolved persistent pool failure.
+
+Initial CPU trials with this candidate excluded the first minute after rollout:
+
+| PostgreSQL CPU | Valid requests per minute | Minute p95 (seconds) | Outcome |
+| --- | --- | --- | --- |
+| 250m | 300 / 300 / 300 | .187 / .192 / .190 | Too fast |
+| 125m | 2 / 2 / 1 | 10.012 / 10.012 / 10.012 | Too severe |
+| 187m | 300 / 299 / 300 | 5.195 / 4.400 / 2.900 | Above target in first two windows |
+| 218m | 300 / 300 / 300 | .148 / .148 / .161 | Too fast |
+| 202m | 300 / 300 / 300 | .174 / .175 / .179 | Too fast |
+
+Calibration stopped before normal cache expiry, restored healthy CPU, and
+exported complete evidence. A fresh sandbox resumes the 187–202m boundary;
+there is no frozen or accepted CPU yet. Evidence:
+`evidence/2026-10-23-native-driver-calibration/`.
+
+The preceding candidate's diagnostic baseline follows for comparison.
+
 On 2026-10-23, sandbox `gkp8yscwzklg` passed three healthy one-minute
 windows after prewarming all 400 unique pages: 900/900 valid responses at
 5 rps, zero dropped arrivals, and p95 118/131/129 ms. Prewarming took 606 seconds.
@@ -118,9 +142,11 @@ Before acceptance, freeze the candidate image, catalog checksum, rate, CPU,
 timeouts, request code and monitor definitions. `acceptance.py DIR1 DIR2 DIR3
 --soak SOAK_DIR --output acceptance.json` requires three distinct sandbox environments,
 matching workload settings, complete exports, per-minute fault gates, final healthy
-HTTP windows, latency Alert, both monitors sustained OK, correlated product SQL,
+HTTP windows, latency Alert before fault removal, both monitors sustained OK, correlated product SQL,
 container/node headroom (80% CPU and working-set memory limits, with total
-cgroup memory and OOM counters retained), DB throttling, unchanged PVC/backend identity and no pool
+cgroup memory and OOM counters retained), fresh environment-scoped Pup CPU and
+throttling metrics throughout each measured window, local DB throttling,
+unchanged PVC/backend identity and no pool
 or application timeout errors. Do not create an accepted learner profile until all
 checks pass. Reset with `postgres-healthy-patch.json`; never delete PVCs or restart
 the backend as a recovery workaround.
@@ -137,6 +163,13 @@ The first native candidate was stopped after 513 products in 251 seconds;
 that failed setup motivated bulk seeding and is saved in `evidence/2026-10-23-psfxjg5jxc5t/`. Run `tests/integration.sh` for disposable
 seed/safeguard checks and `python3 -m unittest discover -s tests -v` for workload
 and window-gate tests.
+
+The current driver candidate also passed actual stalled socket connect/reset
+checks at three seconds, interrupted bulk seeding at product 107 with 100
+committed, completion to 140 without duplicates, and a full 5,000-product seed
+and repeat (24.66 seconds for the initial seed under emulation). The Python
+suite currently has 23 passing tests, including rejection of absent, stale,
+wrong-environment and sparse Pup metrics.
 
 
 Status: live integration and telemetry verified. Three continuous cycles completed
