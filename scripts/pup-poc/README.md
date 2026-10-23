@@ -6,12 +6,12 @@ The new candidate is **not accepted**. The older 16-product experiments below
 remain historical evidence; they do not validate this catalog or resolve the
 connection-pool failure.
 
-Backend source: `599326a3bbafe4ad3039a3f1d00e05a1d91c9f9f`.
-[Candidate workflow](https://github.com/DataDog/storedog/actions/runs/39993623700)
-published `pup-course-599326a3bbafe4ad3039a3f1d00e05a1d91c9f9f` with digest
-`sha256:27da75c3531f747c839d1a6d2933701bdcaefede54f7cd07690994c7b9ecac1a`.
+Backend source: `b8426ca64391474ac2416254fd82caf055f756fa`.
+[Candidate workflow](https://github.com/DataDog/storedog/actions/runs/40027519105)
+published `pup-course-b8426ca64391474ac2416254fd82caf055f756fa` with digest
+`sha256:5f29264f192cd3ca4fb6a85809ed47ee88881cb6fa609c1d186411deb92d1aa2`.
 `Dockerfile.pup-course` layers only the opt-in catalog and database configuration
-onto the previously pinned backend digest. The next candidate also pins the
+onto the previously pinned backend digest. The candidate also pins the
 upstream `pg` 1.4.6 driver (source gem SHA-256 verified) because 1.3.0 ignores
 `connect_timeout` in asynchronous connect/reset; see
 [upstream fix #459](https://github.com/ged/ruby-pg/pull/459). The overlay changes

@@ -1,5 +1,5 @@
 {
-  "revision": "599326a3bbafe4ad3039a3f1d00e05a1d91c9f9f",
-  "digest": "sha256:27da75c3531f747c839d1a6d2933701bdcaefede54f7cd07690994c7b9ecac1a",
-  "image": "ghcr.io/datadog/storedog/backend:pup-course-599326a3bbafe4ad3039a3f1d00e05a1d91c9f9f"
+  "revision": "b8426ca64391474ac2416254fd82caf055f756fa",
+  "digest": "sha256:5f29264f192cd3ca4fb6a85809ed47ee88881cb6fa609c1d186411deb92d1aa2",
+  "image": "ghcr.io/datadog/storedog/backend:pup-course-b8426ca64391474ac2416254fd82caf055f756fa"
 }
