@@ -73,6 +73,9 @@ cache settings. Prewarm results are separate from offered-rate measurements;
 setup fails if any prewarm response is invalid. Learner mode requires an accepted `frozen-profile.json`,
 then sustained fault symptoms and latency Alert before publishing readiness.
 No accepted profile exists yet. The learner traffic service lasts one hour.
+Cycles and soak reuse the measured setup gate only within two minutes, with
+matching workload hashes and unchanged healthy resource patches; otherwise they
+measure a fresh three-minute gate. Calibration always requalifies after rollouts.
 
 Run the detached `run-live.sh` controller with a private EnvironmentFile containing
 `DD_ENV` (the unique sandbox environment), required Pup credentials and:

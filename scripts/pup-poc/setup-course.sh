@@ -68,6 +68,7 @@ for attempt in 1 2 3 4 5; do
   fi
 done
 [[ $healthy == 1 ]] || { echo 'Healthy setup never qualified' >&2; exit 1; }
+sha256sum fixed-traffic.py workload.py warm-workload.py workload.json catalog-v1.json candidate.json > /root/pup-poc/evidence/setup-inputs.sha256
 if [[ $mode == learner ]]; then
   python3 learner-gate.py frozen-profile.json
 else
