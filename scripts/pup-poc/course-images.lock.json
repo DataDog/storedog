@@ -8,7 +8,7 @@
     },
     {
       "reference": "ghcr.io/datadog/storedog/backend:1.5.0",
-      "digest": "sha256:134d8eb0d8833fc4f4a379cc041454e5daad387aed0c10d6861e538b0126a146"
+      "digest": "sha256:27da75c3531f747c839d1a6d2933701bdcaefede54f7cd07690994c7b9ecac1a"
     },
     {
       "reference": "ghcr.io/datadog/storedog/discounts:1.5.0",
@@ -33,8 +33,8 @@
     }
   ],
   "candidate": {
-    "revision": "383df3ed9b69ac6801b793b6db198f7eeb1b4202",
-    "digest": "sha256:134d8eb0d8833fc4f4a379cc041454e5daad387aed0c10d6861e538b0126a146",
-    "image": "ghcr.io/datadog/storedog/backend:pup-course-383df3ed9b69ac6801b793b6db198f7eeb1b4202"
+    "revision": "599326a3bbafe4ad3039a3f1d00e05a1d91c9f9f",
+    "digest": "sha256:27da75c3531f747c839d1a6d2933701bdcaefede54f7cd07690994c7b9ecac1a",
+    "image": "ghcr.io/datadog/storedog/backend:pup-course-599326a3bbafe4ad3039a3f1d00e05a1d91c9f9f"
   }
 }

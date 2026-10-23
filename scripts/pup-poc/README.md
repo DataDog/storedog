@@ -6,10 +6,10 @@ The new candidate is **not accepted**. The older 16-product experiments below
 remain historical evidence; they do not validate this catalog or resolve the
 connection-pool failure.
 
-Backend source: `383df3ed9b69ac6801b793b6db198f7eeb1b4202`.
-[Candidate workflow](https://github.com/DataDog/storedog/actions/runs/39986537862)
-published `pup-course-383df3ed9b69ac6801b793b6db198f7eeb1b4202` with digest
-`sha256:134d8eb0d8833fc4f4a379cc041454e5daad387aed0c10d6861e538b0126a146`.
+Backend source: `599326a3bbafe4ad3039a3f1d00e05a1d91c9f9f`.
+[Candidate workflow](https://github.com/DataDog/storedog/actions/runs/39993623700)
+published `pup-course-599326a3bbafe4ad3039a3f1d00e05a1d91c9f9f` with digest
+`sha256:27da75c3531f747c839d1a6d2933701bdcaefede54f7cd07690994c7b9ecac1a`.
 `Dockerfile.pup-course` layers only the opt-in catalog and database configuration
 onto the previously pinned backend digest. No general release or `latest` tag
 is changed. `course-images.lock.json` differs from `images.lock.json` only in the
@@ -19,7 +19,7 @@ service digest and the existing Kubernetes topology, OpenCode/Bedrock and disabl
 The explicit `bundle exec rake pup_course:seed` task defaults to 5,000 products,
 20 category children, two non-master variants, USD prices, stock and a shared
 bundled image fixture. Its namespace is `pup-course-v1`; existing sample products
-are preserved. Per-product transactions support interrupted seed recovery;
+are preserved. Bounded 100-product transactions support interrupted seed recovery;
 `ANALYZE` and atomic manifest publication happen after completion. Use
 `PUP_CATALOG_PRODUCTS=10000` for the alternate profile. Use fresh databases when
 moving to a smaller catalog. No seed runs during ordinary backend startup.
@@ -54,7 +54,7 @@ Run the detached `run-live.sh` controller with a private EnvironmentFile contain
 - `PUP_RUN_MODE=soak`: one continuous 2,400-second fault and 360-second recovery.
 
 Use `collect-live.py SSH_HELPER OUTPUT --seconds 3600` independently of the
-controller. The controller has a 58-minute watchdog, restores PostgreSQL CPU,
+controller. The controller has a 55-minute watchdog, restores PostgreSQL CPU,
 exports lifecycle status and waits for export acknowledgement before releasing
 the development hold. The course hold accepts 60–3,600 seconds, development only.
 Missing evidence fails acceptance even when lifecycle cleanup succeeds.
@@ -64,7 +64,7 @@ Calibration tries 250m, 125m, 60m, 30m, 20m and 10m, excluding the first minute
 1–3 seconds, at least 95% valid responses, no drops or queued arrivals, and no
 application/pool timeout errors. It tests integer CPU limits above the first
 qualifying boundary from highest to lowest. This can exceed a single development
-hold; an interrupted sweep is inconclusive and must not be promoted. The ordered
+hold; an interrupted sweep is inconclusive and must not be promoted. Resume using `calibrate.py --resume EXPORTED/calibration-state.json` with the same catalog checksum and rate. The ordered
 catalog/rate combinations are in `course-profile.json`; use a fresh sandbox for
 each combination, stopping at the first qualifying combination. A calibration
 HTTP candidate is not scenario acceptance.
@@ -84,8 +84,11 @@ interruption after product 7, repeat seed/manifests/associations, database-nativ
 statement and lock cancellation followed by connection reuse, unchanged default
 configuration, 100 real API requests across all categories, and a healthy DB
 restart under continuous 1 rps (final 60/60 valid, zero drops). This used AMD64
-emulation and PostgreSQL 17, so it establishes neither native PostgreSQL 15 CPU
-calibration nor the 5,000-product scenario. Run `tests/integration.sh` for disposable
+emulation and PostgreSQL 17, so it establishes no native PostgreSQL 15 CPU calibration. The revised bulk-seed
+functional check subsequently passed at 5,000 products (25.23 seconds under
+emulation), including repeat manifests, associations and the final API page.
+The first native candidate was stopped after 513 products in 251 seconds;
+that failed setup motivated bulk seeding and is saved in `evidence/2026-10-23-psfxjg5jxc5t/`. Run `tests/integration.sh` for disposable
 seed/safeguard checks and `python3 -m unittest discover -s tests -v` for workload
 and window-gate tests.
 

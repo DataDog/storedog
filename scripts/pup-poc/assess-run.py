@@ -48,6 +48,7 @@ try:
   result['monitors']=per_monitor
   product_traces={x.get('trace_id') for x in traffic if x.get('type')=='request' and x.get('status')==200 and x.get('valid') is True}
   result['fresh_product_sql']=any(s.get('start_timestamp') and epoch(restore['at'])+60<=epoch(s['start_timestamp'])<base+recovery_end and s.get('trace_id') in product_traces and (s.get('operation_name') or '').startswith('pg.') and any(table in (s.get('resource_name') or '') for table in ('spree_products','spree_variants','spree_taxons','spree_prices')) for batch in spans for s in batch.get('spans',[]))
+  result['fresh_fault_product_sql']=any(s.get('start_timestamp') and base+fault_lo<=epoch(s['start_timestamp'])<base+fault_end and s.get('trace_id') in product_traces and (s.get('operation_name') or '').startswith('pg.') and any(table in (s.get('resource_name') or '') for table in ('spree_products','spree_variants','spree_taxons','spree_prices')) for batch in spans for s in batch.get('spans',[]))
   cycles.append(result)
  checks['required_cycles']=len(cycles)==(1 if start['fault_seconds']==2400 else 3)
  error_rows=lines('backend-errors.jsonl')
@@ -55,7 +56,7 @@ try:
  poll_times=sorted(epoch(x['at']) for x in error_rows if x.get('polled'))
  checks['error_polling_complete']=bool(poll_times) and poll_times[0]<=base+90 and poll_times[-1]>=base+summary['traffic']['duration_s']-90 and all(y-x<=90 for x,y in zip(poll_times,poll_times[1:]))
  checks['no_pool_or_app_timeout']=not any('error' in x or any(c in ('ActiveRecord::ConnectionTimeoutError','Rack::Timeout::RequestTimeoutException','Rack::Timeout::RequestTimeoutError') for c in x.get('classes',[])) for x in error_rows)
- result={'checks':checks,'cycles':cycles,'http_monitor_trace_pass':all(checks.values()) and all(c['fault_symptom_pass'] and c['http_pass'] and c['fresh_product_sql'] and len(c['monitors'])==2 and all((m['alert_observed'] or not m['alert_required']) and m['sustained_recovery_ok'] for m in c['monitors']) for c in cycles),'scope':'HTTP, monitor and fresh trace gates only; resource headroom and error evidence require review.'}
+ result={'checks':checks,'cycles':cycles,'http_monitor_trace_pass':all(checks.values()) and all(c['fault_symptom_pass'] and c['http_pass'] and c['fresh_product_sql'] and c['fresh_fault_product_sql'] and len(c['monitors'])==2 and all((m['alert_observed'] or not m['alert_required']) and m['sustained_recovery_ok'] for m in c['monitors']) for c in cycles),'scope':'HTTP, monitor and fresh trace gates only; resource headroom and error evidence require review.'}
 except (OSError,KeyError,ValueError,StopIteration) as e:
  result={'http_monitor_trace_pass':False,'error':type(e).__name__,'detail':str(e)}
 (root/'assessment.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result,indent=2))

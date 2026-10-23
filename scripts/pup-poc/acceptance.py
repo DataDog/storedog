@@ -44,15 +44,19 @@ def assess(root, soak=False):
             for name,n in row['nodes'].items())
     hashes=(root/'frozen-inputs.sha256').read_text().splitlines()
     checks['frozen_files']=bool(hashes)
+    inputs={}
+    candidate=read('candidate.json')
+    checks['candidate_image']=(root/'backend-image.txt').read_text().strip()=='ghcr.io/datadog/storedog/backend@'+candidate['digest']
     for line in hashes:
         digest,name=line.split(maxsplit=1)
         path=root/name
+        if name not in ('catalog-v1.json',):inputs[name]=digest
         checks['frozen_files']=checks['frozen_files'] and path.exists() and hashlib.sha256(path.read_bytes()).hexdigest()==digest
     definition=read('monitors/latency-created.json')
     env=next(t[4:] for t in definition['tags'] if t.startswith('env:'))
     return {'directory':str(root),'environment':env,'checks':checks,'pass':all(checks.values()),
             'catalog_checksum':read('catalog-v1.json')['content_sha256'],
-            'rate':start['rate'],'cpu':start['cpu']}
+            'rate':start['rate'],'cpu':start['cpu'],'inputs':inputs,'candidate':candidate['digest']}
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
@@ -65,7 +69,7 @@ def main():
     passed=all(r['pass'] for r in results)
     if passed:
         passed=(len({r['environment'] for r in results[:3]})==3 and
-                len({(r['catalog_checksum'],r['rate'],r['cpu']) for r in results})==1)
+                len({(r['catalog_checksum'],r['rate'],r['cpu'],r['candidate'],json.dumps(r['inputs'],sort_keys=True)) for r in results})==1)
     result={'accepted':passed,'runs':results}
     Path(a.output).write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps(result,indent=2));return 0 if passed else 1

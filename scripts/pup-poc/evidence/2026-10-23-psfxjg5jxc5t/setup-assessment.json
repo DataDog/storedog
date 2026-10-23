@@ -1,0 +1,11 @@
+{
+  "sandbox": "psfxjg5jxc5t",
+  "accepted": false,
+  "phase": "native setup",
+  "candidate": "383df3ed9b69ac6801b793b6db198f7eeb1b4202",
+  "products_created": 513,
+  "first_product_at": "2026-10-23T16:40:11.108612Z",
+  "last_product_at": "2026-10-23T16:44:22.160441Z",
+  "finding": "Model callback seed throughput approximately 2 products/second; projected 5000-product setup exceeds intended setup budget. Shared image triggered repeated analysis jobs.",
+  "action": "Terminated only dedicated seed database session; lifecycle stopped and cleaned up. No fault injected. Reworking explicit seeding into bounded bulk transactions; runtime query behavior unchanged."
+}

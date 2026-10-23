@@ -12,7 +12,7 @@ mkdir -p "$evidence/monitors"
 [[ $PUP_RUN_MODE == cycles || $PUP_RUN_MODE == soak || $PUP_RUN_MODE == calibrate ]] || exit 2
 if [[ $PUP_RUN_MODE != calibrate ]]; then : "${PUP_FAULT_CPU:?Use the frozen calibrated CPU limit}"; fi
 watchers=()
-( sleep 3480; kill -TERM $$ ) &
+( sleep 3300; kill -TERM $$ ) &
 watchdog=$!
 finish() {
   result=$?
@@ -21,6 +21,10 @@ finish() {
   kill "$watchdog" 2>/dev/null
   timeout 25 kubectl -n storedog patch statefulset postgres --type strategic --patch-file postgres-healthy-patch.json >> "$evidence/run.log" 2>&1
   restore_result=$?
+  if [[ $restore_result == 0 ]]; then
+    timeout 120 kubectl -n storedog rollout status statefulset/postgres --timeout=110s >> "$evidence/run.log" 2>&1
+    restore_result=$?
+  fi
   for pid in "${watchers[@]}"; do kill "$pid" 2>/dev/null; wait "$pid" 2>/dev/null; done
   printf '{"process_exit":%s,"restore_exit":%s,"completed_at":"%s"}\n' "$result" "$restore_result" "$(date -u +%FT%TZ)" > "$evidence/completed.json"
   for attempt in $(seq 1 12); do
@@ -42,7 +46,8 @@ kubectl -n storedog rollout status deployment/backend --timeout=120s
 cp -R monitors "$evidence/definitions"
 cp monitors/*.json "$evidence/monitors/"
 cp fixed-traffic.py workload.py repeat-cycles.py "$evidence/"
-cp catalog-v1.json workload.json course-profile.json "$evidence/"
+cp catalog-v1.json workload.json course-profile.json candidate.json "$evidence/"
+kubectl -n storedog get deployment backend -o jsonpath='{.spec.template.spec.containers[?(@.name=="backend")].image}' > "$evidence/backend-image.txt"
 sha256sum monitors/*.json fixed-traffic.py workload.py workload.json catalog-v1.json course-profile.json repeat-cycles.py > "$evidence/frozen-inputs.sha256"
 kubectl get nodes -o json > "$evidence/node-capacity.json"
 pup version > "$evidence/pup-version.txt"
@@ -56,7 +61,9 @@ watchers+=("$!")
 python3 watch-telemetry.py &
 watchers+=("$!")
 if [[ $PUP_RUN_MODE == calibrate ]]; then
-  python3 calibrate.py --rate "$PUP_RATE"
+  args=(--rate "$PUP_RATE")
+  if [[ -n ${PUP_CALIBRATION_RESUME:-} ]]; then args+=(--resume "$PUP_CALIBRATION_RESUME"); fi
+  python3 calibrate.py "${args[@]}"
   exit $?
 fi
 healthy=0

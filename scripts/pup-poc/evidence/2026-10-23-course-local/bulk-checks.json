@@ -1,0 +1,15 @@
+{
+  "catalog_products": 5000,
+  "initial_seed_seconds": 25.23,
+  "platform": "AMD64 emulation, PostgreSQL17, local functional test only",
+  "interrupt_after": 107,
+  "retained_batch_products": 100,
+  "resume": true,
+  "idempotency": true,
+  "deterministic_manifest": true,
+  "association_integrity": true,
+  "cancellation_and_reuse": true,
+  "real_api_category_and_pagination_checks": true,
+  "full_scale_final_page": true,
+  "scenario_acceptance": false
+}
