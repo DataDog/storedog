@@ -4,6 +4,7 @@ import argparse,datetime,json,math,importlib.util
 from pathlib import Path
 spec=importlib.util.spec_from_file_location('gates',Path(__file__).with_name('window-gates.py'));gates=importlib.util.module_from_spec(spec);spec.loader.exec_module(gates)
 spec_backlog=importlib.util.spec_from_file_location('backlog_gate',Path(__file__).with_name('backlog-gate.py'));backlog_gate=importlib.util.module_from_spec(spec_backlog);spec_backlog.loader.exec_module(backlog_gate)
+spec_monitor=importlib.util.spec_from_file_location('monitor_gates',Path(__file__).with_name('monitor-gates.py'));monitor_gates=importlib.util.module_from_spec(spec_monitor);spec_monitor.loader.exec_module(monitor_gates)
 p=argparse.ArgumentParser(description=__doc__);p.add_argument('directory');a=p.parse_args();root=Path(a.directory)
 def read(name):return json.loads((root/name).read_text())
 def lines(name):return [json.loads(x) for x in (root/name).read_text().splitlines() if x]
@@ -43,14 +44,14 @@ try:
   result['fault_symptom_pass']=fault_minutes>=1 and result['fault_symptom_pass'] and result['fault_windows']['pass'] and result['fault_tail_window']['pass']
   per_monitor=[]
   for id in ids:
-   alerted=any(x.get('overall_state')=='Alert' and epoch(fault['at'])<=epoch(x['at'])<=base+fault_end for x in states if x.get('id')==id and 'at' in x)
+   incident=monitor_gates.assess(states,id,base+fault_lo,base+fault_end)
    window=[x for x in states if x.get('id')==id and 'at' in x and base+lo<=epoch(x['at'])<base+recovery_end]
    healthy=[]
    for observation in reversed(window):
     if observation.get('overall_state')!='OK':break
     healthy.insert(0,observation)
    sustained=len(healthy)>=2 and epoch(healthy[-1]['at'])-epoch(healthy[0]['at'])>=60 and base+recovery_end-epoch(healthy[-1]['at'])<=45 and all(epoch(y['at'])-epoch(x['at'])<=45 for x,y in zip(healthy,healthy[1:]))
-   per_monitor.append({'id':id,'alert_observed':alerted, 'alert_required':id==read('monitors/latency-created.json')['id'],'sustained_recovery_ok':sustained})
+   per_monitor.append({'id':id,**incident,'alert_required':id==read('monitors/latency-created.json')['id'],'sustained_recovery_ok':sustained})
   result['monitors']=per_monitor
   product_traces={x.get('trace_id') for x in traffic if x.get('type')=='request' and x.get('status')==200 and x.get('valid') is True}
   result['fresh_product_sql']=any(s.get('start_timestamp') and epoch(restore['at'])+60<=epoch(s['start_timestamp'])<base+recovery_end and s.get('trace_id') in product_traces and (s.get('operation_name') or '').startswith('pg.') and any(table in (s.get('resource_name') or '') for table in ('spree_products','spree_variants','spree_taxons','spree_prices')) for batch in spans for s in batch.get('spans',[]))
@@ -62,7 +63,7 @@ try:
  poll_times=sorted(epoch(x['at']) for x in error_rows if x.get('polled'))
  checks['error_polling_complete']=bool(poll_times) and poll_times[0]<=base+90 and poll_times[-1]>=base+summary['traffic']['duration_s']-90 and all(y-x<=90 for x,y in zip(poll_times,poll_times[1:]))
  checks['no_pool_or_app_timeout']=not any('error' in x or any(c in ('ActiveRecord::ConnectionTimeoutError','Rack::Timeout::RequestTimeoutException','Rack::Timeout::RequestTimeoutError','Rack::Timeout::RequestExpiryError') for c in x.get('classes',[])) for x in error_rows)
- result={'checks':checks,'cycles':cycles,'http_monitor_trace_pass':all(checks.values()) and all(c['fault_symptom_pass'] and c['backlog']['pass'] and c['http_pass'] and c['fresh_product_sql'] and c['fresh_fault_product_sql'] and len(c['monitors'])==2 and all((m['alert_observed'] or not m['alert_required']) and m['sustained_recovery_ok'] for m in c['monitors']) for c in cycles),'scope':'HTTP, monitor and fresh trace gates only; resource headroom and error evidence require review.'}
+ result={'checks':checks,'cycles':cycles,'http_monitor_trace_pass':all(checks.values()) and all(c['fault_symptom_pass'] and c['backlog']['pass'] and c['http_pass'] and c['fresh_product_sql'] and c['fresh_fault_product_sql'] and len(c['monitors'])==2 and all(m['coverage_complete'] and ((m['alert_observed'] and m['alert_at_end']) or not m['alert_required']) and m['sustained_recovery_ok'] for m in c['monitors']) for c in cycles),'scope':'HTTP, monitor and fresh trace gates only; resource headroom and error evidence require review.'}
 except (OSError,KeyError,ValueError,StopIteration) as e:
  result={'http_monitor_trace_pass':False,'error':type(e).__name__,'detail':str(e)}
 (root/'assessment.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result,indent=2))

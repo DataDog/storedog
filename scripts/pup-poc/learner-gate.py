@@ -25,6 +25,10 @@ spec=importlib.util.spec_from_file_location('backlog_gate',Path(__file__).with_n
 backlog_gate=importlib.util.module_from_spec(spec);spec.loader.exec_module(backlog_gate)
 rows=[json.loads(line) for line in Path('/root/pup-poc/evidence/learner-gate.traffic.jsonl').read_text().splitlines()]
 if not backlog_gate.assess(rows,rate,60,240)['pass']:raise SystemExit('Learner fault has growing request backlog')
+summary=next(row for row in rows if row['type']=='summary')
+logs=subprocess.check_output(k+['logs','deployment/backend','--since-time='+summary['started_at']],text=True,timeout=25)
+if any(term in logs for term in ('ConnectionTimeoutError','RequestTimeoutException','RequestTimeoutError','RequestExpiryError')):
+    raise SystemExit('Learner fault produced application timeout or pool checkout errors')
 monitor=json.loads(Path('/root/pup-poc/evidence/monitors/latency-created.json').read_text())['id']
 # Continue offered traffic for the entire learner hour, independently of setup.
 subprocess.run(['systemd-run','--unit=pup-course-traffic','--property=RuntimeMaxSec=3660',

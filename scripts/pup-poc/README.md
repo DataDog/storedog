@@ -160,7 +160,8 @@ Before acceptance, freeze the candidate image, catalog checksum, rate, CPU,
 timeouts, request code and monitor definitions. `acceptance.py DIR1 DIR2 DIR3
 --soak SOAK_DIR --output acceptance.json` requires three distinct sandbox environments,
 matching workload settings, complete exports, per-minute fault gates, final healthy
-HTTP windows, latency Alert before fault removal, both monitors sustained OK, correlated product SQL,
+HTTP windows, complete steady-fault monitor polling, latency Alert at fault end,
+both monitors sustained OK, correlated product SQL,
 container/node headroom (80% CPU and working-set memory limits, with total
 cgroup memory and OOM counters retained), fresh environment-scoped Pup CPU and
 throttling metrics throughout each measured window, local DB throttling,
@@ -186,7 +187,7 @@ The current driver candidate also passed actual stalled socket connect/reset
 checks at three seconds, interrupted bulk seeding at product 107 with 100
 committed, completion to 140 without duplicates, and a full 5,000-product seed
 and repeat (24.66 seconds for the initial seed under emulation). The Python
-suite currently has 28 passing tests, including rejection of absent, stale,
+suite currently has 32 passing tests, including rejection of absent, stale,
 wrong-environment and sparse Pup metrics.
 
 

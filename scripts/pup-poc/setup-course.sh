@@ -37,8 +37,19 @@ finish_setup() {
   result=$?
   trap - EXIT
   set +e
+  restore_result=0
+  restoration_attempted=false
+  if [[ $result != 0 && $mode == learner ]]; then
+    restoration_attempted=true
+    timeout 25 kubectl -n storedog patch statefulset postgres --type strategic --patch-file postgres-healthy-patch.json > /root/pup-poc/evidence/setup-restoration.log 2>&1
+    restore_result=$?
+    if [[ $restore_result == 0 ]]; then
+      timeout 120 kubectl -n storedog rollout status statefulset/postgres --timeout=110s >> /root/pup-poc/evidence/setup-restoration.log 2>&1
+      restore_result=$?
+    fi
+  fi
   for pid in "${watchers[@]}"; do kill "$pid" 2>/dev/null; wait "$pid" 2>/dev/null; done
-  printf '{"stage":"setup","process_exit":%s,"restore_exit":0,"completed_at":"%s"}\n' "$result" "$(date -u +%FT%TZ)" > /root/pup-poc/evidence/setup-completed.json
+  printf '{"stage":"setup","process_exit":%s,"restore_exit":%s,"restoration_attempted":%s,"completed_at":"%s"}\n' "$result" "$restore_result" "$restoration_attempted" "$(date -u +%FT%TZ)" > /root/pup-poc/evidence/setup-completed.json
   if [[ $result != 0 ]]; then
     cp /root/pup-poc/evidence/setup-completed.json /root/pup-poc/evidence/completed.json
     for attempt in $(seq 1 12); do
