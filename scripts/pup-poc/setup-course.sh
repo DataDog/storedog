@@ -74,7 +74,9 @@ watchers+=("$!")
 python3 watch-telemetry.py &
 watchers+=("$!")
 python3 startup-event.py warmup-start
-timeout 2400 kubectl -n storedog exec pup-traffic -- python3 /probe/warm-workload.py --workload /tmp/workload.json > /root/pup-poc/evidence/prewarm.jsonl
+warm_timeout=2400
+[[ $mode == learner ]] && warm_timeout=60
+timeout "$warm_timeout" kubectl -n storedog exec pup-traffic -- python3 /probe/warm-workload.py --workload /tmp/workload.json > /root/pup-poc/evidence/prewarm.jsonl
 python3 startup-event.py warmup-ready
 # Prewarming is separate from the required fixed-arrival healthy gate.
 if [[ $mode == validation ]]; then

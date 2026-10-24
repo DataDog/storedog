@@ -114,6 +114,14 @@ cache settings. Prewarm results are separate from offered-rate measurements;
 setup fails if any prewarm response is invalid. Learner mode requires an accepted `frozen-profile.json`,
 then fault rollout readiness and ten consecutive valid product responses before publishing readiness.
 No accepted profile exists yet. The learner traffic service lasts one hour.
+After the scenario profile is accepted, run three sequential fresh sandboxes with
+`sandbox-run.py --mode startup --key KEY --output NEW_DIRECTORY`. Each uses the
+learner setup, records launch time before provisioning, observes fresh telemetry
+for three minutes after opening, restores CPU and exports evidence. The separate
+`assess-startup.py` requires cold startup within 120 seconds and fresh database
+spans plus latency Alert within three minutes of opening; missing evidence fails.
+`startup.jsonl` records catalog, warmup and fault-readiness milestones.
+
 Each cycle sandbox first tests a healthy PostgreSQL restart under five minutes
 of uninterrupted offered traffic. The final three one-minute windows must meet
 the healthy gate, the database pod UID must change, and backend/PVC identities

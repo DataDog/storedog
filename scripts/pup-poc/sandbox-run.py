@@ -19,15 +19,16 @@ HERE=Path(__file__).resolve().parent
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--key',required=True);p.add_argument('--output',required=True)
-    p.add_argument('--mode',choices=['calibrate','cycles','soak'],default='calibrate')
+    p.add_argument('--mode',choices=['calibrate','cycles','soak','startup'],default='calibrate')
     p.add_argument('--cpu');p.add_argument('--products',type=int,default=5000);p.add_argument('--rate',type=int,default=5)
     p.add_argument('--resume');p.add_argument('--track',default='datadog/course-getting-started-pup-dev')
     a=p.parse_args()
-    if a.mode!='calibrate' and not a.cpu:p.error('cycles/soak require a frozen CPU')
+    if a.mode in ('cycles','soak') and not a.cpu:p.error('cycles/soak require a frozen CPU')
     out=Path(a.output).resolve();out.mkdir(parents=True,exist_ok=False)
     key=Path(a.key).resolve();public=Path(str(key)+'.pub').read_text().strip()
     parameters={'PUP_DEV_INTEGRATION':'1','PUP_DEV_HOLD_SECONDS':'3600','PUP_SCENARIO_MODE':'validation',
                 'PUP_CATALOG_PRODUCTS':str(a.products),'PUP_RATE':str(a.rate),'PUP_DEV_SSH_PUBLIC_KEY':public}
+    if a.mode=='startup':parameters['PUP_SCENARIO_MODE']='learner'
     started_at=datetime.datetime.now(datetime.timezone.utc).isoformat()
     (out/'launch.json').write_text(json.dumps({'launched_at':started_at,'cold':True,'track':a.track})+'\n')
     lifecycle=subprocess.Popen(['instruqt','track','test',a.track,'--skip-fail-check',
@@ -87,10 +88,25 @@ def main():
                 collector.wait(timeout=90)
                 raise RuntimeError('Setup failed; evidence exported')
             if lifecycle.poll() is not None:raise RuntimeError('Lifecycle stopped before healthy setup')
-            check=subprocess.run(remote+['test -f /root/pup-poc/validation-ready'],capture_output=True,timeout=20)
+            check=subprocess.run(remote+['test -f /root/pup-poc/'+('learner-ready' if a.mode=='startup' else 'validation-ready')],capture_output=True,timeout=20)
             if check.returncode==0:break
             time.sleep(10)
         else:raise RuntimeError('Healthy setup deadline exceeded')
+        if a.mode=='startup':
+            # Keep launch time on the client: it precedes VM provisioning.
+            subprocess.run(remote+['systemd-run --unit=pup-startup-validation --setenv=PUP_DEV_INTEGRATION=1 --setenv=KUBECONFIG=/root/.kube/config --property=RuntimeMaxSec=360 /bin/bash /root/pup-recovery/startup-validation.sh'],check=True,timeout=25)
+            started=True
+            collector.wait(timeout=450)
+            if collector.returncode or not (out/'completed.json').exists():
+                raise RuntimeError('Incomplete startup evidence export')
+            completed=json.loads((out/'completed.json').read_text())
+            if completed.get('process_exit')!=0 or completed.get('restore_exit')!=0:
+                raise RuntimeError('Startup validation did not restore cleanly')
+            lifecycle.wait(timeout=180)
+            assessment=subprocess.run(['python3',str(HERE/'assess-startup.py'),str(out)],capture_output=True,text=True)
+            (out/'startup-assessment.json').write_text(assessment.stdout)
+            if assessment.returncode:raise RuntimeError('Cold startup acceptance failed')
+            return
         # Upload exact locally frozen helpers after setup has created the directory.
         names=[str(p.relative_to(HERE)) for p in HERE.glob('*.py')]+['run-live.sh','course-profile.json','candidate.json','backend-healthy-patch.json','postgres-healthy-patch.json']
         archive=subprocess.check_output(['tar','-C',str(HERE),'-cf','-',*names])
