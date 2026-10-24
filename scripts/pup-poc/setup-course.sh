@@ -6,7 +6,7 @@ cd /root/pup-recovery
 mode=${PUP_SCENARIO_MODE:-learner}
 [[ $mode == learner || $mode == validation ]] || { echo 'Unknown scenario mode'; exit 1; }
 if [[ $mode == learner ]]; then
-  rm -f /root/pup-poc/learner-ready /root/pup-poc/evidence/learner-ready.json
+  rm -f /root/pup-poc/requests-ready /root/pup-poc/incident-ready /root/pup-poc/evidence/requests-ready.json /root/pup-poc/evidence/incident-ready.json
   settings=$(python3 - <<'PY'
 import hashlib,json,pathlib
 profile=json.load(open('frozen-profile.json'))
@@ -42,7 +42,7 @@ finish_setup() {
   fi
   for pid in "${watchers[@]}"; do kill "$pid" 2>/dev/null; wait "$pid" 2>/dev/null; done
   printf '{"stage":"setup","process_exit":%s,"restore_exit":%s,"restoration_attempted":%s,"completed_at":"%s"}\n' "$result" "$restore_result" "$restoration_attempted" "$(date -u +%FT%TZ)" > /root/pup-poc/evidence/setup-completed.json
-  if [[ $result != 0 ]]; then
+  if [[ $result != 0 && ${PUP_BACKGROUND_PREPARATION:-0} != 1 ]]; then
     cp /root/pup-poc/evidence/setup-completed.json /root/pup-poc/evidence/completed.json
     for attempt in $(seq 1 12); do
       [[ -f /root/pup-recovery/export-complete ]] && break
@@ -55,6 +55,7 @@ trap finish_setup EXIT
 python3 ensure-monitors.py &
 monitor_pid=$!
 watchers+=("$monitor_pid")
+python3 preparation-status.py --stage "preparing the catalog"
 python3 startup-event.py catalog-start
 bash prepare-workload.sh
 python3 startup-event.py catalog-ready
@@ -74,6 +75,7 @@ python3 watch-resources.py &
 watchers+=("$!")
 python3 watch-telemetry.py &
 watchers+=("$!")
+python3 preparation-status.py --stage "warming product requests"
 python3 startup-event.py warmup-start
 warm_timeout=2400
 [[ $mode == learner ]] && warm_timeout=60
@@ -99,6 +101,4 @@ if [[ $mode == learner ]]; then
   watchers=()
   python3 start-learner-observers.py
   python3 learner-gate.py frozen-profile.json
-else
-  touch /root/pup-poc/validation-ready
 fi

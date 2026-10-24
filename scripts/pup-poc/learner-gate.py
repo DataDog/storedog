@@ -37,11 +37,11 @@ while time.monotonic() < deadline:
     subprocess.run(['systemctl','is-active','--quiet','pup-course-traffic'],check=True)
     if traffic.exists() and consecutive_valid(traffic.read_text()):
         import datetime
-        ready = {'opened_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        ready = {'requests_ready_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
                  'fault_cpu': cpu, 'monitor_alert_required': False}
         Path('/root/pup-poc/evidence/learner-ready.json').write_text(json.dumps(ready)+'\n')
-        subprocess.run(['python3','startup-event.py','learner-ready'],check=True)
-        Path('/root/pup-poc/learner-ready').touch()
+        subprocess.run(['python3','startup-event.py','requests-ready'],check=True)
+        Path('/root/pup-poc/requests-ready').touch()
         break
     time.sleep(1)
 else:

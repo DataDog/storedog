@@ -7,10 +7,15 @@ work** within the one-hour course. Startup timing remains unverified. Manifest
 version 2 selects the first/middle/last catalog pages and the first page of all
 20 categories: 23 URLs, with the full catalog and 60/40 traffic mix retained.
 Version 1 and version 2 `working_set: full` preserve full traversal.
-Learner setup warms only the selected URLs and verifies ten consecutive valid
-responses from continuous traffic after applying the accepted CPU fault. The
+Learner setup opens with the terminal, OpenCode/Bedrock and Pup available.
+A supervised background service deploys the application, seeds the catalog,
+warms the selected URLs and applies the accepted CPU fault. The first minute
+introduces the scenario and tools; `pup-lab-status` reports preparation progress.
+Investigation requires ten consecutive valid product responses, fresh correlated
+product SQL spans and latency Alert. Opening and incident readiness are separate
+milestones; the latter must occur within 60 seconds after actual platform opening. The
 three-minute healthy and four-minute fault gates belong to development validation.
-The latency alert may develop during the first three minutes of learner work.
+The latency alert must be available by the end of the one-minute introduction.
 Course-specific VM preparation caches images, source and the operator chart;
 never report a pre-provisioned claim as a cold start. Old full-traversal calibration
 cannot establish acceptance for this workload.
@@ -118,9 +123,14 @@ After the scenario profile is accepted, run three sequential fresh sandboxes wit
 `sandbox-run.py --mode startup --key KEY --output NEW_DIRECTORY`. Each uses the
 learner setup, records launch time before provisioning, observes fresh telemetry
 for three minutes after opening, restores CPU and exports evidence. The separate
-`assess-startup.py` requires cold startup within 120 seconds and fresh database
-spans plus latency Alert within three minutes of opening; missing evidence fails.
-`startup.jsonl` records catalog, warmup and fault-readiness milestones.
+`assess-startup.py` requires actual platform opening within 120 seconds and incident readiness
+within 60 seconds afterward; missing evidence fails.
+`startup.jsonl` records tools, catalog, warmup, fault and incident milestones.
+Opening evidence must be recorded separately in `platform-open.json` with an
+`opened_at` timestamp, `source` (`platform-event` or `browser-observation`) and
+an `evidence` reference to the platform event or browser observation. An internal
+marker does not establish opening; missing opening evidence fails assessment.
+The CLI lifecycle test alone is not proof of browser availability.
 
 Each cycle sandbox first tests a healthy PostgreSQL restart under five minutes
 of uninterrupted offered traffic. The final three one-minute windows must meet

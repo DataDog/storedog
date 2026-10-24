@@ -28,7 +28,9 @@ def main():
     key=Path(a.key).resolve();public=Path(str(key)+'.pub').read_text().strip()
     parameters={'PUP_DEV_INTEGRATION':'1','PUP_DEV_HOLD_SECONDS':'3600','PUP_SCENARIO_MODE':'validation',
                 'PUP_CATALOG_PRODUCTS':str(a.products),'PUP_RATE':str(a.rate),'PUP_DEV_SSH_PUBLIC_KEY':public}
-    if a.mode=='startup':parameters['PUP_SCENARIO_MODE']='learner'
+    if a.mode=='startup':
+        parameters['PUP_SCENARIO_MODE']='learner'
+        parameters['PUP_DEV_STARTUP_TEST']='1'
     started_at=datetime.datetime.now(datetime.timezone.utc).isoformat()
     (out/'launch.json').write_text(json.dumps({'launched_at':started_at,'cold':True,'track':a.track})+'\n')
     lifecycle=subprocess.Popen(['instruqt','track','test',a.track,'--skip-fail-check',
@@ -88,7 +90,7 @@ def main():
                 collector.wait(timeout=90)
                 raise RuntimeError('Setup failed; evidence exported')
             if lifecycle.poll() is not None:raise RuntimeError('Lifecycle stopped before healthy setup')
-            check=subprocess.run(remote+['test -f /root/pup-poc/'+('learner-ready' if a.mode=='startup' else 'validation-ready')],capture_output=True,timeout=20)
+            check=subprocess.run(remote+['test -f /root/pup-poc/'+('incident-ready' if a.mode=='startup' else 'validation-ready')],capture_output=True,timeout=20)
             if check.returncode==0:break
             time.sleep(10)
         else:raise RuntimeError('Healthy setup deadline exceeded')

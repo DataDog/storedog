@@ -10,8 +10,13 @@ def timestamp(value):
 
 def assess(root):
     launch=json.loads((root/'launch.json').read_text())
-    ready=json.loads((root/'learner-ready.json').read_text())
-    opened=timestamp(ready['opened_at']); launched=timestamp(launch['launched_at'])
+    opened_record=json.loads((root/'platform-open.json').read_text())
+    if opened_record.get('source') not in ('platform-event','browser-observation') or not opened_record.get('evidence'):
+        raise ValueError('Platform opening evidence is required; tools-ready is not opening')
+    ready=json.loads((root/'incident-ready.json').read_text())
+    opened=timestamp(opened_record['opened_at']); launched=timestamp(launch['launched_at'])
+    incident=timestamp(ready['ready_at'])
+    preparation=json.loads((root/'preparation.json').read_text())
     latency_id=json.loads((root/'monitors/latency-created.json').read_text())['id']
     states=[json.loads(line) for line in (root/'monitors/states.jsonl').read_text().splitlines()]
     alerts=[timestamp(row['at']) for row in states if row.get('id')==latency_id and row.get('overall_state')=='Alert' and timestamp(row['at'])>=launched]
@@ -19,9 +24,10 @@ def assess(root):
     fresh=[timestamp(row['at']) for row in span_rows if any(timestamp(span['start_timestamp'])>=launched for span in row.get('spans',[]) if span.get('start_timestamp'))]
     elapsed=opened-launched
     checks={'cold':launch.get('cold') is True, 'startup':0<=elapsed<=120,
-            'alert':bool(alerts) and min(alerts)<=opened+180,
-            'fresh_trace':bool(fresh) and min(fresh)<=opened+180}
-    return {'pass':all(checks.values()),'checks':checks,'startup_seconds':elapsed,
+            'incident':launched<=incident<=opened+60 and preparation.get('state')=='ready',
+            'alert':bool(alerts) and min(alerts)<=opened+60,
+            'fresh_trace':bool(fresh) and min(fresh)<=opened+60}
+    return {'pass':all(checks.values()),'checks':checks,'startup_seconds':elapsed,'incident_after_open_seconds':max(0,incident-opened),
             'first_alert_at':min(alerts) if alerts else None,'first_fresh_trace_at':min(fresh) if fresh else None}
 
 if __name__=='__main__':
