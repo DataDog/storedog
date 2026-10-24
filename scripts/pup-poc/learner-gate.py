@@ -10,7 +10,7 @@ p=argparse.ArgumentParser(description=__doc__);p.add_argument('frozen_profile');
 frozen=json.loads(Path(a.frozen_profile).read_text())
 if frozen.get('status')!='accepted':raise SystemExit('Learner mode requires accepted scenario evidence')
 cpu=frozen['fault_cpu'];rate=frozen['rate']
-for command in (['pup','--version'], ['opencode','--version']):
+for command in (['pup','version'], ['opencode','--version']):
     subprocess.run(command,check=True,timeout=10)
 k=['kubectl','--request-timeout=20s','-n','storedog']
 deployment=json.loads(subprocess.check_output(k+['get','deployment','backend','-o','json'],text=True))
