@@ -7,6 +7,7 @@ import subprocess
 
 path=Path('/root/pup-recovery/learner-observers.env')
 fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_TRUNC,0o600)
+os.fchmod(fd,0o600)
 with os.fdopen(fd,'w') as stream:
     for name in ('DD_API_KEY','DD_APP_KEY','DD_APPLICATION_KEY','DD_SITE','DD_ENV','PATH'):
         if name in os.environ:

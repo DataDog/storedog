@@ -6,6 +6,7 @@ cd /root/pup-recovery
 mode=${PUP_SCENARIO_MODE:-learner}
 [[ $mode == learner || $mode == validation ]] || { echo 'Unknown scenario mode'; exit 1; }
 if [[ $mode == learner ]]; then
+  rm -f /root/pup-poc/learner-ready /root/pup-poc/evidence/learner-ready.json
   settings=$(python3 - <<'PY'
 import hashlib,json,pathlib
 profile=json.load(open('frozen-profile.json'))

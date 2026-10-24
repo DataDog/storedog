@@ -22,6 +22,7 @@ patch={'spec':{'template':{'spec':{'containers':[{'name':'postgres','resources':
 subprocess.run(k+['patch','statefulset','postgres','--type=strategic','-p',json.dumps(patch)],check=True)
 subprocess.run(k+['rollout','status','statefulset/postgres','--timeout=180s'],check=True)
 subprocess.run(['python3','startup-event.py','fault-ready'],check=True)
+Path('/root/pup-poc/evidence/learner-traffic.jsonl').write_text('')
 # Continue offered traffic for the entire learner hour, independently of setup.
 subprocess.run(['systemd-run','--unit=pup-course-traffic','--property=RuntimeMaxSec=3660',
                 '--setenv=KUBECONFIG=/root/.kube/config',
