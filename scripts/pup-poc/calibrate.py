@@ -8,6 +8,9 @@ import subprocess
 import time
 import signal
 import hashlib
+# This exact prior controller used the same phase durations, gates, traffic and
+# safeguards; only its search redundantly re-refined an already resolved band.
+LEGACY_SEARCH_SHA256='a3a741c337d7979aad3b842e674ed2f2435e57be41c140347a3c70296f72ca3f'
 spec=importlib.util.spec_from_file_location('gates',Path(__file__).with_name('window-gates.py'))
 gates=importlib.util.module_from_spec(spec);spec.loader.exec_module(gates)
 
@@ -18,8 +21,13 @@ def search(test):
     and the soak must independently validate the chosen integer limit.
     """
     upper = 1000  # Proven healthy by the initial warmup.
+    resolved_failed_boundary = False
     for cpu in (250, 125, 60, 30, 20, 10):
         result = test(cpu)
+        if resolved_failed_boundary:
+            if result['fast'] or result['pass']:
+                raise RuntimeError('Non-monotonic coarse result after a failed boundary; repeat calibration before selecting a CPU')
+            continue
         if result['fast']:
             upper = cpu
             continue
@@ -32,7 +40,23 @@ def search(test):
                 low = middle
         if test(low)['pass']:
             return low
+        resolved_failed_boundary = True
     return None
+
+def resume(saved, profile):
+    """Retain exact measurement provenance for a narrowly audited search update."""
+    previous=saved['profile']
+    provenance=list(saved.get('resume_provenance',[]))
+    if previous!=profile:
+        comparable=json.loads(json.dumps(previous))
+        old=comparable.get('inputs',{}).get('calibrate.py')
+        comparable.setdefault('inputs',{})['calibrate.py']=profile['inputs']['calibrate.py']
+        if old!=LEGACY_SEARCH_SHA256 or comparable!=profile:
+            raise RuntimeError('Resume profile mismatch')
+        provenance.append({'reason':'Search-only update; unchanged measurement protocol',
+                           'previous_profile':previous,'current_profile':profile})
+    results=[dict(row,source_profile=row.get('source_profile',previous)) for row in saved['results']]
+    return results,provenance
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
@@ -44,11 +68,10 @@ def main():
     profile={'rate':a.rate,'catalog_checksum':json.loads(Path('catalog-v1.json').read_text())['content_sha256'],
              'candidate':json.loads(Path('candidate.json').read_text())['digest'],
              'inputs':{name:hashlib.sha256(Path(name).read_bytes()).hexdigest() for name in ('fixed-traffic.py','workload.py','warm-workload.py','course-profile.json','window-gates.py','calibrate.py')}}
-    results=[]
+    results=[];provenance=[]
     if a.resume:
         saved=json.loads(Path(a.resume).read_text())
-        if saved['profile']!=profile:raise RuntimeError('Resume profile mismatch')
-        results=saved['results']
+        results,provenance=resume(saved,profile)
     cached={int(r['name'].split('-')[-1]):r for r in results if r['name'].startswith('candidate-')}
     signal.signal(signal.SIGTERM, lambda *_: (_ for _ in ()).throw(SystemExit(124)))
     def resize(cpu):
@@ -63,14 +86,14 @@ def main():
         result=gates.assess(rows,a.rate,mode,skip=skip)
         logs=subprocess.check_output(k+['logs','deployment/backend','--since-time='+started],text=True)
         errors=[term for term in ('ConnectionTimeoutError','RequestTimeoutException','RequestTimeoutError') if term in logs]
-        result.update(name=name,errors=errors)
+        result.update(name=name,errors=errors,source_profile=profile)
         result['fast']=not errors and all(w['complete'] and w['dropped']==0 and
             w['valid']==w['expected'] and w['p95_s'] is not None and w['p95_s']<1 and
             w['max_dispatch_lag_s']<1/a.rate for w in result['windows'])
         result['pass']=result['pass'] and not errors
         results.append(result)
         (out/'calibration.json').write_text(json.dumps(results,indent=2)+'\n')
-        (out/'calibration-state.json').write_text(json.dumps({'profile':profile,'results':results},indent=2)+'\n')
+        (out/'calibration-state.json').write_text(json.dumps({'profile':profile,'results':results,'resume_provenance':provenance},indent=2)+'\n')
         return result
     def healthy(name):
         resize('1')
@@ -93,6 +116,8 @@ def main():
         selected=search(test)
         (out/'calibration-result.json').write_text(json.dumps({'cpu_m':selected,'rate':a.rate,
             'profile':profile,
+            'resume_provenance':provenance,
+            'selected_source_profile':cached[selected]['source_profile'] if selected is not None else None,
             'http_candidate':selected is not None,'scenario_accepted':False,
             'requires':'resource, monitor, span evidence; three fresh sandboxes and 40-minute soak'},indent=2)+'\n')
         if selected is None:raise RuntimeError('No qualifying CPU; try next ordered catalog/rate combination in a fresh sandbox')

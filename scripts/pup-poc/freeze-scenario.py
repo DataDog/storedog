@@ -33,6 +33,9 @@ if sorted(r['index'] for r in requests)!=list(range(int(240*cal['rate']))):p.err
 backlog=backlog_gate.assess(rows,cal['rate'],60,240)
 if not backlog['pass']:p.error('Growing request backlog: '+json.dumps(backlog))
 result={'version':1,'status':'frozen','backlog':backlog,'catalog_products':catalog['counts']['products'],
+        'calibration_sha256':hashlib.sha256(Path(a.calibration).read_bytes()).hexdigest(),
+        'calibration_resume_provenance':cal.get('resume_provenance',[]),
+        'selected_source_profile':cal.get('selected_source_profile',measured),
         'catalog_checksum':catalog['content_sha256'],'rate':cal['rate'],'fault_cpu':str(cal['cpu_m'])+'m',
         'healthy_cpu':'1','memory':'2Gi','timeouts':profile['timeouts'],
         'candidate':candidate,
