@@ -2,6 +2,12 @@
 
 ## Course candidate (task 137, 2026-10-23)
 
+Target approximately **20 minutes of learner work** within the one-hour course.
+The longer calibration, repeatability and 40-minute fault-soak runs below are
+development validation, not learner waiting periods. Express CPU settings in
+cores or explicitly named millicores in learner instructions and progress reports
+(for example, `60m` in Kubernetes means 0.06 CPU, not 60 minutes).
+
 The new candidate is **not accepted**. The older 16-product experiments below
 remain historical evidence; they do not validate this catalog or resolve the
 connection-pool failure.
