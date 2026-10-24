@@ -2,7 +2,18 @@
 
 ## Course candidate (task 137, 2026-10-23)
 
-Target approximately **20 minutes of learner work** within the one-hour course.
+Target approximately **2 minutes of cold startup** and **20 minutes of learner
+work** within the one-hour course. Startup timing remains unverified. Manifest
+version 2 selects the first/middle/last catalog pages and the first page of all
+20 categories: 23 URLs, with the full catalog and 60/40 traffic mix retained.
+Version 1 and version 2 `working_set: full` preserve full traversal.
+Learner setup warms only the selected URLs and verifies ten consecutive valid
+responses from continuous traffic after applying the accepted CPU fault. The
+three-minute healthy and four-minute fault gates belong to development validation.
+The latency alert may develop during the first three minutes of learner work.
+Course-specific VM preparation caches images, source and the operator chart;
+never report a pre-provisioned claim as a cold start. Old full-traversal calibration
+cannot establish acceptance for this workload.
 The longer calibration, repeatability and 40-minute fault-soak runs below are
 development validation, not learner waiting periods. Express CPU settings in
 cores or explicitly named millicores in learner instructions and progress reports
@@ -101,7 +112,7 @@ windows below 200 ms. Before this gate, `warm-workload.py` visits every unique
 manifest page with at most two concurrent requests, without changing application
 cache settings. Prewarm results are separate from offered-rate measurements;
 setup fails if any prewarm response is invalid. Learner mode requires an accepted `frozen-profile.json`,
-then sustained fault symptoms and latency Alert before publishing readiness.
+then fault rollout readiness and ten consecutive valid product responses before publishing readiness.
 No accepted profile exists yet. The learner traffic service lasts one hour.
 Each cycle sandbox first tests a healthy PostgreSQL restart under five minutes
 of uninterrupted offered traffic. The final three one-minute windows must meet

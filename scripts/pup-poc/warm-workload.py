@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prewarm every manifest page with bounded concurrency; this is not a rate gate.
+"""Prewarm every selected manifest page with bounded concurrency; this is not a rate gate.
 
 Normal application cache settings remain unchanged. Follow with three measured
 one-minute windows at the frozen offered rate before any database fault.
@@ -14,7 +14,7 @@ import urllib.request
 from workload import Workload
 
 def targets(workload):
-    expected=math.ceil(len(workload.products)/25)+sum(math.ceil(len(p)/25) for p in workload.by_category.values())
+    expected=len(workload.pages(workload.products, 'catalog'))+sum(len(workload.pages(p, 'category')) for p in workload.by_category.values())
     seen={}
     for index in range(expected*10):
         target=workload.request(index)

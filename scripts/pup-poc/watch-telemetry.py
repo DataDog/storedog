@@ -13,8 +13,8 @@ with open(out/'db-spans.jsonl','a') as spans,open(out/'backend-errors.jsonl','a'
     d=json.loads(subprocess.check_output(['pup','--no-agent','traces','search','--query','env:'+os.environ['DD_ENV']+' service:store-backend @component:pg','--from','1m','--limit','1000'],text=True,timeout=25))
     rows=[]
     for x in d.get('data',[]):
-     a=x['attributes']; row={k:a.get(k) for k in ['service','operation_name','resource_name','trace_id','span_id','start_timestamp','end_timestamp','duration']}
-     row['custom_duration']=a.get('custom',{}).get('duration');rows.append(row)
+     attributes=x['attributes']; row={k:attributes.get(k) for k in ['service','operation_name','resource_name','trace_id','span_id','start_timestamp','end_timestamp','duration']}
+     row['custom_duration']=attributes.get('custom',{}).get('duration');rows.append(row)
     spans.write(json.dumps({'at':now,'spans':rows})+'\n')
    except Exception as e:spans.write(json.dumps({'at':now,'error':type(e).__name__})+'\n')
    spans.flush()

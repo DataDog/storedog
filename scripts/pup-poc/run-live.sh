@@ -80,7 +80,7 @@ backend=next(c for c in json.load(sys.stdin)["spec"]["template"]["spec"]["contai
 print(json.dumps({"image":backend["image"],"resources":backend["resources"],
                   "timeouts":{e["name"]:e.get("value") for e in backend.get("env",[]) if e["name"].startswith("PUP_DB_")}},indent=2))
 ' > "$evidence/backend-config.json"
-sha256sum monitors/*.json fixed-traffic.py workload.py reuse-warmup.py backlog-gate.py warm-workload.py healthy-restart.py workload.json catalog-v1.json course-profile.json repeat-cycles.py run-live.sh backend-healthy-patch.json postgres-healthy-patch.json > "$evidence/frozen-inputs.sha256"
+sha256sum setup-course.sh prepare-workload.sh learner-gate.py readiness.py start-learner-observers.py startup-event.py watch-telemetry.py watch-monitors.py monitors/*.json fixed-traffic.py workload.py reuse-warmup.py backlog-gate.py warm-workload.py healthy-restart.py workload.json catalog-v1.json course-profile.json repeat-cycles.py run-live.sh backend-healthy-patch.json postgres-healthy-patch.json > "$evidence/frozen-inputs.sha256"
 kubectl get nodes -o json > "$evidence/node-capacity.json"
 pup version > "$evidence/pup-version.txt"
 python3 ensure-monitors.py

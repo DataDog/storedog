@@ -28,6 +28,22 @@ class WorkloadTests(unittest.TestCase):
         self.assertTrue(all(len(r['expected_ids'])==25 for r in requests))
         self.assertEqual(requests, [self.workload.request(i) for i in range(1000)])
 
+    def test_bounded_working_set(self):
+        path = Path(self.directory.name)/'workload.json'
+        profile = json.loads(path.read_text())
+        profile.update(version=2, working_set='catalog-edges-category-first-v1')
+        path.write_text(json.dumps(profile))
+        workload = Workload(path)
+        requests = [workload.request(i) for i in range(1000)]
+        self.assertEqual(600, sum(r['request_class']=='catalog' for r in requests))
+        self.assertEqual(23, len({r['url'] for r in requests}))
+        self.assertEqual({1,20,40}, {r['page'] for r in requests if r['request_class']=='catalog'})
+        self.assertEqual({1}, {r['page'] for r in requests if r['request_class']=='category'})
+        self.assertEqual(20, len({r['taxon_id'] for r in requests if r['request_class']=='category'}))
+        spec=importlib.util.spec_from_file_location('warm',Path(__file__).resolve().parents[1]/'warm-workload.py')
+        warm=importlib.util.module_from_spec(spec);spec.loader.exec_module(warm)
+        self.assertEqual(23,len(warm.targets(workload)))
+
     def test_wrong_page_same_count_fails(self):
         request = self.workload.request(0)
         body = {'data': [{'id': id, 'type': 'product'} for id in request['expected_ids']]}

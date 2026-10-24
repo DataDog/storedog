@@ -22,16 +22,6 @@ PY
   export PUP_CATALOG_PRODUCTS PUP_RATE
 fi
 mkdir -p /root/pup-poc/evidence
-bash prepare-workload.sh
-if [[ $mode == learner ]]; then
-  python3 - <<'PY'
-import json
-profile=json.load(open('frozen-profile.json'));catalog=json.load(open('catalog-v1.json'))
-assert catalog['content_sha256']==profile['catalog_checksum'], 'Seeded catalog differs from accepted profile'
-assert json.load(open('workload.json'))['rate']==profile['rate'], 'Workload rate changed'
-PY
-fi
-python3 ensure-monitors.py
 watchers=()
 finish_setup() {
   result=$?
@@ -40,6 +30,7 @@ finish_setup() {
   restore_result=0
   restoration_attempted=false
   if [[ $result != 0 && $mode == learner ]]; then
+    systemctl stop pup-course-traffic pup-course-monitors pup-course-resources pup-course-telemetry 2>/dev/null
     restoration_attempted=true
     timeout 25 kubectl -n storedog patch statefulset postgres --type strategic --patch-file postgres-healthy-patch.json > /root/pup-poc/evidence/setup-restoration.log 2>&1
     restore_result=$?
@@ -60,6 +51,20 @@ finish_setup() {
   exit "$result"
 }
 trap finish_setup EXIT
+python3 ensure-monitors.py &
+monitor_pid=$!
+watchers+=("$monitor_pid")
+python3 startup-event.py catalog-start
+bash prepare-workload.sh
+python3 startup-event.py catalog-ready
+if [[ $mode == learner ]]; then
+  python3 - <<'PY'
+import json
+profile=json.load(open('frozen-profile.json'));catalog=json.load(open('catalog-v1.json'))
+assert catalog['content_sha256']==profile['catalog_checksum'], 'Seeded catalog differs from accepted profile'
+assert json.load(open('workload.json'))['rate']==profile['rate'], 'Workload rate changed'
+PY
+fi
 kubectl get nodes -o json > /root/pup-poc/evidence/node-capacity.json
 kubectl -n storedog get deployment backend -o jsonpath='{.spec.template.spec.containers[0].resources}' > /root/pup-poc/evidence/setup-backend-resources.json
 kubectl -n storedog get statefulset postgres -o jsonpath='{.spec.template.spec.containers[0].resources}' > /root/pup-poc/evidence/setup-postgres-resources.json
@@ -68,8 +73,11 @@ python3 watch-resources.py &
 watchers+=("$!")
 python3 watch-telemetry.py &
 watchers+=("$!")
+python3 startup-event.py warmup-start
 timeout 2400 kubectl -n storedog exec pup-traffic -- python3 /probe/warm-workload.py --workload /tmp/workload.json > /root/pup-poc/evidence/prewarm.jsonl
+python3 startup-event.py warmup-ready
 # Prewarming is separate from the required fixed-arrival healthy gate.
+if [[ $mode == validation ]]; then
 healthy=0
 for attempt in 1 2 3 4 5; do
   kubectl -n storedog exec pup-traffic -- python3 /probe/fixed-traffic.py --workload /tmp/workload.json --duration 180 --stream > "/root/pup-poc/evidence/setup-warmup-$attempt.jsonl"
@@ -79,8 +87,14 @@ for attempt in 1 2 3 4 5; do
   fi
 done
 [[ $healthy == 1 ]] || { echo 'Healthy setup never qualified' >&2; exit 1; }
+fi
 sha256sum fixed-traffic.py workload.py warm-workload.py workload.json catalog-v1.json candidate.json > /root/pup-poc/evidence/setup-inputs.sha256
+wait "$monitor_pid"
 if [[ $mode == learner ]]; then
+  # Hand off observers before the setup process exits.
+  for pid in "${watchers[@]}"; do kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true; done
+  watchers=()
+  python3 start-learner-observers.py
   python3 learner-gate.py frozen-profile.json
 else
   touch /root/pup-poc/validation-ready

@@ -1,6 +1,7 @@
 {
-  "version": 1,
+  "version": 2,
   "catalog": "catalog-v1.json",
   "endpoint": "http://service-proxy/services/backend/api/v2/storefront/products",
-  "rate": 5
+  "rate": 5,
+  "working_set": "catalog-edges-category-first-v1"
 }

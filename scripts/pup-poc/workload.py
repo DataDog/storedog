@@ -10,8 +10,13 @@ class Workload:
         path = Path(path)
         self.profile = json.loads(path.read_text())
         self.catalog = json.loads((path.parent / self.profile['catalog']).read_text())
-        if self.profile['version'] != 1 or self.catalog['version'] != 1:
+        if self.profile['version'] not in (1, 2) or self.catalog['version'] != 1:
             raise ValueError('unsupported manifest version')
+        self.working_set = self.profile.get('working_set', 'full')
+        if self.working_set not in ('full', 'catalog-edges-category-first-v1'):
+            raise ValueError('unsupported working set')
+        if self.profile['version'] == 1 and self.working_set != 'full':
+            raise ValueError('working set requires manifest version 2')
         self.products = sorted(self.catalog['products'], key=lambda r: r['key'])
         self.categories = self.catalog['categories']
         if len(self.products) != self.catalog['counts']['products'] or not self.categories:
@@ -30,12 +35,19 @@ class Workload:
             category = self.categories[ordinal % len(self.categories)]
             products, taxon = self.by_category[category['key']], category['id']
             ordinal //= len(self.categories)
-        page = ordinal % ((len(products) + 24) // 25) + 1
+        pages = self.pages(products, kind)
+        page = pages[ordinal % len(pages)]
         expected = [p['id'] for p in products[(page-1)*25:page*25]]
         query = urlencode({'per_page': 25, 'page': page, 'include': INCLUDES,
                            'filter[taxons]': taxon, 'sort': 'name'})
         return {'url': self.profile['endpoint'] + '?' + query,
                 'request_class': kind, 'page': page, 'taxon_id': taxon, 'expected_ids': expected}
+
+    def pages(self, products, kind):
+        count = (len(products) + 24) // 25
+        if self.working_set == 'full':
+            return list(range(1, count + 1))
+        return sorted({1, (count + 1) // 2, count}) if kind == 'catalog' else [1]
 
     @staticmethod
     def validate(request, body):

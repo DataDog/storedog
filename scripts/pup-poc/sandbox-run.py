@@ -29,6 +29,7 @@ def main():
     parameters={'PUP_DEV_INTEGRATION':'1','PUP_DEV_HOLD_SECONDS':'3600','PUP_SCENARIO_MODE':'validation',
                 'PUP_CATALOG_PRODUCTS':str(a.products),'PUP_RATE':str(a.rate),'PUP_DEV_SSH_PUBLIC_KEY':public}
     started_at=datetime.datetime.now(datetime.timezone.utc).isoformat()
+    (out/'launch.json').write_text(json.dumps({'launched_at':started_at,'cold':True,'track':a.track})+'\n')
     lifecycle=subprocess.Popen(['instruqt','track','test',a.track,'--skip-fail-check',
         '--runtime-parameters='+','.join(k+'='+v for k,v in parameters.items())],
         stdout=open(out/'lifecycle.log','w'),stderr=subprocess.STDOUT)
