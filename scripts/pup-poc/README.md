@@ -122,6 +122,13 @@ its checkpoint is resumed in a fresh sandbox. Cache expiry remains part of the
 full acceptance soak. The controller restores PostgreSQL CPU,
 exports lifecycle status and waits for export acknowledgement before releasing
 the development hold. The course hold accepts 60–3,600 seconds, development only.
+Track setup returns after readiness. Challenge setup and solve each wait at most
+30 minutes against one shared absolute deadline, because Instruqt limits each
+setup/solve script to 55 minutes. The private development track uses a four-hour
+track limit and two-hour idle limit; restore the learner limits before release.
+Sandbox `aaewv3vrivod` was destroyed while the previous hold still occupied track
+setup: its final export and restoration are unverified, so it cannot count toward
+acceptance. Only fully saved calibration phases can be reused with provenance.
 Missing evidence fails acceptance even when lifecycle cleanup succeeds.
 
 Calibration tries 250m, 125m, 60m, 30m, 20m and 10m, excluding the first minute

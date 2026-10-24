@@ -120,7 +120,15 @@ systemd-run --unit=pup-course-validation --property=EnvironmentFile=/root/pup-re
         collector.terminate();collector.wait(timeout=15)
         collector=subprocess.Popen(['python3',str(HERE/'collect-live.py'),str(helper),str(out),'--seconds','3600'],
                                    stdout=open(out/'collector.log','a'),stderr=subprocess.STDOUT)
-        code=collector.wait(timeout=3660)
+        export_deadline=time.monotonic()+3660
+        while collector.poll() is None:
+            if lifecycle.poll() is not None and not (out/'completed.json').exists():
+                collector.terminate();collector.wait(timeout=15)
+                raise RuntimeError('Platform lifecycle ended before final export')
+            if time.monotonic()>=export_deadline:
+                raise RuntimeError('Final export deadline exceeded')
+            time.sleep(5)
+        code=collector.returncode
         if code!=0 or not (out/'completed.json').exists():raise RuntimeError('Incomplete final export')
         lifecycle.wait(timeout=180)
         print('Exported: '+str(out),flush=True)
