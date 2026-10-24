@@ -97,7 +97,11 @@ cache settings. Prewarm results are separate from offered-rate measurements;
 setup fails if any prewarm response is invalid. Learner mode requires an accepted `frozen-profile.json`,
 then sustained fault symptoms and latency Alert before publishing readiness.
 No accepted profile exists yet. The learner traffic service lasts one hour.
-Cycles and soak reuse the measured setup gate only within two minutes, with
+Each cycle sandbox first tests a healthy PostgreSQL restart under five minutes
+of uninterrupted offered traffic. The final three one-minute windows must meet
+the healthy gate, the database pod UID must change, and backend/PVC identities
+must remain unchanged. This is separate from the earlier post-readiness restart
+measurements and remains pending native execution. The soak reuses the measured setup gate only within two minutes, with
 matching workload hashes and unchanged healthy resource patches; otherwise they
 measure a fresh three-minute gate. Calibration always requalifies after rollouts.
 

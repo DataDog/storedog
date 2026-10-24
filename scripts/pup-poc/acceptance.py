@@ -19,6 +19,10 @@ def assess(root, soak=False):
             'export_complete':read('export-status.json')['complete'],
             'duration':start['fault_seconds']==(2400 if soak else 180) and start['recovery_seconds']==360,
             'cycles':start['cycles']==(1 if soak else 3)}
+    if not soak:
+        checks['continuous_healthy_restart']=read('healthy-restart.assessment.json')['pass']
+        subprocess.run(['python3',str(HERE/'window-gates.py'),str(root/'healthy-restart.traffic.jsonl'),
+                        '--rate',str(start['rate']),'--mode','healthy','--skip','2'],check=True,stdout=subprocess.DEVNULL)
     nodes=read('node-capacity.json')['items']
     def cpu(v):return float(v[:-1])/1000 if v.endswith('m') else float(v)
     def memory(v):

@@ -68,7 +68,7 @@ kubectl -n storedog rollout status deployment/backend --timeout=120s
 [[ -f catalog-v1.json ]] || bash prepare-workload.sh
 cp -R monitors "$evidence/definitions"
 cp monitors/*.json "$evidence/monitors/"
-cp fixed-traffic.py workload.py reuse-warmup.py backlog-gate.py warm-workload.py repeat-cycles.py run-live.sh backend-healthy-patch.json postgres-healthy-patch.json "$evidence/"
+cp fixed-traffic.py workload.py reuse-warmup.py backlog-gate.py warm-workload.py healthy-restart.py repeat-cycles.py run-live.sh backend-healthy-patch.json postgres-healthy-patch.json "$evidence/"
 cp catalog-v1.json workload.json course-profile.json candidate.json "$evidence/"
 kubectl -n storedog get deployment backend -o jsonpath='{.spec.template.spec.containers[?(@.name=="backend")].image}' > "$evidence/backend-image.txt"
 kubectl -n storedog get deployment backend -o json | python3 -c '
@@ -77,7 +77,7 @@ backend=next(c for c in json.load(sys.stdin)["spec"]["template"]["spec"]["contai
 print(json.dumps({"image":backend["image"],"resources":backend["resources"],
                   "timeouts":{e["name"]:e.get("value") for e in backend.get("env",[]) if e["name"].startswith("PUP_DB_")}},indent=2))
 ' > "$evidence/backend-config.json"
-sha256sum monitors/*.json fixed-traffic.py workload.py reuse-warmup.py backlog-gate.py warm-workload.py workload.json catalog-v1.json course-profile.json repeat-cycles.py run-live.sh backend-healthy-patch.json postgres-healthy-patch.json > "$evidence/frozen-inputs.sha256"
+sha256sum monitors/*.json fixed-traffic.py workload.py reuse-warmup.py backlog-gate.py warm-workload.py healthy-restart.py workload.json catalog-v1.json course-profile.json repeat-cycles.py run-live.sh backend-healthy-patch.json postgres-healthy-patch.json > "$evidence/frozen-inputs.sha256"
 kubectl get nodes -o json > "$evidence/node-capacity.json"
 pup version > "$evidence/pup-version.txt"
 python3 ensure-monitors.py
@@ -96,7 +96,10 @@ if [[ $PUP_RUN_MODE == calibrate ]]; then
   exit $?
 fi
 healthy=0
-if [[ $postgres_change == *"(no change)"* && $backend_change == *"(no change)"* ]]; then
+if [[ $PUP_RUN_MODE == cycles ]]; then
+  python3 healthy-restart.py --rate "$PUP_RATE" --output "$evidence"
+  healthy=1
+elif [[ $postgres_change == *"(no change)"* && $backend_change == *"(no change)"* ]]; then
   if python3 reuse-warmup.py --rate "$PUP_RATE" --output "$evidence"; then healthy=1; fi
 fi
 if [[ $healthy != 1 ]]; then
