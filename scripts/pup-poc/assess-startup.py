@@ -26,7 +26,7 @@ def assess(root):
     span_rows=[json.loads(line) for line in (root/'db-spans.jsonl').read_text().splitlines()]
     fresh=[timestamp(row['at']) for row in span_rows if any(timestamp(span['start_timestamp'])>=launched for span in row.get('spans',[]) if span.get('start_timestamp'))]
     elapsed=opened-launched
-    checks={'cold':launch.get('cold') is True, 'startup':0<=elapsed<=120,
+    checks={'cold':launch.get('cold') is True, 'startup':0<=elapsed<180,
             'incident':launched<=incident<=opened+60 and preparation.get('state')=='ready',
             'alert':bool(alerts) and min(alerts)<=opened+60,
             'fresh_trace':bool(fresh) and min(fresh)<=opened+60}

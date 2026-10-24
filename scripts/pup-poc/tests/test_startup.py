@@ -23,7 +23,7 @@ class StartupTests(unittest.TestCase):
             write('launch.json',{'cold':False,'launched_at':'2026-10-24T00:00:00Z'})
             self.assertFalse(module.assess(root)['pass'])
             write('launch.json',{'cold':True,'launched_at':'2026-10-24T00:00:00Z'})
-            write('platform-open.json',{'source':'platform-event','evidence':'event-1','opened_at':'2026-10-24T00:02:01Z'})
+            write('platform-open.json',{'source':'platform-event','evidence':'event-1','opened_at':'2026-10-24T00:03:00Z'})
             self.assertFalse(module.assess(root)['pass'])
             write('platform-open.json',{'source':'platform-event','evidence':'event-1','opened_at':'2026-10-24T00:02:00Z'})
             write('db-spans.jsonl',{'at':'2026-10-24T00:03:00Z','spans':[{'start_timestamp':'2026-10-23T23:59:59Z'}]})

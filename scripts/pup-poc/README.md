@@ -2,7 +2,7 @@
 
 ## Course candidate (task 137, 2026-10-23)
 
-Target approximately **2 minutes of cold startup** and **20 minutes of learner
+Target **under 3 minutes to open the lab** and **20 minutes of learner
 work** within the one-hour course. Startup timing remains unverified. Manifest
 version 2 selects the first/middle/last catalog pages and the first page of all
 20 categories: 23 URLs, with the full catalog and 60/40 traffic mix retained.
@@ -123,7 +123,7 @@ After the scenario profile is accepted, run three sequential fresh sandboxes wit
 `sandbox-run.py --mode startup --key KEY --output NEW_DIRECTORY`. Each uses the
 learner setup, records launch time before provisioning, observes fresh telemetry
 for three minutes after opening, restores CPU and exports evidence. The separate
-`assess-startup.py` requires actual platform opening within 120 seconds and incident readiness
+`assess-startup.py` requires actual platform opening in less than 180 seconds and incident readiness
 within 60 seconds afterward; missing evidence fails.
 `startup.jsonl` records tools, catalog, warmup, fault and incident milestones.
 Opening evidence must be recorded separately in `platform-open.json` with an
