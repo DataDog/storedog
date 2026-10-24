@@ -30,6 +30,8 @@ class Calibration(unittest.TestCase):
         rows,provenance=calibration.resume({'profile':old,'results':[{'name':'candidate-190'}]},current)
         self.assertEqual(old,rows[0]['source_profile'])
         self.assertEqual(old,provenance[0]['previous_profile'])
+        with self.assertRaises(RuntimeError):
+            calibration.resume({'profile':old,'results':[{'name':'candidate-190','pass':True}]},current)
         current['inputs']['fixed-traffic.py']='changed'
         with self.assertRaises(RuntimeError):calibration.resume({'profile':old,'results':[]},current)
         current['inputs']['fixed-traffic.py']='traffic';old['inputs']['calibrate.py']='unknown'

@@ -8,9 +8,10 @@ import subprocess
 import time
 import signal
 import hashlib
-# This exact prior controller used the same phase durations, gates, traffic and
-# safeguards; only its search redundantly re-refined an already resolved band.
+# Audited prior controllers used the same traffic, durations and safeguards,
+# but lacked the explicit expiry-error gate. Never reuse a positive candidate.
 LEGACY_SEARCH_SHA256='a3a741c337d7979aad3b842e674ed2f2435e57be41c140347a3c70296f72ca3f'
+LEGACY_ERROR_GATE_SHA256='ac8bf966fd092b2a3202b408bfe9efeaf16b49325b6f547fe1af38872efbd68a'
 spec=importlib.util.spec_from_file_location('gates',Path(__file__).with_name('window-gates.py'))
 gates=importlib.util.module_from_spec(spec);spec.loader.exec_module(gates)
 
@@ -44,16 +45,18 @@ def search(test):
     return None
 
 def resume(saved, profile):
-    """Retain exact measurement provenance for a narrowly audited search update."""
+    """Retain exact measurement provenance for narrowly audited controller updates."""
     previous=saved['profile']
     provenance=list(saved.get('resume_provenance',[]))
     if previous!=profile:
         comparable=json.loads(json.dumps(previous))
         old=comparable.get('inputs',{}).get('calibrate.py')
         comparable.setdefault('inputs',{})['calibrate.py']=profile['inputs']['calibrate.py']
-        if old!=LEGACY_SEARCH_SHA256 or comparable!=profile:
+        if old not in (LEGACY_SEARCH_SHA256,LEGACY_ERROR_GATE_SHA256) or comparable!=profile:
             raise RuntimeError('Resume profile mismatch')
-        provenance.append({'reason':'Search-only update; unchanged measurement protocol',
+        if any(r['name'].startswith('candidate-') and r.get('pass') for r in saved['results']):
+            raise RuntimeError('Older error gate cannot supply a qualifying candidate')
+        provenance.append({'reason':'Audited search/error-gate update; only nonqualifying candidates reused, request workload unchanged',
                            'previous_profile':previous,'current_profile':profile})
     results=[dict(row,source_profile=row.get('source_profile',previous)) for row in saved['results']]
     return results,provenance
@@ -85,7 +88,7 @@ def main():
         rows=[json.loads(x) for x in (out/(name+'.traffic.jsonl')).read_text().splitlines()]
         result=gates.assess(rows,a.rate,mode,skip=skip)
         logs=subprocess.check_output(k+['logs','deployment/backend','--since-time='+started],text=True)
-        errors=[term for term in ('ConnectionTimeoutError','RequestTimeoutException','RequestTimeoutError') if term in logs]
+        errors=[term for term in ('ConnectionTimeoutError','RequestTimeoutException','RequestTimeoutError','RequestExpiryError') if term in logs]
         result.update(name=name,errors=errors,source_profile=profile)
         result['fast']=not errors and all(w['complete'] and w['dropped']==0 and
             w['valid']==w['expected'] and w['p95_s'] is not None and w['p95_s']<1 and

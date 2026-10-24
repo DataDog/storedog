@@ -134,9 +134,10 @@ Missing evidence fails acceptance even when lifecycle cleanup succeeds.
 Calibration tries 250m, 125m, 60m, 30m, 20m and 10m, excluding the first minute
 after readiness. A resolved nonqualifying 1m boundary is not repeatedly refined
 for every lower coarse trial; all remaining coarse limits are still tested.
-Resume permits one audited search-only controller update, preserving each
-measurement's original profile and both controller hashes in exported provenance;
-any changed workload, candidate, catalog, rate or unknown controller is rejected.
+Resume permits two audited prior controllers only for nonqualifying candidates,
+preserving each measurement's original profile and controller hashes in exported
+provenance; older error gates cannot supply a qualifying candidate.
+Any changed workload, candidate, catalog, rate or unknown controller is rejected.
 Each trial excludes the first minute
 **after rollout readiness**, then requires three consecutive minutes with p95
 1–3 seconds, at least 95% valid responses, no drops or queued arrivals, and no

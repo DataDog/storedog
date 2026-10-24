@@ -47,6 +47,9 @@ finish() {
     restore_result=$?
   fi
   for pid in "${watchers[@]}"; do kill "$pid" 2>/dev/null; wait "$pid" 2>/dev/null; done
+  # Cover the final polling interval before declaring the evidence complete.
+  timeout 25 python3 watch-telemetry.py --errors-only --once >> "$evidence/run.log" 2>&1
+  if [[ $? != 0 ]]; then result=1; fi
   printf '{"process_exit":%s,"restore_exit":%s,"completed_at":"%s"}\n' "$result" "$restore_result" "$(date -u +%FT%TZ)" > "$evidence/completed.json"
   for attempt in $(seq 1 12); do
     [[ -f /root/pup-recovery/export-complete ]] && break
