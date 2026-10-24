@@ -1,0 +1,133 @@
+{
+  "scenario_accepted": false,
+  "export_complete": false,
+  "restoration_verified": false,
+  "platform_lifecycle": "failed: platform stopped sandbox after approximately one hour while track setup remained active; exact termination reason not reported",
+  "verified_completed_phases": 23,
+  "provenance": {
+    "reason": "Complete phase files verified after platform terminated track setup; sandbox final export/restoration remain unverified",
+    "sandbox": "aaewv3vrivod",
+    "source_run_complete": false,
+    "verified_phase_files": [
+      {
+        "phase": "initial-warmup-0",
+        "path": "/Users/nik.stern/Documents/storedog/scripts/pup-poc/evidence/2026-10-23-native-driver-calibration/initial-warmup-0.traffic.jsonl",
+        "sha256": "d9b73bd09138b2f50b5e8dac1615932f8db9d96206ab9c9e7a19064ad2ba9cac"
+      },
+      {
+        "phase": "candidate-250",
+        "path": "/Users/nik.stern/Documents/storedog/scripts/pup-poc/evidence/2026-10-23-native-driver-calibration/candidate-250.traffic.jsonl",
+        "sha256": "ed8b37f648c7596218a924e58c05238b23210a06e8fef0cea512390c2cbf4719"
+      },
+      {
+        "phase": "warmup-125-0",
+        "path": "/Users/nik.stern/Documents/storedog/scripts/pup-poc/evidence/2026-10-23-native-driver-calibration/warmup-125-0.traffic.jsonl",
+        "sha256": "85d10add593baeca7acc279a49f253ac1f95061fe6ad36768e3577ac598ea943"
+      },
+      {
+        "phase": "candidate-125",
+        "path": "/Users/nik.stern/Documents/storedog/scripts/pup-poc/evidence/2026-10-23-native-driver-calibration/candidate-125.traffic.jsonl",
+        "sha256": "18d45f00127cac2ff3b87bee4449eba63177f5e4ae3f4d9453b5ab5154988c02"
+      },
+      {
+        "phase": "warmup-187-0",
+        "path": "/Users/nik.stern/Documents/storedog/scripts/pup-poc/evidence/2026-10-23-native-driver-calibration/warmup-187-0.traffic.jsonl",
+        "sha256": "e26282b088a71965389840611dc5c4f6c081942e410c79d1ee1a480794a33756"
+      },
+      {
+        "phase": "candidate-187",
+        "path": "/Users/nik.stern/Documents/storedog/scripts/pup-poc/evidence/2026-10-23-native-driver-calibration/candidate-187.traffic.jsonl",
+        "sha256": "c2f29d269447b7a139a37d1dec2c2c41dfe7989ac6f990712c709a6c40b37502"
+      },
+      {
+        "phase": "warmup-218-0",
+        "path": "/Users/nik.stern/Documents/storedog/scripts/pup-poc/evidence/2026-10-23-native-driver-calibration/warmup-218-0.traffic.jsonl",
+        "sha256": "acace107ea272f67843ba4dfacdbfb03243af5458ca4d749b8472737b8db2eb6"
+      },
+      {
+        "phase": "warmup-218-1",
+        "path": "/Users/nik.stern/Documents/storedog/scripts/pup-poc/evidence/2026-10-23-native-driver-calibration/warmup-218-1.traffic.jsonl",
+        "sha256": "6c0979655b4d6a9ab7bf4a3ef4c917a4895ad6484bcf7cff25aa98e2d3915e8b"
+      },
+      {
+        "phase": "candidate-218",
+        "path": "/Users/nik.stern/Documents/storedog/scripts/pup-poc/evidence/2026-10-23-native-driver-calibration/candidate-218.traffic.jsonl",
+        "sha256": "e9283198e89d7da07bd4ac8b1396b997fe16be91c7df411a4910847e7bbdc3fe"
+      },
+      {
+        "phase": "warmup-202-0",
+        "path": "/Users/nik.stern/Documents/storedog/scripts/pup-poc/evidence/2026-10-23-native-driver-calibration/warmup-202-0.traffic.jsonl",
+        "sha256": "ac6413de2a25125bb23851836d5c8c1e905ebe5042b23089ea6bf1e1b82e5ae8"
+      },
+      {
+        "phase": "warmup-202-1",
+        "path": "/Users/nik.stern/Documents/storedog/scripts/pup-poc/evidence/2026-10-23-native-driver-calibration/warmup-202-1.traffic.jsonl",
+        "sha256": "f925b922fb765978fc5d3e08174cd3c64744cd96323ae6c7a3139dc636a3c53b"
+      },
+      {
+        "phase": "candidate-202",
+        "path": "/Users/nik.stern/Documents/storedog/scripts/pup-poc/evidence/2026-10-23-native-driver-calibration/candidate-202.traffic.jsonl",
+        "sha256": "146ad3e92532f55aa63033b258ea05820223c34e05f6ca93b0ab1ee9525294ee"
+      },
+      {
+        "phase": "initial-warmup-0",
+        "path": "/Users/nik.stern/Documents/storedog/scripts/pup-poc/evidence/2026-10-23-native-driver-calibration-resume1/initial-warmup-0.traffic.jsonl",
+        "sha256": "a10896c31420c66b3f5f791f52cd73e069bf5083b6990af438d0511876551943"
+      },
+      {
+        "phase": "candidate-194",
+        "path": "/Users/nik.stern/Documents/storedog/scripts/pup-poc/evidence/2026-10-23-native-driver-calibration-resume1/candidate-194.traffic.jsonl",
+        "sha256": "e8c2f91a48b6a6bd13ddb63c2645157291fc2e8a0b5f81e7ddfaf0142be11f74"
+      },
+      {
+        "phase": "warmup-190-0",
+        "path": "/Users/nik.stern/Documents/storedog/scripts/pup-poc/evidence/2026-10-23-native-driver-calibration-resume1/warmup-190-0.traffic.jsonl",
+        "sha256": "60eb2b8ff215a05528753a48e215de1431bd875847d46da52b7093f7fc761cea"
+      },
+      {
+        "phase": "candidate-190",
+        "path": "/Users/nik.stern/Documents/storedog/scripts/pup-poc/evidence/2026-10-23-native-driver-calibration-resume1/candidate-190.traffic.jsonl",
+        "sha256": "e6d747793d6084168bb6b47ee272a4d1d4dc028dfdc7a87ea4ebca89c96dce00"
+      },
+      {
+        "phase": "warmup-188-0",
+        "path": "/Users/nik.stern/Documents/storedog/scripts/pup-poc/evidence/2026-10-23-native-driver-calibration-resume1/warmup-188-0.traffic.jsonl",
+        "sha256": "83bd898191aad4a2c0b9d7dfe473e669d859437bd243bc2e0bbede52633bfddb"
+      },
+      {
+        "phase": "warmup-188-1",
+        "path": "/Users/nik.stern/Documents/storedog/scripts/pup-poc/evidence/2026-10-23-native-driver-calibration-resume1/warmup-188-1.traffic.jsonl",
+        "sha256": "027aa71fdaa3f97039ea07761890c94549ee5a47ea467968b4525993c217af3e"
+      },
+      {
+        "phase": "candidate-188",
+        "path": "/Users/nik.stern/Documents/storedog/scripts/pup-poc/evidence/2026-10-23-native-driver-calibration-resume1/candidate-188.traffic.jsonl",
+        "sha256": "f6ff86c1234a89ff5af26f6410ac62a1ae3436ed9a3789a99f641e69d159af29"
+      },
+      {
+        "phase": "warmup-189-0",
+        "path": "/Users/nik.stern/Documents/storedog/scripts/pup-poc/evidence/2026-10-23-native-driver-calibration-resume1/warmup-189-0.traffic.jsonl",
+        "sha256": "a7746d93b407d8f3c68b1503e329879574795ece570e1458a609c6f67c5b28bc"
+      },
+      {
+        "phase": "warmup-189-1",
+        "path": "/Users/nik.stern/Documents/storedog/scripts/pup-poc/evidence/2026-10-23-native-driver-calibration-resume1/warmup-189-1.traffic.jsonl",
+        "sha256": "3145ed3f49312a43a3933ff1a1c5998e21bf7a4c4fdcfbbf0c85c725d8ae608f"
+      },
+      {
+        "phase": "candidate-189",
+        "path": "/Users/nik.stern/Documents/storedog/scripts/pup-poc/evidence/2026-10-23-native-driver-calibration-resume1/candidate-189.traffic.jsonl",
+        "sha256": "8e883c9aa6bfa21c1e57c997c7f231de928bf7d3de4feba4e051d501df4f8aa4"
+      },
+      {
+        "phase": "warmup-60-0",
+        "path": "/Users/nik.stern/Documents/storedog/scripts/pup-poc/evidence/2026-10-23-native-driver-calibration-resume1/warmup-60-0.traffic.jsonl",
+        "sha256": "fc8d88b52ffaa2c1b179b92679e0cf69510dc587a1fb4f1d96ec7c2ece64ae37"
+      }
+    ]
+  },
+  "identified_constraints": {
+    "documented_setup_script_limit_minutes": 55,
+    "deployed_idle_timeout_seconds": 3600
+  }
+}

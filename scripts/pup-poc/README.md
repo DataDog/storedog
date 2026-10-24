@@ -185,7 +185,7 @@ The current driver candidate also passed actual stalled socket connect/reset
 checks at three seconds, interrupted bulk seeding at product 107 with 100
 committed, completion to 140 without duplicates, and a full 5,000-product seed
 and repeat (24.66 seconds for the initial seed under emulation). The Python
-suite currently has 23 passing tests, including rejection of absent, stale,
+suite currently has 28 passing tests, including rejection of absent, stale,
 wrong-environment and sparse Pup metrics.
 
 

@@ -1,0 +1,261 @@
+{
+  "scenario_accepted": false,
+  "status": "incomplete sandbox; verified phase checkpoint only",
+  "catalog_products": 5000,
+  "rate": 5,
+  "candidate": "sha256:5f29264f192cd3ca4fb6a85809ed47ee88881cb6fa609c1d186411deb92d1aa2",
+  "trials": [
+    {
+      "cpu_m": 250,
+      "http_candidate": false,
+      "p95_by_minute_s": [
+        0.1870071010000629,
+        0.19243786100014404,
+        0.19016821399986839
+      ],
+      "valid_by_minute": [
+        300,
+        300,
+        300
+      ],
+      "application_or_pool_errors": [],
+      "backlog": {
+        "pass": true,
+        "first_average_pending": 0.6044591260166764,
+        "last_average_pending": 0.6126509438000008,
+        "growth": 0.008191817783324451,
+        "maximum_growth": 1.0,
+        "comparison_window_seconds": 60,
+        "start": 60,
+        "end": 240,
+        "scope": "Observed HTTP requests; timeout and pool gates remain separate"
+      },
+      "traffic_sha256": "ed8b37f648c7596218a924e58c05238b23210a06e8fef0cea512390c2cbf4719"
+    },
+    {
+      "cpu_m": 125,
+      "http_candidate": false,
+      "p95_by_minute_s": [
+        10.012199986000041,
+        10.012190763000035,
+        10.012109713999962
+      ],
+      "valid_by_minute": [
+        2,
+        2,
+        1
+      ],
+      "application_or_pool_errors": [],
+      "backlog": {
+        "pass": true,
+        "first_average_pending": 50.05044593754998,
+        "last_average_pending": 50.05044381346662,
+        "growth": -2.1240833589786234e-06,
+        "maximum_growth": 1.0,
+        "comparison_window_seconds": 60,
+        "start": 60,
+        "end": 240,
+        "scope": "Observed HTTP requests; timeout and pool gates remain separate"
+      },
+      "traffic_sha256": "18d45f00127cac2ff3b87bee4449eba63177f5e4ae3f4d9453b5ab5154988c02"
+    },
+    {
+      "cpu_m": 187,
+      "http_candidate": false,
+      "p95_by_minute_s": [
+        5.195099177999964,
+        4.399996727000143,
+        2.8999863809999624
+      ],
+      "valid_by_minute": [
+        300,
+        299,
+        300
+      ],
+      "application_or_pool_errors": [],
+      "backlog": {
+        "pass": true,
+        "first_average_pending": 15.631323007233334,
+        "last_average_pending": 5.475647856350037,
+        "growth": -10.155675150883297,
+        "maximum_growth": 1.0,
+        "comparison_window_seconds": 60,
+        "start": 60,
+        "end": 240,
+        "scope": "Observed HTTP requests; timeout and pool gates remain separate"
+      },
+      "traffic_sha256": "c2f29d269447b7a139a37d1dec2c2c41dfe7989ac6f990712c709a6c40b37502"
+    },
+    {
+      "cpu_m": 218,
+      "http_candidate": false,
+      "p95_by_minute_s": [
+        0.14750009599993064,
+        0.14790783799981,
+        0.16142356599993946
+      ],
+      "valid_by_minute": [
+        300,
+        300,
+        300
+      ],
+      "application_or_pool_errors": [],
+      "backlog": {
+        "pass": true,
+        "first_average_pending": 0.5204974338665959,
+        "last_average_pending": 0.5315640370501039,
+        "growth": 0.01106660318350805,
+        "maximum_growth": 1.0,
+        "comparison_window_seconds": 60,
+        "start": 60,
+        "end": 240,
+        "scope": "Observed HTTP requests; timeout and pool gates remain separate"
+      },
+      "traffic_sha256": "e9283198e89d7da07bd4ac8b1396b997fe16be91c7df411a4910847e7bbdc3fe"
+    },
+    {
+      "cpu_m": 202,
+      "http_candidate": false,
+      "p95_by_minute_s": [
+        0.17415544400000726,
+        0.17459316500026034,
+        0.17855516700001317
+      ],
+      "valid_by_minute": [
+        300,
+        300,
+        300
+      ],
+      "application_or_pool_errors": [],
+      "backlog": {
+        "pass": true,
+        "first_average_pending": 0.46656456754994907,
+        "last_average_pending": 0.4701504858500281,
+        "growth": 0.0035859183000790384,
+        "maximum_growth": 1.0,
+        "comparison_window_seconds": 60,
+        "start": 60,
+        "end": 240,
+        "scope": "Observed HTTP requests; timeout and pool gates remain separate"
+      },
+      "traffic_sha256": "146ad3e92532f55aa63033b258ea05820223c34e05f6ca93b0ab1ee9525294ee"
+    },
+    {
+      "cpu_m": 194,
+      "http_candidate": false,
+      "p95_by_minute_s": [
+        0.577477564999981,
+        0.18454981900003986,
+        0.1871672889999445
+      ],
+      "valid_by_minute": [
+        300,
+        300,
+        300
+      ],
+      "application_or_pool_errors": [],
+      "backlog": {
+        "pass": true,
+        "first_average_pending": 0.8325254139166418,
+        "last_average_pending": 0.4447909663333424,
+        "growth": -0.3877344475832994,
+        "maximum_growth": 1.0,
+        "comparison_window_seconds": 60,
+        "start": 60,
+        "end": 240,
+        "scope": "Observed HTTP requests; timeout and pool gates remain separate"
+      },
+      "traffic_sha256": "e8c2f91a48b6a6bd13ddb63c2645157291fc2e8a0b5f81e7ddfaf0142be11f74"
+    },
+    {
+      "cpu_m": 190,
+      "http_candidate": false,
+      "p95_by_minute_s": [
+        0.2511369950000244,
+        0.25540187499996136,
+        0.24610872399989603
+      ],
+      "valid_by_minute": [
+        300,
+        300,
+        300
+      ],
+      "application_or_pool_errors": [],
+      "backlog": {
+        "pass": true,
+        "first_average_pending": 0.6442954622833289,
+        "last_average_pending": 0.623540030816711,
+        "growth": -0.020755431466617846,
+        "maximum_growth": 1.0,
+        "comparison_window_seconds": 60,
+        "start": 60,
+        "end": 240,
+        "scope": "Observed HTTP requests; timeout and pool gates remain separate"
+      },
+      "traffic_sha256": "e6d747793d6084168bb6b47ee272a4d1d4dc028dfdc7a87ea4ebca89c96dce00"
+    },
+    {
+      "cpu_m": 188,
+      "http_candidate": false,
+      "p95_by_minute_s": [
+        4.612530990000323,
+        4.9125157799999215,
+        4.420462179999959
+      ],
+      "valid_by_minute": [
+        299,
+        300,
+        300
+      ],
+      "application_or_pool_errors": [],
+      "backlog": {
+        "pass": true,
+        "first_average_pending": 11.814158787450046,
+        "last_average_pending": 11.409466226799918,
+        "growth": -0.40469256065012793,
+        "maximum_growth": 1.0,
+        "comparison_window_seconds": 60,
+        "start": 60,
+        "end": 240,
+        "scope": "Observed HTTP requests; timeout and pool gates remain separate"
+      },
+      "traffic_sha256": "f6ff86c1234a89ff5af26f6410ac62a1ae3436ed9a3789a99f641e69d159af29"
+    },
+    {
+      "cpu_m": 189,
+      "http_candidate": false,
+      "p95_by_minute_s": [
+        1.712404795999646,
+        0.24738211600015347,
+        0.25701489599987326
+      ],
+      "valid_by_minute": [
+        300,
+        300,
+        300
+      ],
+      "application_or_pool_errors": [],
+      "backlog": {
+        "pass": true,
+        "first_average_pending": 2.3977641378666585,
+        "last_average_pending": 0.6580220387000357,
+        "growth": -1.7397420991666228,
+        "maximum_growth": 1.0,
+        "comparison_window_seconds": 60,
+        "start": 60,
+        "end": 240,
+        "scope": "Observed HTTP requests; timeout and pool gates remain separate"
+      },
+      "traffic_sha256": "8e883c9aa6bfa21c1e57c997c7f231de928bf7d3de4feba4e051d501df4f8aa4"
+    }
+  ],
+  "remaining_coarse_cpu_m": [
+    60,
+    30,
+    20,
+    10
+  ],
+  "export_complete": false,
+  "restoration_verified": false,
+  "checkpoint_sha256": "dd2b963894282d571c0702ef77bc6359db45a88a05d395f39a74a5ba43ef26f2"
+}
