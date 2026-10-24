@@ -13,6 +13,9 @@ def assess(root):
     opened_record=json.loads((root/'platform-open.json').read_text())
     if opened_record.get('source') not in ('platform-event','browser-observation') or not opened_record.get('evidence'):
         raise ValueError('Platform opening evidence is required; tools-ready is not opening')
+    proof=(root/opened_record['evidence']).resolve()
+    if not proof.is_relative_to(root.resolve()) or not proof.is_file():
+        raise ValueError('Referenced platform opening evidence is missing')
     ready=json.loads((root/'incident-ready.json').read_text())
     opened=timestamp(opened_record['opened_at']); launched=timestamp(launch['launched_at'])
     incident=timestamp(ready['ready_at'])

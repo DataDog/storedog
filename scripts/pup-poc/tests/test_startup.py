@@ -10,6 +10,7 @@ class StartupTests(unittest.TestCase):
     def test_cold_time_and_fresh_telemetry(self):
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder);(root/'monitors').mkdir()
+            (root/'event-1').write_text('Test fixture for an observed platform opening event')
             def write(name,data): (root/name).write_text(json.dumps(data)+'\n')
             write('launch.json',{'cold':True,'launched_at':'2026-10-24T00:00:00Z'})
             write('platform-open.json',{'source':'platform-event','evidence':'event-1','opened_at':'2026-10-24T00:02:00Z'})
