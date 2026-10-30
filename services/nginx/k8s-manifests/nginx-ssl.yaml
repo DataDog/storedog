@@ -61,7 +61,7 @@ spec:
             - name: NGINX_RESOLVER
               value: "kube-dns.kube-system.svc.cluster.local"
             - name: ENABLE_SSL
-              value: "true"
+              value: "${ENABLE_SSL}"
             - name: DD_ENV
               valueFrom:
                 configMapKeyRef:

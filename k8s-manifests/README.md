@@ -109,6 +109,7 @@ The deployment process uses several environment variables to template image loca
 | `DD_VERSION_BACKEND`          | Version tag for backend & worker services   | `1.0.0`                        |
 | `DD_VERSION_DISCOUNTS`        | Version tag for discounts service           | `1.0.0`                        |
 | `DD_VERSION_NGINX`            | Version tag for nginx                       | `1.0.0`                        |
+| `ENABLE_SSL`                  | Enables TLS on the `service-proxy` (nginx) pod. `true` or `false` | `true`           |
 | `NEXT_PUBLIC_DD_VERSION_FRONTEND` | Version tag for frontend service        | `1.0.0`                        |
 | `DD_API_KEY`                  | Datadog API key (for secret creation)       | `<your-datadog-api-key>`        |
 | `DD_APP_KEY`                  | Datadog App key (for secret creation)       | `<your-datadog-app-key>`        |
@@ -145,7 +146,11 @@ export DD_VERSION_BACKEND=1.0.0
 export DD_VERSION_DISCOUNTS=1.0.0
 export DD_VERSION_NGINX=1.28.0
 export NEXT_PUBLIC_DD_VERSION_FRONTEND=1.0.0
+export ENABLE_SSL=${ENABLE_SSL:-true}
 ```
+
+> [!IMPORTANT]
+> Always export `ENABLE_SSL` before you run `envsubst` on `storedog-app/deployments/nginx.yaml`. If `ENABLE_SSL` is unset, `envsubst` writes an empty value and the `service-proxy` pod starts with SSL disabled and no error.
 
 The Datadog environment variable `DD_ENV` is set in two places. Update both values as needed. The commands below uses `envsubst` to update the variable values in place before applying the definition file.
 
@@ -154,6 +159,18 @@ The Datadog environment variable `DD_ENV` is set in two places. Update both valu
 
 > [!IMPORTANT]
 > These values should match.
+
+### SSL/TLS on the service-proxy
+
+SSL is enabled by default. When `ENABLE_SSL=true`, the `service-proxy` pod needs a certificate and key. It downloads them from GCP instance metadata, which Instruqt provides when the VM has `provision_ssl_certificate: true`. If no certificate is available, the pod exits with an error and goes into `CrashLoopBackOff`. See [SSL/TLS on the service proxy](../README.md#ssltls-on-the-service-proxy) in the root README for the Instruqt `config.yml` example.
+
+To run on a local cluster (for example, kind or minikube) that has no GCP instance metadata, disable SSL in your shell before you run the deploy commands below. You don't need to edit any manifest files:
+
+```bash
+export ENABLE_SSL=false
+```
+
+To test TLS on a local cluster instead, keep `ENABLE_SSL=true` and mount a certificate and key into the `service-proxy` container at `/etc/nginx/certs/cert.pem` and `/etc/nginx/certs/key.pem`.
 
 ### Deploy the Datadog Operator
 
