@@ -143,13 +143,16 @@ services:
     image: ghcr.io/datadog/storedog/nginx:${STOREDOG_IMAGE_VERSION:-latest}
     restart: always
     ports:
-      - '80:80'
+      # Uncomment for local testing (http://localhost). Containers reach service-proxy:80 over the Docker network without it.
+      # - '80:80'
+      - '443:443'
     networks:
       - storedog-network
     depends_on:
       - frontend
       - dd-agent
     environment:
+      - ENABLE_SSL=${ENABLE_SSL:-true}
       - DD_AGENT_HOST=dd-agent
       - DD_ENV=${DD_ENV:-production}
       - DD_SERVICE=service-proxy
