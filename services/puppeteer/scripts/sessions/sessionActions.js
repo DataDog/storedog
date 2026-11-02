@@ -262,6 +262,15 @@ const goToHomePage = async (session) => {
   const storedogUrl = config.storedogUrl;
   // const urlWithUtm = Math.random() > 0.5 ? setUtmParams(config.storedogUrl) : config.storedogUrl;
   await session.page.goto(storedogUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
+
+  // Public Instruqt URLs first serve an "Opening…" interstitial that redirects to the site.
+  // Wait for the redirect so the session doesn't run against the interstitial.
+  try {
+    await session.page.waitForFunction(() => !document.title.startsWith('Opening'), { timeout: 30000 });
+  } catch (error) {
+    throw new Error(`Still on the Instruqt "Opening…" page after 30s at ${storedogUrl}`);
+  }
+
   const pageTitle = await session.page.title();
   session.log(`"${pageTitle}" loaded`);
   
