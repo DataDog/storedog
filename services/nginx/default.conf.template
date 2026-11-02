@@ -12,6 +12,7 @@ upstream ads_upstream {
 
 server {
     listen 80;
+    ${SSL_LISTEN_BLOCK}
 
     # Reverse proxy for ads
     location /services/ads {

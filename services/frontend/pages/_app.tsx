@@ -34,7 +34,8 @@ function isFirstPartyTracingUrl(url: string): boolean {
     const { hostname } = new URL(url)
     return (
       FIRST_PARTY_TRACING_HOSTS.has(hostname) ||
-      hostname.endsWith('.env.play.instruqt.com')
+      hostname.endsWith('.env.play.instruqt.com') ||
+      hostname.endsWith('.instruqt.io')
     )
   } catch {
     return false
