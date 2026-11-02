@@ -272,6 +272,7 @@ services:
       - STOREDOG_URL=${STOREDOG_URL:-http://service-proxy:80}
       - PUPPETEER_LOOP=${PUPPETEER_LOOP:-infinite}
       - PUPPETEER_SESSION_TYPES=${PUPPETEER_SESSION_TYPES:-browsing,vip,frustration,homepage,short,taxonomy}
+      - PUPPETEER_DEBUG_SESSIONS=${PUPPETEER_DEBUG_SESSIONS:-false}
 volumes:
   redis:
   postgres_logs:

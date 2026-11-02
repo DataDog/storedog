@@ -130,8 +130,10 @@ class BaseSession {
       const url = request.url();
       const resourceType = request.resourceType();
       
-      // Block resource-heavy content types to reduce CPU/memory usage
-      const blockedTypes = ['image', 'stylesheet', 'font', 'media'];
+      // Block resource-heavy content types to reduce CPU/memory usage.
+      // Stylesheets and fonts load so the Session Replay recorder can inline their CSS;
+      // otherwise replays reference service-proxy URLs the viewer's browser can't resolve.
+      const blockedTypes = ['image', 'media'];
       if (blockedTypes.includes(resourceType)) {
         request.abort();
         return;
