@@ -8,6 +8,9 @@ spec:
     - port: 80
       targetPort: 80
       name: http
+    - port: 443
+      targetPort: 443
+      name: https
   selector:
     app: service-proxy
 ---
@@ -53,9 +56,12 @@ spec:
           image: ${REGISTRY_URL}/nginx:${SD_TAG}
           ports:
             - containerPort: 80
+            - containerPort: 443
           env:
             - name: NGINX_RESOLVER
               value: "kube-dns.kube-system.svc.cluster.local"
+            - name: ENABLE_SSL
+              value: "${ENABLE_SSL}"
             - name: DD_ENV
               valueFrom:
                 configMapKeyRef:

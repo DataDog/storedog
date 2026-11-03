@@ -19,36 +19,37 @@ environment:
   - ADS_B_PERCENT=${ADS_B_PERCENT:-0}
 ```
 
-## SSL/TLS (Optional)
+## SSL/TLS (Enabled by default)
 
-The service-proxy can terminate its own TLS on port `443`, gated by the `ENABLE_SSL` environment variable. This is needed when a lab exposes Storedog through Instruqt's external ingress (`*.instruqt.io`) rather than the learner proxy (`*.env.play.instruqt.com`), since external ingress does not include Instruqt-provided HTTPS termination. For more information, see the [README.md](../../README.md#enable-ssltls-on-the-service-proxy) file in the root of this repo.
-
-Situations where a lab typically needs this:
-- Datadog Synthetic browser tests, which need a valid HTTPS URL to run reliably against the lab
-- Demonstrating browser features that require a secure context (for example, Service Workers or WebAuthn)
-- A lab where an external service needs a stable public URL to call back into Storedog (for example, webhooks), rather than Instruqt's session-scoped learner proxy
+The service-proxy terminates its own TLS on port `443`, controlled by the `ENABLE_SSL` environment variable. The shipped `docker-compose.yml`, `docker-compose.dev.yml`, and Kubernetes manifests turn it on by default. Labs that expose Storedog through Instruqt's external ingress (`*.instruqt.io`) need it, because external ingress does not include Instruqt-provided HTTPS termination. For more information, including the Instruqt `config.yml` example, see the [README.md](../../README.md#ssltls-on-the-service-proxy) file in the root of this repo.
 
 > [!IMPORTANT]
-> When `ENABLE_SSL=true`, the container looks for a certificate and key at `/etc/nginx/certs/cert.pem` and `/etc/nginx/certs/key.pem`. If they aren't already mounted there, [docker-entrypoint.sh](./docker-entrypoint.sh) tries to download them from GCP instance metadata (the `ssl-certificate`/`ssl-certificate-key` attributes Instruqt provisions). If neither source has a cert/key, the service-proxy exits with an error on startup.
+> When `ENABLE_SSL=true`, the container looks for a certificate and key at `/etc/nginx/certs/cert.pem` and `/etc/nginx/certs/key.pem`. If they aren't already mounted there, [docker-entrypoint.sh](./docker-entrypoint.sh) tries to download them from GCP instance metadata (the `ssl-certificate`/`ssl-certificate-key` attributes Instruqt provisions). If neither source has a cert/key, the service-proxy exits with an error on startup. There is no fallback to HTTP.
 
-### Using SSL/TLS
+Only the exact value `true` enables TLS. Any other value, including an empty value, leaves nginx listening on port `80` only.
 
-#### Docker Compose
+### Docker Compose
 
-1. Add these to the `service-proxy` service in your `docker-compose.yml` file:
+`docker-compose.yml` and `docker-compose.dev.yml` set `ENABLE_SSL=${ENABLE_SSL:-true}` and publish port `443`. They don't publish port `80` by default, because containers reach `service-proxy:80` over the Docker network. To disable SSL for local development, copy `.env.template` to `.env` and uncomment this line:
 
-    ```yaml
-    service-proxy:
-      ports:
-        - '443:443'
-      environment:
-        - ENABLE_SSL=${ENABLE_SSL:-true}
-    ```
+```bash
+ENABLE_SSL=false
+```
 
-1. Start the app via `docker compose up -d`. With nothing mounted, the container downloads the cert/key from GCP instance metadata on startup. To use your own cert/key instead, add a `./certs:/etc/nginx/certs:ro` volume and place them at `./certs/cert.pem` and `./certs/key.pem` before starting.
+Then uncomment the `'80:80'` mapping under `service-proxy` in the compose file so `http://localhost` works.
 
-#### Kubernetes
+To test TLS locally instead, keep SSL enabled and add a `./certs:/etc/nginx/certs:ro` volume to the `service-proxy` service. Place your certificate and key at `./certs/cert.pem` and `./certs/key.pem`.
 
-Replace your entire `k8s-manifests/storedog-app/deployments/nginx.yaml` file with [`nginx-ssl.yaml`](./k8s-manifests/nginx-ssl.yaml) in this directory. It adds `ENABLE_SSL=true`, `containerPort: 443`, and a matching Service `port: 443` to the base manifest, with no cert volume needed: the container fetches its own certificate from GCP instance metadata at startup, the same way the entrypoint does for Docker Compose.
+### Kubernetes
 
-This only works if the `service-proxy` pod is scheduled onto a VM with `provision_ssl_certificate: true` in its `config.yml` (or a single-node cluster, where that's the only VM). In a split control-plane/worker topology, that usually means the worker node exposed via external ingress.
+`k8s-manifests/storedog-app/deployments/nginx.yaml` sets `ENABLE_SSL` to `${ENABLE_SSL}`, which `envsubst` fills in from your shell when you deploy. Export it before you apply the manifests:
+
+```bash
+export ENABLE_SSL=${ENABLE_SSL:-true}
+```
+
+To disable SSL on a local cluster (for example, kind), run `export ENABLE_SSL=false` before applying. For the full deployment steps, see the [Kubernetes README](../../k8s-manifests/README.md#ssltls-on-the-service-proxy).
+
+The [`nginx-ssl.yaml`](./k8s-manifests/nginx-ssl.yaml) file in this directory is a reference copy of the deployed `nginx.yaml`. Keep the two files identical.
+
+In Kubernetes, the certificate comes from GCP instance metadata, so the `service-proxy` pod must run on a VM with `provision_ssl_certificate: true` in its Instruqt `config.yml`. In a split control-plane/worker topology, that is usually the worker node exposed through external ingress.
