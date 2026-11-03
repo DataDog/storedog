@@ -42,6 +42,15 @@ function isFirstPartyTracingUrl(url: string): boolean {
   }
 }
 
+// The RUM Events panel is lab tooling, not part of Storedog, so clicks on it
+// (including rage/dead clicks) should not show up as learner actions. The
+// target may already be detached (e.g. the close button), but closest() still
+// walks the removed subtree.
+function isRumPanelInteraction(context: any): boolean {
+  const target = context?.events?.[0]?.target
+  return target instanceof Element && target.closest('[data-rum-panel]') !== null
+}
+
 // RUM configuration factory - generates config with dynamic application ID and client token
 function getRumConfig(applicationId: string, clientToken: string): RumInitConfiguration {
   return {
@@ -67,7 +76,12 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
     allowedTracingUrls: [isFirstPartyTracingUrl],
     traceSampleRate: 100,
     allowUntrustedEvents: true,
-    beforeSend: (event: any) => {
+    beforeSend: (event: any, context: any) => {
+      // Drop before routing so the panel doesn't list its own clicks either
+      if (event.type === 'action' && isRumPanelInteraction(context)) {
+        return false
+      }
+
       // Route to appropriate event handler
       if (event.type === 'view') {
         ViewEvent.handle(event, mockSession)
@@ -157,13 +171,13 @@ const Noop: FC = ({ children }) => <>{children}</>
 const CartWatcher = () => {
   const { cart } = useCart()
   useEffect(() => {
-    if (!cart) {
-      return
-    }
+    // A null cart (emptied or deleted) is a zero total, not "keep the last one"
+    const cartTotal = cart?.totalPrice ?? 0
 
-    datadogRum.setGlobalContextProperty('cart_status', {
-      cartTotal: cart.totalPrice,
-    })
+    datadogRum.setGlobalContextProperty('cart_status', { cartTotal })
+    // View events keep the global context from when the view started; checkout
+    // is a sidebar, not a new view, so mirror the total into the view context.
+    datadogRum.setViewContextProperty('cart_status', { cartTotal })
   }, [cart])
 
   return null

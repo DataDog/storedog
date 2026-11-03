@@ -219,6 +219,7 @@ export default function SessionDebugPanel() {
         ref={toggleButtonRef}
         onClick={() => handleToggleVisibility(true)} 
         className={styles.toggleBtn}
+        data-rum-panel
         aria-label="Show live RUM events panel"
         aria-expanded="false"
       >
@@ -235,6 +236,7 @@ export default function SessionDebugPanel() {
     <aside 
       ref={panelRef}
       className={styles.container}
+      data-rum-panel
       role="complementary"
       aria-label="Live RUM Events Panel"
       tabIndex={-1}

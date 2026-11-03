@@ -35,11 +35,11 @@
 }
 
 .card[data-event-type="vital"] {
-  border-left: 2px solid #06b6d4;
+  border-left: 2px solid rgb(57, 177, 193);
 }
 
 .card[data-event-type="operation"] {
-  border-left: 2px solid #4f46e5;
+  border-left: 2px solid rgb(0, 133, 151);
 }
 
 .badge[data-event-type="session"] {
@@ -73,12 +73,12 @@
 }
 
 .badge[data-event-type="vital"] {
-  background-color: #06b6d4;
+  background-color: rgb(57, 177, 193);
   color: #ffffff;
 }
 
 .badge[data-event-type="operation"] {
-  background-color: #4f46e5;
+  background-color: rgb(0, 133, 151);
   color: #ffffff;
 }
 
