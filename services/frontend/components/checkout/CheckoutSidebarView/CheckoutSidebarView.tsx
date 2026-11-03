@@ -182,8 +182,7 @@ const CheckoutSidebarView: FC = () => {
               type="submit"
               width="100%"
               variant="ghost"
-              className="!py-2 !border-1"
-              data-dd-action-name="ApplyDiscount"
+              className="apply-discount-btn !py-2 !border-1"
             >
               Apply Discount
             </Button>
@@ -223,7 +222,6 @@ const CheckoutSidebarView: FC = () => {
             width="100%"
             loading={loadingSubmit}
             className="confirm-purchase-btn"
-            data-dd-action-name="ConfirmPurchase"
             disabled={addressStatus.ok && paymentStatus.ok ? false : true}
           >
             Confirm Purchase
