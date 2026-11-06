@@ -64,6 +64,10 @@ export default function SessionDebugPanel() {
   const panelRef = useRef<HTMLDivElement>(null)
   const toggleButtonRef = useRef<HTMLButtonElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
+  // Whether the log was scrolled to the bottom as of its last scroll. Content
+  // growth doesn't fire scroll events, so this still reflects the position from
+  // before the newest event was rendered.
+  const pinnedToBottomRef = useRef(true)
   // Holds the live width mid-drag, when width state is deliberately not updating.
   const widthRef = useRef(width)
 
@@ -205,6 +209,15 @@ export default function SessionDebugPanel() {
     if (!newestCard) {
       return
     }
+    // A view's events land above any Operation card that follows the view, so
+    // they can push that card out of view. Staying pinned keeps it on screen,
+    // and scrolling all the way down for the last card (rather than to the
+    // card's own bottom, short of the session card's padding) is what pins.
+    const cards = content.querySelectorAll('[data-event-id]')
+    if (pinnedToBottomRef.current || cards[cards.length - 1] === newestCard) {
+      content.scrollTop = content.scrollHeight
+      return
+    }
     // Done by hand rather than scrollIntoView, which can also scroll the store.
     const overflow =
       newestCard.getBoundingClientRect().bottom - content.getBoundingClientRect().bottom
@@ -212,6 +225,16 @@ export default function SessionDebugPanel() {
       content.scrollTop += overflow
     }
   }, [events.length, newestEventId])
+
+  const handleContentScroll = () => {
+    const content = contentRef.current
+    if (!content) {
+      return
+    }
+    // 1px of slack for the fractional scrollTop values zoomed pages report.
+    pinnedToBottomRef.current =
+      content.scrollHeight - content.scrollTop - content.clientHeight <= 1
+  }
 
   if (!isVisible) {
     return (
@@ -261,6 +284,7 @@ export default function SessionDebugPanel() {
       <div
         ref={contentRef}
         className={styles.content}
+        onScroll={handleContentScroll}
         role="log"
         aria-live="polite"
         aria-label="RUM event log"
