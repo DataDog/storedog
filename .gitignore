@@ -60,3 +60,5 @@ Gemfile.lock
 settings.json
 
 docker-compose.dev.frontend-prod.yml
+# local SSL certs/keys used for testing ENABLE_SSL
+certs/

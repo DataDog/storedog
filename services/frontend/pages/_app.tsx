@@ -52,6 +52,10 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
         propagatorTypes: ['tracecontext', 'datadog', 'b3', 'b3multi'],
       },
       {
+        match: /https:\/\/.*\.instruqt\.io/,
+        propagatorTypes: ['tracecontext', 'datadog', 'b3', 'b3multi'],
+      },
+      {
         match: /^http:\/\/localhost(:\d+)?$/,
         propagatorTypes: ['tracecontext', 'datadog', 'b3', 'b3multi'],
       },

@@ -190,7 +190,9 @@ services:
       context: ./services/nginx
     restart: always
     ports:
-      - '80:80'
+      # Uncomment for local testing (http://localhost). Containers reach service-proxy:80 over the Docker network without it.
+      # - '80:80'
+      - '443:443'
     networks:
       - storedog-network
     depends_on:
@@ -207,6 +209,7 @@ services:
       - DD_SERVICE=service-proxy
       - DD_VERSION=1.0.0
       - DEFAULT_RUM_APP_ID=${RUM_APPLICATION_ID}
+      - ENABLE_SSL=${ENABLE_SSL:-true}
       - DEFAULT_RUM_CLIENT_TOKEN=${RUM_CLIENT_TOKEN}
     labels:
       com.datadoghq.ad.logs: '[{"source": "nginx"}]'
@@ -272,7 +275,7 @@ services:
     networks:
       - storedog-network
     environment:
-      - STOREDOG_URL=http://service-proxy:80
+      - STOREDOG_URL=${STOREDOG_URL:-http://service-proxy:80}
       - PUPPETEER_LOOP=${PUPPETEER_LOOP:-infinite}
       - PUPPETEER_SESSION_TYPES=${PUPPETEER_SESSION_TYPES:-browsing,vip,frustration,homepage,short,taxonomy}
 volumes:
