@@ -285,6 +285,7 @@ services:
   puppeteer:
     build:
       context: ./services/puppeteer
+    restart: on-failure
     depends_on:
       service-proxy:
         condition: service_healthy
@@ -296,6 +297,12 @@ services:
       - STOREDOG_URL=${STOREDOG_URL:-http://service-proxy:80}
       - PUPPETEER_LOOP=${PUPPETEER_LOOP:-infinite}
       - PUPPETEER_SESSION_TYPES=${PUPPETEER_SESSION_TYPES:-browsing,vip,frustration,homepage,short,taxonomy}
+      - PUPPETEER_DEBUG_SESSIONS=${PUPPETEER_DEBUG_SESSIONS:-false}
+      # Without these, the container falls back to the Dockerfile's 8GB profile
+      # (up to 20 concurrent sessions), which exhausts memory on small lab VMs.
+      - PUPPETEER_MAX_CONCURRENT=${PUPPETEER_MAX_CONCURRENT:-1}
+      - PUPPETEER_BROWSER_POOL_SIZE=${PUPPETEER_BROWSER_POOL_SIZE:-1}
+      - PUPPETEER_SYSTEM_MEMORY=${PUPPETEER_SYSTEM_MEMORY:-8GB}
 volumes:
   redis:
   postgres_logs:

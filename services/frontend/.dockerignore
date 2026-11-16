@@ -1,0 +1,7 @@
+# The Dockerfile runs `npm ci` inside the image, then `COPY . .`. Without this file, a
+# node_modules installed on the host (for example by a lab's provision.sh, for the IDE)
+# is sent in the build context (~280 MB) and copied over the image's Alpine-built modules.
+node_modules
+.next
+npm-debug.log*
+.git

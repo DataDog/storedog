@@ -61,18 +61,20 @@ function trackCartUpdated(cart: Cart | null) {
     return
   }
 
-  // datadogRum.addAction('Cart Updated', {
-  //   cart: {
-  //     total: cart.totalPrice,
-  //     item_count: cart.lineItems?.length ?? 0,
-  //     items: cart.lineItems?.map((item: any) => ({
-  //       id: item.id,
-  //       name: item.name,
-  //       quantity: item.quantity,
-  //       price: item.variant?.price,
-  //     })),
-  //   },
-  // })
+  // The click that triggered the mutation snapshots global context before the
+  // cart API responds, so this action is what carries the post-update total.
+  datadogRum.addAction('Cart Updated', {
+    cart: {
+      total: cart.totalPrice,
+      item_count: cart.lineItems?.length ?? 0,
+      items: cart.lineItems?.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        price: item.variant?.price,
+      })),
+    },
+  })
 }
 
 export const CartProvider = ({ children }: CartProviderProps) => {
