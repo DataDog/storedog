@@ -103,11 +103,11 @@ services:
     command: bundle exec sidekiq -C config/sidekiq.yml
     depends_on:
       postgres:
-        condition: service_started
+        condition: service_healthy
       redis:
         condition: service_started
       backend:
-        condition: service_started
+        condition: service_healthy
       dd-agent:
         condition: service_started
     networks:
@@ -131,6 +131,7 @@ services:
     build:
       context: ./services/discounts
     command: ddtrace-run flask run --port=2814 --host=0.0.0.0
+    restart: on-failure
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "2814"]
       interval: 3s
@@ -164,11 +165,18 @@ services:
   ads:
     build:
       context: ./services/ads/java
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:3030/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
     depends_on:
       dd-agent:
         condition: service_started
-      postgres: 
-        condition: service_started
+      postgres:
+        condition: service_healthy
     environment:
       - DD_AGENT_HOST=dd-agent
       - DD_SERVICE=store-ads
@@ -204,6 +212,14 @@ services:
         condition: service_healthy
       frontend:
         condition: service_healthy
+      ads:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost:81/nginx_status"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
     environment:
       - DD_AGENT_HOST=dd-agent
       - DD_SERVICE=service-proxy
@@ -220,11 +236,11 @@ services:
     build:
       context: ./services/postgres
     healthcheck:
-      test: ["CMD", "nc", "-z", "postgres", "5432"]
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "postgres"]
       interval: 5s
       timeout: 5s
-      retries: 5
-      start_period: 40s
+      retries: 15
+      start_period: 180s
     restart: always
     depends_on:
       dd-agent:
@@ -271,7 +287,9 @@ services:
       context: ./services/puppeteer
     depends_on:
       service-proxy:
-        condition: service_started
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
     networks:
       - storedog-network
     environment:
