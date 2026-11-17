@@ -185,7 +185,7 @@ export class ActionEventHandler extends BaseEventHandler {
 
     this.dispatchEvent({
       type: 'action',
-      data: { name: event.action?.target?.name },
+      data: { name: event.action?.target?.name, actionType: event.action?.type },
       viewId: event.view?.id,
     })
   }

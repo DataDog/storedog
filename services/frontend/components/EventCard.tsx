@@ -27,6 +27,7 @@ interface ErrorEventDisplay {
 interface ActionEventDisplay {
   type: 'action'
   name: string | null
+  actionType: string | null
 }
 
 interface ResourceEventDisplay {
@@ -75,6 +76,7 @@ function useEventDisplayData(event: RumEvent): EventDisplayData {
       return {
         type: 'action',
         name: event.data.name ?? null,
+        actionType: event.data.actionType ?? null,
       }
 
     case 'resource':
@@ -93,6 +95,13 @@ function useEventDisplayData(event: RumEvent): EventDisplayData {
         type: 'vitals',
       }
   }
+}
+
+// Match how Datadog names actions: custom actions (datadogRum.addAction) show as
+// "Custom user action <name>", and automatically collected clicks as "Click on <name>".
+function actionLabel(name: string | null, actionType: string | null): string | null {
+  if (!name) return name
+  return actionType === 'custom' ? `Custom user action ${name}` : `Click on ${name}`
 }
 
 interface CardProps {
@@ -163,7 +172,7 @@ export default function EventCard({ event, isNewest, children }: EventCardProps)
     case 'action':
       return (
         <Card {...commonProps}
-        headerContent={<span className={styles.name}>{data.name ? `Click on ${data.name}` : data.name}</span>}
+        headerContent={<span className={styles.name}>{actionLabel(data.name, data.actionType)}</span>}
         />
       )
 

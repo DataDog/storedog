@@ -12,6 +12,8 @@ export interface ErrorEventData {
 
 export interface ActionEventData {
   name?: string
+  // RUM action type, for example 'click' or 'custom' (datadogRum.addAction)
+  actionType?: string
 }
 
 interface BaseRumEvent {
@@ -109,6 +111,7 @@ export interface DatadogErrorEvent {
 export interface DatadogActionEvent {
   type: 'action'
   action: {
+    type?: string
     target?: {
       name?: string
     }
