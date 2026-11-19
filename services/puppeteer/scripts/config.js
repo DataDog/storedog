@@ -33,6 +33,8 @@ const config = {
   sessionDelay: 2000,
   timeout: parseInt(process.env.PUPPETEER_TIMEOUT) || 60000,
   sessionTypes: process.env.PUPPETEER_SESSION_TYPES.split(',').map(s => s.trim()),
+  // Run the one-time watch session (fixed user, always recorded) at startup
+  runWatchSession: process.env.PUPPETEER_WATCH_SESSION !== 'false',
   
   // Safety limits from memory profile
   safetyLimits: {

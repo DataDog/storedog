@@ -14,7 +14,7 @@ const SessionManager = require('./core/sessionManager');
 const config = require('./config');
 const { setTimeout } = require('node:timers/promises');
 
-const { storedogUrl, systemMemory, maxConcurrency, browserPoolSize, safetyLimits, debug, debugSessions, sessionTypes, startupDelay, loop } = config;
+const { storedogUrl, systemMemory, maxConcurrency, browserPoolSize, safetyLimits, debug, debugSessions, sessionTypes, runWatchSession, startupDelay, loop } = config;
 // The main function that runs when the script starts.
 async function main() {
   console.log('🚀 Starting Puppeteer Traffic Generator');
@@ -30,6 +30,7 @@ async function main() {
     "debugSessions": debugSessions,
     "startupDelay": startupDelay,
     "sessionTypes": sessionTypes.join(', '),
+    "runWatchSession": runWatchSession,
     "loop": loop
   }
 

@@ -229,6 +229,39 @@ const selectProductsPageProduct = async (session) => {
   }
 };
 
+// Clicks a specific product's link on the current page, falling back to its URL
+const goToProduct = async (session, slug) => {
+  const selector = `a[href$="/products/${slug}"]`;
+  session.log(`Going to product: ${slug}`);
+
+  try {
+    await session.page.waitForSelector(selector, { timeout: 5000 });
+
+    // The homepage grid comes before the moving marquee in the DOM, so the first visible link is the grid card
+    let productLink = null;
+    for (const link of await session.page.$$(selector)) {
+      if (await link.isVisible()) {
+        productLink = link;
+        break;
+      }
+    }
+    if (!productLink) {
+      throw new Error(`No visible link for ${slug}`);
+    }
+
+    await Promise.all([
+      productLink.evaluate(el => el.click()),
+      session.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 20000 })
+    ]);
+  } catch (error) {
+    session.log(`Clicking ${slug} failed, using direct URL: ${error.message}`);
+    await session.page.goto(`${config.storedogUrl}/products/${slug}`, { waitUntil: 'domcontentloaded', timeout: 15000 });
+  }
+
+  await session.page.waitForSelector('#add-to-cart-button', { timeout: 10000 });
+  session.log(`"${await session.page.title()}" loaded`);
+};
+
 // This looks for a hardcoded selector for the Learning Bits product and clicks it
 // There isn't always a Learning Bits product on the page, so this will fail and create frustration signals
 const tryToSelectLearningBitsRelatedProduct = async (session) => {
@@ -879,6 +912,7 @@ module.exports = {
   selectHomePageProduct,
   selectProduct,
   selectProductsPageProduct,
+  goToProduct,
   tryToSelectLearningBitsRelatedProduct,
   goToHomePage,
   clickStoredogLogoToGoHome,

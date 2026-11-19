@@ -881,12 +881,20 @@ const USERS = [
   }
 ];
 
+// Fixed user for the one-time watch session; the frontend always records this user's replay
+const WATCH_USER = {
+  id: "5f0c7a2e-9b3d-4c61-8e2a-6d4b1f9c3a70",
+  name: "Watch This Session",
+  email: "watch-this-session@example.com"
+};
+
 module.exports = {
   CHROME_ARGS,
   DEVICES,
   EMOJIS,
   MEMORY_PROFILES,
   VIP_USERS,
-  USERS
+  USERS,
+  WATCH_USER
 };
 

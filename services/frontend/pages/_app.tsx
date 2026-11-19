@@ -27,6 +27,11 @@ const mockSession = new MockSession()
 
 const FIRST_PARTY_TRACING_HOSTS = new Set(['localhost', '127.0.0.1', 'service-proxy'])
 
+const LEARNING_CENTER_EMAIL = 'learning-center-user@example.com'
+
+// Sessions for these users are always recorded, regardless of sessionReplaySampleRate
+const FORCE_REPLAY_EMAILS = [LEARNING_CENTER_EMAIL, 'watch-this-session@example.com']
+
 // RUM matches the full request URL. Only inject tracing headers on first-party
 // fetches so third-party calls (Datadog intake, CDNs) do not get CORS preflights.
 function isFirstPartyTracingUrl(url: string): boolean {
@@ -206,25 +211,27 @@ export default function MyApp({ Component, pageProps }: AppProps) {
   }, [])
 
   useEffect(() => {
-    // if user exists in local storage, set user or create a new user
-    if (localStorage.getItem('rum_user')) {
-      const user = JSON.parse(localStorage.getItem('rum_user') || '')
-      datadogRum.setUser(user)
-      
-      // Show debug panel only for learning center user
-      if (user.email === 'learning-center-user@example.com') {
-        datadogRum.startSessionReplayRecording({force: true})
-        setShowDebugPanel(true)
-      }
-    } else {
-      const anonymousUser = {
+    // Use the user from local storage, or create the learning center user on first visit
+    let user = JSON.parse(localStorage.getItem('rum_user') || 'null')
+    if (!user) {
+      user = {
         id: Math.random().toString(36).substring(2, 15),
         name: 'Learning Center User',
-        email: 'learning-center-user@example.com',
+        email: LEARNING_CENTER_EMAIL,
       }
-      localStorage.setItem('rum_user', JSON.stringify(anonymousUser))
-      datadogRum.setUser(anonymousUser)
-      setShowDebugPanel(true) // This is the learning center user
+      localStorage.setItem('rum_user', JSON.stringify(user))
+    }
+    datadogRum.setUser(user)
+
+    // Decide after the user is resolved so a first visit is forced too; client-side
+    // navigation doesn't re-run this effect, so a later reload can't be relied on
+    if (FORCE_REPLAY_EMAILS.includes(user.email)) {
+      datadogRum.startSessionReplayRecording({ force: true })
+    }
+
+    // Show debug panel only for learning center user
+    if (user.email === LEARNING_CENTER_EMAIL) {
+      setShowDebugPanel(true)
     }
   }, [])
 

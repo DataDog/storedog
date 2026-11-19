@@ -15,6 +15,10 @@ const LateErrorSession = require('../sessions/lateErrorSession');
 const CartAbandonmentSession = require('../sessions/cartAbandonmentSession');
 const BotSession = require('../sessions/botSession');
 const CheckoutErrorSession = require('../sessions/checkoutErrorSession');
+const WatchSession = require('../sessions/watchSession');
+
+const WATCH_SESSION_MAX_ATTEMPTS = 3;
+const WATCH_SESSION_RETRY_DELAY = 10000;
 
 // Build ramp-up schedule from the memory profile's percentages
 // Each percentage is applied to the configured maxConcurrency
@@ -138,6 +142,56 @@ class SessionManager {
   shouldAddNewSession() {
     return this.sessionPromises.length < this.currentMaxConcurrent && this.checkMemoryLimit();
   }
+
+  // Run one session on a pooled browser. Resolves true if it completed, false if it failed.
+  async runSession(Session, sessionId) {
+    let session;
+    let browser;
+
+    try {
+      browser = await this.browserPool.getBrowser();
+      session = new Session(browser, sessionId);
+      await session.run();
+      return true;
+    } catch (error) {
+      this.log(`Error creating session: ${error.message}`);
+      return false;
+    } finally {
+      try {
+        if (browser) {
+          await this.browserPool.releaseBrowser(browser);
+        }
+      } catch (cleanupError) {
+        this.log(`Browser cleanup error: ${cleanupError.message}`);
+      }
+      
+      this.tryGarbageCollection();
+    }
+  }
+
+  // Count a running session against concurrency until it settles
+  trackSession(sessionPromise) {
+    this.sessionPromises.push(sessionPromise);
+    sessionPromise.finally(() => {
+      this.sessionPromises.splice(this.sessionPromises.indexOf(sessionPromise), 1);
+    });
+  }
+
+  // The watch session runs once per container start, retrying if the stack isn't ready yet
+  async runWatchSession(sessionId) {
+    for (let attempt = 1; attempt <= WATCH_SESSION_MAX_ATTEMPTS; attempt++) {
+      this.log(`👀 Starting watch session (attempt ${attempt} of ${WATCH_SESSION_MAX_ATTEMPTS})`);
+      if (await this.runSession(WatchSession, sessionId)) {
+        this.log('👀 Watch session completed');
+        return;
+      }
+      if (attempt < WATCH_SESSION_MAX_ATTEMPTS) {
+        await setTimeout(WATCH_SESSION_RETRY_DELAY);
+      }
+    }
+    this.log(`👀 Watch session failed after ${WATCH_SESSION_MAX_ATTEMPTS} attempts`);
+  }
+
   // This is the main orchestration function - it runs forever, maintaining constant traffic.
   // It progressively ramps up concurrency, then maintains exactly config.maxConcurrency sessions.
   // When a session completes, it immediately starts a new one to keep the count constant.
@@ -145,6 +199,10 @@ class SessionManager {
     this.log(`🔄 Starting continuous traffic generation with ${this.Sessions.length} session types`);
     
     let sessionIdCounter = 1;
+
+    if (config.runWatchSession) {
+      this.trackSession(this.runWatchSession(sessionIdCounter++));
+    }
     
     const maxLoops = config.loop === 'single' ? 1 : Infinity;
     
@@ -156,33 +214,7 @@ class SessionManager {
         const randomIndex = Math.floor(Math.random() * this.Sessions.length);
         const Session = this.Sessions[randomIndex];
         const sessionId = sessionIdCounter++;
-        const sessionPromise = (async () => {
-          let session;
-          let browser;
-          
-          try {
-            browser = await this.browserPool.getBrowser();
-            session = new Session(browser, sessionId);
-            await session.run();
-          } catch (error) {
-            this.log(`Error creating session: ${error.message}`);
-          } finally {
-            try {
-              if (browser) {
-                await this.browserPool.releaseBrowser(browser);
-              }
-            } catch (cleanupError) {
-              this.log(`Browser cleanup error: ${cleanupError.message}`);
-            }
-            
-            this.tryGarbageCollection();
-          }
-        })();
-
-        this.sessionPromises.push(sessionPromise);
-        sessionPromise.finally(() => {
-          this.sessionPromises.splice(this.sessionPromises.indexOf(sessionPromise), 1);
-        });
+        this.trackSession(this.runSession(Session, sessionId));
       }
       
       if (this.sessionPromises.length > 0) {

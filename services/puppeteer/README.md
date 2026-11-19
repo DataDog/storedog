@@ -56,6 +56,10 @@ A modular Puppeteer-based traffic generator for Storedog that simulates realisti
     - `vip` - VIP users with @vip.example.com email domain
   - **Note**: Session names are case-insensitive and "Session" suffix is optional (e.g., `vip`, `VIP`, `vipSession` all work)
 
+- **`PUPPETEER_WATCH_SESSION`** - Run the one-time watch session at startup (see [watchSession](#watchsession))
+  - Default: `true`
+  - Set to `false` to skip it
+
 ### Concurrency & Performance
 
 - **`PUPPETEER_MAX_CONCURRENT`** - Maximum concurrent sessions
@@ -222,6 +226,13 @@ environment:
 - Enables filtering/retention based on VIP user status
 - Same shopping flow as browsingSession (browse, add to cart, checkout)
 
+### watchSession
+- Runs **once** per container start, alongside the random traffic; it is not a `PUPPETEER_SESSION_TYPES` option
+- Always runs as `watch-this-session@example.com`, and the frontend always records this user for Session Replay
+- Fixed flow: home page, wait, Blue Jeans product page, wait, add to cart, check out and confirm the purchase
+- Retries up to 3 times (10 seconds apart) if a run fails, e.g. because the stack isn't ready yet
+- Find it in RUM with `@usr.email:watch-this-session@example.com`
+
 ## Creating Custom Sessions
 
 1. Create a new file in `scripts/sessions/` (e.g., `customSession.js`)
@@ -284,7 +295,8 @@ scripts/
     ├── frustrationSession.js   # Frustration signals session
     ├── homePageSession.js      # Home page shopping session
     ├── shortSession.js         # Quick session with no actions
-    └── vipSession.js           # VIP user session
+    ├── vipSession.js           # VIP user session
+    └── watchSession.js         # One-time, always-recorded checkout session
 ```
 
 ## Troubleshooting

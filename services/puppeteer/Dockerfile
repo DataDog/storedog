@@ -13,6 +13,7 @@ ENV STOREDOG_URL=http://service-proxy:80 \
   PUPPETEER_DEBUG_SESSIONS=false \
   PUPPETEER_LOOP=infinite \
   PUPPETEER_SESSION_TYPES=browsing,vip,frustration,homepage,short,taxonomy \
+  PUPPETEER_WATCH_SESSION=true \
   RUM_APP_ID=${RUM_APP_ID} \
   RUM_CLIENT_TOKEN=${RUM_CLIENT_TOKEN}
 

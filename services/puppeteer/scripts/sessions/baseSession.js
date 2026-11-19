@@ -51,6 +51,8 @@ class BaseSession {
     this.device = BaseSession.getRandomDevice();
     this.debugSessions = BaseSession.getLogLevel();
     this.isVip = false;
+    // Subclasses can pin a specific user instead of a random one
+    this.user = null;
   }
 
   log(message) {
@@ -90,7 +92,7 @@ class BaseSession {
     // Create new page
     this.page = await this.browser.newPage();
     
-    const userInfo = BaseSession.getRandomUser(isVip);
+    const userInfo = this.user ?? BaseSession.getRandomUser(isVip);
     const stringifiedUserInfo = JSON.stringify(userInfo);
     this.log(`Setting user: ${stringifiedUserInfo}`);
 
@@ -109,12 +111,10 @@ class BaseSession {
       this.log(`⚠️  WARNING: RUM credentials not set! App ID=${rumAppId}, Token=${rumClientToken ? 'set' : 'missing'}`);
     }
 
-    // Set localStorage BEFORE page loads - this runs before any page JavaScript
-    // Only set if not already set (persists across navigations)
+    // Set localStorage BEFORE page loads - this runs before any page JavaScript.
+    // Always overwrite: pooled browsers can keep a previous session's rum_user.
     await this.page.evaluateOnNewDocument((userInfoString) => {
-      if (!localStorage.getItem('rum_user')) {
-        localStorage.setItem('rum_user', userInfoString);
-      }
+      localStorage.setItem('rum_user', userInfoString);
     }, stringifiedUserInfo);
 
     // Set device emulation (viewport and user agent)
