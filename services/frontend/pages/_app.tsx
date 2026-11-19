@@ -114,6 +114,17 @@ function getRumConfig(applicationId: string, clientToken: string): RumInitConfig
   }
 }
 
+// The RUM session manager starts asynchronously after init(). Until it does, the SDK
+// ignores stopSession() and drops the `force` option of startSessionReplayRecording(),
+// so wait for a session before calling either. Gives up after ~30s (e.g. RUM never initialized).
+function whenRumStarted(callback: () => void, attemptsLeft = 300) {
+  if (datadogRum.getInternalContext()?.session_id) {
+    callback()
+  } else if (attemptsLeft > 0) {
+    setTimeout(() => whenRumStarted(callback, attemptsLeft - 1), 100)
+  }
+}
+
 // Helper to read cookie value
 function getCookie(name: string): string | null {
   if (typeof document === 'undefined') return null
@@ -198,15 +209,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
   useEffect(() => {
     document.body.classList?.remove('loading')
     if (window?.location.search.includes('end_session=true')) {
-      // Wait for RUM to be initialized before stopping session
-      const stopSession = () => {
-        if ((window as any).__DD_RUM_INITIALIZED__) {
-          datadogRum.stopSession()
-        } else {
-          setTimeout(stopSession, 100)
-        }
-      }
-      stopSession()
+      whenRumStarted(() => datadogRum.stopSession())
     }
   }, [])
 
@@ -226,7 +229,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
     // Decide after the user is resolved so a first visit is forced too; client-side
     // navigation doesn't re-run this effect, so a later reload can't be relied on
     if (FORCE_REPLAY_EMAILS.includes(user.email)) {
-      datadogRum.startSessionReplayRecording({ force: true })
+      whenRumStarted(() => datadogRum.startSessionReplayRecording({ force: true }))
     }
 
     // Show debug panel only for learning center user
