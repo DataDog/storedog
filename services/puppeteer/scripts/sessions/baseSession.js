@@ -7,12 +7,13 @@ const { DEVICES, EMOJIS, VIP_USERS, USERS } = require('../constants');
 const { setTimeout: setTimeoutPromise } = require('node:timers/promises');
 
 class BaseSession {
-  // Get a random device profile for emulation
-  static getRandomDevice() {
-    if (DEVICES.length === 0) {
-      throw new Error('No devices available for emulation');
+  // Get a random device profile for emulation, optionally limited to one category (e.g. 'desktop')
+  static getRandomDevice(category) {
+    const devices = category ? DEVICES.filter(d => d.category === category) : DEVICES;
+    if (devices.length === 0) {
+      throw new Error(`No ${category ? `${category} ` : ''}devices available for emulation`);
     }
-    return DEVICES[Math.floor(Math.random() * DEVICES.length)];
+    return devices[Math.floor(Math.random() * devices.length)];
   }
 
   // Get a random emoji for user identification

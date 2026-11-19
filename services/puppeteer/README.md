@@ -229,6 +229,7 @@ environment:
 ### watchSession
 - Runs **once** per container start, alongside the random traffic; it is not a `PUPPETEER_SESSION_TYPES` option
 - Always runs as `watch-this-session@example.com`, and the frontend always records this user for Session Replay
+- Always uses a laptop or desktop device (picked at random from the `desktop` devices)
 - Fixed flow: home page, wait, Blue Jeans product page, wait, add to cart, check out and confirm the purchase
 - Retries up to 3 times (10 seconds apart) if a run fails, e.g. because the stack isn't ready yet
 - Find it in RUM with `@usr.email:watch-this-session@example.com`

@@ -9,6 +9,7 @@ class WatchSession extends BaseSession {
   constructor(browser, sessionId) {
     super(browser, sessionId);
     this.user = WATCH_USER;
+    this.device = BaseSession.getRandomDevice('desktop');
   }
 
   // Errors are not caught here so the SessionManager can retry a failed run
