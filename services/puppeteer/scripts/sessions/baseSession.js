@@ -134,7 +134,8 @@ class BaseSession {
       // Block resource-heavy content types to reduce CPU/memory usage.
       // Stylesheets and fonts load so the Session Replay recorder can inline their CSS;
       // otherwise replays reference service-proxy URLs the viewer's browser can't resolve.
-      const blockedTypes = ['image', 'media'];
+      // Images load so the ad banners' onLoad stops the ad.banner_load duration Vital.
+      const blockedTypes = ['media'];
       if (blockedTypes.includes(resourceType)) {
         request.abort();
         return;

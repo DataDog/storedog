@@ -19,7 +19,6 @@ const CHROME_ARGS = [
   '--disable-ipc-flooding-protection',
   '--max_old_space_size=256',
   // Additional performance optimizations
-  '--blink-settings=imagesEnabled=false', // Block all images
   '--disable-remote-fonts', // Don't load web fonts
   '--disable-smooth-scrolling', // Reduce animation overhead
   '--disable-software-rasterizer',
